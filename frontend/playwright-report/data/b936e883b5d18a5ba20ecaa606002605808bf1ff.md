@@ -1,0 +1,221 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e5]:
+      - link "A Airbcar" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]: A
+        - generic [ref=e10]: Airbcar
+      - navigation [ref=e11]:
+        - link "Search" [ref=e12] [cursor=pointer]:
+          - /url: /search
+        - link "How it Works" [ref=e13] [cursor=pointer]:
+          - /url: /#how-it-works
+        - link "Become a Partner" [ref=e14] [cursor=pointer]:
+          - /url: /partner
+        - link "Mission" [ref=e15] [cursor=pointer]:
+          - /url: /mission
+      - button "MAD - DH" [ref=e18]:
+        - img [ref=e19]
+        - generic [ref=e21]: MAD - DH
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - heading "Find Your Perfect Car" [level=1] [ref=e25]
+      - paragraph [ref=e26]: Discover amazing vehicles for your next adventure
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: Pick-up Location
+          - generic [ref=e32]:
+            - generic:
+              - img
+            - textbox "Pick-up Location" [ref=e33]:
+              - /placeholder: Where are you going?
+              - text: Rabat
+        - generic [ref=e34]:
+          - generic [ref=e35]: Pick-up Date
+          - generic [ref=e36]:
+            - generic:
+              - img
+            - textbox "Pick-up Date" [ref=e37]
+        - generic [ref=e38]:
+          - generic [ref=e39]: Return Date
+          - generic [ref=e40]:
+            - generic:
+              - img
+            - textbox "Return Date" [disabled] [ref=e41]
+      - button "Search Cars" [ref=e43]:
+        - img [ref=e44]
+        - text: Search Cars
+    - generic [ref=e46]:
+      - generic [ref=e47]:
+        - heading "Searching..." [level=2] [ref=e48]
+        - generic [ref=e49]:
+          - generic [ref=e50]: 1 filter applied
+          - button "Clear all" [ref=e51]
+      - generic [ref=e52]:
+        - generic [ref=e53]: "Sort by:"
+        - combobox [ref=e54]:
+          - 'option "Price: Low to High" [selected]'
+          - 'option "Price: High to Low"'
+          - option "Highest Rated"
+          - option "Newest First"
+    - generic [ref=e57]:
+      - heading "Filters" [level=3] [ref=e59]
+      - generic [ref=e60]:
+        - generic [ref=e61]: Price Range (MAD/day)
+        - generic [ref=e62]:
+          - slider [ref=e63] [cursor=pointer]: "5000"
+          - generic [ref=e64]:
+            - generic [ref=e65]: 0 MAD
+            - generic [ref=e66]: 5000+ MAD
+      - generic [ref=e67]:
+        - generic [ref=e68]: Transmission
+        - generic [ref=e69]:
+          - button "Manual" [ref=e70]
+          - button "Automatic" [ref=e71]
+      - generic [ref=e72]:
+        - generic [ref=e73]: Fuel Type
+        - generic [ref=e74]:
+          - button "Petrol" [ref=e75]
+          - button "Diesel" [ref=e76]
+          - button "Electric" [ref=e77]
+          - button "Hybrid" [ref=e78]
+      - generic [ref=e79]:
+        - generic [ref=e80]: Style
+        - generic [ref=e81]:
+          - button "Commercial" [ref=e82]
+          - button "City" [ref=e83]
+          - button "Sedan" [ref=e84]
+          - button "Show More" [ref=e85]:
+            - img [ref=e86]
+            - text: Show More
+      - generic [ref=e88]:
+        - generic [ref=e89]: Brand
+        - generic [ref=e90]:
+          - button "Toyota" [ref=e91]
+          - button "BMW" [ref=e92]
+          - button "Mercedes" [ref=e93]
+          - button "Show More" [ref=e94]:
+            - img [ref=e95]
+            - text: Show More
+      - generic [ref=e97]:
+        - generic [ref=e98]: Features
+        - generic [ref=e99]:
+          - button "Child seat" [ref=e100]
+          - button "GPS" [ref=e101]
+          - button "Air conditioning" [ref=e102]
+          - button "Show More" [ref=e103]:
+            - img [ref=e104]
+            - text: Show More
+      - generic [ref=e106]:
+        - generic [ref=e107]: Seats
+        - generic [ref=e108]:
+          - button "2" [ref=e109]
+          - button "4" [ref=e110]
+          - button "5" [ref=e111]
+          - button "7" [ref=e112]
+          - button "8+" [ref=e113]
+      - generic [ref=e115]:
+        - checkbox "Verified agencies only" [ref=e116]
+        - generic [ref=e117]: Verified agencies only
+      - generic [ref=e119]:
+        - checkbox "Instant booking available" [ref=e120]
+        - generic [ref=e121]: Instant booking available
+  - contentinfo [ref=e190]:
+    - generic [ref=e191]:
+      - generic [ref=e192]:
+        - generic [ref=e193]:
+          - generic [ref=e194]:
+            - generic [ref=e196]: A
+            - generic [ref=e197]: Airbcar
+          - paragraph [ref=e198]: Premium car rental platform connecting travelers with trusted local partners across Morocco.
+          - generic [ref=e199]:
+            - link "Facebook" [ref=e200] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e201]
+            - link "Instagram" [ref=e203] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e204]
+            - link "Twitter" [ref=e206] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e207]
+            - link "LinkedIn" [ref=e209] [cursor=pointer]:
+              - /url: "#"
+              - img [ref=e210]
+        - generic [ref=e212]:
+          - heading "Company" [level=3] [ref=e213]
+          - list [ref=e214]:
+            - listitem [ref=e215]:
+              - link "About Us" [ref=e216] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e217]:
+              - link "Mission" [ref=e218] [cursor=pointer]:
+                - /url: /mission
+            - listitem [ref=e219]:
+              - link "Careers" [ref=e220] [cursor=pointer]:
+                - /url: /careers
+            - listitem [ref=e221]:
+              - link "Press" [ref=e222] [cursor=pointer]:
+                - /url: /press
+        - generic [ref=e223]:
+          - heading "Services" [level=3] [ref=e224]
+          - list [ref=e225]:
+            - listitem [ref=e226]:
+              - link "Car Rental" [ref=e227] [cursor=pointer]:
+                - /url: /search
+            - listitem [ref=e228]:
+              - link "Partner Program" [ref=e229] [cursor=pointer]:
+                - /url: /partner
+            - listitem [ref=e230]:
+              - link "Gift Cards" [ref=e231] [cursor=pointer]:
+                - /url: /gift-cards
+        - generic [ref=e232]:
+          - heading "Support" [level=3] [ref=e233]
+          - list [ref=e234]:
+            - listitem [ref=e235]:
+              - link "Help Center" [ref=e236] [cursor=pointer]:
+                - /url: /help
+            - listitem [ref=e237]:
+              - link "Contact Us" [ref=e238] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=e239]:
+              - link "Safety" [ref=e240] [cursor=pointer]:
+                - /url: /safety
+            - listitem [ref=e241]:
+              - link "Insurance" [ref=e242] [cursor=pointer]:
+                - /url: /insurance
+        - generic [ref=e243]:
+          - heading "Legal" [level=3] [ref=e244]
+          - list [ref=e245]:
+            - listitem [ref=e246]:
+              - link "Terms of Service" [ref=e247] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=e248]:
+              - link "Privacy Policy" [ref=e249] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=e250]:
+              - link "Rental Policies" [ref=e251] [cursor=pointer]:
+                - /url: /rental-policies
+            - listitem [ref=e252]:
+              - link "Cookie Policy" [ref=e253] [cursor=pointer]:
+                - /url: /cookies
+      - generic [ref=e255]:
+        - heading "Stay updated with the latest deals" [level=3] [ref=e256]
+        - generic [ref=e257]:
+          - textbox "Enter your email" [ref=e258]
+          - button "Subscribe" [ref=e259]
+        - paragraph [ref=e260]: We respect your privacy. Unsubscribe at any time.
+      - generic [ref=e262]:
+        - generic [ref=e263]:
+          - paragraph [ref=e264]: © 2025 Airbcar. All rights reserved.
+          - generic [ref=e265]:
+            - generic [ref=e266]: 🇲🇦 Made in Morocco
+            - generic [ref=e267]: •
+            - generic [ref=e268]: Available 24/7
+        - generic [ref=e270]:
+          - img [ref=e271]
+          - generic [ref=e273]: Secure & Trusted
+```

@@ -1,0 +1,9 @@
+// Re-export feature-specific services for backward compatibility
+export { apiClient } from '@/lib/api/client'
+export { authService } from '@/features/auth/services/authService'
+export { userService } from '@/features/user/services/userService'
+export { vehicleService as listingsService } from '@/features/vehicle/services/vehicleService'
+export { vehicleService } from '@/features/vehicle/services/vehicleService'
+export { bookingService, bookingService as bookingsService } from '@/features/booking/services/bookingService'
+export { partnerService } from '@/features/partner/services/partnerService'
+export { adminService } from '@/features/admin/services/adminService'

@@ -1,0 +1,13 @@
+# Python 3.13.5 required
+
+django==4.2.21
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.2.2
+django-cors-headers==4.2.0
+psycopg2-binary
+Pillow==10.4.0
+gunicorn==22.0.0
+python-dotenv==1.0.1
+supabase==2.6.0
+httpx[http2]
+setuptools>=56.0.0 

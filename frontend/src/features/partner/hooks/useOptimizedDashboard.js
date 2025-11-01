@@ -1,0 +1,433 @@
+'use client';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
+
+export function useOptimizedDashboard() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  
+  // State management
+  const [isPartner, setIsPartner] = useState(false);
+  const [currentView, setCurrentView] = useState("dashboard");
+  const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
+  const [showEditVehicleModal, setShowEditVehicleModal] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [upcomingBookings, setUpcomingBookings] = useState([]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [theme, setTheme] = useState('light');
+  const [notifications, setNotifications] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [isOnline, setIsOnline] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [backendAvailable, setBackendAvailable] = useState(true);
+  const [processingBooking, setProcessingBooking] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const {
+    vehicles,
+    bookings,
+    partnerData,
+    stats,
+    loading: dataLoading,
+    addVehicle,
+    updateVehicle,
+    deleteVehicle,
+    acceptBooking,
+    rejectBooking,
+    cancelBooking,
+    getPendingRequests,
+    getUpcomingBookings,
+    refetch
+  } = usePartnerData();
+
+  // Memoized navigation items
+  const navigationItems = useMemo(() => [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊', badge: null },
+    { id: 'vehicles', label: 'Vehicles', icon: '🚗', badge: vehicles?.length || 0 },
+    { id: 'bookings', label: 'Bookings', icon: '📅', badge: bookings?.length || 0 },
+    { id: 'earnings', label: 'Earnings', icon: '💰', badge: null },
+    { id: 'analytics', label: 'Analytics', icon: '📈', badge: null },
+    { id: 'calendar', label: 'Calendar', icon: '📆', badge: null },
+    { id: 'reviews', label: 'Reviews', icon: '⭐', badge: null },
+    { id: 'rental-policies', label: 'Rental Policies', icon: '📋', badge: null },
+    { id: 'profile', label: 'Profile', icon: '👤', badge: null },
+    { id: 'settings', label: 'Settings', icon: '⚙️', badge: null }
+  ], [vehicles?.length, bookings?.length]);
+
+  // Memoized quick stats
+  const quickStats = useMemo(() => {
+    if (!stats) return [];
+    
+    return [
+      {
+        title: 'Total Vehicles',
+        value: stats.totalVehicles || 0,
+        icon: '🚗',
+        color: 'blue'
+      },
+      {
+        title: 'Active Bookings',
+        value: stats.activeBookings || 0,
+        icon: '📅',
+        color: 'green'
+      },
+      {
+        title: 'Pending Requests',
+        value: pendingRequests.length,
+        icon: '⏳',
+        color: 'yellow'
+      },
+      {
+        title: 'Monthly Earnings',
+        value: `$${stats.monthlyEarnings || 0}`,
+        icon: '💰',
+        color: 'purple'
+      }
+    ];
+  }, [stats, pendingRequests.length]);
+
+  // Partner status check
+  const checkPartnerStatus = useCallback(async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || "http://localhost:8000";
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        router.push("/auth/signin");
+        return;
+      }
+
+      const cachedStatus = sessionStorage.getItem('partner_status');
+      if (cachedStatus) {
+        setIsPartner(JSON.parse(cachedStatus));
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/api/verify-token/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        const isUserPartner = userData.is_partner === true || 
+                             userData.role === 'partner' || 
+                             userData.email?.includes('partner');
+        
+        setIsPartner(isUserPartner);
+        setBackendAvailable(true);
+        sessionStorage.setItem('partner_status', JSON.stringify(isUserPartner));
+        
+        if (!isUserPartner) {
+          router.push('/');
+        }
+      } else if (response.status === 0 || !response.ok) {
+        console.warn('Backend not available, using mock mode');
+        setBackendAvailable(false);
+        setIsPartner(true);
+        sessionStorage.setItem('partner_status', JSON.stringify(true));
+      } else {
+        router.push("/auth/signin");
+      }
+    } catch (error) {
+      console.warn('Backend not available, using mock mode:', error);
+      setBackendAvailable(false);
+      setIsPartner(true);
+      sessionStorage.setItem('partner_status', JSON.stringify(true));
+    }
+  }, [router]);
+
+  // Data fetching functions
+  const fetchPendingRequests = useCallback(async () => {
+    try {
+      const requests = await getPendingRequests();
+      setPendingRequests(requests);
+    } catch (error) {
+      console.warn('Could not fetch pending requests, using mock data:', error);
+      setPendingRequests([
+        {
+          id: 1,
+          listing: { make: 'Toyota', model: 'Camry' },
+          start_time: new Date().toISOString(),
+          end_time: new Date(Date.now() + 86400000).toISOString(),
+          user: { first_name: 'John', last_name: 'Doe' }
+        }
+      ]);
+    }
+  }, [getPendingRequests]);
+
+  const fetchUpcomingBookings = useCallback(async () => {
+    try {
+      const upcoming = await getUpcomingBookings();
+      setUpcomingBookings(upcoming);
+    } catch (error) {
+      console.warn('Could not fetch upcoming bookings, using mock data:', error);
+      setUpcomingBookings([
+        {
+          id: 1,
+          listing: { make: 'Honda', model: 'Civic' },
+          start_time: new Date(Date.now() + 86400000).toISOString(),
+          end_time: new Date(Date.now() + 172800000).toISOString(),
+          user: { first_name: 'Sarah', last_name: 'Johnson' }
+        }
+      ]);
+    }
+  }, [getUpcomingBookings]);
+
+  // Toast notification system
+  const showToast = useCallback((message, type = 'info') => {
+    setToastMessage({ message, type });
+    setTimeout(() => setToastMessage(null), 5000);
+  }, []);
+
+  // Event handlers
+  const handleAddVehicle = useCallback(() => {
+    setShowAddVehicleModal(true);
+  }, []);
+
+  const handleEditVehicle = useCallback((vehicle) => {
+    setSelectedVehicle(vehicle);
+    setShowEditVehicleModal(true);
+  }, []);
+
+  const handleDeleteVehicle = useCallback(async (vehicle) => {
+    if (confirm(`Are you sure you want to delete ${vehicle.brand} ${vehicle.model}?`)) {
+      try {
+        await deleteVehicle(vehicle.id);
+        refetch();
+      } catch (error) {
+        console.error('Error deleting vehicle:', error);
+      }
+    }
+  }, [deleteVehicle, refetch]);
+
+  const handleVehicleSubmit = useCallback(async (vehicleData) => {
+    try {
+      if (selectedVehicle) {
+        await updateVehicle(selectedVehicle.id, vehicleData);
+      } else {
+        await addVehicle(vehicleData);
+      }
+      setShowAddVehicleModal(false);
+      setShowEditVehicleModal(false);
+      setSelectedVehicle(null);
+      refetch();
+    } catch (error) {
+      console.error('Error saving vehicle:', error);
+    }
+  }, [selectedVehicle, updateVehicle, addVehicle, refetch]);
+
+  const handleAcceptRequest = useCallback(async (bookingId) => {
+    if (processingBooking === bookingId) return;
+    
+    setProcessingBooking(bookingId);
+    try {
+      await acceptBooking(bookingId);
+      await fetchPendingRequests();
+      await fetchUpcomingBookings();
+      refetch();
+      showToast('Booking accepted successfully!', 'success');
+    } catch (error) {
+      console.error('Error accepting booking:', error);
+      
+      if (error.message.includes('conflicts with an existing booking')) {
+        showToast('Cannot accept: Time slot conflicts with existing booking', 'error');
+      } else if (error.message.includes('vehicle not available')) {
+        showToast('Cannot accept: Vehicle not available for requested dates', 'error');
+      } else {
+        showToast('Error accepting booking: ' + error.message, 'error');
+      }
+    } finally {
+      setProcessingBooking(null);
+    }
+  }, [acceptBooking, fetchPendingRequests, fetchUpcomingBookings, refetch, processingBooking, showToast]);
+
+  const handleRejectRequest = useCallback(async (bookingId, reason = '') => {
+    if (processingBooking === bookingId) return;
+    
+    setProcessingBooking(bookingId);
+    try {
+      await rejectBooking(bookingId, reason);
+      await fetchPendingRequests();
+      refetch();
+      showToast('Booking rejected successfully!', 'success');
+    } catch (error) {
+      console.error('Error rejecting booking:', error);
+      showToast('Error rejecting booking: ' + error.message, 'error');
+    } finally {
+      setProcessingBooking(null);
+    }
+  }, [rejectBooking, fetchPendingRequests, refetch, processingBooking, showToast]);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  }, []);
+
+  // Notification handlers
+  const handleMarkAsRead = useCallback((id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  }, []);
+
+  const handleClearAllNotifications = useCallback(() => {
+    setNotifications([]);
+  }, []);
+
+  // Effects
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (user && !initialLoadComplete) {
+      checkPartnerStatus();
+      setInitialLoadComplete(true);
+    }
+  }, [user, loading, router, checkPartnerStatus, initialLoadComplete]);
+
+  useEffect(() => {
+    if (isPartner && !dataLoading && initialLoadComplete) {
+      // Initialize mock data only once
+      const mockNotifications = [
+        {
+          id: 1,
+          type: 'new_booking',
+          title: 'New Booking Request',
+          message: 'John Doe wants to book your Toyota Camry',
+          timestamp: new Date().toISOString(),
+          read: false,
+          priority: 'high'
+        },
+        {
+          id: 2,
+          type: 'payment_received',
+          title: 'Payment Received',
+          message: '$150 payment received for booking #123',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          read: false,
+          priority: 'medium'
+        }
+      ];
+
+      const mockActivity = [
+        {
+          id: 1,
+          type: 'booking_created',
+          message: 'New booking request for Toyota Camry',
+          timestamp: new Date().toISOString(),
+          icon: '📅'
+        },
+        {
+          id: 2,
+          type: 'payment_received',
+          message: 'Payment of $150 received',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          icon: '💰'
+        }
+      ];
+
+      setNotifications(mockNotifications);
+      setRecentActivity(mockActivity);
+      
+      Promise.allSettled([
+        fetchPendingRequests(),
+        fetchUpcomingBookings()
+      ]).catch(error => {
+        console.warn('Some data could not be loaded:', error);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPartner, dataLoading, initialLoadComplete]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
+  return {
+    // State
+    user,
+    loading,
+    isPartner,
+    currentView,
+    setCurrentView,
+    showAddVehicleModal,
+    setShowAddVehicleModal,
+    showEditVehicleModal,
+    setShowEditVehicleModal,
+    selectedVehicle,
+    setSelectedVehicle,
+    pendingRequests,
+    upcomingBookings,
+    sidebarCollapsed,
+    theme,
+    notifications,
+    recentActivity,
+    isOnline,
+    initialLoadComplete,
+    backendAvailable,
+    processingBooking,
+    toastMessage,
+    setToastMessage,
+    
+    // Data
+    vehicles,
+    bookings,
+    partnerData,
+    stats,
+    dataLoading,
+    
+    // Computed
+    navigationItems,
+    quickStats,
+    
+    // Actions
+    addVehicle,
+    updateVehicle,
+    deleteVehicle,
+    acceptBooking,
+    rejectBooking,
+    cancelBooking,
+    refetch,
+    
+    // Handlers
+    handleAddVehicle,
+    handleEditVehicle,
+    handleDeleteVehicle,
+    handleVehicleSubmit,
+    handleAcceptRequest,
+    handleRejectRequest,
+    toggleSidebar,
+    toggleTheme,
+    showToast,
+    handleMarkAsRead,
+    handleClearAllNotifications,
+    
+    // Data fetching
+    fetchPendingRequests,
+    fetchUpcomingBookings
+  };
+}
