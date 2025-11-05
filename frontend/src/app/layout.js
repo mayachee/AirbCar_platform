@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ToastProvider } from "@/contexts/ToastContext";
+import NetworkStatusBanner from "@/components/NetworkStatusBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,17 +31,25 @@ export default function RootLayout({ children }) {
               (function() {
                 const originalError = console.error;
                 console.error = function(message) {
+                  // Suppress known non-critical errors
                   if (
                     typeof message === 'string' && 
                     (
                       message.includes('data-new-gr-c-s-check-loaded') ||
                       message.includes('data-gr-ext-installed') ||
                       message.includes('Hydration failed') ||
-                      message.includes('server rendered HTML didn\\'t match')
+                      message.includes('server rendered HTML didn\\'t match') ||
+                      message.includes('Failed to fetch') && message.includes('pollForCommands')
                     )
                   ) {
                     return;
                   }
+                  
+                  // Suppress "Failed to fetch" from pollForCommands (Next.js dev server polling)
+                  if (typeof message === 'string' && message.includes('pollForCommands')) {
+                    return;
+                  }
+                  
                   originalError.apply(console, arguments);
                 };
               })();
@@ -52,7 +62,10 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning={true}
       >
         <AuthProvider>
-          {children}
+          <ToastProvider>
+            <NetworkStatusBanner />
+            {children}
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

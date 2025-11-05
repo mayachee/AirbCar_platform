@@ -1,32 +1,35 @@
 'use client';
 
+import { Car, RefreshCw, BarChart3, Download } from 'lucide-react';
+import { motion } from 'framer-motion';
+
 export default function QuickActionsPanel({ onAddVehicle, onRefreshData }) {
   const quickActions = [
     {
       id: 'add_vehicle',
       label: 'Add Vehicle',
-      icon: '🚗',
+      icon: Car,
       color: 'blue',
       action: onAddVehicle
     },
     {
       id: 'refresh_data',
       label: 'Refresh Data',
-      icon: '🔄',
+      icon: RefreshCw,
       color: 'green',
       action: onRefreshData
     },
     {
       id: 'view_analytics',
       label: 'View Analytics',
-      icon: '📊',
+      icon: BarChart3,
       color: 'purple',
       action: () => console.log('View Analytics')
     },
     {
       id: 'export_data',
       label: 'Export Data',
-      icon: '📤',
+      icon: Download,
       color: 'orange',
       action: () => console.log('Export Data')
     }
@@ -49,20 +52,28 @@ export default function QuickActionsPanel({ onAddVehicle, onRefreshData }) {
 
   return (
     <div className="space-y-2">
-      {quickActions.map((action) => (
-        <button
-          key={action.id}
-          onClick={action.action}
-          className={`w-full p-3 rounded-lg border transition-colors ${getColorClasses(action.color)}`}
-        >
-          <div className="flex items-center space-x-3">
-            <span className="text-lg">{action.icon}</span>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {action.label}
-            </span>
-          </div>
-        </button>
-      ))}
+      {quickActions.map((action, index) => {
+        const Icon = action.icon;
+        return (
+          <motion.button
+            key={action.id}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
+            whileHover={{ scale: 1.02, x: 4 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={action.action}
+            className={`w-full p-3 rounded-lg border transition-all ${getColorClasses(action.color)}`}
+          >
+            <div className="flex items-center space-x-3">
+              <Icon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {action.label}
+              </span>
+            </div>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }

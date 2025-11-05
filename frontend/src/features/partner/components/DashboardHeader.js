@@ -1,6 +1,8 @@
 'use client';
 
 import { Suspense, lazy } from 'react';
+import { Moon, Sun, Bell, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const NotificationCenter = lazy(() => import('@/features/partner/components/NotificationCenter'));
 const PartnerVerificationStatus = lazy(() => import('@/features/partner/components/PartnerVerificationStatus'));
@@ -22,34 +24,86 @@ export default function DashboardHeader({
   onMarkAsRead,
   onClearAll
 }) {
+  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const currentNavItem = navigationItems.find(item => item.id === currentView);
+  
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-4">
+    <motion.div 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4"
+    >
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {navigationItems.find(item => item.id === currentView)?.label || 'Dashboard'}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Welcome back, {partnerData?.company_name || user?.firstName || 'Partner'}!
+        <div className="flex-1">
+          <div className="flex items-center space-x-3 mb-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {currentNavItem?.label || 'Dashboard'}
+            </h1>
+            {currentNavItem?.icon && (
+              <span className="text-gray-400">{currentNavItem.icon}</span>
+            )}
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Welcome back, <span className="font-semibold text-gray-900 dark:text-white">
+              {partnerData?.company_name || user?.first_name || user?.email || 'Partner'}
+            </span>
+            {partnerData?.verification_status && (
+              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium">
+                {partnerData.verification_status === 'approved' && (
+                  <span className="flex items-center space-x-1 text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400">
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Verified</span>
+                  </span>
+                )}
+                {partnerData.verification_status === 'pending' && (
+                  <span className="flex items-center space-x-1 text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400">
+                    <Clock className="h-3 w-3" />
+                    <span>Pending Verification</span>
+                  </span>
+                )}
+                {partnerData.verification_status === 'rejected' && (
+                  <span className="flex items-center space-x-1 text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>Verification Required</span>
+                  </span>
+                )}
+              </span>
+            )}
           </p>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <button
+        <div className="flex items-center space-x-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-gray-700 dark:text-gray-300"
+            aria-label="Toggle theme"
           >
-            <span className="text-gray-600 dark:text-gray-300">
-              {theme === 'light' ? '🌙' : '☀️'}
-            </span>
-          </button>
+            {theme === 'light' ? (
+              <Moon className="h-5 w-5" />
+            ) : (
+              <Sun className="h-5 w-5" />
+            )}
+          </motion.button>
 
           <ComponentLoader>
-            <NotificationCenter
-              notifications={notifications}
-              onMarkAsRead={onMarkAsRead}
-              onClearAll={onClearAll}
-            />
+            <div className="relative">
+              <NotificationCenter
+                notifications={notifications}
+                onMarkAsRead={onMarkAsRead}
+                onClearAll={onClearAll}
+              />
+              {unreadCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </motion.span>
+              )}
+            </div>
           </ComponentLoader>
 
           <ComponentLoader>
@@ -57,6 +111,6 @@ export default function DashboardHeader({
           </ComponentLoader>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

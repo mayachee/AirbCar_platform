@@ -11,7 +11,8 @@ class AdminService {
    * @returns {Promise} Users list
    */
   async getUsers() {
-    return apiClient.get('/users/');
+    // Increase timeout for large datasets (30 seconds)
+    return apiClient.get('/users/', undefined, { timeout: 30000 });
   }
 
   /**
@@ -57,7 +58,8 @@ class AdminService {
    * @returns {Promise} Partners list
    */
   async getPartners() {
-    return apiClient.get('/partners/');
+    // Increase timeout for large datasets (30 seconds)
+    return apiClient.get('/partners/', undefined, { timeout: 30000 });
   }
 
   /**
@@ -94,7 +96,11 @@ class AdminService {
    * @returns {Promise}
    */
   async approvePartner(partnerId) {
-    return apiClient.post(`/partners/${partnerId}/approve/`);
+    // Update partner verification_status to 'approved' and set is_verified to true
+    return apiClient.patch(`/partners/${partnerId}/`, {
+      verification_status: 'approved',
+      is_verified: true
+    });
   }
 
   /**
@@ -103,7 +109,11 @@ class AdminService {
    * @returns {Promise}
    */
   async rejectPartner(partnerId) {
-    return apiClient.post(`/partners/${partnerId}/reject/`);
+    // Update partner verification_status to 'rejected' and set is_verified to false
+    return apiClient.patch(`/partners/${partnerId}/`, {
+      verification_status: 'rejected',
+      is_verified: false
+    });
   }
 
   // ============ BOOKINGS API ============
@@ -112,7 +122,8 @@ class AdminService {
    * @returns {Promise} Bookings list
    */
   async getBookings() {
-    return apiClient.get('/bookings/');
+    // Increase timeout for large datasets (30 seconds)
+    return apiClient.get('/bookings/', undefined, { timeout: 30000 });
   }
 
   /**
@@ -184,7 +195,8 @@ class AdminService {
    * @returns {Promise} Listings list
    */
   async getListings() {
-    return apiClient.get('/listings/');
+    // Increase timeout for large datasets (30 seconds)
+    return apiClient.get('/listings/', undefined, { timeout: 30000 });
   }
 
   /**
@@ -221,7 +233,8 @@ class AdminService {
    * @returns {Promise} Statistics data
    */
   async getStats() {
-    return apiClient.get('/admin/stats/').catch(() => {
+    // Increase timeout for stats (20 seconds)
+    return apiClient.get('/admin/stats/', undefined, { timeout: 20000 }).catch(() => {
       // Return default stats if endpoint doesn't exist
       return {
         totalUsers: 0,
@@ -272,7 +285,8 @@ class AdminService {
    * @returns {Promise} Analytics data
    */
   async getAnalytics() {
-    return apiClient.get('/admin/analytics/');
+    // Increase timeout for analytics (30 seconds - may involve complex calculations)
+    return apiClient.get('/admin/analytics/', undefined, { timeout: 30000 });
   }
 
   /**
@@ -280,7 +294,8 @@ class AdminService {
    * @returns {Promise} Revenue data
    */
   async getRevenueAnalytics() {
-    return apiClient.get('/admin/revenue/');
+    // Increase timeout for analytics (30 seconds - may involve complex calculations)
+    return apiClient.get('/admin/revenue/', undefined, { timeout: 30000 });
   }
 
   // ============ NOTIFICATIONS API ============

@@ -11,9 +11,9 @@ const nextConfig = {
   // Suppress hydration warnings during development
   onDemandEntries: {
     // Period (in ms) where the server will keep pages in the buffer
-    maxInactiveAge: 25 * 1000,
+    maxInactiveAge: 60 * 1000, // Increased from 25s to 60s to prevent chunk unload
     // Number of pages that should be kept simultaneously without being disposed
-    pagesBufferLength: 2,
+    pagesBufferLength: 5, // Increased from 2 to 5
   },
   // Custom webpack config - removed profiling aliases that cause issues with React 19
   webpack: (config, { dev, isServer }) => {
@@ -28,11 +28,37 @@ const nextConfig = {
 
     // Optimize memory usage for development
     if (dev) {
+      // Enhanced watch options for Windows/OneDrive compatibility
       config.watchOptions = {
-        poll: 1000,
-        aggregateTimeout: 300,
-        ignored: /node_modules/,
+        poll: 2000, // Increased polling interval for better OneDrive compatibility
+        aggregateTimeout: 800, // Wait longer before rebuilding to avoid rapid file changes
+        ignored: [
+          '**/node_modules/**',
+          '**/.next-local/**',
+          '**/.next/**',
+          '**/.git/**',
+          '**/out/**',
+        ],
+        followSymlinks: false,
+        // Add file system options to handle OneDrive better
+        stdin: false,
       };
+      
+      // Add additional webpack options to reduce file locking issues
+      // Use filesystem cache but with a safe directory outside OneDrive sync
+      config.cache = {
+        type: 'filesystem',
+        buildDependencies: {
+          config: [__filename],
+        },
+        cacheDirectory: path.resolve(__dirname, '.next-local/.cache'),
+        // Disable symlinks on Windows to avoid OneDrive issues
+        compression: 'gzip',
+        store: 'pack',
+      };
+      
+      // Disable symlink resolution to prevent EINVAL errors on Windows/OneDrive
+      config.resolve.symlinks = false;
       
       // Reduce memory usage
       config.optimization = {
@@ -41,19 +67,25 @@ const nextConfig = {
         removeEmptyChunks: false,
         splitChunks: false,
       };
+      
+      // Better error handling for file system issues
+      config.infrastructureLogging = {
+        level: 'error',
+      };
     }
 
     return config
   },
 
   // Turbopack configuration
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        '@': path.resolve(__dirname, 'src'),
-      },
+  turbopack: {
+    resolveAlias: {
+      '@': path.resolve(__dirname, 'src'),
     },
   },
+  
+  // Set workspace root to avoid lockfile warnings
+  outputFileTracingRoot: path.resolve(__dirname),
 };
 
 module.exports = nextConfig;

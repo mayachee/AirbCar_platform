@@ -1,6 +1,8 @@
 'use client';
 
 import { Suspense, lazy } from 'react';
+import { ChevronLeft, ChevronRight, Wifi, WifiOff, Server, ServerOff, Building2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const QuickActionsPanel = lazy(() => import('@/features/partner/components/QuickActionsPanel'));
 
@@ -22,64 +24,120 @@ export default function DashboardSidebar({
   onRefreshData
 }) {
   return (
-    <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700`}>
-      <div className="p-4">
+    <motion.div 
+      initial={false}
+      animate={{ width: sidebarCollapsed ? 64 : 256 }}
+      className="bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700 flex flex-col h-screen"
+    >
+      <div className="p-4 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           {!sidebarCollapsed && (
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">Partner Hub</h2>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center space-x-2"
+            >
+              <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">Partner Hub</h2>
+            </motion.div>
           )}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
+            aria-label="Toggle sidebar"
           >
-            <span className="text-gray-600 dark:text-gray-300">
-              {sidebarCollapsed ? '→' : '←'}
-            </span>
-          </button>
+            {sidebarCollapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
+          </motion.button>
         </div>
 
         {/* Status Indicators */}
-        <div className={`space-y-2 mb-4 ${sidebarCollapsed ? 'text-center' : ''}`}>
-          <div className="flex items-center">
-            <div className={`w-2 h-2 rounded-full mr-2 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+        <div className={`space-y-2 mb-6 ${sidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''} p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50`}
+          >
+            {isOnline ? (
+              <Wifi className="h-4 w-4 text-green-500 mr-2" />
+            ) : (
+              <WifiOff className="h-4 w-4 text-red-500 mr-2" />
+            )}
             {!sidebarCollapsed && (
-              <span className="text-sm text-gray-600 dark:text-gray-300">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
                 {isOnline ? 'Online' : 'Offline'}
               </span>
             )}
-          </div>
-          <div className="flex items-center">
-            <div className={`w-2 h-2 rounded-full mr-2 ${backendAvailable ? 'bg-blue-500' : 'bg-yellow-500'}`}></div>
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''} p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50`}
+          >
+            {backendAvailable ? (
+              <Server className="h-4 w-4 text-blue-500 mr-2" />
+            ) : (
+              <ServerOff className="h-4 w-4 text-yellow-500 mr-2" />
+            )}
             {!sidebarCollapsed && (
-              <span className="text-sm text-gray-600 dark:text-gray-300">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
                 {backendAvailable ? 'API Connected' : 'Demo Mode'}
               </span>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Navigation */}
-        <nav className="space-y-2">
-          {navigationItems.map((item) => (
-            <button
+        <nav className="space-y-1">
+          {navigationItems.map((item, index) => (
+            <motion.button
               key={item.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ x: sidebarCollapsed ? 0 : 4 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setCurrentView(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group ${
                 currentView === item.id
-                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               <div className="flex items-center">
-                <span className="text-lg mr-3">{item.icon}</span>
-                {!sidebarCollapsed && <span className="font-medium">{item.label}</span>}
+                <span className={`text-lg ${sidebarCollapsed ? '' : 'mr-3'} ${
+                  currentView === item.id ? 'text-white' : 'text-gray-600 dark:text-gray-400'
+                }`}>
+                  {item.icon}
+                </span>
+                {!sidebarCollapsed && (
+                  <span className={`font-medium ${
+                    currentView === item.id ? 'text-white' : 'text-gray-700 dark:text-gray-300'
+                  }`}>
+                    {item.label}
+                  </span>
+                )}
               </div>
               {!sidebarCollapsed && item.badge && (
-                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                    currentView === item.id
+                      ? 'bg-white/20 text-white'
+                      : 'bg-blue-500 text-white'
+                  }`}
+                >
                   {item.badge}
-                </span>
+                </motion.span>
               )}
-            </button>
+            </motion.button>
           ))}
         </nav>
 
@@ -96,6 +154,6 @@ export default function DashboardSidebar({
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

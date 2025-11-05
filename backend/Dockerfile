@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     postgresql-client \
     gcc \
+    libpq-dev \
+    openssl \
+    ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,5 +28,5 @@ WORKDIR /app/airbcar_backend
 
 EXPOSE 8000
 
-# Use environment PORT for Render/Railway compatibility
-CMD ["gunicorn", "airbcar_backend.wsgi:application", "--bind", "0.0.0.0:${PORT:-8000}", "--workers", "3"]
+# Set entrypoint to run migrations and setup before starting app
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]

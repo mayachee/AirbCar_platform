@@ -1,13 +1,13 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
+
 from core.views import (
     home_view, UserViewSet, PartnerViewSet, ListingViewSet,
-    BookingViewSet, FavoriteViewSet, PasswordResetRequestView, PasswordResetConfirmView, 
+    BookingViewSet, FavoriteViewSet, ReviewViewSet, PasswordResetRequestView, PasswordResetConfirmView, 
     verify_email, CustomTokenObtainPairView, UserStatusView, AdminStatusView,
-    UserVerificationView)
-
+    UserVerificationView, public_partner_profile_view)
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -15,12 +15,14 @@ router.register(r'partners', PartnerViewSet, basename='partner')
 router.register(r'listings', ListingViewSet, basename='listing')
 router.register(r'bookings', BookingViewSet, basename='booking')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
+router.register(r'reviews', ReviewViewSet, basename='review')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home_view, name= 'home'),
-    path('', include(router.urls)),
-
+    
+    # Public partner profile endpoint - using re_path for more control
+    re_path(r'^api/partners/public/(?P<slug>[\w-]+)/$', public_partner_profile_view, name='partner_public_profile'),
+    
     path('api/register/', UserViewSet.as_view({'post': 'create'}), name='user_register'),
     path('api/login/', CustomTokenObtainPairView.as_view(), name='login'),
    
@@ -33,4 +35,10 @@ urlpatterns = [
    
     path('api/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('api/reset-password/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    
+    # Include router URLs (after custom routes - router will handle /partners/ but not /partners/public/)
+    path('', include(router.urls)),
+    
+    # Home view as fallback (must be last)
+    path('', home_view, name='home'),
 ]

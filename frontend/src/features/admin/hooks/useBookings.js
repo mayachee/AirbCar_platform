@@ -12,12 +12,37 @@ export const useBookings = () => {
     try {
       setLoading(true);
       setError(null);
-      const bookingsData = await adminService.getBookings();
-      const bookingsList = bookingsData.results || bookingsData || [];
+      const response = await adminService.getBookings().catch(err => {
+        // Handle timeout and network errors gracefully
+        if (err?.isTimeoutError || err?.isNetworkError) {
+          console.warn('Bookings API timeout/network error, using empty list');
+          return { results: [], data: [] };
+        }
+        throw err; // Re-throw other errors
+      });
+      
+      // Handle different response structures
+      let bookingsList = [];
+      if (Array.isArray(response)) {
+        bookingsList = response;
+      } else if (response?.data) {
+        bookingsList = Array.isArray(response.data) ? response.data : 
+                      (response.data.results || []);
+      } else if (response?.results) {
+        bookingsList = Array.isArray(response.results) ? response.results : [];
+      } else if (response) {
+        const data = response?.data || response?.result || response;
+        bookingsList = Array.isArray(data) ? data : [];
+      }
+      
       setBookings(bookingsList);
     } catch (err) {
       console.error('Error loading bookings:', err);
-      setError(err.message);
+      // Don't set error for timeout/network errors - just use empty array
+      if (!err?.isTimeoutError && !err?.isNetworkError) {
+        setError(err?.message || 'Unknown error');
+      }
+      setBookings([]);
     } finally {
       setLoading(false);
     }

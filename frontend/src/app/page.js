@@ -10,7 +10,6 @@ import PopularDestinations from "@/features/home/components/PopularDestinations"
 import Footer from "@/components/layout/Footer";
 import TrustSignals from "@/features/home/components/TrustSignals";
 import RentalProviders from "@/features/home/components/RentalProviders";
-import CarRentalFacts from "@/features/home/components/CarRentalFacts";
 import InfoSection from "@/features/home/components/InfoSection";
 
 function HomeContent() {
@@ -42,7 +41,6 @@ function HomeContent() {
       <CarTypes />
       <TrustSignals />
       <RentalProviders />
-      <CarRentalFacts />
       <HowItWorks />
       <InfoSection />
       <Footer />

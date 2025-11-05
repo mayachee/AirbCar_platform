@@ -12,12 +12,23 @@ export const useListings = () => {
     try {
       setLoading(true);
       setError(null);
-      const listingsData = await adminService.getListings();
-      const listingsList = listingsData.results || listingsData || [];
-      setListings(listingsList);
+      const listingsData = await adminService.getListings().catch(err => {
+        // Handle timeout and network errors gracefully
+        if (err?.isTimeoutError || err?.isNetworkError) {
+          console.warn('Listings API timeout/network error, using empty list');
+          return { results: [], data: [] };
+        }
+        throw err; // Re-throw other errors
+      });
+      const listingsList = listingsData?.results || listingsData?.data || listingsData || [];
+      setListings(Array.isArray(listingsList) ? listingsList : []);
     } catch (err) {
       console.error('Error loading listings:', err);
-      setError(err.message);
+      // Don't set error for timeout/network errors - just use empty array
+      if (!err?.isTimeoutError && !err?.isNetworkError) {
+        setError(err.message);
+      }
+      setListings([]);
     } finally {
       setLoading(false);
     }

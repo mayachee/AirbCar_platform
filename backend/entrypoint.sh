@@ -32,4 +32,12 @@ if [ -n "$DJANGO_SUPERUSER_EMAIL" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
 fi
 
 echo "Starting application..."
-exec "$@"
+# Use PORT from environment or default to 8000
+export PORT=${PORT:-8000}
+echo "Using PORT: ${PORT}"
+
+# Build bind address
+BIND_ADDRESS="0.0.0.0:${PORT}"
+echo "Binding to: ${BIND_ADDRESS}"
+
+exec gunicorn airbcar_backend.wsgi:application --bind "${BIND_ADDRESS}" --workers 3

@@ -22,11 +22,18 @@ export const useSearch = (initialFilters = {}) => {
         setVehicles(data || []);
         setFilteredVehicles(data || []);
       } catch (err) {
-        console.warn('Failed to fetch vehicles:', err.message);
-        // Show empty state instead of error - better UX when backend is down
-        setVehicles([]);
-        setFilteredVehicles([]);
-        setError(null); // Don't show error to user
+        // Handle timeout and network errors gracefully
+        if (err?.isTimeoutError || err?.isNetworkError) {
+          console.warn('Search API timeout/network error, using empty list');
+          setVehicles([]);
+          setFilteredVehicles([]);
+          setError(null); // Don't show error to user
+        } else {
+          console.warn('Failed to fetch vehicles:', err.message);
+          setVehicles([]);
+          setFilteredVehicles([]);
+          setError(null); // Don't show error to user
+        }
       } finally {
         setLoading(false);
       }
@@ -73,9 +80,16 @@ export const useSearch = (initialFilters = {}) => {
       const data = response.data || response;
       setVehicles(data || []);
     } catch (err) {
-      console.warn('Failed to refetch vehicles:', err.message);
-      setVehicles([]);
-      setError(null); // Don't show error to user
+      // Handle timeout and network errors gracefully
+      if (err?.isTimeoutError || err?.isNetworkError) {
+        console.warn('Search API timeout/network error, using empty list');
+        setVehicles([]);
+        setError(null);
+      } else {
+        console.warn('Failed to refetch vehicles:', err.message);
+        setVehicles([]);
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }

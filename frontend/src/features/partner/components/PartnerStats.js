@@ -1,6 +1,7 @@
 'use client';
 
-import { CarFront, Calendar, DollarSign, CheckCircle, TrendingUp, Clock, Star, Users } from 'lucide-react';
+import { CarFront, Calendar, DollarSign, CheckCircle, TrendingUp, Clock, Star, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function PartnerStats({ stats, loading }) {
   const statCards = [
@@ -87,28 +88,37 @@ export default function PartnerStats({ stats, loading }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
       {statCards.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
-          <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <div className={`${stat.bgColor} rounded-lg p-3`}>
-                <IconComponent className={`h-6 w-6 ${stat.textColor}`} />
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ scale: 1.03, y: -4 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-all duration-200"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className={`${stat.bgColor} dark:bg-gray-700 rounded-xl p-3`}>
+                <IconComponent className={`h-6 w-6 ${stat.textColor} dark:text-gray-300`} />
               </div>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-              <p className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</p>
-              <p className={`text-xs ${
-                stat.changeType === 'positive' ? 'text-green-600' : 
-                stat.changeType === 'negative' ? 'text-red-600' : 
-                'text-gray-500'
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">{stat.title}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{stat.value}</p>
+              <div className={`flex items-center space-x-1 text-xs ${
+                stat.changeType === 'positive' ? 'text-green-600 dark:text-green-400' : 
+                stat.changeType === 'negative' ? 'text-red-600 dark:text-red-400' : 
+                'text-gray-500 dark:text-gray-400'
               }`}>
-                {stat.change}
-              </p>
+                {stat.changeType === 'positive' && <ArrowUpRight className="h-3 w-3" />}
+                {stat.changeType === 'negative' && <ArrowDownRight className="h-3 w-3" />}
+                <span className="font-medium">{stat.change}</span>
+              </div>
             </div>
-          </div>
+          </motion.div>
         );
       })}
     </div>

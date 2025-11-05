@@ -31,14 +31,18 @@ export class VehicleService {
       params.append('seats', seats)
     }
     
-    const queryString = params.toString()
-    const endpoint = queryString ? `/listings/?${queryString}` : '/listings/'
+    // Convert URLSearchParams to object for apiClient
+    const paramsObj: Record<string, string | number> = {}
+    params.forEach((value, key) => {
+      paramsObj[key] = value
+    })
     
-    return apiClient.get(endpoint)
+    // Increase timeout for vehicle search (30 seconds - large dataset)
+    return apiClient.get('/listings/', paramsObj, { timeout: 30000 })
   }
 
   async getVehicle(vehicleId: number) {
-    return apiClient.get(`/listings/${vehicleId}/`)
+    return apiClient.get(`/listings/${vehicleId}/`, undefined, { timeout: 20000 })
   }
 
   async createVehicle(vehicleData: Partial<Vehicle>) {

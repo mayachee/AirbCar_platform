@@ -3,17 +3,32 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminData, usePartners, useBookings, useListings } from '@/features/admin';
+import { useAdminData, usePartners, useBookings, useListings, useUsers } from '@/features/admin';
 import AdminStats from '@/features/admin/components/AdminStats';
 import AdminCharts from '@/features/admin/components/AdminCharts';
 import UsersTable from '@/features/admin/components/UsersTable';
 import AdminBookingsManagement from '@/features/admin/components/AdminBookingsManagement';
+import AdminSidebar from '@/features/admin/components/AdminSidebar';
+import QuickActions from '@/features/admin/components/QuickActions';
+import RecentActivity from '@/features/admin/components/RecentActivity';
+import AdminStatsSkeleton from '@/features/admin/components/AdminStatsSkeleton';
+import PartnersTable from '@/features/admin/components/PartnersTable';
+import CarsTable from '@/features/admin/components/CarsTable';
+import EarningsManagement from '@/features/admin/components/EarningsManagement';
+import DashboardOverview from '@/features/admin/components/DashboardOverview';
+import AdminReviewsManagement from '@/features/admin/components/AdminReviewsManagement';
+import { useToast } from '@/contexts/ToastContext';
+import { motion } from 'framer-motion';
+import { RefreshCw, Bell, Search, DollarSign, TrendingUp, Album, Calendar } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentView, setCurrentView] = useState("dashboard");
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
+  const { addToast } = useToast();
   
   const {
     users,
@@ -27,6 +42,7 @@ export default function AdminDashboard() {
   } = useAdminData();
 
   // Use specific hooks for each section
+  const usersHook = useUsers();
   const partnersHook = usePartners();
   const bookingsHook = useBookings();
   const listingsHook = useListings();
@@ -100,19 +116,51 @@ export default function AdminDashboard() {
     }
   };
 
-  const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'users', label: 'Users', icon: '👥' },
-    { id: 'partners', label: 'Partners', icon: '🤝' },
-    { id: 'cars', label: 'Cars', icon: '🚗' },
-    { id: 'bookings', label: 'Bookings', icon: '📋' },
-    { id: 'earnings', label: 'Earnings', icon: '💰' },
-  ];
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      addToast('Data refreshed successfully', 'success');
+    } catch (error) {
+      addToast('Failed to refresh data', 'error');
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
+  const handleQuickAction = (actionId) => {
+    switch (actionId) {
+      case 'add-user':
+        addToast('Add user feature coming soon', 'info');
+        break;
+      case 'add-listing':
+        addToast('Add listing feature coming soon', 'info');
+        break;
+      case 'export-data':
+        addToast('Export data feature coming soon', 'info');
+        break;
+      case 'generate-report':
+        addToast('Generate report feature coming soon', 'info');
+        break;
+      case 'analytics':
+        setCurrentView('earnings');
+        addToast('Viewing analytics', 'success');
+        break;
+      case 'settings':
+        addToast('Settings feature coming soon', 'info');
+        break;
+      default:
+        break;
+    }
+  };
 
   if (loading || loadingData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -122,185 +170,157 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
-              <button
-                onClick={() => router.push('/')}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Back to Site
-              </button>
+    <div className="min-h-screen bg-gray-50 flex">
+      
+      {/* Sidebar */}
+      <AdminSidebar 
+        currentView={currentView}
+        onViewChange={setCurrentView}
+        isMobileOpen={isMobileOpen}
+        setIsMobileOpen={setIsMobileOpen}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:ml-0">
+        {/* Top Header */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 capitalize">
+                  {currentView === 'dashboard' ? 'Dashboard Overview' : currentView}
+                </h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  {currentView === 'dashboard' 
+                    ? 'Monitor your platform activity and metrics'
+                    : `Manage ${currentView} on your platform`
+                  }
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  title="Refresh data"
+                >
+                  <RefreshCw className={`h-5 w-5 text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+                
+                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
+                  <Bell className="h-5 w-5 text-gray-600" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation */}
-        <div className="mb-8">
-          <nav className="flex space-x-8">
-            {navigationItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setCurrentView(item.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                  currentView === item.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8">
+
+            {/* Dashboard Content */}
+            {currentView === 'dashboard' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
+                <DashboardOverview
+                  stats={stats}
+                  chartData={chartData}
+                  bookings={bookingsHook.bookings}
+                  users={usersHook.users}
+                  partners={partnersHook.partners}
+                  listings={listingsHook.listings}
+                  loading={loadingData || bookingsHook.loading || usersHook.loading || partnersHook.loading || listingsHook.loading}
+                  onRefresh={handleRefresh}
+                />
+              </motion.div>
+            )}
 
-        {/* Content */}
-        {currentView === 'dashboard' && (
-          <div>
-            <AdminStats stats={stats} />
-            <AdminCharts chartData={chartData} />
-          </div>
-        )}
+            {currentView === 'users' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <UsersTable
+                  users={usersHook.users}
+                  loading={usersHook.loading}
+                  onRefresh={usersHook.refetch}
+                />
+              </motion.div>
+            )}
 
-        {currentView === 'users' && (
-          <UsersTable users={users} loading={loadingData} />
-        )}
+            {currentView === 'partners' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <PartnersTable
+                  partners={Array.isArray(partnersHook.partners) ? partnersHook.partners : (partnersHook.partners?.results || partnersHook.partners?.data || [])}
+                  loading={partnersHook.loading}
+                  onApprove={partnersHook.approvePartner}
+                  onReject={partnersHook.rejectPartner}
+                  onRefresh={partnersHook.refetch}
+                />
+              </motion.div>
+            )}
 
-        {currentView === 'partners' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Partners Management</h3>
-            {partnersHook.loading ? (
-              <p className="text-gray-600">Loading partners...</p>
-            ) : partnersHook.partners.length > 0 ? (
-              <div>
-                <p className="text-gray-600 mb-4">Total Partners: {partnersHook.partners.length}</p>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {partnersHook.partners.map((partner) => (
-                        <tr key={partner.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">{partner.name || 'N/A'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{partner.email || 'N/A'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              partner.is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {partner.is_verified ? 'Verified' : 'Pending'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button
-                              onClick={() => partnersHook.approvePartner(partner.id)}
-                              className="text-green-600 hover:text-green-900 mr-2"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => partnersHook.rejectPartner(partner.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Reject
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-600">No partners found.</p>
+            {currentView === 'cars' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <CarsTable
+                  listings={Array.isArray(listingsHook.listings) ? listingsHook.listings : (listingsHook.listings?.results || listingsHook.listings?.data || [])}
+                  loading={listingsHook.loading}
+                  onRefresh={listingsHook.refetch}
+                />
+              </motion.div>
+            )}
+
+            {currentView === 'bookings' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AdminBookingsManagement />
+              </motion.div>
+            )}
+
+            {currentView === 'reviews' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AdminReviewsManagement />
+              </motion.div>
+            )}
+
+            {currentView === 'earnings' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <EarningsManagement
+                  bookings={bookingsHook.bookings}
+                  listings={listingsHook.listings}
+                  partners={partnersHook.partners}
+                  loading={bookingsHook.loading || listingsHook.loading || partnersHook.loading}
+                />
+              </motion.div>
             )}
           </div>
-        )}
-
-        {currentView === 'cars' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cars Management</h3>
-            {listingsHook.loading ? (
-              <p className="text-gray-600">Loading listings...</p>
-            ) : listingsHook.listings.length > 0 ? (
-              <div>
-                <p className="text-gray-600 mb-4">Total Listings: {listingsHook.listings.length}</p>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehicle</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price/Day</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {listingsHook.listings.slice(0, 5).map((listing) => (
-                        <tr key={listing.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">{listing.vehicle_name || 'N/A'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">{listing.location || 'N/A'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">${listing.price_per_day || '0'}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              listing.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {listing.available ? 'Available' : 'Unavailable'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-600">No listings found.</p>
-            )}
-          </div>
-        )}
-
-        {currentView === 'bookings' && (
-          <AdminBookingsManagement />
-        )}
-
-        {currentView === 'earnings' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Earnings Overview</h3>
-            {analyticsHook.loading ? (
-              <p className="text-gray-600">Loading analytics...</p>
-            ) : analyticsHook.revenue ? (
-              <div>
-                <p className="text-gray-600 mb-4">Revenue Data Available</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Total Revenue</p>
-                    <p className="text-2xl font-bold text-blue-600">${analyticsHook.revenue.total || '0'}</p>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <p className="text-sm text-gray-600">Pending Revenue</p>
-                    <p className="text-2xl font-bold text-green-600">${analyticsHook.revenue.pending || '0'}</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-600">No revenue data available.</p>
-            )}
-          </div>
-        )}
+        </main>
       </div>
     </div>
   );

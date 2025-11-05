@@ -1,96 +1,346 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, Filter, Eye, Edit, Trash2, ChevronLeft, ChevronRight, Users, Download, Link as LinkIcon, ExternalLink, Ban, CheckCircle, ArrowUpDown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { adminService } from '@/features/admin/services/adminService';
+import { useToast } from '@/contexts/ToastContext';
+import UserDetailsModal from './UserDetailsModal';
 
-export default function UsersTable({ users, loading }) {
+export default function UsersTable({ users, loading, onRefresh }) {
+  const { addToast } = useToast();
+  const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const usersApiUrl = `${apiUrl}/users/`;
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.last_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || 
-                         (statusFilter === "active" && user.is_active) ||
-                         (statusFilter === "inactive" && !user.is_active);
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredUsers = useMemo(() => {
+    let filtered = users.filter(user => {
+      const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.username?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || 
+                           (statusFilter === "active" && user.is_active) ||
+                           (statusFilter === "inactive" && !user.is_active);
+      
+      const matchesRole = roleFilter === "all" ||
+                         (roleFilter === "admin" && (user.is_superuser || user.is_staff)) ||
+                         (roleFilter === "partner" && user.is_partner) ||
+                         (roleFilter === "user" && !user.is_superuser && !user.is_staff && !user.is_partner);
+      
+      return matchesSearch && matchesStatus && matchesRole;
+    });
 
-  const handleViewUser = (userId) => {
-    console.log('View user:', userId);
-    // Implement view user functionality
+    // Sorting
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        
+        // Handle date sorting
+        if (sortConfig.key === 'date_joined' || sortConfig.key === 'last_login') {
+          aValue = aValue ? new Date(aValue).getTime() : 0;
+          bValue = bValue ? new Date(bValue).getTime() : 0;
+        }
+        
+        // Handle string sorting
+        if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = (bValue || '').toLowerCase();
+        }
+        
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [users, searchTerm, statusFilter, roleFilter, sortConfig]);
+
+  const handleSort = (key) => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
-  const handleEditUser = (userId) => {
-    console.log('Edit user:', userId);
-    // Implement edit user functionality
+  // Pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, roleFilter]);
+
+  const handleViewUser = async (userId) => {
+    try {
+      const response = await adminService.getUserById(userId);
+      const userData = response?.data || response?.result || response;
+      const existingUser = users.find(u => u.id === userId);
+      if (existingUser) {
+        setSelectedUser(existingUser);
+      } else {
+        setSelectedUser(userData);
+      }
+      setShowDetailsModal(true);
+    } catch (error) {
+      // Fallback to user from list
+      const existingUser = users.find(u => u.id === userId);
+      if (existingUser) {
+        setSelectedUser(existingUser);
+        setShowDetailsModal(true);
+        addToast('Loaded user from cache (API unavailable)', 'info');
+      } else {
+        addToast(`Failed to load user details: ${error?.message || 'Unknown error'}`, 'error');
+        console.error('Error loading user:', error);
+      }
+    }
   };
 
-  const handleDeleteUser = (userId) => {
-    console.log('Delete user:', userId);
-    // Implement delete user functionality
+  const handleEditUser = async (user) => {
+    // For now, show a toast. In the future, you can open an edit modal
+    addToast(`Edit user feature for ${user?.email || user?.id} - Coming soon`, 'info');
+    console.log('Edit user:', user);
+    // TODO: Implement edit modal
+  };
+
+  const handleToggleActive = async (userId, isActive) => {
+    try {
+      // Update user active status via backend API
+      const response = await adminService.updateUser(userId, { is_active: !isActive });
+      
+      if (response?.success !== false) {
+        addToast(`User ${isActive ? 'deactivated' : 'activated'} successfully`, 'success');
+        if (onRefresh) {
+          await onRefresh();
+        }
+      } else {
+        addToast(`Failed to ${isActive ? 'deactivate' : 'activate'} user`, 'error');
+      }
+    } catch (error) {
+      const errorMessage = error?.message || 'Unknown error';
+      if (errorMessage.includes('fetch') || errorMessage.includes('Network')) {
+        addToast('Network error: Unable to reach the server. Please check if the backend is running.', 'error');
+      } else {
+        addToast(`Failed to ${isActive ? 'deactivate' : 'activate'} user: ${errorMessage}`, 'error');
+      }
+      console.error('Error updating user status:', error);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    const user = users.find(u => u.id === userId);
+    const userName = user?.email || `User #${userId}`;
+    
+    // Confirm before deleting
+    if (!window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await adminService.deleteUser(userId);
+      addToast(`User ${userName} deleted successfully`, 'success');
+      
+      // Refresh the users list
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (error) {
+      const errorMessage = error?.message || 'Unknown error';
+      // Check for network errors
+      if (errorMessage.includes('fetch') || errorMessage.includes('Network')) {
+        addToast('Network error: Unable to reach the server. Please check if the backend is running.', 'error');
+      } else {
+        addToast(`Failed to delete user: ${errorMessage}`, 'error');
+      }
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      // Try to use API endpoint first if available
+      try {
+        const response = await adminService.exportUsers();
+        const blob = response.data instanceof Blob ? response.data : new Blob([response.data]);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        addToast('Users exported successfully from API', 'success');
+      } catch (apiError) {
+        // Check if it's a network error
+        const errorMessage = apiError?.message || '';
+        if (errorMessage.includes('fetch') || errorMessage.includes('Network')) {
+          console.warn('API export failed due to network error, using client-side export');
+        } else {
+          console.warn('API export endpoint not available, using client-side export:', apiError);
+        }
+        
+        // Fallback to client-side CSV generation
+        const csvContent = [
+          ['Name', 'Email', 'Role', 'Status', 'Joined Date'].join(','),
+          ...filteredUsers.map(user => [
+            `"${(`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'N/A').replace(/"/g, '""')}"`,
+            `"${(user.email || 'N/A').replace(/"/g, '""')}"`,
+            user.role || 'customer',
+            user.is_active ? 'Active' : 'Inactive',
+            user.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'N/A'
+          ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        addToast('Users exported successfully (client-side)', 'success');
+      }
+    } catch (error) {
+      const errorMessage = error?.message || 'Unknown error';
+      if (errorMessage.includes('fetch') || errorMessage.includes('Network')) {
+        addToast('Network error: Unable to export. Please check if the backend is running.', 'error');
+      } else {
+        addToast(`Failed to export users: ${errorMessage}`, 'error');
+      }
+      console.error('Error exporting users:', error);
+    }
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-4 bg-gray-200 rounded"></div>
-            ))}
-          </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <Skeleton className="h-8 w-48 mb-6" />
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4">
+              <Skeleton className="h-12 w-12 rounded-full" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Users Management</h3>
-        <div className="flex space-x-4">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div className="flex-1">
+          <div className="flex items-center space-x-3">
+            <h3 className="text-lg font-semibold text-gray-900">Users Management</h3>
+            <div className="flex items-center space-x-2">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Connected to backend"></div>
+              <span className="text-xs text-gray-500">API: {apiUrl}</span>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+          </p>
+          <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500">
+            <LinkIcon className="h-3 w-3" />
+            <span>Endpoint: </span>
+            <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{usersApiUrl}</code>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-4">
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           
-          {/* Filter */}
+          {/* Status Filter */}
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
             >
-              <option value="all">All Users</option>
+              <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
           </div>
+
+          {/* Role Filter */}
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+            >
+              <option value="all">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="partner">Partner</option>
+              <option value="user">User</option>
+            </select>
+          </div>
+
+          {/* Export Button */}
+          <button
+            onClick={handleExport}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            <span className="text-sm font-medium">Export</span>
+          </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
+          <caption className="sr-only">Users table with pagination</caption>
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                User
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('first_name')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>User</span>
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('email')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Email</span>
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Role
@@ -98,8 +348,14 @@ export default function UsersTable({ users, loading }) {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Joined
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('date_joined')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Joined</span>
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -107,7 +363,7 @@ export default function UsersTable({ users, loading }) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
+            {paginatedUsers.map((user, index) => (
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -153,22 +409,36 @@ export default function UsersTable({ users, loading }) {
                   {user.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleViewUser(user.id)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                      title="View details"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleEditUser(user.id)}
-                      className="text-green-600 hover:text-green-900"
+                      onClick={() => handleEditUser(user)}
+                      className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                      title="Edit user"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
+                      onClick={() => handleToggleActive(user.id, user.is_active)}
+                      className={`p-1 rounded transition-colors ${
+                        user.is_active
+                          ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
+                          : 'text-green-600 hover:text-green-900 hover:bg-green-50'
+                      }`}
+                      title={user.is_active ? 'Deactivate' : 'Activate'}
+                    >
+                      {user.is_active ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                    </button>
+                    <button
                       onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                      title="Delete user"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -181,10 +451,100 @@ export default function UsersTable({ users, loading }) {
       </div>
 
       {filteredUsers.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No users found</p>
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="h-8 w-8 text-gray-400" />
+          </div>
+          <p className="text-gray-500 font-medium">No users found</p>
+          <p className="text-gray-400 text-sm mt-1">Try adjusting your filters</p>
         </div>
       )}
+
+      {/* Pagination */}
+      {filteredUsers.length > 0 && totalPages > 1 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Items per page:</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            
+            <div className="flex items-center space-x-1">
+              {[...Array(totalPages)].map((_, index) => {
+                const page = index + 1;
+                // Show first page, last page, current page, and pages around current
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return <span key={page} className="px-2 text-gray-400">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </div>
+        </div>
+      )}
+
+      {/* User Details Modal */}
+      <UserDetailsModal
+        user={selectedUser}
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedUser(null);
+        }}
+        onEdit={handleEditUser}
+        onDelete={handleDeleteUser}
+        onToggleActive={handleToggleActive}
+      />
     </div>
   );
 }

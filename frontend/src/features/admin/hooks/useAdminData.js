@@ -25,25 +25,47 @@ export function useAdminData() {
       setErrors({});
 
       // Fetch all data in parallel using adminService
+      // Use shorter timeout for faster failure detection
       const [usersData, partnersData, bookingsData, listingsData, statsData] = await Promise.all([
         adminService.getUsers().catch(err => {
-          console.warn('Users API error:', err);
+          // Silently handle timeout/network errors, only warn for other errors
+          if (err?.isTimeoutError || err?.isNetworkError) {
+            console.warn('Users API timeout/network error - backend may be unavailable');
+          } else {
+            console.warn('Users API error:', err?.message || err);
+          }
           return { results: [], data: [] };
         }),
         adminService.getPartners().catch(err => {
-          console.warn('Partners API error:', err);
+          if (err?.isTimeoutError || err?.isNetworkError) {
+            console.warn('Partners API timeout/network error - backend may be unavailable');
+          } else {
+            console.warn('Partners API error:', err?.message || err);
+          }
           return { results: [], data: [] };
         }),
         adminService.getBookings().catch(err => {
-          console.warn('Bookings API error:', err);
+          if (err?.isTimeoutError || err?.isNetworkError) {
+            console.warn('Bookings API timeout/network error - backend may be unavailable');
+          } else {
+            console.warn('Bookings API error:', err?.message || err);
+          }
           return { results: [], data: [] };
         }),
         adminService.getStats().catch(err => {
-          console.warn('Stats API error:', err);
+          if (err?.isTimeoutError || err?.isNetworkError) {
+            console.warn('Stats API timeout/network error - backend may be unavailable');
+          } else {
+            console.warn('Stats API error:', err?.message || err);
+          }
           return {};
         }),
         adminService.getListings().catch(err => {
-          console.warn('Listings API error:', err);
+          if (err?.isTimeoutError || err?.isNetworkError) {
+            console.warn('Listings API timeout/network error - backend may be unavailable');
+          } else {
+            console.warn('Listings API error:', err?.message || err);
+          }
           return { results: [], data: [] };
         })
       ]);
@@ -89,27 +111,9 @@ export function useAdminData() {
         setStats(prev => ({ ...prev, ...statsData }));
       }
 
-      // Generate chart data based on bookings
-      if (Array.isArray(bookingsData.results || bookingsData)) {
-        const bookings = bookingsData.results || bookingsData;
-        const months = {};
-        bookings.forEach(booking => {
-          if (booking.created_at) {
-            const month = new Date(booking.created_at).toLocaleString('default', { month: 'short' });
-            months[month] = (months[month] || 0) + 1;
-          }
-        });
-
-        const chartDataPoints = Object.keys(months).map(month => ({
-          month,
-          bookings: months[month],
-          users: Math.floor(Math.random() * 50)
-        }));
-
-        setChartData(chartDataPoints.length > 0 ? chartDataPoints : [
-          { month: "Jan", bookings: 0, users: 0 },
-        ]);
-      }
+      // Generate chart data based on bookings and users (will be calculated in AdminCharts component)
+      // Just provide empty array here - AdminCharts will calculate from actual bookings and users data
+      setChartData([]);
 
     } catch (error) {
       console.error('Error fetching admin data:', error);

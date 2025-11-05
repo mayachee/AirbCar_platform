@@ -4,6 +4,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
+import { 
+  LayoutDashboard, Car, Calendar, DollarSign, BarChart3, 
+  CalendarDays, Star, FileText, User, Settings 
+} from 'lucide-react';
 
 export function useOptimizedDashboard() {
   const { user, loading } = useAuth();
@@ -46,16 +50,16 @@ export function useOptimizedDashboard() {
 
   // Memoized navigation items
   const navigationItems = useMemo(() => [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊', badge: null },
-    { id: 'vehicles', label: 'Vehicles', icon: '🚗', badge: vehicles?.length || 0 },
-    { id: 'bookings', label: 'Bookings', icon: '📅', badge: bookings?.length || 0 },
-    { id: 'earnings', label: 'Earnings', icon: '💰', badge: null },
-    { id: 'analytics', label: 'Analytics', icon: '📈', badge: null },
-    { id: 'calendar', label: 'Calendar', icon: '📆', badge: null },
-    { id: 'reviews', label: 'Reviews', icon: '⭐', badge: null },
-    { id: 'rental-policies', label: 'Rental Policies', icon: '📋', badge: null },
-    { id: 'profile', label: 'Profile', icon: '👤', badge: null },
-    { id: 'settings', label: 'Settings', icon: '⚙️', badge: null }
+    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, badge: null },
+    { id: 'vehicles', label: 'Vehicles', icon: <Car className="h-5 w-5" />, badge: vehicles?.length || 0 },
+    { id: 'bookings', label: 'Bookings', icon: <Calendar className="h-5 w-5" />, badge: bookings?.length || 0 },
+    { id: 'earnings', label: 'Earnings', icon: <DollarSign className="h-5 w-5" />, badge: null },
+    { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-5 w-5" />, badge: null },
+    { id: 'calendar', label: 'Calendar', icon: <CalendarDays className="h-5 w-5" />, badge: null },
+    { id: 'reviews', label: 'Reviews', icon: <Star className="h-5 w-5" />, badge: null },
+    { id: 'rental-policies', label: 'Rental Policies', icon: <FileText className="h-5 w-5" />, badge: null },
+    { id: 'profile', label: 'Profile', icon: <User className="h-5 w-5" />, badge: null },
+    { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" />, badge: null }
   ], [vehicles?.length, bookings?.length]);
 
   // Memoized quick stats
@@ -66,26 +70,34 @@ export function useOptimizedDashboard() {
       {
         title: 'Total Vehicles',
         value: stats.totalVehicles || 0,
-        icon: '🚗',
-        color: 'blue'
+        icon: null, // Will be handled by QuickStatsCard component
+        color: 'blue',
+        change: stats.totalVehiclesChange || '+2 this month',
+        changeType: 'positive'
       },
       {
         title: 'Active Bookings',
         value: stats.activeBookings || 0,
-        icon: '📅',
-        color: 'green'
+        icon: null,
+        color: 'green',
+        change: stats.activeBookingsChange || '+12% from last month',
+        changeType: 'positive'
       },
       {
         title: 'Pending Requests',
         value: pendingRequests.length,
-        icon: '⏳',
-        color: 'yellow'
+        icon: null,
+        color: 'yellow',
+        change: pendingRequests.length > 0 ? 'Needs attention' : 'All clear',
+        changeType: pendingRequests.length > 0 ? 'neutral' : 'positive'
       },
       {
         title: 'Monthly Earnings',
         value: `$${stats.monthlyEarnings || 0}`,
-        icon: '💰',
-        color: 'purple'
+        icon: null,
+        color: 'purple',
+        change: stats.monthlyEarningsChange || '+8% from last month',
+        changeType: 'positive'
       }
     ];
   }, [stats, pendingRequests.length]);
@@ -325,15 +337,13 @@ export function useOptimizedDashboard() {
           id: 1,
           type: 'booking_created',
           message: 'New booking request for Toyota Camry',
-          timestamp: new Date().toISOString(),
-          icon: '📅'
+          timestamp: new Date().toISOString()
         },
         {
           id: 2,
           type: 'payment_received',
           message: 'Payment of $150 received',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          icon: '💰'
+          timestamp: new Date(Date.now() - 3600000).toISOString()
         }
       ];
 

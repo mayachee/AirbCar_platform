@@ -34,9 +34,15 @@ class SearchService {
       }
       
       const queryString = params.toString();
-      const url = `/listings/${queryString ? `?${queryString}` : ''}`;
       
-      return await apiClient.get(url);
+      // Build params object for apiClient
+      const queryParams = {};
+      params.forEach((value, key) => {
+        queryParams[key] = value;
+      });
+      
+      // Increase timeout for search (30 seconds - large dataset)
+      return await apiClient.get('/listings/', queryParams, { timeout: 30000 });
     } catch (error) {
       console.error('Error searching vehicles:', error);
       throw error;
@@ -46,7 +52,7 @@ class SearchService {
   // Get vehicle by ID
   async getVehicleById(id) {
     try {
-      return await apiClient.get(`/listings/${id}/`);
+      return await apiClient.get(`/listings/${id}/`, undefined, { timeout: 20000 });
     } catch (error) {
       console.error('Error fetching vehicle:', error);
       throw error;
@@ -56,7 +62,8 @@ class SearchService {
   // Get featured/popular vehicles
   async getFeaturedVehicles() {
     try {
-      return await apiClient.get('/listings/?featured=true');
+      // Increase timeout for featured vehicles (30 seconds - large dataset)
+      return await apiClient.get('/listings/', { featured: 'true' }, { timeout: 30000 });
     } catch (error) {
       console.error('Error fetching featured vehicles:', error);
       throw error;

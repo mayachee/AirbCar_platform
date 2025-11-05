@@ -6,7 +6,6 @@ export { default as PopularDestinations } from './components/PopularDestinations
 export { default as HowItWorks } from './components/HowItWorks';
 export { default as TrustSignals } from './components/TrustSignals';
 export { default as RentalProviders } from './components/RentalProviders';
-export { default as CarRentalFacts } from './components/CarRentalFacts';
 export { default as InfoSection } from './components/InfoSection';
 export { default as TipCard } from './components/TipCard';
 

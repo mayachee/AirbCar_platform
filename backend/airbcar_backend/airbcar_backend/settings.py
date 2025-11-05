@@ -119,14 +119,23 @@ if IS_CI:
     }
 else:
     # Production/Development database configuration
+    # Check if connecting to Supabase (pooler or direct)
+    database_host = os.environ.get('DATABASE_HOST', 'db')
+    is_supabase = 'supabase.com' in database_host or 'pooler.supabase.com' in database_host
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('DATABASE_NAME', 'airbcar_db'),
             'USER': os.environ.get('DATABASE_USER', 'airbcar_user'),
             'PASSWORD': os.environ.get('DATABASE_PASSWORD', 'amineamine'),
-            'HOST': os.environ.get('DATABASE_HOST', 'db'),
+            'HOST': database_host,
             'PORT': os.environ.get('DATABASE_PORT', '5432'),
+            'OPTIONS': {
+                'sslmode': 'require' if is_supabase else 'disable',
+                'connect_timeout': 10,
+            },
+            'CONN_MAX_AGE': 0 if is_supabase else 600,  # Disable persistent connections for pooler
         }
     }
 
