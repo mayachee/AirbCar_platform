@@ -182,13 +182,13 @@ The project includes GitHub Actions workflows for automatic deployment:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
+## Support
 
 For support and questions:
 - Create an issue in this repository
 - Contact the development team
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (Django REST Framework)
 - RESTful API design
@@ -209,7 +209,7 @@ For support and questions:
 - API: Newman/Postman collections
 - Frontend: Jest + React Testing Library (planned)
 
-## 🔄 CI/CD
+## CI/CD
 
 The project uses GitHub Actions for:
 - Automated testing on pull requests
