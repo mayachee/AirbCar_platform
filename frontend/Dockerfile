@@ -31,17 +31,19 @@ COPY public ./public/
 # Set environment for development
 ENV NODE_ENV="development"
 
-# Make the startup script executable
-RUN chmod +x /app/start.sh
+# Fix line endings in start.sh (convert CRLF to LF) and make executable
+RUN tr -d '\r' < /app/start.sh > /app/start.sh.tmp && mv /app/start.sh.tmp /app/start.sh && chmod +x /app/start.sh
 
 # Set memory limits for Node.js
-ENV NODE_OPTIONS="--max-old-space-size=1536 --no-warnings"
+ENV NODE_OPTIONS="--max-old-space-size=2048 --no-warnings"
+ENV WATCHPACK_POLLING=true
+ENV NODE_ENV=development
 
 # Expose port 3000
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# Health check (longer timeout for Next.js compilation)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
   CMD curl -f http://localhost:3000/ || exit 1
 
 # Use the start script as entrypoint

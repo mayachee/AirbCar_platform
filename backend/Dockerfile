@@ -22,7 +22,8 @@ COPY . .
 
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Fix line endings (convert CRLF to LF) and make executable
+RUN tr -d '\r' < /entrypoint.sh > /entrypoint.sh.tmp && mv /entrypoint.sh.tmp /entrypoint.sh && chmod +x /entrypoint.sh
 
 WORKDIR /app/airbcar_backend
 

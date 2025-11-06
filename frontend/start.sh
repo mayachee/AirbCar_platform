@@ -8,10 +8,16 @@ else
   echo "[start.sh] Using provided DJANGO_API_URL: $DJANGO_API_URL"
 fi
 
-# Clear .next cache if it exists to prevent ENOMEM errors
+# Clear .next and .next-local cache if they exist to prevent ENOMEM errors
+# Note: If .next is mounted as a volume, it will be busy and can't be removed
 if [ -d ".next" ]; then
-  echo "[start.sh] Clearing .next cache to free memory..."
-  rm -rf .next
+  echo "[start.sh] Attempting to clear .next cache to free memory..."
+  rm -rf .next 2>/dev/null || echo "[start.sh] Note: .next directory is mounted as volume, skipping removal"
+fi
+
+if [ -d ".next-local" ]; then
+  echo "[start.sh] Clearing .next-local cache to free memory..."
+  rm -rf .next-local 2>/dev/null || echo "[start.sh] Could not remove .next-local"
 fi
 
 echo "Starting Next.js application..."
@@ -20,7 +26,9 @@ if [ "$NODE_ENV" = "production" ]; then
   pnpm start
 else
   echo "[start.sh] Starting in development mode with optimized settings..."
-  # Use NODE_OPTIONS from environment for memory management
-  # Disable turbo mode and linting for better memory usage
+  # Use regular webpack (Turbopack has memory issues in Docker)
+  # Reduce memory pressure by limiting file watching
+  # Set low memory mode for Node.js
+  export NODE_OPTIONS="${NODE_OPTIONS} --expose-gc"
   exec pnpm run dev
 fi

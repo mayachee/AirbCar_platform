@@ -38,6 +38,19 @@ const nextConfig = {
           '**/.next/**',
           '**/.git/**',
           '**/out/**',
+          '**/public/**',
+          '**/src/app/public/**',
+          '**/test-results/**',
+          '**/playwright-report/**',
+          '**/e2e/**',
+          '**/docs/**',
+          '**/__mocks__/**',
+          '**/*.test.js',
+          '**/*.test.jsx',
+          '**/*.test.ts',
+          '**/*.test.tsx',
+          '**/*.spec.js',
+          '**/*.spec.jsx',
         ],
         followSymlinks: false,
         // Add file system options to handle OneDrive better
@@ -77,15 +90,44 @@ const nextConfig = {
     return config
   },
 
-  // Turbopack configuration
+  // Turbopack configuration (more memory efficient)
   turbopack: {
     resolveAlias: {
       '@': path.resolve(__dirname, 'src'),
     },
   },
   
+  // External packages for server components (moved from experimental in Next.js 15+)
+  serverExternalPackages: [],
+  
+  // Experimental features to reduce memory usage
+  experimental: {
+    // Optimize memory for file system operations
+    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+  },
+  
   // Set workspace root to avoid lockfile warnings
   outputFileTracingRoot: path.resolve(__dirname),
+  
+  // Exclude large directories from file tracing to save memory
+  outputFileTracingExcludes: {
+    '*': [
+      'public/partner/**',
+      'public/**/*.jpg',
+      'public/**/*.jpeg',
+      'public/**/*.png',
+      'public/**/*.gif',
+      'public/**/*.webp',
+      'public/**/*.mp4',
+      'public/**/*.mov',
+      'src/app/public/**',
+      'test-results/**',
+      'playwright-report/**',
+      'e2e/**',
+      'docs/**',
+      '.next-local/**',
+    ],
+  },
 };
 
 module.exports = nextConfig;

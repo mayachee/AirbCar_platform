@@ -6,7 +6,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0020_alter_booking_options_booking_accepted_at_and_more'),
+        ('core', '0019_create_favorite_table'),
     ]
 
     operations = [
