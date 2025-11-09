@@ -8,13 +8,16 @@ export { default as DownloadAppsSection } from './DownloadAppsSection';
 export { default as MissionDialog } from './MissionDialog';
 export { default as AboutUsSection } from './AboutUsSection';
 export { default as AnimatedImage } from './AnimatedImage';
+export { default as ChallengeSection } from './ChallengeSection';
+export { default as ImpactSection } from './ImpactSection';
+export { default as CreativeSeparator } from './CreativeSeparator';
+export { default as SectionWrapper } from './SectionWrapper';
+export { default as ScrollProgress } from './ScrollProgress';
 
 // Legacy exports (keeping for backward compatibility if needed)
 export { default as HeroSection } from './HeroSection';
 export { default as CarSharingSection } from './CarSharingSection';
-export { default as ChallengeSection } from './ChallengeSection';
 export { default as SolutionSection } from './SolutionSection';
-export { default as ImpactSection } from './ImpactSection';
 export { default as WhyChooseUsSection } from './WhyChooseUsSection';
 export { default as KeyFactsSection } from './KeyFactsSection';
 export { default as TestimonialsSection } from './TestimonialsSection';

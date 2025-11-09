@@ -1,27 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountPage } from './hooks';
 import { formatProfileCompletion } from '@/features/user';
-import { 
-  AccountTabs, 
-  ProfileTab, 
-  SecurityTab, 
-  PreferencesTab, 
-  FavoritesTab, 
-  BookingsTab 
+import {
+  AccountTabs,
+  ProfileTab,
+  SecurityTab,
+  PreferencesTab,
+  FavoritesTab,
 } from './components';
 import ImprovedBookingsTab from './components/ImprovedBookingsTab';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-export default function AccountPage() {
+function AccountPageContent() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const {
     accountData,
     activeTab,
@@ -45,7 +44,7 @@ export default function AccountPage() {
     handleViewBookingDetails,
     handleCancelBooking,
     handleDeleteAccount,
-    refreshVerificationStatus
+    refreshVerificationStatus,
   } = useAccountPage();
 
   // Handle tab from query parameter
@@ -78,7 +77,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
@@ -88,11 +87,13 @@ export default function AccountPage() {
 
         {/* Save Message */}
         {saveMessage && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            saveMessage.includes('success') 
-              ? 'bg-green-50 text-green-800' 
-              : 'bg-red-50 text-red-800'
-          }`}>
+          <div
+            className={`mb-6 p-4 rounded-lg ${
+              saveMessage.includes('success')
+                ? 'bg-green-50 text-green-800'
+                : 'bg-red-50 text-red-800'
+            }`}
+          >
             {saveMessage}
           </div>
         )}
@@ -124,9 +125,7 @@ export default function AccountPage() {
             />
           )}
 
-          {activeTab === 'preferences' && (
-            <PreferencesTab />
-          )}
+          {activeTab === 'preferences' && <PreferencesTab />}
 
           {activeTab === 'favorites' && (
             <FavoritesTab
@@ -138,13 +137,25 @@ export default function AccountPage() {
             />
           )}
 
-          {activeTab === 'bookings' && (
-            <ImprovedBookingsTab />
-          )}
+          {activeTab === 'bookings' && <ImprovedBookingsTab />}
         </div>
       </div>
 
       <Footer />
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        </div>
+      }
+    >
+      <AccountPageContent />
+    </Suspense>
   );
 }

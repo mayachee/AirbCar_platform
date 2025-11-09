@@ -1,362 +1,566 @@
-'use client';
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import Header from '@/components/layout/Header'
+import Footer from '@/components/layout/Footer'
 
-import { useState, useEffect, Suspense } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import { Building2, MapPin, Phone, Globe, Star, Calendar, Car, CheckCircle, ExternalLink } from 'lucide-react';
-import { API_BASE_URL } from '@/constants';
+const API_BASE_URL =
+  process.env.DJANGO_API_URL ||
+  process.env.NEXT_PUBLIC_DJANGO_API_URL ||
+  'http://127.0.0.1:8000'
 
-function PartnerProfileContent() {
-  const params = useParams();
-  const router = useRouter();
-  const [partner, setPartner] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchPartner = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const apiUrl = API_BASE_URL;
-        const url = `${apiUrl}/api/partners/public/${params.slug}/`;
-        
-        console.log('🔍 Fetching partner profile:', {
-          slug: params.slug,
-          apiUrl: apiUrl,
-          fullUrl: url
-        });
-        
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        console.log('📡 API Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-          ok: response.ok,
-          headers: Object.fromEntries(response.headers.entries())
-        });
-        
-        if (!response.ok) {
-          // Try to get error message - could be JSON or HTML
-          let errorData = {};
-          const contentType = response.headers.get('content-type');
-          
-          if (contentType && contentType.includes('application/json')) {
-            try {
-              errorData = await response.json();
-            } catch (e) {
-              console.error('Failed to parse JSON error:', e);
-            }
-          } else {
-            // Might be HTML or plain text
-            try {
-              const text = await response.text();
-              console.error('❌ Non-JSON response:', text.substring(0, 500));
-              errorData = { error: text.substring(0, 200), raw: true };
-            } catch (e) {
-              console.error('Failed to read error response:', e);
-            }
-          }
-          
-          console.error('❌ API Error:', errorData);
-          
-          if (response.status === 404) {
-            setError(`Partner profile not found (ID/Slug: ${params.slug})`);
-          } else {
-            setError(`Failed to load partner profile: ${errorData.error || response.statusText}`);
-          }
-          return;
-        }
-        
-        const data = await response.json();
-        console.log('✅ Partner data received:', {
-          id: data.id,
-          company_name: data.company_name,
-          slug: data.slug,
-          status: data.verification_status
-        });
-        
-        // If accessed via ID instead of slug, redirect to slug URL
-        if (data.slug && params.slug !== data.slug && params.slug.match(/^\d+$/)) {
-          console.log('🔄 Redirecting to slug URL:', data.slug);
-          router.replace(`/partner/${data.slug}`);
-          return;
-        }
-        
-        setPartner(data);
-      } catch (err) {
-        console.error('💥 Error fetching partner:', err);
-        console.error('Error details:', {
-          message: err.message,
-          stack: err.stack,
-          name: err.name
-        });
-        setError(`Failed to load partner profile: ${err.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (params.slug) {
-      fetchPartner();
-    } else {
-      console.warn('⚠️ No slug provided in params:', params);
+async function fetchPartnerProfile(slug) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/partners/public/${slug}/`,
+    {
+      // Revalidate periodically so public data stays fresh but cached
+      next: { revalidate: 180 },
+      headers: {
+        Accept: 'application/json',
+      },
     }
-  }, [params.slug, router]);
+  )
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
-  };
+  if (!response.ok) {
+    if (response.status === 404) {
+      notFound()
+    }
 
-  const handleViewListing = (listingId) => {
-    router.push(`/car/${listingId}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading partner profile...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
+    throw new Error(
+      `Failed to load partner profile (${response.status})`
+    )
   }
 
-  if (error || !partner) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {error ? 'Unable to load profile' : 'Partner not found'}
-            </h2>
-            <p className="text-gray-600 mb-6">
-              {error || "The partner profile you're looking for doesn't exist or is not available."}
-            </p>
-            <div className="flex gap-4 justify-center">
-              <button 
-                onClick={() => router.push('/search')}
-                className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
-              >
-                Browse Cars
-              </button>
-              <button 
-                onClick={() => router.push('/')}
-                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Go Home
-              </button>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
+  return response.json()
+}
+
+export async function generateMetadata({ params }) {
+  try {
+    const { slug } = await params
+    const partner = await fetchPartnerProfile(slug)
+    return {
+      title: `${partner.company_name} | AirbCar partner`,
+      description:
+        partner.description ||
+        `Discover vehicles offered by ${partner.company_name}`,
+      openGraph: {
+        title: partner.company_name,
+        description: partner.description,
+        type: 'website',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/partner/${partner.slug}`,
+        images: partner.logo
+          ? [
+              {
+                url: partner.logo,
+                width: 1200,
+                height: 630,
+                alt: `${partner.company_name} logo`,
+              },
+            ]
+          : undefined,
+      },
+    }
+  } catch (error) {
+    return {
+      title: 'Partner not found | AirbCar',
+    }
   }
+}
+
+export default async function PartnerPublicProfilePage({ params }) {
+  const { slug } = await params
+  const partner = await fetchPartnerProfile(slug)
+  const heroImage =
+    partner.listings?.[0]?.pictures?.[0] || partner.logo || null
+  const listings = partner.listings ?? []
+
+  const { minPrice, maxRating, locationCount } = computeFleetInsights(listings)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-neutral-50">
       <Header />
-      
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              {partner.logo ? (
-                <img 
-                  src={partner.logo} 
-                  alt={partner.company_name}
-                  className="w-32 h-32 rounded-full object-cover bg-white p-2 shadow-lg"
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-full bg-white/20 flex items-center justify-center">
-                  <Building2 className="w-16 h-16" />
-                </div>
-              )}
-            </div>
-            
-            {/* Company Info */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                <h1 className="text-4xl font-bold">{partner.company_name}</h1>
-                {partner.verification_status === 'approved' && (
-                  <CheckCircle className="w-6 h-6 text-green-300" title="Verified Partner" />
-                )}
-              </div>
-              
-              {partner.description && (
-                <p className="text-lg text-white/90 mb-4 max-w-3xl">
-                  {partner.description}
-                </p>
-              )}
-              
-              {/* Stats */}
-              <div className="flex flex-wrap gap-6 justify-center md:justify-start mt-6">
-                <div className="flex items-center gap-2">
-                  <Car className="w-5 h-5" />
-                  <span className="font-semibold">{partner.total_listings || 0} Vehicles</span>
-                </div>
-                {partner.average_rating > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 fill-current" />
-                    <span className="font-semibold">{partner.average_rating.toFixed(1)} Rating</span>
+      <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="inline-flex items-center text-sm font-medium text-orange-600 transition hover:text-orange-700"
+        >
+          ← Back to home
+        </Link>
+
+        <section className="mt-6 overflow-hidden rounded-3xl bg-white shadow-sm">
+          <div className="grid gap-8 p-8 md:grid-cols-[320px,1fr] md:p-12">
+            <div className="space-y-6">
+              <div className="relative h-56 w-full overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-100 shadow-inner">
+                {heroImage ? (
+                  <Image
+                    src={heroImage}
+                    alt={`${partner.company_name} hero`}
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 1024px) 320px, 100vw"
+                    priority
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-4xl font-semibold text-neutral-300">
+                    {partner.company_name?.[0] || '?'}
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  <span className="font-semibold">Member since {formatDate(partner.created_at)}</span>
-                </div>
+              </div>
+
+              <ContactCard partner={partner} />
+            </div>
+
+            <div className="flex flex-col gap-8">
+              <header>
+                <span className="text-xs font-semibold uppercase tracking-wide text-orange-500">
+                  Trusted mobility partner
+                </span>
+                <h1 className="mt-2 text-3xl font-semibold text-neutral-900 md:text-4xl">
+                  {partner.company_name}
+                </h1>
+
+                {partner.description && (
+                  <p className="mt-4 text-base leading-7 text-neutral-600">
+                    {partner.description}
+                  </p>
+                )}
+
+                <dl className="mt-8 grid gap-6 sm:grid-cols-3">
+                  <StatItem
+                    label="Cars available"
+                    value={partner.total_listings ?? 0}
+                  />
+                  <StatItem
+                    label="Average rating"
+                    value={
+                      typeof partner.average_rating === 'number'
+                        ? partner.average_rating.toFixed(1)
+                        : '–'
+                    }
+                  />
+                  <StatItem
+                    label="Joined"
+                    value={new Date(
+                      partner.created_at
+                    ).toLocaleDateString()}
+                  />
+                </dl>
+              </header>
+
+              <div className="rounded-3xl border border-neutral-200 bg-neutral-50 p-6">
+                <h2 className="text-lg font-semibold text-neutral-900">
+                  Why ride with this partner?
+                </h2>
+                <WhyRide partner={partner} />
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Contact Info */}
-      {(partner.phone || partner.address || partner.website) && (
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-wrap gap-6 justify-center">
-              {partner.phone && (
-                <div className="flex items-center gap-2 text-gray-700">
-                  <Phone className="w-5 h-5 text-orange-500" />
-                  <span>{partner.phone}</span>
-                </div>
-              )}
-              {partner.address && (
-                <div className="flex items-center gap-2 text-gray-700">
-                  <MapPin className="w-5 h-5 text-orange-500" />
-                  <span>{partner.address}</span>
-                </div>
-              )}
-              {partner.website && (
-                <a 
-                  href={partner.website} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-orange-600 hover:text-orange-700"
+        <section className="mt-12 grid gap-6 lg:grid-cols-[2fr,1fr]">
+          <FleetInsights
+            minPrice={minPrice}
+            maxRating={maxRating}
+            locationCount={locationCount}
+            vehicleCount={listings.length}
+          />
+          <OwnerSpotlight partner={partner} />
+        </section>
+
+        <section className="mt-12 space-y-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-neutral-900">
+                Fleet highlights
+              </h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                Explore popular vehicles available from this partner.
+              </p>
+            </div>
+            <Link
+              href="/search"
+              className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+            >
+              Search all vehicles
+            </Link>
+          </div>
+
+          {partner.listings?.length ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {partner.listings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          ) : (
+            <EmptyListingsState />
+          )}
+        </section>
+
+        <section className="mt-16 rounded-3xl bg-gradient-to-br from-orange-500 via-orange-600 to-red-500 p-10 text-white shadow-lg">
+          <div className="grid gap-10 md:grid-cols-[2fr,1fr] md:items-center">
+            <div>
+              <h2 className="text-3xl font-semibold leading-tight">
+                Interested in partnering with AirbCar?
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm text-orange-50/90">
+                Reach thousands of drivers looking for reliable, beautifully
+                maintained vehicles. We handle the tech, marketing and bookings
+                so you can focus on delighting customers.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-4">
+                <Link
+                  href="/partner"
+                  className="inline-flex items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-orange-600 transition hover:bg-orange-50"
                 >
-                  <Globe className="w-5 h-5" />
-                  <span>Visit Website</span>
-                  <ExternalLink className="w-4 h-4" />
+                  Become a partner
+                </Link>
+                <a
+                  href="mailto:partners@airbcar.com"
+                  className="inline-flex items-center justify-center rounded-full border border-white/60 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Talk to our team
                 </a>
-              )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/30 bg-white/10 p-6 backdrop-blur">
+              <h3 className="text-lg font-semibold text-white">
+                Why teams choose AirbCar
+              </h3>
+              <ul className="mt-4 space-y-3 text-sm text-orange-50/90">
+                <li>• Dedicated account manager</li>
+                <li>• Insurance integration support</li>
+                <li>• Real-time booking dashboard</li>
+                <li>• Automated payouts & invoicing</li>
+              </ul>
             </div>
           </div>
-        </div>
-      )}
+        </section>
+      </main>
+      <Footer />
+    </div>
+  )
+}
 
-      {/* Vehicle Listings */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Available Vehicles ({partner.listings?.length || 0})
-          </h2>
-          <p className="text-gray-600">
-            Browse our fleet of vehicles available for rent
-          </p>
-        </div>
+function StatItem({ label, value }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        {label}
+      </dt>
+      <dd className="mt-2 text-2xl font-semibold text-neutral-900">{value}</dd>
+    </div>
+  )
+}
 
-        {!partner.listings || partner.listings.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-            <Car className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No vehicles available</h3>
-            <p className="text-gray-600">This partner doesn't have any vehicles listed yet.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {partner.listings.map((listing) => (
-              <div
-                key={listing.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden cursor-pointer"
-                onClick={() => handleViewListing(listing.id)}
+function Badge({ children }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-semibold text-orange-600 shadow-sm">
+      {children}
+    </span>
+  )
+}
+
+function ContactCard({ partner }) {
+  return (
+    <aside className="rounded-3xl border border-neutral-200 bg-neutral-50 p-6 text-sm text-neutral-600 shadow-sm">
+      <h2 className="text-lg font-semibold text-neutral-900">
+        Contact information
+      </h2>
+      <p className="mt-1 text-xs uppercase tracking-wide text-neutral-500">
+        Reach out directly for pickup details or special requests.
+      </p>
+      <dl className="mt-4 space-y-3">
+        {partner.phone && (
+          <div className="flex items-center justify-between">
+            <dt className="text-neutral-500">Phone</dt>
+            <dd>
+              <a
+                href={`tel:${partner.phone}`}
+                className="font-medium text-orange-600 hover:text-orange-700"
               >
-                {/* Vehicle Image */}
-                <div className="relative h-48 bg-gray-200">
-                  {listing.pictures && listing.pictures.length > 0 ? (
-                    <img
-                      src={listing.pictures[0]}
-                      alt={`${listing.make} ${listing.model}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Car className="w-16 h-16 text-gray-400" />
-                    </div>
-                  )}
-                  {listing.rating > 0 && (
-                    <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-current" />
-                      <span className="text-sm font-semibold">{listing.rating.toFixed(1)}</span>
-                    </div>
-                  )}
-                </div>
+                {partner.phone}
+              </a>
+            </dd>
+          </div>
+        )}
+        {partner.website && (
+          <div className="flex items-center justify-between">
+            <dt className="text-neutral-500">Website</dt>
+            <dd>
+              <a
+                href={partner.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-orange-600 hover:text-orange-700"
+              >
+                Visit site
+              </a>
+            </dd>
+          </div>
+        )}
+        {partner.address && (
+          <div className="flex items-start justify-between gap-4">
+            <dt className="mt-[2px] text-neutral-500">Address</dt>
+            <dd className="text-right">{partner.address}</dd>
+          </div>
+        )}
+        <div className="flex items-start justify-between">
+          <dt className="mt-[2px] text-neutral-500">Status</dt>
+          <dd>
+            <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+              {partner.verification_status === 'approved'
+                ? 'Verified partner'
+                : 'In review'}
+            </span>
+          </dd>
+        </div>
+      </dl>
+    </aside>
+  )
+}
 
-                {/* Vehicle Info */}
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    {listing.make} {listing.model}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-2">{listing.year}</p>
-                  
-                  {listing.location && (
-                    <div className="flex items-center gap-1 text-gray-500 text-sm mb-3">
-                      <MapPin className="w-4 h-4" />
-                      <span>{listing.location}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-orange-600">
-                      ${parseFloat(listing.price_per_day).toFixed(0)}
-                    </span>
-                    <span className="text-gray-500 text-sm">/day</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+function ListingCard({ listing }) {
+  const coverImage = listing.pictures?.[0] || null
+  const sanitizedLocation = listing.location?.trim()
+  const formattedPrice =
+    typeof listing.price_per_day === 'number'
+      ? `€${listing.price_per_day}`
+      : '—'
+
+  return (
+    <article className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+      <div className="relative h-52 w-full bg-neutral-100">
+        {coverImage ? (
+          <Image
+            src={coverImage}
+            alt={`${listing.make} ${listing.model}`}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
+            priority={false}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-neutral-400">
+            No image
           </div>
         )}
       </div>
 
-      <Footer />
-    </div>
-  );
+      <div className="space-y-3 p-5">
+        <div>
+          <h3 className="text-lg font-semibold text-neutral-900">
+            {listing.year} {listing.make} {listing.model}
+          </h3>
+          {sanitizedLocation && (
+            <p className="text-sm text-neutral-500">{sanitizedLocation}</p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-neutral-600">
+          <span>
+            <span className="text-lg font-semibold text-neutral-900">
+              {formattedPrice}
+            </span>{' '}
+            / day
+          </span>
+          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+            Rating: {listing.rating ?? '–'}
+          </span>
+        </div>
+
+        <Link
+          href={`/car/${listing.id}`}
+          className="inline-flex w-full items-center justify-center rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+        >
+          View details
+        </Link>
+      </div>
+    </article>
+  )
 }
 
-export default function PartnerProfile() {
+function EmptyListingsState() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading partner profile...</p>
-          </div>
-        </div>
-        <Footer />
+    <div className="rounded-3xl border border-dashed border-neutral-200 bg-white p-12 text-center text-neutral-500">
+      <h3 className="text-lg font-medium text-neutral-700">
+        No cars listed yet
+      </h3>
+      <p className="mt-2 text-sm text-neutral-500">
+        Check back soon to see the vehicles this partner offers or contact them
+        directly for availability.
+      </p>
+    </div>
+  )
+}
+
+function WhyRide({ partner }) {
+  const highlights = [
+    'Transparent pricing with no hidden fees',
+    'Professionally maintained vehicles with routine inspections',
+    'Flexible pickup options tailored to your itinerary',
+    'Friendly support team for custom requests and special events',
+  ]
+
+  return (
+    <>
+      <p className="mt-3 text-sm text-neutral-600">
+        Our partners are carefully vetted to ensure high service quality,
+        transparent pricing, well-maintained vehicles and responsive customer
+        care. Book with confidence and enjoy a seamless rental experience from
+        pickup to drop-off.
+      </p>
+      <ul className="mt-4 space-y-2 text-sm text-neutral-600">
+        {highlights.map((item) => (
+          <li key={item} className="flex items-start gap-2">
+            <span className="mt-[6px] inline-block h-2 w-2 rounded-full bg-orange-500" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-5 flex flex-wrap gap-3 text-xs font-medium text-neutral-600">
+        <Badge>Flexible cancellation</Badge>
+        <Badge>Verified fleet</Badge>
+        <Badge>24/7 support</Badge>
+        <Badge>Contactless pickup</Badge>
       </div>
-    }>
-      <PartnerProfileContent />
-    </Suspense>
-  );
+    </>
+  )
+}
+
+function FleetInsights({
+  minPrice,
+  maxRating,
+  locationCount,
+  vehicleCount,
+}) {
+  return (
+    <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <h2 className="text-lg font-semibold text-neutral-900">
+        Fleet at a glance
+      </h2>
+      <p className="mt-2 text-sm text-neutral-600">
+        Snapshot of this partner&rsquo;s availability based on live listings.
+      </p>
+      <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+        <InsightStat label="Vehicles ready" value={vehicleCount} />
+        <InsightStat label="Starting from" value={minPrice ? `€${minPrice}` : '–'} />
+        <InsightStat label="Top customer rating" value={maxRating ?? '–'} />
+        <InsightStat
+          label="Pickup areas"
+          value={locationCount}
+        />
+      </dl>
+      <p className="mt-6 rounded-2xl bg-neutral-50 p-4 text-xs text-neutral-500">
+        Availability can change quickly—secure your dates early for the best
+        selection of vehicles.
+      </p>
+    </section>
+  )
+}
+
+function OwnerSpotlight({ partner }) {
+  const ownerName =
+    [partner?.user?.first_name, partner?.user?.last_name]
+      .filter(Boolean)
+      .join(' ') || 'Partner'
+  const ownerInitials = ownerName
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+  const ownerImage = partner?.user?.profile_picture ?? null
+
+  return (
+    <aside className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <h2 className="text-lg font-semibold text-neutral-900">
+        Owner spotlight
+      </h2>
+      <div className="mt-4 flex items-center gap-4">
+        <div className="relative h-16 w-16 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 shadow-inner">
+          {ownerImage ? (
+            <Image
+              src={ownerImage}
+              alt={`${ownerName} profile`}
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-neutral-400">
+              {ownerInitials || 'P'}
+            </div>
+          )}
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-neutral-900">{ownerName}</p>
+          <p className="text-xs uppercase tracking-wide text-neutral-500">
+            Partner since{' '}
+            {new Date(partner.created_at).toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: 'short',
+            })}
+          </p>
+        </div>
+      </div>
+      <p className="mt-2 text-sm text-neutral-600">
+        {ownerName} personally oversees each booking to ensure a smooth,
+        premium experience. Get in touch for custom itineraries, corporate
+        travel or special events.
+      </p>
+      <div className="mt-6 space-y-3 text-sm text-neutral-600">
+        <div className="rounded-2xl bg-neutral-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            Service commitments
+          </p>
+          <ul className="mt-3 space-y-2">
+            <li>• Timely pick-up coordination and flexible drop-off windows</li>
+            <li>• Vehicles fully sanitized and inspected before each rental</li>
+            <li>• Local insights and route suggestions upon request</li>
+          </ul>
+        </div>
+        <p className="text-xs text-neutral-500">
+          Have a question before booking? Reach out using the contact
+          information above—we respond quickly to ensure your trip stays on
+          schedule.
+        </p>
+      </div>
+    </aside>
+  )
+}
+
+function InsightStat({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        {label}
+      </dt>
+      <dd className="mt-2 text-xl font-semibold text-neutral-900">{value}</dd>
+    </div>
+  )
+}
+
+function computeFleetInsights(listings) {
+  if (!Array.isArray(listings) || !listings.length) {
+    return { minPrice: null, maxRating: null, locationCount: 0 }
+  }
+
+  const prices = listings
+    .map((listing) => listing.price_per_day)
+    .filter((price) => typeof price === 'number' && !Number.isNaN(price))
+  const ratings = listings
+    .map((listing) => listing.rating)
+    .filter((rating) => typeof rating === 'number' && !Number.isNaN(rating))
+  const locations = new Set(
+    listings
+      .map((listing) => listing.location?.trim())
+      .filter(Boolean)
+  )
+
+  return {
+    minPrice: prices.length ? Math.min(...prices) : null,
+    maxRating: ratings.length ? Math.max(...ratings).toFixed(1) : null,
+    locationCount: locations.size,
+  }
 }

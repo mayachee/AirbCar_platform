@@ -21,11 +21,12 @@ services:
 
   app:
     build: frontend/
-    # Memory limits - note: Docker Desktop must have enough memory allocated
-    # Check Docker Desktop Settings > Resources > Memory (should be at least 4GB)
-    # Try removing mem_limit if Docker Desktop memory is limited
-    # mem_limit: 3g
-    # memswap_limit: 3g
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1.5G
     ports:
       - "3000:3000"
     environment:
@@ -34,14 +35,12 @@ services:
       - NEXT_PUBLIC_DJANGO_API_URL=http://localhost:8000
       - NEXTAUTH_URL=http://localhost:3000
       - DATABASE_URL=postgresql://postgres.wtbmqtmmdobfvvecinif:Mayache+123455@aws-1-eu-north-1.pooler.supabase.com:5432/postgres
-      - NODE_OPTIONS=--max-old-space-size=2048 --openssl-legacy-provider
-      - NEXT_TELEMETRY_DISABLED=1
+      - NODE_OPTIONS=--max-old-space-size=4096 --openssl-legacy-provider
       - WATCHPACK_POLLING=true
+      - WATCHPACK_POLLING_INTERVAL=2000
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app:cached
       - /app/node_modules
-      - /app/.next-local
-      # .next-local is mounted separately to avoid scanning issues
     networks:
       - AirbNet
     restart: unless-stopped

@@ -175,35 +175,69 @@ export function AuthProvider({ children }) {
   const register = async (firstName, lastName, email, password) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'
+      const requestBody = { 
+        first_name: firstName,
+        last_name: lastName,
+        email, 
+        password 
+      }
+      
+      console.log('Registering user:', { apiUrl, requestBody: { ...requestBody, password: '***' } })
+      
       const response = await fetch(`${apiUrl}/api/register/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          first_name: firstName,
-          last_name: lastName,
-          email, 
-          password 
-        }),
+        body: JSON.stringify(requestBody),
       })
+      
+      console.log('Registration response status:', response.status)
 
       if (response.ok) {
         // After successful registration, automatically log the user in without redirect
         const loginResult = await login(email, password, { redirect: false })
         return loginResult
       } else {
-        const errorData = await response.json()
-        
-        // Handle Django validation errors
-        let errorMessage = 'Something went wrong'
-        if (errorData.username) {
-          errorMessage = `Username: ${errorData.username[0]}`
-        } else if (errorData.email) {
-          errorMessage = `Email: ${errorData.email[0]}`
-        } else if (errorData.password) {
-          errorMessage = `Password: ${errorData.password[0]}`
+        let errorData
+        try {
+          errorData = await response.json()
+        } catch (e) {
+          // If response is not JSON, try to get text
+          const text = await response.text()
+          return { 
+            success: false, 
+            error: text || `Server error (${response.status})` 
+          }
         }
+        
+        // Handle Django validation errors - show all errors, not just the first
+        let errorMessage = 'Something went wrong'
+        
+        // Check for common error fields
+        if (errorData.email) {
+          errorMessage = Array.isArray(errorData.email) ? errorData.email[0] : errorData.email
+        } else if (errorData.username) {
+          errorMessage = Array.isArray(errorData.username) ? errorData.username[0] : errorData.username
+        } else if (errorData.password) {
+          errorMessage = Array.isArray(errorData.password) ? errorData.password[0] : errorData.password
+        } else if (errorData.first_name) {
+          errorMessage = Array.isArray(errorData.first_name) ? errorData.first_name[0] : errorData.first_name
+        } else if (errorData.last_name) {
+          errorMessage = Array.isArray(errorData.last_name) ? errorData.last_name[0] : errorData.last_name
+        } else if (errorData.detail) {
+          errorMessage = errorData.detail
+        } else if (errorData.non_field_errors) {
+          errorMessage = Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors
+        } else {
+          // Show all errors if we can't identify a specific one
+          const allErrors = Object.entries(errorData)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value[0] : value}`)
+            .join(', ')
+          errorMessage = allErrors || JSON.stringify(errorData)
+        }
+        
+        console.error('Registration error:', errorData)
         
         return { 
           success: false, 

@@ -21,14 +21,8 @@ if [ -d ".next-local" ]; then
 fi
 
 echo "Starting Next.js application..."
-if [ "$NODE_ENV" = "production" ]; then
-  pnpm run build
-  pnpm start
-else
-  echo "[start.sh] Starting in development mode with optimized settings..."
-  # Use regular webpack (Turbopack has memory issues in Docker)
-  # Reduce memory pressure by limiting file watching
-  # Set low memory mode for Node.js
-  export NODE_OPTIONS="${NODE_OPTIONS} --expose-gc"
-  exec pnpm run dev
-fi
+echo "[start.sh] Running production build inside container to avoid high memory usage from dev watcher..."
+export NODE_ENV=production
+pnpm run build
+echo "[start.sh] Starting Next.js in production mode on 0.0.0.0:3000"
+exec pnpm run start -- --hostname 0.0.0.0 --port 3000

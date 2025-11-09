@@ -30,9 +30,6 @@ export default function AboutUsSection() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mb-6"
           >
-            <span className="text-green-800/70 text-base sm:text-lg font-medium">
-              About us
-            </span>
           </motion.div>
 
           {/* Main Headline */}

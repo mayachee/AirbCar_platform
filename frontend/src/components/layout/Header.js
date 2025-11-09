@@ -259,12 +259,12 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link href="/auth/signin">
+                <Link href="/auth?mode=signin">
                   <Button variant="ghost" size="sm">
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/auth/register">
+                <Link href="/auth?mode=signin">
                   <Button size="sm">
                     Sign Up
                   </Button>

@@ -45,7 +45,7 @@ export default function PartnerHero() {
               Grow your rental business with Airbcar
             </h1>
             <p className="text-gray-600 text-lg max-w-xl mb-6">
-              List vehicles, manage bookings, and get paid fast — all in one dashboard.
+              List vehicles, manage bookings, and get paid fast all in one dashboard.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <motion.a 

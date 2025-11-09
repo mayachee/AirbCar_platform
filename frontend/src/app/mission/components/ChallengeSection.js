@@ -1,49 +1,108 @@
 'use client';
 
-import { animations } from '@/hooks/useScrollAnimation';
+import { motion } from 'framer-motion';
+import SectionWrapper from './SectionWrapper';
 
-export default function ChallengeSection({ challengeVisible }) {
+export default function ChallengeSection() {
   return (
-    <section 
-      className="py-20 bg-white"
-      style={animations.fadeInUp(challengeVisible, { duration: '0.9s' })}
-    >
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <h2 className="text-4xl font-bold text-gray-900">The challenge</h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Traditional car ownership is becoming increasingly unsustainable. With rising costs, 
-              environmental concerns, and urban congestion, we need innovative solutions that 
-              prioritize people and communities over individual car ownership.
-            </p>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Cities around the world are struggling with air pollution, traffic congestion, and 
-              the enormous space requirements of parking. Meanwhile, many people can't afford to 
-              own a car but still need reliable transportation.
-            </p>
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <div className="text-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-300 group">
-                <div className="text-2xl font-bold text-red-600 group-hover:scale-110 transition-transform duration-300">95%</div>
-                <div className="text-sm text-gray-600">Cars sit unused daily</div>
-              </div>
-              <div className="text-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-300 group">
-                <div className="text-2xl font-bold text-red-600 group-hover:scale-110 transition-transform duration-300">30%</div>
-                <div className="text-sm text-gray-600">Urban space for parking</div>
-              </div>
-            </div>
-          </div>
-          <div className="relative">
-            <img 
-              src="/public/step1.webp" 
-              alt="Urban traffic challenge" 
-              className="w-full h-96 object-cover rounded-xl shadow-lg"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl"></div>
-          </div>
-        </div>
+    <div className="relative py-20 bg-gradient-to-b from-white via-gray-50/30 to-white overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.03, 0.06, 0.03],
+            x: [0, 30, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="absolute top-1/4 right-1/4 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl"
+        />
       </div>
-    </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <SectionWrapper delay={0.1}>
+          <div className="flex flex-col lg:flex-row gap-14 lg:gap-28 items-center">
+            {/* Image with enhanced styling */}
+            <motion.div
+              className="w-full lg:w-[560px] flex-shrink-0"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <motion.div
+                className="relative rounded-3xl overflow-hidden shadow-2xl group"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Glass-morphism border effect */}
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <img
+                  src="/Figure1.jpg"
+                  alt="The challenge"
+                  className="w-full h-[420px] object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </motion.div>
+            </motion.div>
+
+            {/* Text Content with enhanced styling */}
+            <motion.div
+              className="flex-1 max-w-[464px]"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-6 leading-[56px] tracking-[-0.48px]">
+                The challenge
+              </h2>
+              <div className="text-xl text-gray-600 leading-7 tracking-[-0.176px] space-y-7">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <p>For decades, cities have been built for cars,</p>
+                  <p>neglecting pedestrians and light vehicles.</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <p>Today, cities devote up to 60% of urban land to</p>
+                  <p>car infrastructure. Passenger transport accounts</p>
+                  <p>for almost half of global transport emissions. It is</p>
+                  <p>also the primary cause of air pollution that can</p>
+                  <p>lead to serious health problems. That's</p>
+                  <p>astonishing, given private cars sit idle for up to</p>
+                  <p>95% of the time.</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p>As the global urban population is projected to</p>
+                  <p>double by 2050, cities, their citizens, and the</p>
+                  <p>transport sector must work together to drive</p>
+                  <p>positive change.</p>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+        </SectionWrapper>
+      </div>
+    </div>
   );
 }
-

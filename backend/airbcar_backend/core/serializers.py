@@ -52,13 +52,29 @@ class UserSerializer(serializers.ModelSerializer):
             'id_front_document_url', 'id_back_document_url', 'profile_picture']
 
     def create(self, validated_data):
-        print("User create serializer called")
+        print("🔧 User create serializer called")
+        print(f"🔧 Validated data keys: {list(validated_data.keys())}")
         password = validated_data.pop('password')
         if 'username' not in validated_data or not validated_data['username']:
             validated_data['username'] = validated_data['email']
+        
+        # Create user
         user = User.objects.create(**validated_data)
+        print(f"✅ User object created: ID={user.id}, Email={user.email}")
+        
+        # Set password and save
         user.set_password(password)
         user.save()
+        print(f"✅ User password set and saved: ID={user.id}")
+        
+        # Verify user exists in database
+        from .models import User as UserModel
+        user_check = UserModel.objects.filter(id=user.id).first()
+        if user_check:
+            print(f"✅ User verified in database: ID={user_check.id}, Email={user_check.email}")
+        else:
+            print(f"❌ ERROR: User not found in database after save!")
+        
         return user
 
 class PartnerSerializer(serializers.ModelSerializer):

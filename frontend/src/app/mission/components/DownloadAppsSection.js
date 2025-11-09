@@ -1,7 +1,8 @@
 'use client';
 
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import Phone3D from './Phone3D';
 
 // Animation variants for better performance and reusability
 const containerVariants = {
@@ -62,6 +63,17 @@ export default function DownloadAppsSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
   const [activeTab, setActiveTab] = useState('Rides');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Parallax scroll effect for background elements
   const { scrollYProgress } = useScroll({
@@ -74,7 +86,7 @@ export default function DownloadAppsSection() {
   const opacity2 = useTransform(scrollYProgress, [0, 0.5, 1], [0.05, 0.04, 0.03]);
 
   return (
-    <section ref={ref} className="py-24 bg-[#121212] relative overflow-hidden">
+    <section ref={ref} className="py-24 bg-gray-900 relative overflow-hidden">
       {/* Background decorative elements with parallax */}
       <motion.div 
         style={{ 
@@ -191,7 +203,7 @@ export default function DownloadAppsSection() {
             </div>
             <div className="relative flex justify-center">
               <motion.span 
-                className="bg-[#121212] px-4 text-gray-500 text-sm"
+                className="bg-gray-900 px-4 text-gray-500 text-sm"
                 initial={{ opacity: 0, y: 10 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                 transition={{ delay: 1, duration: 0.5 }}
@@ -201,17 +213,17 @@ export default function DownloadAppsSection() {
             </div>
           </motion.div>
 
-          {/* Header Section */}
+          {/* Header Section with enhanced styling */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.6 }}
             className="text-center space-y-4"
           >
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
               Download our apps
             </h2>
-            <p className="text-lg sm:text-xl text-gray-300">
+            <p className="text-lg sm:text-xl text-gray-300 font-light">
               Available for iOS and Android devices.
             </p>
           </motion.div>
@@ -223,7 +235,7 @@ export default function DownloadAppsSection() {
               initial={{ opacity: 0, x: -50, scale: 0.9 }}
               animate={isInView ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, x: -50, scale: 0.9 }}
               transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }}
-              className="relative flex justify-center items-center"
+              className="relative flex justify-center items-center order-2 md:order-1"
             >
               {/* Glow effect behind phone */}
               <div 
@@ -234,11 +246,11 @@ export default function DownloadAppsSection() {
                 }}
               />
               
-              {/* Phone container with rotation */}
+              {/* Phone container with rotation - less rotation on mobile */}
               <motion.div
-                className="relative transform rotate-[5deg]"
-                initial={{ rotate: 5, scale: 0.9 }}
-                animate={isInView ? { rotate: 5, scale: 1 } : { rotate: 5, scale: 0.9 }}
+                className="relative transform rotate-[2deg] md:rotate-[5deg]"
+                initial={{ rotate: 2, scale: 0.9 }}
+                animate={isInView ? { rotate: 5, scale: 1 } : { rotate: 2, scale: 0.9 }}
                 whileHover={{ 
                   scale: 1.08, 
                   rotate: 8,
@@ -247,29 +259,15 @@ export default function DownloadAppsSection() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 style={{ willChange: 'transform' }}
               >
-                {/* Floating animation */}
-                <motion.div
-                  variants={phoneVariants}
-                  animate="float"
-                  className="relative z-10"
-                  style={{ willChange: 'transform' }}
-                >
-                  <motion.img 
-                    src="/Gemini_Generated_Image_dfh2pedfh2pedfh2.png" 
-                    alt="Mobile apps on phone"
-                    className="w-full max-w-sm md:max-w-md lg:max-w-lg h-auto object-contain select-none"
-                    style={{
-                      filter: 'drop-shadow(0 25px 50px rgba(0, 0, 0, 0.5))',
-                      willChange: 'transform'
-                    }}
-                    loading="eager"
-                    draggable="false"
-                    whileHover={{ 
-                      filter: 'drop-shadow(0 35px 70px rgba(255, 107, 53, 0.3))',
-                      transition: { duration: 0.3 }
-                    }}
+                {/* 3D Phone Model - Responsive sizing */}
+                <div className="relative z-10 w-full max-w-md sm:max-w-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl h-[600px] sm:h-[650px] md:h-[600px] lg:h-[700px] xl:h-[800px] flex items-center justify-center">
+                  <Phone3D 
+                    className="w-full h-full"
+                    autoRotate={true}
+                    floatSpeed={0.5}
+                    isMobile={isMobile}
                   />
-                </motion.div>
+                </div>
               </motion.div>
             </motion.div>
 
@@ -278,7 +276,7 @@ export default function DownloadAppsSection() {
               initial={{ opacity: 0, x: 50 }}
               animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
               transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
-              className="flex flex-col"
+              className="flex flex-col order-1 md:order-2"
             >
               {/* Tabs with enhanced animations */}
               <div className="flex gap-8 mb-10">
@@ -289,30 +287,28 @@ export default function DownloadAppsSection() {
                   whileTap={{ scale: 0.95 }}
                   style={{ willChange: 'transform' }}
                 >
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={activeTab === 'Rides' ? 'active' : 'inactive'}
-                      className="relative z-10 block"
-                      initial={{ color: '#ffffff' }}
-                      animate={{ 
-                        color: activeTab === 'Rides' ? '#FF6B35' : '#ffffff'
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      Rides
-                    </motion.span>
-                  </AnimatePresence>
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/50"
-                    initial={false}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 400, 
-                      damping: 35,
-                      mass: 0.8
+                  <motion.span
+                    className="relative z-10 block"
+                    animate={{ 
+                      color: activeTab === 'Rides' ? '#FF6B35' : '#ffffff'
                     }}
-                  />
+                    transition={{ duration: 0.3 }}
+                  >
+                    iOS
+                  </motion.span>
+                  {activeTab === 'Rides' && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/50"
+                      initial={false}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 35,
+                        mass: 0.8
+                      }}
+                    />
+                  )}
                 </motion.button>
                 <motion.button
                   onClick={() => setActiveTab('Delivery')}
@@ -321,100 +317,105 @@ export default function DownloadAppsSection() {
                   whileTap={{ scale: 0.95 }}
                   style={{ willChange: 'transform' }}
                 >
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={activeTab === 'Delivery' ? 'active' : 'inactive'}
-                      className="relative z-10 block"
-                      initial={{ color: '#ffffff' }}
-                      animate={{ 
-                        color: activeTab === 'Delivery' ? '#FF6B35' : '#ffffff'
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      Delivery
-                    </motion.span>
-                  </AnimatePresence>
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/50"
-                    initial={false}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 400, 
-                      damping: 35,
-                      mass: 0.8
+                  <motion.span
+                    className="relative z-10 block"
+                    animate={{ 
+                      color: activeTab === 'Delivery' ? '#FF6B35' : '#ffffff'
                     }}
-                  />
+                    transition={{ duration: 0.3 }}
+                  >
+                    Android
+                  </motion.span>
+                  {activeTab === 'Delivery' && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/50"
+                      initial={false}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 35,
+                        mass: 0.8
+                      }}
+                    />
+                  )}
                 </motion.button>
               </div>
 
-              {/* Content with staggered animations */}
-              <motion.div 
-                variants={containerVariants}
-                initial="hidden"
-                animate={isInView ? "visible" : "hidden"}
-                className="space-y-8"
-              >
-                <motion.div 
-                  variants={itemVariants}
-                  className="space-y-4"
-                  style={{ willChange: 'transform, opacity' }}
-                >
-                  <motion.h3 
-                    className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ delay: 0.5, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    The fast, affordable way to ride.
-                  </motion.h3>
-                  
-                  <motion.p 
-                    className="text-lg sm:text-xl text-gray-300 leading-relaxed"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ delay: 0.6, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    Available for iOS and Android devices.
-                  </motion.p>
-                </motion.div>
-                
-                {/* Enhanced CTA Button */}
-                <motion.button
+              {/* Content with staggered animations - switches based on activeTab */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ delay: 0.7, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  whileHover={{ 
-                    scale: 1.05, 
-                    boxShadow: "0 20px 40px rgba(255, 107, 53, 0.5)",
-                    transition: { type: "spring", stiffness: 400, damping: 25 }
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative bg-[#FF6B35] hover:bg-[#FF8555] text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#FF6B35]/30 overflow-hidden group"
-                  style={{ willChange: 'transform' }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="space-y-8"
                 >
-                  {/* Animated shine effect */}
-                  <motion.span 
-                    className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0"
-                    initial={{ x: '-200%' }}
-                    whileHover={{ x: '200%' }}
-                    transition={{ 
-                      duration: 0.8,
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      repeatDelay: 2
-                    }}
-                    style={{ willChange: 'transform' }}
-                  />
-                  <motion.span 
-                    className="relative z-10 flex items-center gap-2"
-                    whileHover={{ x: 2 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  <motion.div 
+                    className="space-y-4"
+                    style={{ willChange: 'transform, opacity' }}
                   >
-                    Get Airbcar
-                  </motion.span>
-                </motion.button>
-              </motion.div>
+                    <motion.h3 
+                      className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      {activeTab === 'Rides' 
+                        ? 'The fast, affordable way to ride.'
+                        : 'Deliver anything, anywhere, anytime.'}
+                    </motion.h3>
+                    
+                    <motion.p 
+                      className="text-lg sm:text-xl text-gray-300 leading-relaxed"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      {activeTab === 'Rides'
+                        ? 'Available for iOS devices. Book rides, track your driver, and pay seamlessly.'
+                        : 'Available for Android devices. Order food, track deliveries, and enjoy fast service.'}
+                    </motion.p>
+                  </motion.div>
+                  
+                  {/* Enhanced CTA Button */}
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={{ 
+                      scale: 1.05, 
+                      boxShadow: "0 20px 40px rgba(255, 107, 53, 0.5)",
+                      transition: { type: "spring", stiffness: 400, damping: 25 }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative bg-[#FF6B35] hover:bg-[#FF8555] text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#FF6B35]/30 overflow-hidden group"
+                    style={{ willChange: 'transform' }}
+                  >
+                    {/* Animated shine effect */}
+                    <motion.span 
+                      className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0"
+                      initial={{ x: '-200%' }}
+                      whileHover={{ x: '200%' }}
+                      transition={{ 
+                        duration: 0.8,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatDelay: 2
+                      }}
+                      style={{ willChange: 'transform' }}
+                    />
+                    <motion.span 
+                      className="relative z-10 flex items-center gap-2"
+                      whileHover={{ x: 2 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    >
+                      {activeTab === 'Rides' ? 'Get Airbcar' : 'Get Airbcar'}
+                    </motion.span>
+                  </motion.button>
+                </motion.div>
+              </AnimatePresence>
             </motion.div>
           </div>
         </div>
