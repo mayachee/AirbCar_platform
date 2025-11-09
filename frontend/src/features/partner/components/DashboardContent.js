@@ -107,7 +107,7 @@ export default function DashboardContent({
   const router = useRouter();
 
   return (
-    <div className="flex-1 p-6 overflow-auto">
+    <div className="flex-1 p-4 sm:p-6 overflow-auto">
       {currentView === 'dashboard' && (
         <div className="space-y-6">
           {/* Quick Stats */}

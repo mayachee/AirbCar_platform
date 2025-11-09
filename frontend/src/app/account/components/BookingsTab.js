@@ -19,35 +19,11 @@ export default function BookingsTab({ upcomingBookings, pastBookings, loading: p
       setError(null);
       
       let allBookings = [];
-      
-      // Try user-specific bookings endpoint first
       try {
-        const userBookingsResponse = await apiClient.get('/users/me/bookings/');
-        allBookings = userBookingsResponse.data || [];
+        const response = await apiClient.get('/bookings/');
+        allBookings = Array.isArray(response.data) ? response.data : (response.data?.results || []);
       } catch (err) {
-        console.log('User bookings endpoint not available, trying general bookings endpoint');
-      }
-
-      // Fallback to general bookings endpoint
-      if (allBookings.length === 0) {
-        try {
-          const response = await apiClient.get('/bookings/');
-          allBookings = response.data || [];
-        } catch (err) {
-          console.log('General bookings endpoint not available');
-        }
-      }
-
-      // Try booking history
-      try {
-        const historyResponse = await apiClient.get('/users/me/bookings/history/');
-        const historyBookings = historyResponse.data || [];
-        // Combine with existing bookings, avoiding duplicates
-        const existingIds = new Set(allBookings.map(b => b.id));
-        const newBookings = historyBookings.filter(b => !existingIds.has(b.id));
-        allBookings = [...allBookings, ...newBookings];
-      } catch (err) {
-        console.log('Booking history endpoint not available');
+        console.log('General bookings endpoint not available');
       }
 
       // Try upcoming bookings endpoint

@@ -19,12 +19,12 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
     <div className="space-y-6">
       {/* Profile Picture Upload */}
       <div className="border-b border-gray-200 pb-6">
-        <div className="flex items-center space-x-6">
-          <div className="flex-shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-4 sm:space-y-0">
+          <div className="flex-shrink-0 mx-auto sm:mx-0">
             <img
               src={accountData.profileImage || '/default-avatar.svg'}
               alt="Profile"
-              className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-lg"
+              className="h-24 w-24 sm:h-28 sm:w-28 rounded-full object-cover border-4 border-white shadow-lg"
               onError={(e) => {
                 if (e.target.src !== '/default-avatar.svg') {
                   e.target.src = '/default-avatar.svg';
@@ -32,9 +32,9 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
               }}
             />
           </div>
-          <div className="flex-1">
+          <div className="text-center sm:text-left">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Picture</h3>
-            <label className="cursor-pointer">
+            <label className="inline-block">
               <input
                 type="file"
                 accept="image/*"
@@ -53,8 +53,8 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
       </div>
 
       {/* Profile Completion Indicator */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
-        <div className="flex items-center justify-between mb-2">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-5 sm:p-6 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
           <span className="text-sm font-medium opacity-90">Profile Completion</span>
           <span className="text-2xl font-bold">{profileCompletion}%</span>
         </div>
@@ -152,7 +152,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 City *
@@ -193,60 +193,111 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
         </div>
       </div>
 
-      {/* Driver's License Section */}
+      {/* Identity Documents */}
       <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver's License Information</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Identity Documents</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Upload clear photos of the front and back of your ID. These are used to verify your identity and will be reviewed by our team.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              License Number *
-            </label>
-            <input
-              type="text"
-              name="licenseNumber"
-              value={accountData.licenseNumber}
-              onChange={handleFieldChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              License Country *
-            </label>
-            <input
-              type="text"
-              name="licenseCountry"
-              value={accountData.licenseCountry}
-              onChange={handleFieldChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Issue Date *
-            </label>
-            <input
-              type="date"
-              name="licenseIssueDate"
-              value={accountData.licenseIssueDate}
-              onChange={handleFieldChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Expiry Date
-            </label>
-            <input
-              type="date"
-              name="licenseExpiryDate"
-              value={accountData.licenseExpiryDate}
-              onChange={handleFieldChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
+          {(() => {
+            const frontPreview = accountData.idFrontDocumentPreview || accountData.idFrontDocumentUrl;
+            const backPreview = accountData.idBackDocumentPreview || accountData.idBackDocumentUrl;
+
+            const renderDocumentCard = (label, preview, url, fileName, onSelect) => (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                <p className="text-sm font-medium text-gray-700">{label}</p>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onSelect}
+                    className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-orange-600"
+                  />
+                </label>
+                {fileName && (
+                  <p className="text-xs text-gray-500 truncate">
+                    Selected file: <span className="font-medium">{fileName}</span>
+                  </p>
+                )}
+                {preview ? (
+                  <a href={url || preview} target="_blank" rel="noopener noreferrer" className="block group">
+                    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                      <img
+                        src={preview}
+                        alt={`${label}`}
+                        className="h-40 w-full object-contain bg-gray-100 transition-transform duration-200 group-hover:scale-[1.02]"
+                        onError={(event) => {
+                          event.currentTarget.onerror = null;
+                          event.currentTarget.src = '/document-placeholder.svg';
+                        }}
+                      />
+                    </div>
+                    <span className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-orange-600 group-hover:text-orange-700">
+                      {url ? 'View current document' : 'View upload preview'}
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5h6m0 0v6m0-6L10 14" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19h14" />
+                      </svg>
+                    </span>
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-500">No document on file.</p>
+                )}
+              </div>
+            );
+
+            return (
+              <>
+                {renderDocumentCard(
+                  'Front Document',
+                  frontPreview,
+                  accountData.idFrontDocumentUrl,
+                  accountData.idFrontDocumentFile?.name,
+                  (event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    if (file) {
+                      if (accountData.idFrontDocumentPreview) {
+                        URL.revokeObjectURL(accountData.idFrontDocumentPreview);
+                      }
+                      handleFieldChange({ name: 'idFrontDocumentFile', value: file });
+                      const previewUrl = URL.createObjectURL(file);
+                      handleFieldChange({ name: 'idFrontDocumentPreview', value: previewUrl });
+                    } else {
+                      if (accountData.idFrontDocumentPreview) {
+                        URL.revokeObjectURL(accountData.idFrontDocumentPreview);
+                      }
+                      handleFieldChange({ name: 'idFrontDocumentFile', value: null });
+                      handleFieldChange({ name: 'idFrontDocumentPreview', value: '' });
+                    }
+                  }
+                )}
+                {renderDocumentCard(
+                  'Back Document',
+                  backPreview,
+                  accountData.idBackDocumentUrl,
+                  accountData.idBackDocumentFile?.name,
+                  (event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    if (file) {
+                      if (accountData.idBackDocumentPreview) {
+                        URL.revokeObjectURL(accountData.idBackDocumentPreview);
+                      }
+                      handleFieldChange({ name: 'idBackDocumentFile', value: file });
+                      const previewUrl = URL.createObjectURL(file);
+                      handleFieldChange({ name: 'idBackDocumentPreview', value: previewUrl });
+                    } else {
+                      if (accountData.idBackDocumentPreview) {
+                        URL.revokeObjectURL(accountData.idBackDocumentPreview);
+                      }
+                      handleFieldChange({ name: 'idBackDocumentFile', value: null });
+                      handleFieldChange({ name: 'idBackDocumentPreview', value: '' });
+                    }
+                  }
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>

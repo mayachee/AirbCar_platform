@@ -297,6 +297,18 @@ export function useOptimizedDashboard() {
 
   // Effects
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResponsiveSidebar = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarCollapsed(true);
+      }
+    };
+    handleResponsiveSidebar();
+    window.addEventListener('resize', handleResponsiveSidebar);
+    return () => window.removeEventListener('resize', handleResponsiveSidebar);
+  }, []);
+
+  useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/signin');
       return;
@@ -438,6 +450,7 @@ export function useOptimizedDashboard() {
     
     // Data fetching
     fetchPendingRequests,
-    fetchUpcomingBookings
+    fetchUpcomingBookings,
+    setSidebarCollapsed
   };
 }

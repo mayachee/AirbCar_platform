@@ -45,7 +45,9 @@ export class AuthService {
     return this.getProfile()
   }
 
-  async updateProfile(profileData: {
+  async updateProfile(profileData:
+    | FormData
+    | {
     first_name?: string
     last_name?: string
     email?: string
@@ -63,6 +65,9 @@ export class AuthService {
     nationality?: string
     default_currency?: string
   }) {
+    if (typeof FormData !== 'undefined' && profileData instanceof FormData) {
+      return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData)
+    }
     return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData)
   }
 

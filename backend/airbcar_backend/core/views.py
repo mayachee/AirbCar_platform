@@ -23,8 +23,12 @@ from .serializers import (UserSerializer, BookingSerializer, PartnerSerializer,
     CustomTokenObtainPairSerializer, FavoriteSerializer, ReviewSerializer, ReviewVoteSerializer, ReviewReportSerializer,
     PublicPartnerSerializer)
 from django.shortcuts import get_object_or_404
+import logging
 
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -141,6 +145,70 @@ class ListingViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
+    def _normalize_listing_payload(self, request):
+        import json
+
+        is_multipart = bool(request.content_type and request.content_type.startswith('multipart/form-data'))
+        raw_data = request.data.copy()
+        normalized = {}
+
+        for key in raw_data.keys():
+            values = raw_data.getlist(key)
+
+            if key == 'features':
+                if is_multipart:
+                    # Multipart uploads send features as repeated fields or a JSON string
+                    if len(values) == 1:
+                        single_value = values[0]
+                        if isinstance(single_value, str):
+                            single_value = single_value.strip()
+                        if not single_value:
+                            normalized[key] = []
+                        else:
+                            try:
+                                normalized[key] = json.loads(single_value)
+                                if not isinstance(normalized[key], list):
+                                    normalized[key] = [normalized[key]]
+                            except (json.JSONDecodeError, TypeError):
+                                normalized[key] = [single_value]
+                    else:
+                        normalized[key] = [v for v in values if v]
+                else:
+                    feature_value = raw_data.get(key)
+                    if isinstance(feature_value, str):
+                        feature_value = feature_value.strip()
+                        if not feature_value:
+                            normalized[key] = []
+                        else:
+                            try:
+                                parsed = json.loads(feature_value)
+                                normalized[key] = parsed if isinstance(parsed, list) else [parsed]
+                            except (json.JSONDecodeError, TypeError):
+                                normalized[key] = [feature_value]
+                    elif feature_value is None:
+                        normalized[key] = []
+                    else:
+                        normalized[key] = feature_value
+                continue
+
+            if len(values) == 0:
+                value = raw_data.get(key)
+            elif len(values) == 1:
+                value = values[0]
+            else:
+                value = values
+
+            if value is None:
+                value = ''
+            normalized[key] = value
+
+        if 'features' not in normalized:
+            normalized['features'] = []
+        elif not isinstance(normalized['features'], list):
+            normalized['features'] = [normalized['features']] if normalized['features'] else []
+
+        return normalized, is_multipart
+
     def get_queryset(self):
         qs = super().get_queryset()
         partner_id = self.request.query_params.get('partner_id')
@@ -152,83 +220,83 @@ class ListingViewSet(viewsets.ModelViewSet):
         """Override create to add better error logging and handle FormData features"""
         import json
         
-        print("=" * 50)
-        print("ListingViewSet.create called")
-        print(f"Request method: {request.method}")
-        print(f"Content-Type: {request.content_type}")
-        print(f"User: {request.user}")
+        data, is_multipart = self._normalize_listing_payload(request)
+
+        logger.warning("=" * 50)
+        logger.warning(
+            "ListingViewSet.create called method=%s content_type=%s user=%s is_multipart=%s payload_bytes=%s",
+            request.method,
+            request.content_type,
+            request.user,
+            is_multipart,
+            getattr(request, 'content_length', 'unknown')
+        )
         
-        # Prepare data dictionary from request
-        data = dict(request.data)
-        
-        # Handle features from FormData - ensure it's in the correct format
-        # The backend JSONField expects either a list (JSON) or JSON string
-        if 'features' in request.POST:
-            features_value = request.POST.get('features')
-            if isinstance(features_value, str):
-                # Check if it's already a JSON string
-                try:
-                    # Validate it's valid JSON
-                    json.loads(features_value)
-                    # If it parses, use it as-is (serializer will parse it)
-                    data['features'] = features_value
-                except (json.JSONDecodeError, ValueError):
-                    # If not valid JSON, might be multiple form entries - collect them
-                    features_list = request.POST.getlist('features')
-                    if features_list:
-                        # Filter and convert to JSON string
-                        features_list = [f for f in features_list if f and str(f).strip()]
-                        data['features'] = json.dumps(features_list) if features_list else json.dumps([])
-                    else:
-                        data['features'] = json.dumps([])
-            elif isinstance(features_value, list):
-                # If it's already a list, convert to JSON string
-                data['features'] = json.dumps(features_value)
-        elif 'features' in request.data:
-            # If features is already in request.data (from JSON request)
-            if isinstance(data['features'], list):
-                # Already a list, keep it
-                pass
-            elif isinstance(data['features'], str):
-                # Try to parse as JSON
-                try:
-                    json.loads(data['features'])
-                    # Valid JSON, keep as string (serializer will parse)
-                except (json.JSONDecodeError, ValueError):
-                    # Invalid JSON, convert to empty list
-                    data['features'] = []
-            else:
-                data['features'] = []
-        else:
-            # No features provided, use empty list
-            data['features'] = json.dumps([])
-        
-        print(f"Request data keys: {list(data.keys())}")
-        print(f"Request POST keys: {list(request.POST.keys())}")
-        print(f"Request FILES keys: {list(request.FILES.keys())}")
+        logger.warning("Request data keys: %s", list(data.keys()))
+        logger.warning("Request POST keys: %s", list(request.POST.keys()))
+        logger.warning("Request FILES keys: %s", list(request.FILES.keys()))
         
         # Log all data values (but truncate long values)
-        print("\nRequest.data contents:")
+        logger.warning("Request.data contents:")
         for key, value in data.items():
             if isinstance(value, str) and len(value) > 100:
-                print(f"  {key}: {value[:100]}... (truncated)")
+                logger.warning("  %s: %s... (truncated)", key, value[:100])
             elif isinstance(value, list):
-                print(f"  {key}: {value} (type: list, length: {len(value)})")
+                logger.warning("  %s: %s (type: list, length: %d)", key, value, len(value))
             else:
-                print(f"  {key}: {value} (type: {type(value).__name__})")
+                logger.warning("  %s: %s (type: %s)", key, value, type(value).__name__)
         
         serializer = self.get_serializer(data=data)
         if not serializer.is_valid():
-            print("\n❌ Serializer validation failed!")
-            print(f"Serializer errors: {serializer.errors}")
-            print("=" * 50)
+            logger.error("Serializer validation failed! errors=%s", serializer.errors)
+            logger.warning("=" * 50)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        print("\n✅ Serializer is valid, calling perform_create")
-        print("=" * 50)
+        logger.warning("Serializer is valid, calling perform_create")
+        logger.warning("=" * 50)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        """Normalize payload for PUT/PATCH requests and provide detailed logging"""
+        partial = kwargs.pop('partial', False)
+        data, is_multipart = self._normalize_listing_payload(request)
+
+        logger.warning("=" * 50)
+        logger.warning(
+            "ListingViewSet.update called method=%s content_type=%s user=%s is_multipart=%s payload_bytes=%s partial=%s",
+            request.method,
+            request.content_type,
+            request.user,
+            is_multipart,
+            getattr(request, 'content_length', 'unknown'),
+            partial
+        )
+        logger.warning("Request data keys: %s", list(data.keys()))
+        logger.warning("Request POST keys: %s", list(request.POST.keys()))
+        logger.warning("Request FILES keys: %s", list(request.FILES.keys()))
+        logger.warning("Request.data contents:")
+        for key, value in data.items():
+            if isinstance(value, str) and len(value) > 100:
+                logger.warning("  %s: %s... (truncated)", key, value[:100])
+            elif isinstance(value, list):
+                logger.warning("  %s: %s (type: list, length: %d)", key, value, len(value))
+            else:
+                logger.warning("  %s: %s (type: %s)", key, value, type(value).__name__)
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        if not serializer.is_valid():
+            logger.error("Serializer validation failed during update! errors=%s", serializer.errors)
+            logger.warning("=" * 50)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        logger.warning("Serializer valid, performing update")
+        logger.warning("=" * 50)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         request = self.request

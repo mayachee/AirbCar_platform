@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, lazy } from 'react';
-import { Moon, Sun, Bell, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Moon, Sun, Bell, CheckCircle, AlertCircle, Clock, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const NotificationCenter = lazy(() => import('@/features/partner/components/NotificationCenter'));
@@ -22,7 +22,8 @@ export default function DashboardHeader({
   toggleTheme,
   notifications,
   onMarkAsRead,
-  onClearAll
+  onClearAll,
+  onToggleSidebar
 }) {
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
   const currentNavItem = navigationItems.find(item => item.id === currentView);
@@ -31,12 +32,24 @@ export default function DashboardHeader({
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4"
+      className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="flex items-center space-x-3 mb-1">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+          {onToggleSidebar && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onToggleSidebar}
+              className="lg:hidden p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
+              aria-label="Toggle navigation menu"
+            >
+              <Menu className="h-5 w-5" />
+            </motion.button>
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center space-x-3 mb-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
               {currentNavItem?.label || 'Dashboard'}
             </h1>
             {currentNavItem?.icon && (
@@ -71,8 +84,9 @@ export default function DashboardHeader({
             )}
           </p>
         </div>
+        </div>
         
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

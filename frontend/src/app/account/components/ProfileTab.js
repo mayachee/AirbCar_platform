@@ -27,20 +27,6 @@ export default function ProfileTab({
       setLocalLoading(true);
       setError(null);
 
-      // Fetch user stats
-      let userStats = null;
-      try {
-        const statsResponse = await apiClient.get('/users/me/stats/');
-        userStats = statsResponse.data;
-      } catch (err) {
-        // Silently handle 404 - endpoint doesn't exist
-        if (err.message?.includes('404') || err.status === 404) {
-          console.log('Stats endpoint not available');
-        } else {
-          console.log('Error fetching stats:', err);
-        }
-      }
-
       // Fetch bookings
       let allBookings = [];
       try {
@@ -52,27 +38,7 @@ export default function ProfileTab({
         }
       }
 
-      // Fetch bookings from user-specific endpoint if available
-      if (allBookings.length === 0) {
-        try {
-          const userBookingsResponse = await apiClient.get('/users/me/bookings/');
-          allBookings = userBookingsResponse.data || [];
-        } catch (err) {
-          // Silently handle 404
-        }
-      }
-
-      // Fetch bookings history
-      let bookingHistory = [];
-      try {
-        const historyResponse = await apiClient.get('/users/me/bookings/history/');
-        bookingHistory = historyResponse.data || [];
-      } catch (err) {
-        // Silently handle 404
-      }
-
-      // Combine bookings and history
-      const combinedBookings = [...allBookings, ...bookingHistory];
+      const combinedBookings = [...allBookings];
       
       // Filter upcoming bookings
       const now = new Date();
@@ -94,7 +60,7 @@ export default function ProfileTab({
       }
 
       // Use fetched stats or calculate from bookings
-      const newStats = userStats || {
+      const newStats = {
         total_bookings: combinedBookings.length || 0,
         total_favorites: favoritesCount || propStats?.total_favorites || 0,
         total_spent: combinedBookings.reduce((sum, b) => sum + (parseFloat(b.total_price || b.price || 0)), 0) || 0,

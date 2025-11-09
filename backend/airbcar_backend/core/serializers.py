@@ -148,6 +148,16 @@ class ListingSerializer(serializers.ModelSerializer):
         # DRF should handle this, but let's ensure it works
         processed_data = data.copy() if hasattr(data, 'copy') else dict(data)
         
+        # Flatten single-value lists that can come from multipart/form-data
+        single_value_fields = [
+            'make', 'model', 'year', 'location', 'price_per_day',
+            'fuel_type', 'transmission', 'seating_capacity',
+            'vehicle_condition', 'vehicle_description', 'availability'
+        ]
+        for field in single_value_fields:
+            if field in processed_data and isinstance(processed_data[field], list):
+                processed_data[field] = processed_data[field][0] if processed_data[field] else ''
+
         # Convert string numbers to integers for year and seating_capacity
         if 'year' in processed_data and isinstance(processed_data['year'], str):
             try:

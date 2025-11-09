@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useOptimizedDashboard } from '@/features/partner/hooks/useOptimizedDashboard';
@@ -36,6 +36,7 @@ export default function OptimizedPartnerDashboard() {
     pendingRequests,
     upcomingBookings,
     sidebarCollapsed,
+    setSidebarCollapsed,
     theme,
     notifications,
     recentActivity,
@@ -80,6 +81,22 @@ export default function OptimizedPartnerDashboard() {
     fetchUpcomingBookings
   } = useOptimizedDashboard();
 
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 1024;
+      setIsMobileView(isMobile);
+      if (isMobile) {
+        setSidebarCollapsed(true);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setSidebarCollapsed]);
+
   // Early loading state
   if (loading || (!initialLoadComplete && user)) {
     return <LoadingSkeleton />;
@@ -93,27 +110,59 @@ export default function OptimizedPartnerDashboard() {
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
       <Header />
       
-      <div className="flex">
-        {/* Sidebar */}
-        <DashboardSidebar
-          sidebarCollapsed={sidebarCollapsed}
-          toggleSidebar={toggleSidebar}
-          navigationItems={navigationItems}
-          currentView={currentView}
-          setCurrentView={setCurrentView}
-          isOnline={isOnline}
-          backendAvailable={backendAvailable}
-          onAddVehicle={handleAddVehicle}
-          onRefreshData={() => {
-            refetch();
-            fetchPendingRequests();
-            fetchUpcomingBookings();
-          }}
-        />
+      {/* Mobile Sidebar */}
+      {isMobileView && (
+        <>
+          <div
+            className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${
+              sidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+            onClick={toggleSidebar}
+          />
+          <DashboardSidebar
+            isMobile
+            sidebarCollapsed={sidebarCollapsed}
+            toggleSidebar={toggleSidebar}
+            navigationItems={navigationItems}
+            currentView={currentView}
+            setCurrentView={(view) => {
+              setCurrentView(view);
+              setSidebarCollapsed(true);
+            }}
+            isOnline={isOnline}
+            backendAvailable={backendAvailable}
+            onAddVehicle={handleAddVehicle}
+            onRefreshData={() => {
+              refetch();
+              fetchPendingRequests();
+              fetchUpcomingBookings();
+            }}
+          />
+        </>
+      )}
+
+      <div className="flex min-h-screen">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <DashboardSidebar
+            sidebarCollapsed={sidebarCollapsed}
+            toggleSidebar={toggleSidebar}
+            navigationItems={navigationItems}
+            currentView={currentView}
+            setCurrentView={setCurrentView}
+            isOnline={isOnline}
+            backendAvailable={backendAvailable}
+            onAddVehicle={handleAddVehicle}
+            onRefreshData={() => {
+              refetch();
+              fetchPendingRequests();
+              fetchUpcomingBookings();
+            }}
+          />
+        </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
+        <div className="flex-1 flex flex-col min-h-screen">
           <DashboardHeader
             navigationItems={navigationItems}
             currentView={currentView}
@@ -124,31 +173,33 @@ export default function OptimizedPartnerDashboard() {
             notifications={notifications}
             onMarkAsRead={handleMarkAsRead}
             onClearAll={handleClearAllNotifications}
+            onToggleSidebar={isMobileView ? toggleSidebar : undefined}
           />
 
-          {/* Content */}
-          <DashboardContent
-            currentView={currentView}
-            quickStats={quickStats}
-            pendingRequests={pendingRequests}
-            upcomingBookings={upcomingBookings}
-            recentActivity={recentActivity}
-            vehicles={vehicles}
-            bookings={bookings}
-            partnerData={partnerData}
-            stats={stats}
-            dataLoading={dataLoading}
-            processingBooking={processingBooking}
-            handleAddVehicle={handleAddVehicle}
-            handleEditVehicle={handleEditVehicle}
-            handleDeleteVehicle={handleDeleteVehicle}
-            handleAcceptRequest={handleAcceptRequest}
-            handleRejectRequest={handleRejectRequest}
-            acceptBooking={acceptBooking}
-            rejectBooking={rejectBooking}
-            cancelBooking={cancelBooking}
-            refetch={refetch}
-          />
+          <div className="flex-1 overflow-hidden">
+            <DashboardContent
+              currentView={currentView}
+              quickStats={quickStats}
+              pendingRequests={pendingRequests}
+              upcomingBookings={upcomingBookings}
+              recentActivity={recentActivity}
+              vehicles={vehicles}
+              bookings={bookings}
+              partnerData={partnerData}
+              stats={stats}
+              dataLoading={dataLoading}
+              processingBooking={processingBooking}
+              handleAddVehicle={handleAddVehicle}
+              handleEditVehicle={handleEditVehicle}
+              handleDeleteVehicle={handleDeleteVehicle}
+              handleAcceptRequest={handleAcceptRequest}
+              handleRejectRequest={handleRejectRequest}
+              acceptBooking={acceptBooking}
+              rejectBooking={rejectBooking}
+              cancelBooking={cancelBooking}
+              refetch={refetch}
+            />
+          </div>
         </div>
       </div>
 

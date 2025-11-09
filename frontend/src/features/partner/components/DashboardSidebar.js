@@ -21,13 +21,30 @@ export default function DashboardSidebar({
   isOnline,
   backendAvailable,
   onAddVehicle,
-  onRefreshData
+  onRefreshData,
+  isMobile = false
 }) {
+  const mobileVariants = {
+    open: { x: 0 },
+    closed: { x: '-100%' }
+  };
+
+  const desktopVariants = {
+    open: { width: 256 },
+    closed: { width: 64 }
+  };
+
   return (
     <motion.div 
       initial={false}
-      animate={{ width: sidebarCollapsed ? 64 : 256 }}
-      className="bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-gray-700 flex flex-col h-screen"
+      animate={sidebarCollapsed ? 'closed' : 'open'}
+      variants={isMobile ? mobileVariants : desktopVariants}
+      transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+      className={`bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 ease-in-out flex flex-col ${
+        isMobile
+          ? 'fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] h-full border-r border-gray-200 dark:border-gray-700'
+          : 'h-screen border-r border-gray-200 dark:border-gray-700'
+      }`}
     >
       <div className="p-4 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
@@ -57,7 +74,7 @@ export default function DashboardSidebar({
         </div>
 
         {/* Status Indicators */}
-        <div className={`space-y-2 mb-6 ${sidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+        <div className={`space-y-2 mb-6 ${sidebarCollapsed && !isMobile ? 'flex flex-col items-center' : ''}`}>
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}

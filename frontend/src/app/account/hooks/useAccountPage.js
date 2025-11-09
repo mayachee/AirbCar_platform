@@ -45,13 +45,36 @@ export const useAccountPage = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem('accountForm', JSON.stringify(accountData));
+      const {
+        idFrontDocumentFile,
+        idBackDocumentFile,
+        ...rest
+      } = accountData;
+      localStorage.setItem('accountForm', JSON.stringify(rest));
     } catch (_) {}
   }, [accountData]);
 
   // Handle form field changes
-  const handleAccountFieldChange = (e) => {
-    const { name, value } = e.target;
+  const handleAccountFieldChange = (input, valueArg) => {
+    let name;
+    let value;
+
+    if (input && typeof input === 'object' && 'target' in input) {
+      name = input.target?.name;
+      if (input.target?.files && input.target.files.length > 0) {
+        value = input.target.files[0];
+      } else {
+        value = input.target?.value;
+      }
+    } else if (input && typeof input === 'object' && 'name' in input) {
+      name = input.name;
+      value = 'value' in input ? input.value : valueArg;
+    } else {
+      name = input;
+      value = valueArg;
+    }
+
+    if (name === undefined || name === null) return;
     handleFieldChange(name, value);
   };
 
@@ -85,8 +108,28 @@ export const useAccountPage = () => {
         }
       });
 
-      // Use authService to update profile
-      const response = await authService.updateProfile(profileData);
+      const hasDocumentUploads = Boolean(accountData.idFrontDocumentFile || accountData.idBackDocumentFile);
+
+      let response;
+      if (hasDocumentUploads) {
+        const formData = new FormData();
+        Object.entries(profileData).forEach(([key, val]) => {
+          if (val !== undefined && val !== null && val !== '') {
+            formData.append(key, String(val));
+          }
+        });
+
+        if (accountData.idFrontDocumentFile) {
+          formData.append('id_front_document_url', accountData.idFrontDocumentFile);
+        }
+        if (accountData.idBackDocumentFile) {
+          formData.append('id_back_document_url', accountData.idBackDocumentFile);
+        }
+
+        response = await authService.updateProfile(formData);
+      } else {
+        response = await authService.updateProfile(profileData);
+      }
       // Unwrap ApiResponse - the actual data is in response.data
       const updatedUserData = response?.data || response;
 
@@ -110,8 +153,21 @@ export const useAccountPage = () => {
         licenseCountry: updatedUserData.license_origin_country || accountData.licenseCountry,
         licenseIssueDate: updatedUserData.issue_date || accountData.licenseIssueDate,
         licenseExpiryDate: updatedUserData.expiry_date || accountData.licenseExpiryDate,
-        profileImage: updatedUserData.profile_picture || accountData.profileImage
+        profileImage: updatedUserData.profile_picture || accountData.profileImage,
+        idFrontDocumentUrl: updatedUserData.id_front_document_url || accountData.idFrontDocumentUrl,
+        idBackDocumentUrl: updatedUserData.id_back_document_url || accountData.idBackDocumentUrl,
+        idFrontDocumentFile: null,
+        idBackDocumentFile: null,
+        idFrontDocumentPreview: '',
+        idBackDocumentPreview: ''
       });
+
+      if (accountData.idFrontDocumentPreview) {
+        URL.revokeObjectURL(accountData.idFrontDocumentPreview);
+      }
+      if (accountData.idBackDocumentPreview) {
+        URL.revokeObjectURL(accountData.idBackDocumentPreview);
+      }
       
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (error) {
@@ -164,7 +220,9 @@ export const useAccountPage = () => {
         licenseCountry: updatedData.license_origin_country || accountData.licenseCountry,
         licenseIssueDate: updatedData.issue_date || accountData.licenseIssueDate,
         licenseExpiryDate: updatedData.expiry_date || accountData.licenseExpiryDate,
-        profileImage: updatedData.profile_picture || updatedUserData.profile_picture || '/default-avatar.svg'
+        profileImage: updatedData.profile_picture || updatedUserData.profile_picture || '/default-avatar.svg',
+        idFrontDocumentUrl: updatedData.id_front_document_url || accountData.idFrontDocumentUrl,
+        idBackDocumentUrl: updatedData.id_back_document_url || accountData.idBackDocumentUrl
       });
     } catch (error) {
       console.error('Error uploading profile picture:', error);

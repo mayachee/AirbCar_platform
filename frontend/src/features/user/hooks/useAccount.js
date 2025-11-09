@@ -22,7 +22,13 @@ export const useAccount = () => {
     licenseNumber: user?.license_number || '',
     licenseCountry: user?.license_country || '',
     licenseIssueDate: user?.license_issue_date || '',
-    licenseExpiryDate: user?.license_expiry_date || ''
+    licenseExpiryDate: user?.license_expiry_date || '',
+    idFrontDocumentUrl: user?.id_front_document_url || '',
+    idBackDocumentUrl: user?.id_back_document_url || '',
+    idFrontDocumentFile: null,
+    idBackDocumentFile: null,
+    idFrontDocumentPreview: '',
+    idBackDocumentPreview: ''
   });
 
   const [saving, setSaving] = useState(false);
@@ -53,7 +59,14 @@ export const useAccount = () => {
         licenseNumber: userData.license_number || prev.licenseNumber,
         licenseCountry: userData.license_origin_country || prev.licenseCountry,
         licenseIssueDate: userData.issue_date || prev.licenseIssueDate,
-        profileImage: userData.profile_picture || prev.profileImage || '/default-avatar.svg'
+        licenseExpiryDate: userData.expiry_date || prev.licenseExpiryDate,
+        profileImage: userData.profile_picture || prev.profileImage || '/default-avatar.svg',
+        idFrontDocumentUrl: userData.id_front_document_url || prev.idFrontDocumentUrl,
+        idBackDocumentUrl: userData.id_back_document_url || prev.idBackDocumentUrl,
+        idFrontDocumentFile: null,
+        idBackDocumentFile: null,
+        idFrontDocumentPreview: '',
+        idBackDocumentPreview: ''
       }));
       setEmailVerified(!!(userData?.email_verified || userData?.is_verified));
     } catch (error) {
@@ -91,8 +104,28 @@ export const useAccount = () => {
   }, []);
 
   // Handle field changes
-  const handleFieldChange = useCallback((name, value) => {
-    setAccountData(prev => ({ ...prev, [name]: value }));
+  const handleFieldChange = useCallback((arg1, arg2) => {
+    if (typeof arg1 === 'string') {
+      setAccountData(prev => ({ ...prev, [arg1]: arg2 }));
+      return;
+    }
+
+    if (arg1 && typeof arg1 === 'object') {
+      if ('target' in arg1 && arg1.target) {
+        const { name, value, files } = arg1.target;
+        if (!name) return;
+        if (files && files.length) {
+          setAccountData(prev => ({ ...prev, [name]: files[0] }));
+        } else {
+          setAccountData(prev => ({ ...prev, [name]: value }));
+        }
+        return;
+      }
+
+      if ('name' in arg1) {
+        setAccountData(prev => ({ ...prev, [arg1.name]: arg1.value }));
+      }
+    }
   }, []);
 
   // Refresh verification status
