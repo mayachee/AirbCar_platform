@@ -2,13 +2,11 @@
 import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import CarTypes from "@/features/home/components/CarTypes";
-import Features from "@/features/home/components/Features";
 import Header from "@/components/layout/Header";
 import Hero from "@/features/home/components/Hero";
 import HowItWorks from "@/features/home/components/HowItWorks";
 import PopularDestinations from "@/features/home/components/PopularDestinations";
 import Footer from "@/components/layout/Footer";
-import TrustSignals from "@/features/home/components/TrustSignals";
 import RentalProviders from "@/features/home/components/RentalProviders";
 import InfoSection from "@/features/home/components/InfoSection";
 
@@ -36,10 +34,8 @@ function HomeContent() {
     <div className="min-h-screen">
       <Header />
       <Hero />
-      <Features />
       <PopularDestinations />
       <CarTypes />
-      <TrustSignals />
       <RentalProviders />
       <HowItWorks />
       <InfoSection />

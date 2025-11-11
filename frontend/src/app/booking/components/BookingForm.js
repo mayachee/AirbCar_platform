@@ -1,12 +1,29 @@
-import { useState } from 'react'
+'use client'
+
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function BookingForm({ onConfirm, onCancel, loading, error, user }) {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [specialRequest, setSpecialRequest] = useState('')
   const [licenseFile, setLicenseFile] = useState(null)
   const [licensePreview, setLicensePreview] = useState(null)
+  const router = useRouter()
+
+  const isAuthenticated = Boolean(user)
+  const loginUrl = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return '/auth/signin?redirect=/booking'
+    }
+    const currentPath = window.location.pathname + window.location.search
+    return `/auth/signin?redirect=${encodeURIComponent(currentPath)}`
+  }, [])
 
   const handleFileChange = (e) => {
+    if (!isAuthenticated) {
+      router.push(loginUrl)
+      return
+    }
     const file = e.target.files[0]
     if (file) {
       setLicenseFile(file)
@@ -24,6 +41,10 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
   }
 
   const handleConfirm = () => {
+    if (!isAuthenticated) {
+      router.push(loginUrl)
+      return
+    }
     if (!agreedToTerms || !licenseFile) {
       return
     }
@@ -48,6 +69,28 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
       </div>
 
       <div className="p-6 space-y-6">
+        {!isAuthenticated && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex gap-3 items-start">
+            <svg className="w-6 h-6 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 9v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-orange-900">Sign in required</h3>
+              <p className="text-sm text-orange-800">
+                Please{' '}
+                <button
+                  type="button"
+                  onClick={() => router.push(loginUrl)}
+                  className="font-medium text-orange-700 underline hover:text-orange-800"
+                >
+                  log in
+                </button>{' '}
+                to continue with your booking.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border-l-4 border-red-400 rounded-md p-4">
@@ -89,88 +132,10 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
             onChange={(e) => setSpecialRequest(e.target.value)}
             placeholder="Any special requests, delivery instructions, or additional information..."
             rows={3}
-            disabled={loading}
+            disabled={loading || !isAuthenticated}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none disabled:bg-gray-50 disabled:cursor-not-allowed"
           />
           <p className="mt-1 text-xs text-gray-500">This will be sent to the car owner along with your booking request</p>
-        </div>
-
-        {/* Driver's License Upload */}
-        <div>
-          <label htmlFor="licenseUpload" className="block text-sm font-medium text-gray-700 mb-2">
-            Driver's License Information <span className="text-red-500">*</span>
-          </label>
-          <p className="text-sm text-gray-600 mb-3">
-            Please upload a clear photo of your valid driver's license
-          </p>
-
-          {!licenseFile ? (
-            <label
-              htmlFor="licenseUpload"
-              className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 hover:border-orange-400 transition-colors group"
-            >
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <svg className="w-12 h-12 text-gray-400 group-hover:text-orange-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <p className="mb-2 text-sm text-gray-500">
-                  <span className="font-semibold text-orange-600">Click to upload</span> or drag and drop
-                </p>
-                <p className="text-xs text-gray-500">PNG, JPG or PDF (MAX. 5MB)</p>
-              </div>
-              <input
-                id="licenseUpload"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileChange}
-                disabled={loading}
-                className="hidden"
-              />
-            </label>
-          ) : (
-            <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0">
-                  {licensePreview && licenseFile.type.startsWith('image/') ? (
-                    <img
-                      src={licensePreview}
-                      alt="License preview"
-                      className="w-24 h-16 object-cover rounded border border-gray-300"
-                    />
-                  ) : (
-                    <div className="w-24 h-16 bg-gray-200 rounded border border-gray-300 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{licenseFile.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {(licenseFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRemoveLicense}
-                  disabled={loading}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Remove license"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
-          <p className="mt-2 text-xs text-gray-500">
-            <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            This is required for rental verification and must be valid
-          </p>
         </div>
 
         {/* Terms and Conditions */}
@@ -180,7 +145,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
               type="checkbox"
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
-              disabled={loading}
+              disabled={loading || !isAuthenticated}
               className="mt-1 h-5 w-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500 cursor-pointer disabled:cursor-not-allowed"
             />
             <div className="flex-1">
@@ -216,7 +181,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
           
           <button
             onClick={handleConfirm}
-            disabled={loading || !agreedToTerms || !licenseFile}
+            disabled={loading || (isAuthenticated && (!agreedToTerms || !licenseFile))}
             className="flex-1 px-6 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 disabled:shadow-none"
           >
             {loading ? (

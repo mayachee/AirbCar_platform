@@ -68,6 +68,9 @@ export const API_ENDPOINTS = {
   ADMIN: {
     USERS: '/admin/users/',
     STATS: '/admin/stats/',
+  },
+  NEWSLETTER: {
+    SUBSCRIBE: '/api/newsletter/subscribe/',
   }
 }
 

@@ -7,7 +7,7 @@ from core.views import (
     home_view, UserViewSet, PartnerViewSet, ListingViewSet,
     BookingViewSet, FavoriteViewSet, ReviewViewSet, PasswordResetRequestView, PasswordResetConfirmView, 
     verify_email, CustomTokenObtainPairView, UserStatusView, AdminStatusView,
-    UserVerificationView, public_partner_profile_view)
+    UserVerificationView, public_partner_profile_view, NewsletterSubscriptionView, GoogleOAuthView)
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -35,6 +35,8 @@ urlpatterns = [
    
     path('api/password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('api/reset-password/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('api/newsletter/subscribe/', NewsletterSubscriptionView.as_view(), name='newsletter_subscribe'),
+    path('api/auth/google/', GoogleOAuthView.as_view(), name='google_oauth'),
     
     # Include router URLs (after custom routes - router will handle /partners/ but not /partners/public/)
     path('', include(router.urls)),

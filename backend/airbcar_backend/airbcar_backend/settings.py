@@ -13,10 +13,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 from datetime import timedelta
-import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env file but don't override existing environment variables
+# This is important for Docker where env vars are set by docker-compose
+load_dotenv(override=False)
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -97,7 +98,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'airbcar_backend.wsgi.application'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email Configuration
+# Use SMTP backend if email credentials are provided, otherwise use console for development
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# Use SMTP if credentials are provided, otherwise use console backend
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+else:
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'from@airbcar.com')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

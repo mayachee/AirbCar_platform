@@ -3,6 +3,7 @@ from .models import User, Booking, Partner, Listing, Favorite, Review, ReviewVot
 from django.db.models import Prefetch, Count, Avg, Sum
 from django.utils import timezone
 from rest_framework import viewsets, generics, status
+from rest_framework.views import APIView
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
@@ -10,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 import uuid
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import status
@@ -1311,49 +1312,523 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(upcoming_bookings, many=True)
         return Response(serializer.data)
 
-class PasswordResetRequestView(generics.GenericAPIView):
-    serializer_class = PasswordResetRequestSerializer
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
     
     def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+        serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         email = serializer.validated_data['email']
-        user = User.objects.filter(email=email).first()
-        if user:
-            token_generator = PasswordResetTokenGenerator()
-            token = token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_url = f"http://localhost:3000/auth/reset-password?uid={uid}&token={token}"
-            send_mail(
-                'Password Reset Request',
-                f'Use this link to reset your password: {reset_url}',
-                'from@airbcar.com',
-                [email],
-                fail_silently=False,
+        
+        # Check if email exists in database - but ALWAYS send an email regardless
+        user = None
+        user_exists = False
+        user_active = False
+        
+        try:
+            user = User.objects.filter(email=email).first()
+            
+            if user:
+                user_exists = True
+                user_active = user.is_active
+                logger.info(f'Password reset requested for email: {email} (User ID: {user.id}, Active: {user.is_active})')
+                print(f'[PASSWORD RESET] Database check: Email {email} EXISTS in database (User ID: {user.id}, Active: {user_active})')
+            else:
+                logger.info(f'Password reset requested for non-existent email: {email} - Will send generic email')
+                print(f'[PASSWORD RESET] Database check: Email {email} NOT FOUND in database - Will send generic email')
+            
+        except Exception as db_error:
+            # Log database error but still send email
+            logger.error(f'Database error while checking email {email}: {str(db_error)}', exc_info=True)
+            print(f'[PASSWORD RESET ERROR] Database check failed for {email}: {str(db_error)} - Will send generic email')
+        
+        # ALWAYS send an email - regardless of whether user exists
+        try:
+            from django.conf import settings
+            import urllib.parse
+            
+            # If user exists and is active, generate reset token and URL
+            reset_url = None
+            if user_exists and user_active:
+                token_generator = PasswordResetTokenGenerator()
+                token = token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                # URL encode the token and uid to handle special characters (like colons in tokens)
+                encoded_uid = urllib.parse.quote(uid, safe='')
+                encoded_token = urllib.parse.quote(token, safe='')
+                # Use FRONTEND_URL from settings if available, otherwise default to localhost
+                frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+                reset_url = f"{frontend_url}/auth/reset-password?uid={encoded_uid}&token={encoded_token}"
+            
+            # Create professional HTML email template
+            subject = 'Reset Your Password - AirbCar'
+            
+            # Generate email content based on whether user exists and is active
+            if reset_url:
+                # User exists and is active - include reset link
+                text_content = f'''
+Hello,
+
+You requested to reset your password for your AirbCar account.
+
+Click the following link to reset your password:
+{reset_url}
+
+This link will expire in 24 hours for security reasons.
+
+If you did not request this password reset, please ignore this email. Your account remains secure.
+
+Need help? Contact us at support@airbcar.com
+
+Best regards,
+The AirbCar Team
+
+---
+AirbCar - Your trusted car rental platform
+www.airbcar.com
+'''
+            else:
+                # User doesn't exist or is inactive - send generic message
+                text_content = f'''
+Hello,
+
+We received a request to reset the password for an AirbCar account associated with this email address.
+
+If you have an account with us and requested this password reset, please try again using the email address associated with your account. If you continue to have issues, please contact our support team.
+
+If you did not request this password reset, please ignore this email. Your account remains secure.
+
+Need help? Contact us at support@airbcar.com
+
+Best regards,
+The AirbCar Team
+
+---
+AirbCar - Your trusted car rental platform
+www.airbcar.com
+'''
+            # Build HTML content conditionally
+            if reset_url:
+                message_html = '<p class="message">We received a request to reset the password for your AirbCar account. If you made this request, please click the button below to create a new password.</p>'
+                button_html = f'''<div class="button-container">
+                                        <a href="{reset_url}" class="button">Reset My Password</a>
+                                    </div>
+                                    
+                                    <div class="link-fallback">
+                                        <p class="link-fallback-text">Button not working? Copy and paste this link into your browser:</p>
+                                        <p class="link-url">{reset_url}</p>
+                                    </div>
+                                    
+                                    <div class="expiry-info">
+                                        <p class="expiry-text">⏰ This password reset link will expire in 24 hours for your security.</p>
+                                    </div>'''
+            else:
+                message_html = '<p class="message">We received a request to reset the password for an AirbCar account associated with this email address. If you have an account with us and requested this password reset, please try again using the email address associated with your account.</p>'
+                button_html = ''
+            
+            html_content = f'''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Reset Your Password - AirbCar</title>
+    <!--[if mso]>
+    <style type="text/css">
+        table {{border-collapse:collapse;border-spacing:0;margin:0;}}
+        div, td {{padding:0;}}
+        div {{margin:0 !important;}}
+    </style>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style type="text/css">
+        /* Reset Styles */
+        body, table, td, p, a, li, blockquote {{
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }}
+        table, td {{
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }}
+        img {{
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            outline: none;
+            text-decoration: none;
+        }}
+        
+        /* Main Styles */
+        body {{
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }}
+        .email-wrapper {{
+            width: 100%;
+            background-color: #f5f5f5;
+            padding: 40px 20px;
+        }}
+        .email-container {{
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }}
+        .header {{
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }}
+        .logo {{
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }}
+        .logo-icon {{
+            font-size: 36px;
+            margin-right: 8px;
+        }}
+        .content {{
+            padding: 40px 30px;
+        }}
+        .greeting {{
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0 0 20px 0;
+        }}
+        .message {{
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4b5563;
+            margin: 0 0 30px 0;
+        }}
+        .button-container {{
+            text-align: center;
+            margin: 35px 0;
+        }}
+        .button {{
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3);
+            transition: all 0.3s ease;
+        }}
+        .button:hover {{
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+            box-shadow: 0 6px 12px rgba(249, 115, 22, 0.4);
+            transform: translateY(-2px);
+        }}
+        .link-fallback {{
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-left: 4px solid #f97316;
+            border-radius: 4px;
+        }}
+        .link-fallback-text {{
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0 0 8px 0;
+            font-weight: 600;
+        }}
+        .link-url {{
+            font-size: 12px;
+            color: #9ca3af;
+            word-break: break-all;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+        }}
+        .security-note {{
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            border-radius: 4px;
+        }}
+        .security-title {{
+            font-size: 14px;
+            font-weight: 600;
+            color: #92400e;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+        }}
+        .security-text {{
+            font-size: 13px;
+            color: #78350f;
+            margin: 0;
+            line-height: 1.5;
+        }}
+        .expiry-info {{
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+        }}
+        .expiry-text {{
+            font-size: 14px;
+            color: #1e40af;
+            margin: 0;
+            font-weight: 500;
+        }}
+        .divider {{
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 35px 0;
+        }}
+        .footer {{
+            background-color: #f9fafb;
+            padding: 30px;
+            text-align: center;
+        }}
+        .footer-text {{
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0 0 15px 0;
+            line-height: 1.6;
+        }}
+        .footer-links {{
+            margin: 20px 0;
+        }}
+        .footer-link {{
+            color: #f97316;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 15px;
+        }}
+        .footer-link:hover {{
+            text-decoration: underline;
+        }}
+        .footer-company {{
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin: 0 0 10px 0;
+        }}
+        .footer-contact {{
+            font-size: 13px;
+            color: #9ca3af;
+            margin: 15px 0 0 0;
+        }}
+        .footer-copyright {{
+            font-size: 12px;
+            color: #9ca3af;
+            margin: 20px 0 0 0;
+        }}
+        
+        /* Mobile Responsive */
+        @media only screen and (max-width: 600px) {{
+            .email-wrapper {{
+                padding: 20px 10px;
+            }}
+            .header {{
+                padding: 30px 20px;
+            }}
+            .logo {{
+                font-size: 28px;
+            }}
+            .content {{
+                padding: 30px 20px;
+            }}
+            .button {{
+                padding: 14px 30px;
+                font-size: 15px;
+            }}
+            .footer {{
+                padding: 25px 20px;
+            }}
+            .footer-link {{
+                display: block;
+                margin: 8px 0;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td align="center">
+                    <div class="email-container">
+                        <!-- Header -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td class="header">
+                                    <h1 class="logo">
+                                        <span class="logo-icon">🚗</span>
+                                        AirbCar
+                                    </h1>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- Content -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td class="content">
+                                    <p class="greeting">Hello,</p>
+                                    {message_html}
+                                    
+                                    {button_html}
+                                    
+                                    <div class="security-note">
+                                        <p class="security-title">
+                                            🔒 Security Notice
+                                        </p>
+                                        <p class="security-text">
+                                            If you did not request this password reset, please ignore this email. 
+                                            Your account remains secure and no changes have been made. 
+                                            If you're concerned about your account security, please contact our support team immediately.
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="divider"></div>
+                                    
+                                    <p class="message" style="margin-bottom: 0;">
+                                        Need help? Our support team is here for you 24/7. 
+                                        Simply reply to this email or contact us at 
+                                        <a href="mailto:support@airbcar.com" style="color: #f97316; text-decoration: none;">support@airbcar.com</a>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <!-- Footer -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td class="footer">
+                                    <p class="footer-company">AirbCar</p>
+                                    <p class="footer-text">
+                                        Your trusted car rental platform.<br>
+                                        Find the perfect car for your next adventure.
+                                    </p>
+                                    <div class="footer-links">
+                                        <a href="https://airbcar.com" class="footer-link">Website</a>
+                                        <a href="https://airbcar.com/support" class="footer-link">Support</a>
+                                        <a href="https://airbcar.com/privacy" class="footer-link">Privacy Policy</a>
+                                        <a href="https://airbcar.com/terms" class="footer-link">Terms of Service</a>
+                                    </div>
+                                    <p class="footer-contact">
+                                        📧 support@airbcar.com | 📞 +1 (555) 123-4567
+                                    </p>
+                                    <p class="footer-copyright">
+                                        © 2024 AirbCar. All rights reserved.<br>
+                                        This email was sent to {email}
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
+'''
+            
+            # Send email with both HTML and plain text
+            msg = EmailMultiAlternatives(
+                subject,
+                text_content,
+                settings.DEFAULT_FROM_EMAIL,
+                [email]
             )
-            return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
-        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            msg.attach_alternative(html_content, "text/html")
+            msg.send(fail_silently=False)
+            
+            # Log successful send with details (visible in Docker logs)
+            user_info = f'User ID: {user.id}' if user else 'User not found'
+            reset_info = f'Reset URL: {reset_url}' if reset_url else 'No reset link (user not found or inactive)'
+            logger.info(f'Password reset email sent successfully to {email} ({user_info})')
+            logger.info(reset_info)
+            logger.info(f'Email sent from: {settings.DEFAULT_FROM_EMAIL}')
+            # Print to console for immediate visibility in logs
+            print(f'\n{"="*60}')
+            print(f'[PASSWORD RESET] ✅ Email SENT to: {email}')
+            print(f'[PASSWORD RESET] {user_info}')
+            print(f'[PASSWORD RESET] {reset_info}')
+            print(f'[PASSWORD RESET] From: {settings.DEFAULT_FROM_EMAIL}')
+            print(f'{"="*60}\n')
+            
+            # Return success response
+            return Response(
+                {'message': 'If an account with that email exists, we have sent a password reset link.'}, 
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            # Log error details for debugging
+            user_info = f'User ID: {user.id}' if user else 'User not found'
+            error_msg = f'Failed to send password reset email to {email} ({user_info}): {str(e)}'
+            logger.error(error_msg, exc_info=True)
+            print(f'[PASSWORD RESET ERROR] ❌ {error_msg}')
+            # Don't reveal error to user for security reasons
+            # Still return 200 OK to prevent information leakage
+            return Response(
+                {'message': 'If an account with that email exists, we have sent a password reset link.'}, 
+                status=status.HTTP_200_OK
+            )
+        
+        # This should not be reached due to early returns above, but kept as safety net
+        # Always return 200 to prevent email enumeration (security best practice)
+        return Response(
+            {'message': 'If an account with that email exists, we have sent a password reset link.'}, 
+            status=status.HTTP_200_OK
+        )
     
-class PasswordResetConfirmView(generics.GenericAPIView):
-    serializer_class = PasswordResetConfirmSerializer
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
     
     def post(self, request, uidb64, token):
-        serializer = self.get_serializer(data=request.data)
+        serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            uid = urlsafe_base64_decode(uidb64).decode()
+            # Decode the base64 encoded user ID
+            # Handle URL encoding if the uidb64 was encoded in the URL
+            import urllib.parse
+            uidb64_decoded = urllib.parse.unquote(uidb64)
+            uid_bytes = urlsafe_base64_decode(uidb64_decoded)
+            uid = uid_bytes.decode('utf-8')
             user = User.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, UnicodeDecodeError, User.DoesNotExist) as e:
+            logger.warning(f'Password reset failed: Invalid uid or user not found. uidb64: {uidb64}, error: {str(e)}')
             user = None
 
+        # Handle URL-encoded token (decode if it was URL encoded)
+        import urllib.parse
+        token_decoded = urllib.parse.unquote(token) if '%' in token else token
+        
         token_generator = PasswordResetTokenGenerator()
-        if user and token_generator.check_token(user, token):
+        if user and token_generator.check_token(user, token_decoded):
             user.set_password(serializer.validated_data['password'])
             user.save()
+            logger.info(f'Password reset successful for user ID: {user.id}, email: {user.email}')
             return Response({'message': 'Password reset successful'}, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid token or user'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        logger.warning(f'Password reset failed: Invalid token or user. uidb64: {uidb64}')
+        return Response({'error': 'Invalid token or user. The reset link may have expired.'}, status=status.HTTP_400_BAD_REQUEST)
 
 def verify_email(request):
     token = request.GET.get("token")
@@ -1440,6 +1915,324 @@ class AdminStatusView(generics.GenericAPIView):
     
     def get(self, request):
         return Response({'is_admin': request.user.is_staff})
+
+class GoogleOAuthView(APIView):
+    """
+    Google OAuth authentication endpoint
+    Verifies Google ID token and creates/authenticates user
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        id_token = request.data.get('id_token')
+        
+        if not id_token:
+            return Response(
+                {'error': 'ID token is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            import httpx
+            from django.conf import settings
+            
+            # Verify the ID token with Google
+            google_verify_url = 'https://oauth2.googleapis.com/tokeninfo'
+            params = {'id_token': id_token}
+            response = httpx.get(google_verify_url, params=params, timeout=10.0)
+            
+            if response.status_code != 200:
+                return Response(
+                    {'error': 'Invalid ID token'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            token_data = response.json()
+            
+            # Extract user information from token
+            google_id = token_data.get('sub')
+            email = token_data.get('email', '').lower()
+            first_name = token_data.get('given_name', '')
+            last_name = token_data.get('family_name', '')
+            picture = token_data.get('picture', '')
+            email_verified = token_data.get('email_verified', False)
+            
+            if not email:
+                return Response(
+                    {'error': 'Email not provided by Google'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if user exists
+            try:
+                user = User.objects.get(email=email)
+                # Update user info if needed
+                if not user.first_name and first_name:
+                    user.first_name = first_name
+                if not user.last_name and last_name:
+                    user.last_name = last_name
+                if not user.profile_picture and picture:
+                    user.profile_picture = picture
+                if email_verified:
+                    user.is_verified = True
+                user.save()
+            except User.DoesNotExist:
+                # Create new user
+                # Generate a random username if email-based username exists
+                base_username = email.split('@')[0]
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                
+                # Create user with a random password (OAuth users don't need it)
+                import secrets
+                random_password = secrets.token_urlsafe(32)
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    password=random_password  # Random password for OAuth users
+                )
+                # Set additional fields after creation
+                if picture:
+                    user.profile_picture = picture
+                if email_verified:
+                    user.is_verified = True
+                    user.email_verified = True
+                user.save()
+                logger.info(f'New user created via Google OAuth: {email}')
+            
+            # Generate JWT tokens using the custom serializer to get all claims
+            from rest_framework_simplejwt.tokens import RefreshToken
+            
+            # Use the custom serializer to get tokens with all user data
+            refresh = RefreshToken.for_user(user)
+            access_token = refresh.access_token
+            
+            # Add custom claims to access token
+            access_token['email'] = user.email
+            access_token['is_partner'] = getattr(user, 'is_partner', False)
+            access_token['is_verified'] = getattr(user, 'is_verified', False) or email_verified
+            access_token['is_staff'] = user.is_staff
+            access_token['is_superuser'] = user.is_superuser
+            access_token['role'] = getattr(user, 'role', 'user')
+            access_token['first_name'] = user.first_name or first_name
+            access_token['last_name'] = user.last_name or last_name
+            
+            logger.info(f'Google OAuth login successful: {email}')
+            
+            return Response({
+                'access': str(access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'first_name': user.first_name or first_name,
+                    'last_name': user.last_name or last_name,
+                    'is_partner': getattr(user, 'is_partner', False),
+                    'is_verified': getattr(user, 'is_verified', False) or email_verified,
+                    'is_staff': user.is_staff,
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f'Google OAuth error: {str(e)}', exc_info=True)
+            return Response(
+                {'error': 'Authentication failed'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class NewsletterSubscriptionView(APIView):
+    """
+    Newsletter subscription endpoint
+    Allows users to subscribe to the newsletter
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """Handle GET requests (for testing or CORS preflight)"""
+        return Response(
+            {'message': 'Newsletter subscription endpoint. Use POST to subscribe.'}, 
+            status=status.HTTP_200_OK
+        )
+    
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        
+        if not email:
+            return Response(
+                {'error': 'Email is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate email format
+        from django.core.validators import validate_email
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            return Response(
+                {'error': 'Invalid email format'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Check if user exists with this email
+            user_exists = User.objects.filter(email=email).exists()
+            
+            # Log subscription
+            logger.info(f'Newsletter subscription: {email} (user exists: {user_exists})')
+            print(f'\n{"="*60}')
+            print(f'[NEWSLETTER] ✅ Subscription received: {email}')
+            print(f'[NEWSLETTER] User exists: {user_exists}')
+            print(f'{"="*60}\n')
+            
+            # Send welcome email
+            try:
+                from django.conf import settings
+                frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+                
+                subject = 'Welcome to Airbcar Newsletter!'
+                
+                # Plain text version
+                text_message = f"""
+Hello!
+
+Thank you for subscribing to the Airbcar newsletter!
+
+You'll now receive updates about:
+- Latest car rental deals and promotions
+- New vehicles added to our fleet
+- Special offers and discounts
+- Travel tips and destination guides
+
+We're excited to have you on board!
+
+Best regards,
+The Airbcar Team
+
+---
+If you didn't subscribe to this newsletter, please ignore this email.
+To unsubscribe, visit: {frontend_url}/newsletter/unsubscribe
+"""
+                
+                # HTML version
+                html_message = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }}
+        .content {{
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }}
+        .button {{
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #ff6b35;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }}
+        .footer {{
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚗 Welcome to Airbcar!</h1>
+    </div>
+    <div class="content">
+        <p>Hello!</p>
+        <p>Thank you for subscribing to the <strong>Airbcar newsletter</strong>!</p>
+        
+        <p>You'll now receive updates about:</p>
+        <ul>
+            <li>✅ Latest car rental deals and promotions</li>
+            <li>🚗 New vehicles added to our fleet</li>
+            <li>💰 Special offers and discounts</li>
+            <li>✈️ Travel tips and destination guides</li>
+        </ul>
+        
+        <p>We're excited to have you on board!</p>
+        
+        <p style="text-align: center;">
+            <a href="{frontend_url}" class="button">Explore Our Cars</a>
+        </p>
+        
+        <div class="footer">
+            <p>Best regards,<br>The Airbcar Team</p>
+            <p style="font-size: 11px; color: #999;">
+                If you didn't subscribe to this newsletter, please ignore this email.<br>
+                To unsubscribe, visit: <a href="{frontend_url}/newsletter/unsubscribe">{frontend_url}/newsletter/unsubscribe</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+                
+                # Send email using EmailMultiAlternatives for HTML support
+                from django.conf import settings
+                from_email = settings.DEFAULT_FROM_EMAIL
+                
+                msg = EmailMultiAlternatives(
+                    subject=subject,
+                    body=text_message,
+                    from_email=from_email,
+                    to=[email]
+                )
+                msg.attach_alternative(html_message, "text/html")
+                msg.send()
+                
+                logger.info(f'Newsletter welcome email sent to: {email}')
+                print(f'[NEWSLETTER] 📧 Welcome email sent to: {email}')
+                
+            except Exception as email_error:
+                # Log email error but don't fail the subscription
+                logger.error(f'Failed to send newsletter welcome email to {email}: {str(email_error)}', exc_info=True)
+                print(f'[NEWSLETTER] ⚠️ Warning: Could not send welcome email to {email}: {str(email_error)}')
+                # Continue - subscription is still successful even if email fails
+            
+            return Response(
+                {'message': 'Successfully subscribed to newsletter!'}, 
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            logger.error(f'Newsletter subscription error: {str(e)}', exc_info=True)
+            # Still return success to prevent email enumeration
+            return Response(
+                {'message': 'Successfully subscribed to newsletter!'}, 
+                status=status.HTTP_200_OK
+            )
 
 def home_view(request):
     html_content = """

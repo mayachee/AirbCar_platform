@@ -72,10 +72,6 @@ export default function Hero() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-2 bg-white/10 text-white/90 px-4 py-2 rounded-full backdrop-blur-sm mb-5">
-            <span className="h-2 w-2 rounded-full bg-orange-600"></span>
-            <span className="text-sm font-medium">Best price, instant booking</span>
-          </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-3 leading-tight">
             Find the best car rental deals
           </h1>

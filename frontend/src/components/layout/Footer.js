@@ -1,10 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { APP_NAME } from '@/constants'
+import { apiClient } from '@/lib/api/client'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
 
   const footerSections = [
     {
@@ -43,6 +49,52 @@ export default function Footer() {
       ]
     }
   ]
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!email.trim()) {
+      setError('Please enter your email address')
+      return
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    
+    setIsLoading(true)
+    setError('')
+    setSuccess(false)
+    
+    try {
+      const response = await apiClient.post('/api/newsletter/subscribe/', { email }, { skipAuth: true })
+      setSuccess(true)
+      setEmail('')
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccess(false)
+      }, 5000)
+    } catch (error) {
+      console.error('Newsletter subscription error:', error)
+      // Extract error message from different possible error structures
+      let errorMessage = 'Failed to subscribe. Please try again later.'
+      if (error?.message) {
+        errorMessage = error.message
+      } else if (error?.data?.error) {
+        errorMessage = error.data.error
+      } else if (error?.data?.detail) {
+        errorMessage = error.data.detail
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const socialLinks = [
     {
@@ -143,19 +195,43 @@ export default function Footer() {
             <h3 className="text-lg font-medium text-white mb-4">
               Stay updated with the latest deals
             </h3>
-            <div className="flex space-x-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-              <button className="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors font-medium">
-                Subscribe
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 mt-2">
-              We respect your privacy. Unsubscribe at any time.
-            </p>
+            <form onSubmit={handleNewsletterSubmit}>
+              <div className="flex space-x-3">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setError('')
+                    setSuccess(false)
+                  }}
+                  placeholder="Enter your email"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                />
+                <button 
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {isLoading ? 'Subscribing...' : 'Subscribe'}
+                </button>
+              </div>
+              {error && (
+                <p className="text-sm text-red-400 mt-2">
+                  {error}
+                </p>
+              )}
+              {success && (
+                <p className="text-sm text-green-400 mt-2">
+                  ✓ Successfully subscribed! Check your email for confirmation.
+                </p>
+              )}
+              <p className="text-xs text-gray-400 mt-2">
+                We respect your privacy. Unsubscribe at any time.
+              </p>
+            </form>
           </div>
         </div>
 

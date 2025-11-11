@@ -21,6 +21,8 @@ const nextConfig = {
     cpus: 1,
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
   },
+  // Moved from experimental (Next.js 15+)
+  serverExternalPackages: [],
   images: {
     remotePatterns: [
       {
@@ -45,20 +47,44 @@ const nextConfig = {
     if (dev) {
       // Enhanced watch options for Windows/OneDrive compatibility
       config.watchOptions = {
-        poll: false,
+        poll: 1000, // Enable polling for OneDrive compatibility
         aggregateTimeout: 1200,
         ignored: [
-          '**/*',
+          '**/node_modules/**',
+          '**/.next/**',
+          '**/.git/**',
         ],
         followSymlinks: false,
         stdin: false,
       };
       
-      // Add additional webpack options to reduce file locking issues
-      // Use filesystem cache but with a safe directory outside OneDrive sync
-      // Disable filesystem cache to reduce memory footprint
-      config.cache = false;
+      // Disable symlink resolution to avoid OneDrive issues
+      config.resolve.symlinks = false;
+      
+      // Use memory cache instead of filesystem cache to avoid file locking issues on Windows/OneDrive
+      // This prevents module resolution errors while avoiding file system conflicts
+      config.cache = {
+        type: 'memory',
+        maxGenerations: 1,
+      };
+      
+      // Add resolve fallbacks for better Windows compatibility
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+      
+      // Ensure proper module resolution
+      config.resolve.extensionAlias = {
+        '.js': ['.js', '.ts', '.tsx'],
+        '.jsx': ['.jsx', '.tsx'],
+      };
     }
+    
+    // Let Next.js handle chunking automatically - don't override splitChunks
+    // Next.js 15 has its own optimized chunking strategy
 
     return config
   },

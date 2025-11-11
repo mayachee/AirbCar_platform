@@ -246,7 +246,7 @@ export default function RentalProviders() {
         {/* Simple Header */}
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            Top car rental providers in Fes
+            Top car rental providers in Airbcar
           </h2>
           <p className="text-gray-600">
             Compare trusted providers and find the best deals for your trip.

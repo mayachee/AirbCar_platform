@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { apiClient } from '@/lib/api/client'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -28,27 +29,24 @@ export default function ForgotPassword() {
     setError('')
 
     try {
-      // Use Django backend for password reset
-      const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'
-      const response = await fetch(`${apiUrl}/api/password-reset/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: data.email }),
-      })
-
-      if (response.ok) {
-        setSuccess(true)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || 'Something went wrong')
-      }
+      // Use apiClient for password reset (skipAuth since this is a public endpoint)
+      await apiClient.post('/api/password-reset/', { email: data.email }, { skipAuth: true })
+      setSuccess(true)
     } catch (error) {
-      setError('Something went wrong')
+      console.error('Password reset error:', error)
+      // Handle different error types
+      if (error.message) {
+        setError(error.message)
+      } else if (error.status === 404) {
+        setError('Password reset endpoint not found. Please contact support.')
+      } else if (error.status === 400) {
+        setError('Invalid email address. Please check and try again.')
+      } else {
+        setError('Failed to send password reset email. Please try again later.')
+      }
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   if (success) {
@@ -73,6 +71,9 @@ export default function ForgotPassword() {
               </h2>
               <p className="text-sm text-gray-600 mb-6">
                 If an account with that email exists, we've sent you a password reset link.
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                Please check your inbox, spam folder, and promotions tab. The email may take a few minutes to arrive.
               </p>
               <Link
                 href="/auth/signin"
@@ -111,7 +112,10 @@ export default function ForgotPassword() {
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Forgot your password?</h2>
             <p className="mt-2 text-sm text-gray-600">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your registered email address and we'll send you a link to reset your password.
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              You can use any email address that's registered in your account.
             </p>
           </div>
 

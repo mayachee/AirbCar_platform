@@ -21,8 +21,10 @@ if [ -d ".next-local" ]; then
 fi
 
 echo "Starting Next.js application..."
-echo "[start.sh] Running production build inside container to avoid high memory usage from dev watcher..."
-export NODE_ENV=production
-pnpm run build
-echo "[start.sh] Starting Next.js in production mode on 0.0.0.0:3000"
-exec pnpm run start -- --hostname 0.0.0.0 --port 3000
+
+# Use dev mode instead of production build to avoid memory issues
+echo "[start.sh] Starting Next.js in development mode on 0.0.0.0:3000"
+export NODE_ENV=development
+export HOSTNAME=0.0.0.0
+export PORT=3000
+exec pnpm run dev
