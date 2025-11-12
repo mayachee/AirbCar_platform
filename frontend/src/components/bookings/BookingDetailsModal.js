@@ -440,17 +440,6 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onAction
                       </div>
                     ) : null}
 
-                    {/* Messages */}
-                    {displayBooking.request_message && (
-                      <div className="bg-blue-50 rounded-lg p-5 border border-blue-100">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <MessageSquare className="h-5 w-5 text-blue-600" />
-                          <h3 className="text-lg font-semibold text-gray-900">Customer Message</h3>
-                        </div>
-                        <p className="text-gray-700 whitespace-pre-wrap bg-white rounded-lg p-4">{displayBooking.request_message}</p>
-                      </div>
-                    )}
-
                     {displayBooking.rejection_reason && (
                       <div className="bg-red-50 rounded-lg p-5 border border-red-100">
                         <div className="flex items-center space-x-3 mb-3">

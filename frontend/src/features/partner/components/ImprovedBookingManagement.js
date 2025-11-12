@@ -409,17 +409,6 @@ export default function ImprovedBookingManagement({
                         </div>
                       </div>
 
-                      {booking.request_message && (
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
-                          <div className="flex items-start space-x-2">
-                            <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-blue-900 mb-1">Customer Message</p>
-                              <p className="text-sm text-blue-800 whitespace-pre-wrap">{booking.request_message}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                     
                     <div className="ml-6 flex flex-col space-y-2">

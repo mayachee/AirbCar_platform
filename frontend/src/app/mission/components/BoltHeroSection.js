@@ -144,7 +144,7 @@ export default function BoltHeroSection() {
             variants={itemVariants}
             className="text-xl sm:text-2xl lg:text-3xl text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed font-light"
           >
-            Get picked up anywhere with Airbcar. Have anything delivered with Airbcar Food.
+            Get picked up anywhere with Airbcar. Have anything delivered with Airbcar.
           </motion.p>
 
           {/* CTA Buttons with enhanced glass-morphism effects */}

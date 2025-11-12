@@ -53,8 +53,12 @@ class Partner(models.Model):
     description = models.TextField(max_length=1000, blank=True, null=True, help_text='Company description for public profile')
     logo = models.URLField(blank=True, null=True, help_text='Company logo URL')
     website = models.URLField(blank=True, null=True, help_text='Company website URL')
-    phone = models.CharField(max_length=20, blank=True, null=True, help_text='Contact phone number')
+    phone = models.CharField(max_length=20, blank=False, null=False, help_text='Contact phone number')
+    business_type = models.CharField(max_length=50, blank=True, null=True, help_text='Type of business (individual, company, fleet, dealership)')
     address = models.TextField(max_length=500, blank=True, null=True, help_text='Business address')
+    city = models.CharField(max_length=100, blank=False, null=False, help_text='City')
+    state = models.CharField(max_length=100, blank=True, null=True, help_text='State/Province')
+    zip_code = models.CharField(max_length=20, blank=True, null=True, help_text='Zip/Postal code')
 
     def __str__(self):
         return f"{self.company_name} ({self.user.username})"

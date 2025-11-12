@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Upload, Building2, MapPin, Phone, Globe, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Save, Upload, Building2, FileText, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { MOROCCAN_CITIES } from '@/constants';
 
 export default function PartnerProfileSettings({ partnerData, onUpdate, loading }) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     company_name: '',
     tax_id: '',
@@ -13,13 +16,33 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
     state: '',
     zip_code: '',
     phone_number: '',
-    website: '',
     description: '',
-    verification_document: null
+    verification_document: null,
+    logo: ''
   });
+  const [email, setEmail] = useState('');
+  const [logoPreview, setLogoPreview] = useState('');
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoRemoved, setLogoRemoved] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
   const [uploading, setUploading] = useState(false);
+
+  // Fetch email from API (partnerData.user.email from API response or user context)
+  useEffect(() => {
+    // Priority: 1. partnerData.user.email (from API), 2. partnerData.email (if directly available), 3. user.email (from auth context)
+    if (partnerData?.user?.email) {
+      // Get email from partner user data (API response includes user object with email)
+      setEmail(partnerData.user.email);
+    } else if (partnerData?.email) {
+      // Fallback: email directly on partner data
+      setEmail(partnerData.email);
+    } else if (user?.email) {
+      // Final fallback: user email from auth context (JWT token)
+      setEmail(user.email);
+    }
+  }, [partnerData, user]);
 
   useEffect(() => {
     if (partnerData) {
@@ -32,10 +55,21 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
         state: partnerData.state || '',
         zip_code: partnerData.zip_code || '',
         phone_number: partnerData.phone_number || '',
-        website: partnerData.website || '',
         description: partnerData.description || '',
-        verification_document: partnerData.verification_document || null
+        verification_document: partnerData.verification_document || null,
+        logo: partnerData.logo || ''
       });
+      
+      // Set logo preview if logo URL exists
+      if (partnerData.logo) {
+        setLogoPreview(partnerData.logo);
+        setLogoRemoved(false); // Reset removal flag when partner data loads
+      } else {
+        setLogoPreview('');
+      }
+      
+      // Clear phone error when data loads
+      setPhoneError('');
     }
   }, [partnerData]);
 
@@ -45,6 +79,19 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
       ...prev,
       [name]: value
     }));
+    
+    // Validate phone number in real-time
+    if (name === 'phone_number') {
+      const validation = validatePhoneNumber(value);
+      if (validation.isValid) {
+        setPhoneError('');
+      } else if (value.trim() !== '') {
+        // Only show error if field is not empty (to avoid showing error on empty field)
+        setPhoneError(validation.error);
+      } else {
+        setPhoneError('');
+      }
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -67,13 +114,165 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
     }
   };
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    setLogoFile(file);
+    setLogoRemoved(false); // Reset removal flag when new file is selected
+
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setLogoPreview(event.target.result);
+    };
+    reader.onerror = () => {
+      alert('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview('');
+    setLogoRemoved(true); // Mark logo as removed
+  };
+
+  // Phone number validation function
+  const validatePhoneNumber = (phone) => {
+    if (!phone || phone.trim() === '') {
+      return { isValid: false, error: 'Phone Number is required.' };
+    }
+    
+    // Remove spaces, dashes, and parentheses
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    
+    // Moroccan phone number patterns:
+    // - +212XXXXXXXXX (with country code)
+    // - 0XXXXXXXXX (local format)
+    // - 212XXXXXXXXX (country code without +)
+    // Must be 9-13 digits total (excluding + and formatting)
+    const moroccanPattern = /^(\+?212|0)?[5-7]\d{8}$/;
+    const internationalPattern = /^\+?[1-9]\d{1,14}$/; // E.164 format
+    
+    if (moroccanPattern.test(cleaned)) {
+      return { isValid: true, error: null };
+    }
+    
+    // Check if it's a valid international format
+    if (internationalPattern.test(cleaned) && cleaned.length >= 10) {
+      return { isValid: true, error: null };
+    }
+    
+    return { 
+      isValid: false, 
+      error: 'Please enter a valid phone number. Examples: +212 6XX-XXXXXX, 0X-XXXXXXX, or international format.' 
+    };
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      await onUpdate(formData);
+      // Validate phone number format
+      const phoneValidation = validatePhoneNumber(formData.phone_number);
+      if (!phoneValidation.isValid) {
+        alert(phoneValidation.error);
+        setSaving(false);
+        return;
+      }
+      
+      // Validate required fields
+      if (!formData.city || formData.city.trim() === '') {
+        alert('City is required. Please select a city.');
+        setSaving(false);
+        return;
+      }
+      
+      // Prepare form data
+      const dataToSave = { ...formData };
+      delete dataToSave.logo; // Remove logo from dataToSave, handle separately
+      
+      // Ensure phone_number and city are included (already validated above)
+      // Backend will also validate these fields are not empty
+      
+      // If logo file is uploaded, use FormData for multipart upload
+      if (logoFile) {
+        const formDataToSend = new FormData();
+        
+        // Append all form fields as strings
+        // Always include phone_number and city (required fields)
+        Object.keys(dataToSave).forEach(key => {
+          const value = dataToSave[key];
+          // Always include required fields (phone_number, city) even if empty
+          if (key === 'phone_number' || key === 'city') {
+            formDataToSend.append(key, value || '');
+          } else if (value !== null && value !== undefined && value !== '') {
+            formDataToSend.append(key, String(value));
+          }
+        });
+        
+        // Ensure phone_number and city are always present
+        if (!dataToSave.phone_number) {
+          formDataToSend.append('phone_number', '');
+        }
+        if (!dataToSave.city) {
+          formDataToSend.append('city', '');
+        }
+        
+        // Append logo file
+        formDataToSend.append('logo', logoFile);
+        
+        // Call onUpdate with FormData (backend will handle multipart)
+        await onUpdate(formDataToSend);
+      } else {
+        // No logo file - send regular JSON data
+        // If logo was explicitly removed, we need to send it via FormData with empty string
+        // because the serializer ignores read-only fields, but perform_update checks request.data
+        if (logoRemoved && partnerData?.logo) {
+          // Send as FormData with empty logo to signal removal
+          const formDataToSend = new FormData();
+          Object.keys(dataToSave).forEach(key => {
+            const value = dataToSave[key];
+            // Always include required fields (phone_number, city) even if empty
+            if (key === 'phone_number' || key === 'city') {
+              formDataToSend.append(key, value || '');
+            } else if (value !== null && value !== undefined && value !== '') {
+              formDataToSend.append(key, String(value));
+            }
+          });
+          // Ensure phone_number and city are always present
+          if (!dataToSave.phone_number) {
+            formDataToSend.append('phone_number', '');
+          }
+          if (!dataToSave.city) {
+            formDataToSend.append('city', '');
+          }
+          formDataToSend.append('logo', ''); // Empty string signals removal
+          await onUpdate(formDataToSend);
+        } else {
+          // Send JSON data - phone_number and city are already validated and included
+          await onUpdate(dataToSave);
+        }
+      }
+      
       setIsEditing(false);
+      setLogoFile(null); // Clear file after successful save
+      setLogoRemoved(false); // Reset removal flag
     } catch (error) {
       console.error('Error saving profile:', error);
+      alert('Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -129,7 +328,17 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
           ) : (
             <div className="flex space-x-2">
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  // Reset logo preview and file when canceling
+                  if (partnerData?.logo) {
+                    setLogoPreview(partnerData.logo);
+                  } else {
+                    setLogoPreview('');
+                  }
+                  setLogoFile(null);
+                  setLogoRemoved(false);
+                  setIsEditing(false);
+                }}
                 className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
@@ -151,6 +360,55 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
         {/* Basic Information */}
         <div className="space-y-4">
           <h4 className="text-md font-medium text-gray-900">Basic Information</h4>
+          
+          {/* Logo Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Company Logo
+            </label>
+            <div className="flex items-center space-x-4">
+              {logoPreview ? (
+                <div className="relative">
+                  <img
+                    src={logoPreview}
+                    alt="Company logo"
+                    className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200"
+                  />
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveLogo}
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      title="Remove logo"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                  <ImageIcon className="h-8 w-8 text-gray-400" />
+                </div>
+              )}
+              {isEditing && (
+                <div>
+                  <label className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors">
+                    <Upload className="h-4 w-4" />
+                    <span>{logoPreview ? 'Change Logo' : 'Upload Logo'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG up to 5MB
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -208,7 +466,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
+              Phone Number <span className="text-red-500">*</span>
             </label>
             <input
               type="tel"
@@ -216,24 +474,36 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
               value={formData.phone_number}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-              placeholder="Enter phone number"
+              required
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 ${
+                phoneError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              }`}
+              placeholder="+212 6XX-XXXXXX or 0X-XXXXXXX"
             />
+            {phoneError && isEditing && (
+              <p className="mt-1 text-sm text-red-500">{phoneError}</p>
+            )}
+            {!phoneError && formData.phone_number && isEditing && (
+              <p className="mt-1 text-xs text-green-600">✓ Valid phone number</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Website
+              Email <span className="text-xs text-gray-500">(from account)</span>
             </label>
             <input
-              type="url"
-              name="website"
-              value={formData.website}
-              onChange={handleInputChange}
-              disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-              placeholder="https://your-website.com"
+              type="email"
+              name="email"
+              value={email}
+              readOnly
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+              placeholder="Loading email..."
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Email cannot be changed here. Contact support to update your email address.
+            </p>
           </div>
 
           <div>
@@ -254,17 +524,23 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                City
+                City <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 name="city"
                 value={formData.city}
                 onChange={handleInputChange}
                 disabled={!isEditing}
+                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-                placeholder="City"
-              />
+              >
+                <option value="">Select a city</option>
+                {MOROCCAN_CITIES.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -298,39 +574,6 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
           placeholder="Describe your business and services..."
         />
-      </div>
-
-      {/* Verification Document */}
-      <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Verification Document
-        </label>
-        <div className="flex items-center space-x-4">
-          {formData.verification_document ? (
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <FileText className="h-4 w-4" />
-              <span>{formData.verification_document}</span>
-            </div>
-          ) : (
-            <div className="text-sm text-gray-500">No document uploaded</div>
-          )}
-          
-          {isEditing && (
-            <label className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors">
-              <Upload className="h-4 w-4" />
-              <span>{uploading ? 'Uploading...' : 'Upload Document'}</span>
-              <input
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-              />
-            </label>
-          )}
-        </div>
-        <p className="text-xs text-gray-500 mt-1">
-          Upload business license, tax certificate, or other verification documents
-        </p>
       </div>
     </div>
   );

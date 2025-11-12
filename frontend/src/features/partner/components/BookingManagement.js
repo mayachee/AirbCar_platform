@@ -280,12 +280,6 @@ export default function BookingManagement({ bookings: propBookings, loading: pro
                   <p className="text-2xl font-bold text-gray-900">{formatCurrency(selectedBooking.total_price)}</p>
                 </div>
                 
-                {selectedBooking.message && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Customer Message</label>
-                    <p className="text-gray-900 bg-gray-50 p-3 rounded-md">{selectedBooking.message}</p>
-                  </div>
-                )}
                 
                 {selectedBooking.status === 'pending' && (
                   <div className="flex space-x-3 pt-4 border-t">

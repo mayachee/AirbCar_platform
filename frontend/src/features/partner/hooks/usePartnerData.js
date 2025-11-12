@@ -27,6 +27,9 @@ export function usePartnerData() {
       
       console.log('Partner dashboard data:', {
         partner: dashboardData.partner,
+        phone_number: dashboardData.partner?.phone_number,
+        business_type: dashboardData.partner?.business_type,
+        phone: dashboardData.partner?.phone, // Check if phone field exists
         vehiclesCount: dashboardData.vehicles?.length || 0,
         vehicles: dashboardData.vehicles,
         bookingsCount: dashboardData.bookings?.length || 0

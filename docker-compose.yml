@@ -2,6 +2,8 @@
 services:
   web:
     build: backend/
+    volumes:
+      - ./backend/airbcar_backend:/app/airbcar_backend
     ports:
       - "8000:8000"
     networks:

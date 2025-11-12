@@ -1,8 +1,6 @@
 'use client';
 
 import { Suspense, lazy, useEffect, useState } from 'react';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { useOptimizedDashboard } from '@/features/partner/hooks/useOptimizedDashboard';
 import DashboardSidebar from '@/features/partner/components/DashboardSidebar';
 import DashboardHeader from '@/features/partner/components/DashboardHeader';
@@ -108,8 +106,6 @@ export default function OptimizedPartnerDashboard() {
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-300`}>
-      <Header />
-      
       {/* Mobile Sidebar */}
       {isMobileView && (
         <>
@@ -225,8 +221,6 @@ export default function OptimizedPartnerDashboard() {
         toastMessage={toastMessage}
         onClose={() => setToastMessage(null)}
       />
-
-      <Footer />
     </div>
   );
 }

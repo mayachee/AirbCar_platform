@@ -336,6 +336,8 @@ class PartnerViewSet(viewsets.ModelViewSet):
     queryset = Partner.objects.all().prefetch_related('listings')
     serializer_class = PartnerSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    http_method_names = ['get', 'post', 'patch', 'put', 'delete', 'head', 'options']
     
     def get_queryset(self):
         user = self.request.user
@@ -356,10 +358,26 @@ class PartnerViewSet(viewsets.ModelViewSet):
             self.request.user.is_partner = True
             self.request.user.save(update_fields=['is_partner'])
 
-#  add for bug fix - get or create partner for current user
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def perform_update(self, serializer):
+        partner = serializer.save()
+        
+        # Handle logo file upload
+        logo_file = self.request.FILES.get('logo')
+        if logo_file:
+            url = upload_file_to_supabase(logo_file, folder=f"partners/{partner.id}")
+            partner.logo = url
+            partner.save(update_fields=['logo'])
+        # Handle logo removal (empty string in request data)
+        elif 'logo' in self.request.data:
+            logo_value = self.request.data.get('logo')
+            if logo_value == '' or logo_value is None:
+                partner.logo = None
+                partner.save(update_fields=['logo'])
+
+    # Get or create partner for current user
+    @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated])
     def me(self, request):
-        """Get or create the current user's partner record"""
+        """Get or update the current user's partner record"""
         user = request.user
         
         if not user.is_partner:
@@ -375,8 +393,36 @@ class PartnerViewSet(viewsets.ModelViewSet):
             }
         )
         
-        serializer = self.get_serializer(partner)
-        return Response(serializer.data)
+        if request.method == 'GET':
+            serializer = self.get_serializer(partner)
+            return Response(serializer.data)
+        
+        elif request.method == 'PATCH':
+            # Normalize request data for FormData and JSON
+            # Create a mutable copy of request.data
+            if hasattr(request.data, 'copy'):
+                data = request.data.copy()
+                if hasattr(data, '_mutable'):
+                    data._mutable = True
+            else:
+                data = dict(request.data)
+            
+            # Map phone_number to phone for frontend compatibility
+            if 'phone_number' in data:
+                phone_value = data.get('phone_number')
+                if phone_value:
+                    data['phone'] = phone_value
+                # Remove phone_number to avoid confusion
+                if 'phone_number' in data:
+                    del data['phone_number']
+            
+            serializer = self.get_serializer(partner, data=data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            # Refresh partner data to get updated logo URL if it was uploaded
+            partner.refresh_from_db()
+            serializer = self.get_serializer(partner)
+            return Response(serializer.data)
 
 
 @api_view(['GET'])

@@ -112,15 +112,55 @@ export const CAR_CATEGORIES = [
   { id: 'luxury', name: 'Luxury', icon: '🏎️' },
 ]
 
-// Moroccan Cities
+// Moroccan Cities - All major cities in Morocco
 export const MOROCCAN_CITIES = [
   'Agadir',
-  'Casablanca', 
+  'Al Hoceima',
+  'Azemmour',
+  'Azrou',
+  'Beni Mellal',
+  'Berkane',
+  'Berrechid',
+  'Boujdour',
+  'Casablanca',
+  'Chefchaouen',
+  'Dakhla',
+  'El Jadida',
+  'Errachidia',
+  'Essaouira',
+  'Fes',
+  'Figuig',
+  'Guelmim',
+  'Ifrane',
+  'Imzouren',
+  'Kenitra',
+  'Khemisset',
+  'Khenifra',
+  'Khouribga',
+  'Laayoune',
+  'Larache',
   'Marrakech',
+  'Meknes',
+  'Mohammedia',
+  'Nador',
+  'Ouarzazate',
+  'Oujda',
   'Rabat',
+  'Safi',
+  'Sale',
+  'Sefrou',
+  'Settat',
+  'Sidi Ifni',
+  'Sidi Kacem',
   'Tangier',
-  'Tetouan'
-]
+  'Taroudant',
+  'Taza',
+  'Tetouan',
+  'Tiznit',
+  'Touima',
+  'Touissit',
+  'Zagora'
+].sort() // Sort alphabetically for better UX
 
 // Pagination
 export const ITEMS_PER_PAGE = 12

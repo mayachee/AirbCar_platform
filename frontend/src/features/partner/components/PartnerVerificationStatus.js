@@ -42,12 +42,6 @@ export default function PartnerVerificationStatus({ partnerData }) {
 
   return (
     <div className="relative">
-      <button className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-        <span className="text-lg">{getStatusIcon(verificationStatus.verificationLevel)}</span>
-        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(verificationStatus.verificationLevel)}`}>
-          {verificationStatus.verificationLevel}
-        </span>
-      </button>
       
       {/* Verification Details Tooltip */}
       <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50 hidden group-hover:block">

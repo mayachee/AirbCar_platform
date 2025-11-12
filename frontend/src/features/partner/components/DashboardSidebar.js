@@ -157,19 +157,6 @@ export default function DashboardSidebar({
             </motion.button>
           ))}
         </nav>
-
-        {/* Quick Actions */}
-        {!sidebarCollapsed && (
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">Quick Actions</h3>
-            <ComponentLoader>
-              <QuickActionsPanel 
-                onAddVehicle={onAddVehicle}
-                onRefreshData={onRefreshData}
-              />
-            </ComponentLoader>
-          </div>
-        )}
       </div>
     </motion.div>
   );
