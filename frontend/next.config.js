@@ -32,61 +32,33 @@ const nextConfig = {
       },
     ],
   },
-  // Custom webpack config - removed profiling aliases that cause issues with React 19
+  // Custom webpack config - minimal changes to avoid breaking React 19 module resolution
   webpack: (config, { dev, isServer }) => {
-    // Remove problematic profiling aliases for React 19 compatibility
-
-    // Ensure '@' alias points to the src directory explicitly for webpack
+    // Ensure '@' alias points to the src directory
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       '@': path.resolve(__dirname, 'src'),
-    }
+    };
 
-    // Optimize memory usage for development
-    if (dev) {
+    // Optimize for development
+    if (dev && !isServer) {
       // Enhanced watch options for Windows/OneDrive compatibility
       config.watchOptions = {
-        poll: 1000, // Enable polling for OneDrive compatibility
+        poll: 1000,
         aggregateTimeout: 1200,
         ignored: [
           '**/node_modules/**',
           '**/.next/**',
           '**/.git/**',
         ],
-        followSymlinks: false,
-        stdin: false,
       };
       
       // Disable symlink resolution to avoid OneDrive issues
       config.resolve.symlinks = false;
-      
-      // Use memory cache instead of filesystem cache to avoid file locking issues on Windows/OneDrive
-      // This prevents module resolution errors while avoiding file system conflicts
-      config.cache = {
-        type: 'memory',
-        maxGenerations: 1,
-      };
-      
-      // Add resolve fallbacks for better Windows compatibility
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
-      
-      // Ensure proper module resolution
-      config.resolve.extensionAlias = {
-        '.js': ['.js', '.ts', '.tsx'],
-        '.jsx': ['.jsx', '.tsx'],
-      };
     }
-    
-    // Let Next.js handle chunking automatically - don't override splitChunks
-    // Next.js 15 has its own optimized chunking strategy
 
-    return config
+    return config;
   },
 
   // Set workspace root to avoid lockfile warnings
@@ -104,9 +76,6 @@ const nextConfig = {
       'public/**/*.mp4',
       'public/**/*.mov',
       'src/app/public/**',
-      'test-results/**',
-      'playwright-report/**',
-      'e2e/**',
       'docs/**',
       '.next-local/**',
     ],

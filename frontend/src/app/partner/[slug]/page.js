@@ -4,34 +4,79 @@ import { notFound } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
+// Use NEXT_PUBLIC_ prefix for server-side rendering compatibility
+// For server-side fetch in Next.js, use localhost which works better than 127.0.0.1
 const API_BASE_URL =
-  process.env.DJANGO_API_URL ||
   process.env.NEXT_PUBLIC_DJANGO_API_URL ||
-  'http://127.0.0.1:8000'
+  process.env.DJANGO_API_URL ||
+  'http://localhost:8000'
 
-async function fetchPartnerProfile(slug) {
-  const response = await fetch(
-    `${API_BASE_URL}/api/partners/public/${slug}/`,
-    {
-      // Revalidate periodically so public data stays fresh but cached
+async function fetchPartnerProfile(slugOrId) {
+  const url = `${API_BASE_URL}/api/partners/public/${slugOrId}/`
+  
+  try {
+    console.log(`[PartnerPage] Fetching partner from: ${url}`)
+    
+    // Use the public partners endpoint which uses PublicPartnerSerializer
+    // This endpoint is designed for public viewing and accepts both numeric ID and slug
+    const response = await fetch(url, {
+      // Revalidate periodically so public data stays fresh but cached (3 minutes)
       next: { revalidate: 180 },
       headers: {
         Accept: 'application/json',
       },
-    }
-  )
+    })
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      notFound()
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error')
+      console.error(`[PartnerPage] API error: ${response.status} - ${errorText}`)
+      
+      if (response.status === 404) {
+        notFound()
+      }
+
+      throw new Error(
+        `Failed to load partner profile: ${response.status} ${response.statusText}`
+      )
     }
 
-    throw new Error(
-      `Failed to load partner profile (${response.status})`
-    )
+    const data = await response.json()
+    console.log(`[PartnerPage] Successfully fetched partner: ${data.company_name || slugOrId}`)
+    
+    // Log image information for debugging
+    if (data.listings && Array.isArray(data.listings)) {
+      const listingsWithImages = data.listings.filter(l => l.pictures && l.pictures.length > 0)
+      console.log(`[PartnerPage] Partner has ${listingsWithImages.length} listings with images out of ${data.listings.length} total listings`)
+      listingsWithImages.forEach((listing, idx) => {
+        console.log(`[PartnerPage] Listing ${idx + 1}: ${listing.pictures.length} images`, listing.pictures)
+      })
+    }
+    if (data.logo) {
+      console.log(`[PartnerPage] Partner logo: ${data.logo}`)
+    }
+    if (data.user?.profile_picture) {
+      console.log(`[PartnerPage] Owner profile picture: ${data.user.profile_picture}`)
+    }
+    
+    return data
+  } catch (error) {
+    console.error('[PartnerPage] Error fetching partner profile:', {
+      url,
+      error: error.message,
+      name: error.name,
+      cause: error.cause,
+    })
+    
+    // If it's a network error, provide helpful message
+    if (error.name === 'AbortError' || error.message.includes('fetch failed')) {
+      throw new Error(
+        `Failed to connect to backend API. Please ensure the backend server is running at ${API_BASE_URL}`
+      )
+    }
+    
+    // Re-throw with more context
+    throw new Error(`Failed to fetch partner profile: ${error.message}`)
   }
-
-  return response.json()
 }
 
 export async function generateMetadata({ params }) {
@@ -68,18 +113,46 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function PartnerPublicProfilePage({ params }) {
-  const { slug } = await params
-  const partner = await fetchPartnerProfile(slug)
-  const heroImage =
-    partner.listings?.[0]?.pictures?.[0] || partner.logo || null
-  const listings = partner.listings ?? []
+  try {
+    const { slug } = await params
+    if (!slug) {
+      notFound()
+    }
 
-  const { minPrice, maxRating, locationCount } = computeFleetInsights(listings)
+    const partner = await fetchPartnerProfile(slug)
+    const listings = partner.listings ?? []
+    
+    // Find the first available image from listings or use partner logo
+    // Look through all listings to find the first one with valid image URLs
+    let heroImage = null
+    
+    // First try partner logo if it exists and is a valid URL
+    if (partner.logo && typeof partner.logo === 'string' && partner.logo.trim().length > 0) {
+      heroImage = partner.logo.trim()
+    }
+    
+    // If no logo, look through all listings for the first valid image
+    if (!heroImage && listings.length > 0) {
+      for (const listing of listings) {
+        if (listing.pictures && Array.isArray(listing.pictures) && listing.pictures.length > 0) {
+          // Find first valid image URL
+          const validImage = listing.pictures.find(
+            pic => pic && typeof pic === 'string' && pic.trim().length > 0
+          )
+          if (validImage) {
+            heroImage = validImage.trim()
+            break
+          }
+        }
+      }
+    }
+    
+    const { minPrice, maxRating, locationCount } = computeFleetInsights(listings)
 
-  return (
-    <div className="min-h-screen bg-neutral-50">
-      <Header />
-      <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+    return (
+      <div className="min-h-screen bg-neutral-50">
+        <Header />
+        <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
         <Link
           href="/"
           className="inline-flex items-center text-sm font-medium text-orange-600 transition hover:text-orange-700"
@@ -94,15 +167,16 @@ export default async function PartnerPublicProfilePage({ params }) {
                 {heroImage ? (
                   <Image
                     src={heroImage}
-                    alt={`${partner.company_name} hero`}
+                    alt={`${partner.company_name} hero image`}
                     fill
                     className="object-cover"
                     sizes="(min-width: 1024px) 320px, 100vw"
                     priority
+                    unoptimized={heroImage.includes('supabase.co')}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-4xl font-semibold text-neutral-300">
-                    {partner.company_name?.[0] || '?'}
+                    {partner.company_name?.[0]?.toUpperCase() || '?'}
                   </div>
                 )}
               </div>
@@ -118,6 +192,39 @@ export default async function PartnerPublicProfilePage({ params }) {
                 <h1 className="mt-2 text-3xl font-semibold text-neutral-900 md:text-4xl">
                   {partner.company_name}
                 </h1>
+
+                {/* Business type and location */}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  {partner.business_type && (
+                    <span className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+                      {partner.business_type}
+                    </span>
+                  )}
+                  {partner.city && (
+                    <span className="inline-flex items-center text-sm text-neutral-600">
+                      <svg
+                        className="mr-1.5 h-4 w-4 text-neutral-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      {partner.city}
+                    </span>
+                  )}
+                </div>
 
                 {partner.description && (
                   <p className="mt-4 text-base leading-7 text-neutral-600">
@@ -236,10 +343,19 @@ export default async function PartnerPublicProfilePage({ params }) {
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
-    </div>
-  )
+        </main>
+        <Footer />
+      </div>
+    )
+  } catch (error) {
+    console.error('Error in PartnerPublicProfilePage:', error)
+    // If it's a 404, let notFound() handle it
+    if (error.message?.includes('404') || error.message?.includes('not found')) {
+      notFound()
+    }
+    // Re-throw other errors so Next.js can handle them
+    throw error
+  }
 }
 
 function StatItem({ label, value }) {
@@ -271,6 +387,31 @@ function ContactCard({ partner }) {
         Reach out directly for pickup details or special requests.
       </p>
       <dl className="mt-4 space-y-3">
+        {partner.company_name && (
+          <div className="flex items-center justify-between">
+            <dt className="text-neutral-500">Company</dt>
+            <dd className="font-medium text-neutral-900">
+              {partner.company_name}
+            </dd>
+          </div>
+        )}
+        {partner.business_type && (
+          <div className="flex items-center justify-between">
+            <dt className="text-neutral-500">Business type</dt>
+            <dd className="font-medium text-neutral-900 capitalize">
+              {partner.business_type}
+            </dd>
+          </div>
+        )}
+        {partner.city && (
+          <div className="flex items-center justify-between">
+            <dt className="text-neutral-500">Location</dt>
+            <dd className="font-medium text-neutral-900">
+              {partner.city}
+              {partner.address && `, ${partner.address}`}
+            </dd>
+          </div>
+        )}
         {partner.phone && (
           <div className="flex items-center justify-between">
             <dt className="text-neutral-500">Phone</dt>
@@ -321,12 +462,24 @@ function ContactCard({ partner }) {
 }
 
 function ListingCard({ listing }) {
-  const coverImage = listing.pictures?.[0] || null
+  // Get the first valid image URL from pictures array
+  const pictures = Array.isArray(listing.pictures) ? listing.pictures : []
+  const coverImage = pictures.find(
+    pic => pic && typeof pic === 'string' && pic.trim().length > 0 && (pic.startsWith('http://') || pic.startsWith('https://'))
+  )?.trim() || null
+  
   const sanitizedLocation = listing.location?.trim()
-  const formattedPrice =
-    typeof listing.price_per_day === 'number'
-      ? `€${listing.price_per_day}`
-      : '—'
+  
+  // Format price - handle both string and number
+  let formattedPrice = '—'
+  if (listing.price_per_day) {
+    const price = typeof listing.price_per_day === 'number' 
+      ? listing.price_per_day 
+      : parseFloat(String(listing.price_per_day))
+    if (!isNaN(price) && isFinite(price)) {
+      formattedPrice = `€${price.toFixed(2)}`
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
@@ -334,15 +487,19 @@ function ListingCard({ listing }) {
         {coverImage ? (
           <Image
             src={coverImage}
-            alt={`${listing.make} ${listing.model}`}
+            alt={`${listing.year || ''} ${listing.make || ''} ${listing.model || ''}`.trim() || 'Vehicle image'}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover"
             priority={false}
+            unoptimized={coverImage.includes('supabase.co')}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-neutral-400">
-            No image
+            <div className="text-center">
+              <div className="text-4xl mb-2 font-semibold">{listing.make?.[0]?.toUpperCase() || '?'}</div>
+              <div className="text-xs">No image available</div>
+            </div>
           </div>
         )}
       </div>
@@ -479,13 +636,14 @@ function OwnerSpotlight({ partner }) {
       </h2>
       <div className="mt-4 flex items-center gap-4">
         <div className="relative h-16 w-16 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 shadow-inner">
-          {ownerImage ? (
+          {ownerImage && typeof ownerImage === 'string' && ownerImage.trim().length > 0 && (ownerImage.startsWith('http://') || ownerImage.startsWith('https://')) ? (
             <Image
-              src={ownerImage}
-              alt={`${ownerName} profile`}
+              src={ownerImage.trim()}
+              alt={`${ownerName} profile picture`}
               fill
               className="object-cover"
               sizes="64px"
+              unoptimized={ownerImage.includes('supabase.co')}
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-neutral-400">
@@ -546,12 +704,32 @@ function computeFleetInsights(listings) {
     return { minPrice: null, maxRating: null, locationCount: 0 }
   }
 
+  // Parse price_per_day - can be string or number
   const prices = listings
-    .map((listing) => listing.price_per_day)
-    .filter((price) => typeof price === 'number' && !Number.isNaN(price))
+    .map((listing) => {
+      const price = listing.price_per_day
+      if (typeof price === 'number') return price
+      if (typeof price === 'string') {
+        const parsed = parseFloat(price)
+        return isNaN(parsed) ? null : parsed
+      }
+      return null
+    })
+    .filter((price) => price !== null && !Number.isNaN(price))
+  
+  // Parse ratings - can be string or number
   const ratings = listings
-    .map((listing) => listing.rating)
-    .filter((rating) => typeof rating === 'number' && !Number.isNaN(rating))
+    .map((listing) => {
+      const rating = listing.rating
+      if (typeof rating === 'number') return rating
+      if (typeof rating === 'string') {
+        const parsed = parseFloat(rating)
+        return isNaN(parsed) ? null : parsed
+      }
+      return null
+    })
+    .filter((rating) => rating !== null && !Number.isNaN(rating))
+  
   const locations = new Set(
     listings
       .map((listing) => listing.location?.trim())

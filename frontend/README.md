@@ -12,7 +12,6 @@ A modern car rental platform built with Next.js, featuring user authentication, 
 - Admin panel for user management
 - Password reset functionality
 - Responsive design with modern UI components
-- **Testing**: Jest + React Testing Library
 - **API Architecture**: Model-Controller-Serializer pattern
 - **Real-time Sync**: Booking synchronization across modules
 - **Caching**: Smart API response caching
@@ -53,19 +52,6 @@ openssl rand -base64 32
 5. Make sure Django backend is running at `http://localhost:8000`, then start the frontend:
 ```bash
 pnpm dev
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Generate coverage report
-npm run test:coverage
 ```
 
 ### Manual Setup
@@ -170,12 +156,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - **Serializers** for data transformation
 - **Type Safety** with TypeScript interfaces
 - **Versioning** support
-
-### Testing
-- **Jest** configured for Next.js
-- **React Testing Library** for component tests
-- **Coverage** reporting enabled
-- See [Testing Guide](./docs/TESTING_GUIDE.md)
 
 ### Booking System
 - **Unified Booking Manager** across all modules

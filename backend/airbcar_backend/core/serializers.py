@@ -172,7 +172,7 @@ class PublicPartnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Partner
         fields = ['id', 'company_name', 'slug', 'description', 'logo', 'website', 'phone', 
-            'address', 'verification_status', 'created_at', 'listings', 'user', 
+            'address', 'city', 'business_type', 'verification_status', 'created_at', 'listings', 'user', 
             'total_listings', 'average_rating']
         read_only_fields = ['id', 'verification_status', 'created_at']
     

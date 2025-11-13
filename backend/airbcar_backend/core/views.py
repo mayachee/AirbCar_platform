@@ -17,7 +17,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import status
 from rest_framework.response import Response
 from .utils import upload_file_to_supabase
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (UserSerializer, BookingSerializer, PartnerSerializer, 
     ListingSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer,
@@ -333,21 +333,59 @@ class ListingViewSet(viewsets.ModelViewSet):
             listing.save(update_fields=["pictures"])
 
 class PartnerViewSet(viewsets.ModelViewSet):
-    queryset = Partner.objects.all().prefetch_related('listings')
+    queryset = Partner.objects.all().select_related('user').prefetch_related('listings')
     serializer_class = PartnerSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     http_method_names = ['get', 'post', 'patch', 'put', 'delete', 'head', 'options']
     
     def get_queryset(self):
+        """
+        Get queryset based on user permissions.
+        - Staff: Can see all partners
+        - Authenticated partners: Can see all partners (for browsing) but can only modify their own
+        - Unauthenticated: Can see all partners (public viewing)
+        """
         user = self.request.user
+        
+        # Staff can see everything
         if user.is_staff:
-            return Partner.objects.all().prefetch_related('listings')
+            return Partner.objects.all().select_related('user').prefetch_related('listings')
+        
+        # For unauthenticated users, allow public viewing
         if not user.is_authenticated:
-            raise ValidationError({"detail": "You are not loged in."})
-        if not user.is_partner and user.is_authenticated:
-            raise ValidationError({"detail": "You are not a partner."})
-        return Partner.objects.filter(user=user).prefetch_related('listings')
+            return Partner.objects.all().select_related('user').prefetch_related('listings')
+        
+        # For authenticated users (partner or not), allow viewing all partners
+        # The permission_classes will handle write restrictions
+        return Partner.objects.all().select_related('user').prefetch_related('listings')
+    
+    def get_object(self):
+        """
+        Override get_object to check permissions for write operations.
+        Non-partners can view but not modify partners.
+        Partners can only modify their own partner profile.
+        """
+        obj = super().get_object()
+        user = self.request.user
+        
+        # Allow read operations for all (handled by permission_classes)
+        if self.request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return obj
+        
+        # For write operations, check if user is the owner
+        if not user.is_authenticated:
+            raise PermissionDenied("You must be authenticated to perform this action.")
+        
+        # Partners can only modify their own profile
+        if user.is_partner:
+            if obj.user != user:
+                raise PermissionDenied("You can only modify your own partner profile.")
+        # Non-partners cannot create/modify partners (only staff can)
+        elif not user.is_staff:
+            raise PermissionDenied("You must be a partner to perform this action.")
+        
+        return obj
 
     def perform_create(self, serializer):
         if self.request.user.is_partner:
@@ -421,8 +459,8 @@ class PartnerViewSet(viewsets.ModelViewSet):
             self.perform_update(serializer)
             # Refresh partner data to get updated logo URL if it was uploaded
             partner.refresh_from_db()
-            serializer = self.get_serializer(partner)
-            return Response(serializer.data)
+        serializer = self.get_serializer(partner)
+        return Response(serializer.data)
 
 
 @api_view(['GET'])

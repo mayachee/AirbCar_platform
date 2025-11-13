@@ -122,7 +122,7 @@ export const MOROCCAN_CITIES = [
   'Berkane',
   'Berrechid',
   'Boujdour',
-  'Casablanca',
+  'Casablanca', 
   'Chefchaouen',
   'Dakhla',
   'El Jadida',
