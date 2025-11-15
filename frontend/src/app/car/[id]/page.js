@@ -62,7 +62,32 @@ function CarDetailsContent() {
         'No smoking',
         'No pets'
       ],
-      owner: {
+      owner: data.partner_details ? {
+        name: data.partner_details.company_name || 
+              (data.partner_details.user ? `${data.partner_details.user.first_name || ''} ${data.partner_details.user.last_name || ''}`.trim() : 'Owner') ||
+              'Owner',
+        avatar: data.partner_details.company_name?.[0]?.toUpperCase() || 
+                data.partner_details.user?.first_name?.[0]?.toUpperCase() || 
+                'O',
+        profilePicture: data.partner_details.user?.profile_picture || data.partner_details.logo || null,
+        memberSince: data.partner_details.user?.date_joined 
+          ? new Date(data.partner_details.user.date_joined).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+          : 'Recently',
+        rating: 5.0, // TODO: Calculate from reviews
+        reviewCount: 0, // TODO: Get from reviews count
+        responseRate: '100%', // TODO: Calculate from booking responses
+        languages: ['Arabic', 'French', 'English'], // TODO: Get from user profile if available
+        companyName: data.partner_details.company_name,
+        phone: data.partner_details.phone,
+        city: data.partner_details.city,
+        address: data.partner_details.address,
+        businessType: data.partner_details.business_type,
+        description: data.partner_details.description,
+        logo: data.partner_details.logo,
+        verified: data.partner_details.verification_status === 'verified',
+        partnerId: data.partner_details.id,
+        slug: data.partner_details.slug
+      } : {
         name: 'Owner',
         avatar: 'O',
         memberSince: 'Recently',
@@ -92,8 +117,9 @@ function CarDetailsContent() {
   // Capture search parameters from URL
   useEffect(() => {
     const location = searchParams.get('location') || ''
-    const pickupDate = searchParams.get('pickupDate') || ''
-    const returnDate = searchParams.get('returnDate') || ''
+    // Try multiple parameter name variations for dates
+    const pickupDate = searchParams.get('pickupDate') || searchParams.get('pickup_date') || ''
+    const returnDate = searchParams.get('returnDate') || searchParams.get('dropoffDate') || searchParams.get('return_date') || ''
     
     let duration = 1
     let formattedPickup = 'Wed, Aug 20'
@@ -188,14 +214,29 @@ function CarDetailsContent() {
     const params = new URLSearchParams()
     params.set('carId', vehicle.id)
     
-    // Pass through search parameters
+    // Pass through search parameters - check for truthy values and non-empty strings
     if (searchDetails.location) params.set('location', searchDetails.location)
-    if (searchDetails.pickupDate) params.set('pickupDate', searchDetails.pickupDate)
-    if (searchDetails.returnDate) params.set('returnDate', searchDetails.returnDate)
+    if (searchDetails.pickupDate && searchDetails.pickupDate.trim()) {
+      params.set('pickupDate', searchDetails.pickupDate.trim())
+    }
+    if (searchDetails.returnDate && searchDetails.returnDate.trim()) {
+      params.set('returnDate', searchDetails.returnDate.trim())
+    }
     params.set('duration', searchDetails.duration.toString())
     params.set('totalPrice', ((vehicle.price * searchDetails.duration) + 25).toString())
     
-    router.push(`/booking?${params.toString()}`)
+    // Debug: Log what we're sending
+    console.log('Navigating to booking with params:', {
+      carId: vehicle.id,
+      pickupDate: searchDetails.pickupDate,
+      returnDate: searchDetails.returnDate,
+      duration: searchDetails.duration,
+      searchDetails
+    })
+    
+    const bookingUrl = `/booking?${params.toString()}`
+    console.log('Booking URL:', bookingUrl)
+    router.push(bookingUrl)
   }
 
   const handleModifySearch = () => {

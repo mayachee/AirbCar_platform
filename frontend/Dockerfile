@@ -40,12 +40,12 @@ RUN chmod +x /app/start.sh
 # Set memory limits for Node.js
 ENV NODE_OPTIONS="--max-old-space-size=3072 --no-warnings"
 
-# Expose port 3000
-EXPOSE 3000
+# Expose port 3001
+EXPOSE 3001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/ || exit 1
+  CMD curl -f http://localhost:${PORT:-3001}/ || exit 1
 
 # Use the start script as entrypoint while ensuring Unix line endings
 CMD ["bash", "-lc", "sed -i 's/\\r$//' /app/start.sh && exec bash /app/start.sh"]

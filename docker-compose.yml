@@ -8,6 +8,12 @@ services:
       - "8000:8000"
     networks:
       - AirbNet
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
     environment:
       DATABASE_NAME: postgres
       DATABASE_USER: postgres.wtbmqtmmdobfvvecinif
@@ -26,6 +32,7 @@ services:
       EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-from@airbcar.com}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
       
     restart: unless-stopped
 
@@ -38,12 +45,13 @@ services:
         reservations:
           memory: 1.5G
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       - NODE_ENV=development
+      - PORT=3001
       - DJANGO_API_URL=http://web:8000
       - NEXT_PUBLIC_DJANGO_API_URL=http://localhost:8000
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_URL=http://localhost:3001
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID=712108051146-g9ksbf313hhl7n3nt69ot8np7gtvvd8o.apps.googleusercontent.com
       - DATABASE_URL=postgresql://postgres.wtbmqtmmdobfvvecinif:Mayache+123455@aws-1-eu-north-1.pooler.supabase.com:5432/postgres
       - NODE_OPTIONS=--max-old-space-size=4096 --openssl-legacy-provider

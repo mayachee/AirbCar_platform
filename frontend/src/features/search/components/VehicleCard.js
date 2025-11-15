@@ -61,25 +61,6 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
             </span>
           </div>
         )}
-        <div className="absolute top-3 right-3 flex flex-col space-y-2">
-          {/* Favorite Button */}
-          <button 
-            onClick={() => onToggleFavorite(car.id)}
-            disabled={favoritesLoading}
-            className={`bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors ${
-              isFavorite ? 'text-red-500' : 'text-gray-700'
-            } ${favoritesLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <svg 
-              className="w-5 h-5" 
-              fill={isFavorite ? "currentColor" : "none"} 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
-        </div>
       </div>
 
       {/* Car Details */}

@@ -6,12 +6,15 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/contexts/AuthContext'
 import { apiClient } from '@/lib/api/client'
-import { BookingSummary, UserInfo, BookingNotice, BookingSuccess, BookingForm, BookingProgress } from './components'
+import { authService } from '@/features/auth/services/authService'
+import { BookingSummary, UserInfo, BookingNotice, BookingSuccess, BookingForm } from './components'
 
 function BookingPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user: authUser, loading: authLoading } = useAuth()
+  const [user, setUser] = useState(null)
+  const [userLoading, setUserLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [bookingCreated, setBookingCreated] = useState(false)
@@ -20,10 +23,50 @@ function BookingPageContent() {
   const [vehicleLoading, setVehicleLoading] = useState(true)
 
   const carId = searchParams.get('carId')
-  const pickupDate = searchParams.get('pickupDate')
-  const returnDate = searchParams.get('returnDate')
-  const totalPrice = searchParams.get('totalPrice')
+  // Try multiple parameter name variations - also trim whitespace and check for empty strings
+  const pickupDateRaw = searchParams.get('pickupDate') || searchParams.get('pickup_date') || searchParams.get('startDate')
+  const returnDateRaw = searchParams.get('returnDate') || searchParams.get('dropoffDate') || searchParams.get('return_date') || searchParams.get('endDate')
+  const pickupDate = pickupDateRaw?.trim() || null
+  const returnDate = returnDateRaw?.trim() || null
+  const totalPrice = searchParams.get('totalPrice') || searchParams.get('total_price')
   const duration = searchParams.get('duration')
+  
+  // Debug: Log URL parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('Booking page URL params:', {
+        carId,
+        pickupDate,
+        returnDate,
+        totalPrice,
+        duration,
+        allParams: Object.fromEntries(searchParams.entries())
+      })
+    }
+  }, [carId, pickupDate, returnDate, totalPrice, duration, searchParams])
+
+  // Fetch full user profile with identity documents
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!authUser || authLoading) return
+      
+      try {
+        setUserLoading(true)
+        const response = await authService.getProfile()
+        // The response might be wrapped in ApiResponse or direct data
+        const userData = response?.data || response
+        setUser(userData)
+      } catch (err) {
+        console.error('Error fetching user profile:', err)
+        // Fallback to auth user if profile fetch fails
+        setUser(authUser)
+      } finally {
+        setUserLoading(false)
+      }
+    }
+    
+    fetchUserProfile()
+  }, [authUser, authLoading])
 
   // Fetch vehicle details
   useEffect(() => {
@@ -45,39 +88,84 @@ function BookingPageContent() {
   }, [carId])
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !authUser) {
       router.push('/auth/signin?redirect=/booking' + window.location.search)
     }
-  }, [user, authLoading, router])
+  }, [authUser, authLoading, router])
 
-  const handleCreateBooking = async (specialRequest = '', licenseFile = null) => {
+  const handleCreateBooking = async (specialRequest = '', licenseFile = null, paymentMethod = 'online') => {
     if (!carId) {
-      setError('Car ID is missing')
+      setError('Car ID is missing. Please go back and select a vehicle.')
       return
     }
 
-    if (!user) {
+    // Use full user profile if available, otherwise fallback to auth user
+    const currentUser = user || authUser
+
+    if (!currentUser) {
       router.push('/auth/signin?redirect=/booking' + window.location.search)
       return
     }
 
-    if (!licenseFile) {
-      setError('Please upload your driver\'s license')
+    // Validate dates - provide helpful error message
+    if (!pickupDate || !returnDate) {
+      setError('Please select pickup and return dates. If you came from a car listing page, please go back and select dates first.')
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: 'smooth' })
       return
+    }
+    
+    // Validate date format
+    const pickupDateObj = new Date(pickupDate)
+    const returnDateObj = new Date(returnDate)
+    
+    if (isNaN(pickupDateObj.getTime()) || isNaN(returnDateObj.getTime())) {
+      setError('Invalid date format. Please select valid pickup and return dates.')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    const pickup = pickupDateObj
+    const returnD = returnDateObj
+    const now = new Date()
+
+    if (pickup < now) {
+      setError('Pickup date cannot be in the past')
+      return
+    }
+
+    if (returnD <= pickup) {
+      setError('Return date must be after pickup date')
+      return
+    }
+
+    // License file is optional but recommended
+    if (!licenseFile) {
+      console.warn('No license file provided - booking will proceed without it')
     }
 
     try {
       setLoading(true)
       setError(null)
 
+      // Format dates properly for backend
+      const startTime = new Date(pickupDate)
+      startTime.setHours(10, 0, 0, 0) // Default pickup time: 10 AM
+      const endTime = new Date(returnDate)
+      endTime.setHours(18, 0, 0, 0) // Default return time: 6 PM
+
       // Create FormData to handle file upload
       const formData = new FormData()
       formData.append('listing', carId)
-      formData.append('start_time', pickupDate || new Date().toISOString())
-      formData.append('end_time', returnDate || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString())
+      formData.append('start_time', startTime.toISOString())
+      formData.append('end_time', endTime.toISOString())
       formData.append('price', totalPrice || 0)
       formData.append('request_message', specialRequest || 'Booking request from website')
-      formData.append('driver_license', licenseFile)
+      formData.append('payment_method', paymentMethod || 'online') // 'online' or 'cash'
+      // Only append license file if provided
+      if (licenseFile) {
+        formData.append('driver_license', licenseFile)
+      }
 
       // Don't set Content-Type - let the browser set it with the boundary
       const response = await apiClient.post('/bookings/', formData)
@@ -86,13 +174,22 @@ function BookingPageContent() {
       setBookingCreated(true)
     } catch (err) {
       console.error('Error creating booking:', err)
-      setError(err.message || 'Failed to create booking')
+      // Provide more specific error messages
+      if (err.message?.includes('timeout')) {
+        setError('Request timed out. Please try again or contact support if the problem persists.')
+      } else if (err.message?.includes('400') || err.message?.includes('Bad Request')) {
+        setError('Invalid booking data. Please check your dates and try again.')
+      } else if (err.message?.includes('409') || err.message?.includes('Conflict')) {
+        setError('This vehicle is not available for the selected dates. Please choose different dates.')
+      } else {
+        setError(err.message || 'Failed to create booking. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  if (authLoading) {
+  if (authLoading || userLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -107,9 +204,12 @@ function BookingPageContent() {
     )
   }
 
-  if (!user) {
+  if (!user && !authUser) {
     return null
   }
+
+  // Use full user profile if available, otherwise fallback to auth user
+  const currentUser = user || authUser
 
   if (bookingCreated) {
     return (
@@ -138,8 +238,30 @@ function BookingPageContent() {
           Back to car details
         </button>
 
-        {/* Step Indicator */}
-        <BookingProgress currentStep={1} />
+        {/* Warning if dates are missing */}
+        {(!pickupDate || !returnDate) && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-md p-4 mb-6">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-yellow-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-yellow-800 mb-1">Dates Required</h3>
+                <p className="text-sm text-yellow-700 mb-3">
+                  Please go back to the car listing page and select pickup and return dates before booking.
+                </p>
+                {carId && (
+                  <button
+                    onClick={() => router.push(`/car/${carId}${window.location.search}`)}
+                    className="text-sm font-medium text-yellow-800 hover:text-yellow-900 underline"
+                  >
+                    Go to car details page →
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -193,7 +315,7 @@ function BookingPageContent() {
               onCancel={() => router.back()}
               loading={loading}
               error={error}
-              user={user}
+              user={currentUser}
             />
           </div>
 
@@ -209,7 +331,7 @@ function BookingPageContent() {
               />
 
               {/* User Info */}
-              <UserInfo user={user} />
+              <UserInfo user={currentUser} />
 
               {/* Help & Support Card */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -37,8 +37,8 @@ export class VehicleService {
       paramsObj[key] = value
     })
     
-    // Increase timeout for vehicle search (30 seconds - large dataset)
-    return apiClient.get('/listings/', paramsObj, { timeout: 30000 })
+    // Increase timeout for vehicle search (60 seconds - large dataset, complex queries)
+    return apiClient.get('/listings/', paramsObj, { timeout: 60000 })
   }
 
   async getVehicle(vehicleId: number) {
@@ -114,7 +114,8 @@ export class VehicleService {
   }
 
   async getFavorites() {
-    return apiClient.get('/favorites/')
+    // Increase timeout for favorites (60 seconds - may include full listing details)
+    return apiClient.get('/favorites/', undefined, { timeout: 60000 })
   }
 
   async removeFavorite(vehicleId: number) {

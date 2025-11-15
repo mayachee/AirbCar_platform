@@ -32,20 +32,71 @@ export default function BookingSuccess({ bookingData }) {
         <div className="p-8">
           {/* Booking Details */}
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Booking Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Booking Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-sm text-gray-600 mb-1">Booking ID</p>
-                <p className="font-bold text-gray-900">#{bookingData?.id || 'PENDING'}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Booking ID</p>
+                <p className="font-bold text-lg text-gray-900">#{bookingData?.id || 'PENDING'}</p>
               </div>
               <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-sm text-gray-600 mb-1">Status</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Status</p>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                  <p className="font-bold text-gray-900">Pending Approval</p>
+                  <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full animate-pulse"></div>
+                  <p className="font-bold text-lg text-gray-900">Pending Approval</p>
                 </div>
               </div>
             </div>
+            {bookingData?.start_time && bookingData?.end_time && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Pickup Date</p>
+                  <p className="font-semibold text-gray-900">
+                    {new Date(bookingData.start_time).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(bookingData.start_time).toLocaleTimeString('en-US', { 
+                      hour: 'numeric', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Return Date</p>
+                  <p className="font-semibold text-gray-900">
+                    {new Date(bookingData.end_time).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(bookingData.end_time).toLocaleTimeString('en-US', { 
+                      hour: 'numeric', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
+                  </p>
+                </div>
+              </div>
+            )}
+            {bookingData?.price && (
+              <div className="mt-4 bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <p className="text-xs text-gray-600 mb-1">Total Amount</p>
+                <p className="text-2xl font-bold text-orange-600">{bookingData.price} MAD</p>
+              </div>
+            )}
           </div>
 
           {/* Next Steps */}

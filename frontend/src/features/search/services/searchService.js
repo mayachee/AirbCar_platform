@@ -41,8 +41,8 @@ class SearchService {
         queryParams[key] = value;
       });
       
-      // Increase timeout for search (30 seconds - large dataset)
-      return await apiClient.get('/listings/', queryParams, { timeout: 30000 });
+      // Increase timeout for search (60 seconds - large dataset, complex queries)
+      return await apiClient.get('/listings/', queryParams, { timeout: 60000 });
     } catch (error) {
       console.error('Error searching vehicles:', error);
       throw error;
@@ -62,8 +62,8 @@ class SearchService {
   // Get featured/popular vehicles
   async getFeaturedVehicles() {
     try {
-      // Increase timeout for featured vehicles (30 seconds - large dataset)
-      return await apiClient.get('/listings/', { featured: 'true' }, { timeout: 30000 });
+      // Increase timeout for featured vehicles (60 seconds - large dataset)
+      return await apiClient.get('/listings/', { featured: 'true' }, { timeout: 60000 });
     } catch (error) {
       console.error('Error fetching featured vehicles:', error);
       throw error;

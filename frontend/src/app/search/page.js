@@ -50,16 +50,52 @@ function SearchContent() {
 
   // Handle search form submission
   const handleSearchFormSubmit = (formData) => {
+    // Update filters state
     updateFilters({
       location: formData.location,
       pickupDate: formData.pickupDate,
       returnDate: formData.returnDate
     });
+    
+    // Also update URL to persist the search params
+    const params = new URLSearchParams();
+    if (formData.location) params.set('location', formData.location);
+    if (formData.pickupDate) params.set('pickupDate', formData.pickupDate);
+    if (formData.returnDate) params.set('returnDate', formData.returnDate);
+    
+    const queryString = params.toString();
+    const newUrl = queryString ? `/search?${queryString}` : '/search';
+    
+    console.log('Updating search URL with params:', {
+      location: formData.location,
+      pickupDate: formData.pickupDate,
+      returnDate: formData.returnDate,
+      url: newUrl
+    });
+    
+    router.push(newUrl);
   };
 
-  // Handle view details (redirect to car page)
+  // Handle view details (redirect to car page with search params)
   const handleViewDetails = (car) => {
-    router.push(`/car/${car.id}`);
+    // Build URL with current search filters (dates, location)
+    const params = new URLSearchParams();
+    if (filters.location) params.set('location', filters.location);
+    if (filters.pickupDate) params.set('pickupDate', filters.pickupDate);
+    if (filters.returnDate) params.set('returnDate', filters.returnDate);
+    
+    const queryString = params.toString();
+    const url = `/car/${car.id}${queryString ? `?${queryString}` : ''}`;
+    
+    console.log('Navigating to car details with params:', {
+      carId: car.id,
+      location: filters.location,
+      pickupDate: filters.pickupDate,
+      returnDate: filters.returnDate,
+      url
+    });
+    
+    router.push(url);
   };
 
   // Handle favorite toggle with router redirect

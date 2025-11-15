@@ -189,12 +189,28 @@ class PublicPartnerSerializer(serializers.ModelSerializer):
 class ListingSerializer(serializers.ModelSerializer):
     partner = serializers.PrimaryKeyRelatedField(read_only=True)
     
+    class PartnerBriefSerializer(serializers.ModelSerializer):
+        """Brief partner info for listing display"""
+        class UserBriefSerializer(serializers.ModelSerializer):
+            """Limited user info for partner"""
+            class Meta:
+                model = User
+                fields = ['id', 'first_name', 'last_name', 'email', 'profile_picture', 'date_joined']
+        
+        user = UserBriefSerializer(read_only=True)
+        
+        class Meta:
+            model = Partner
+            fields = ['id', 'company_name', 'user', 'logo', 'slug', 'description', 'phone', 'city', 'address', 'business_type', 'verification_status']
+    
+    partner_details = PartnerBriefSerializer(source='partner', read_only=True)
+    
     class Meta:
         model = Listing
-        fields = ['id', 'partner', 'make', 'model', 'year', 'location', 'features', 
+        fields = ['id', 'partner', 'partner_details', 'make', 'model', 'year', 'location', 'features', 
             'price_per_day', 'availability', 'rating', 'created_at', 'fuel_type', 
             'transmission', 'seating_capacity', 'vehicle_condition', 'pictures', 'vehicle_description']
-        read_only_fields = ['partner', 'created_at', 'rating']
+        read_only_fields = ['partner', 'partner_details', 'created_at', 'rating']
 
     def to_internal_value(self, data):
         # Remove pictures from data (it's handled separately in views)

@@ -26,7 +26,8 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       
       // Try the my-favorites endpoint first (returns favorites with full listing details)
       try {
-        const response = await apiClient.get('/favorites/my-favorites/');
+        // Increase timeout for favorites (60 seconds - may include full listing details)
+        const response = await apiClient.get('/favorites/my-favorites/', undefined, { timeout: 60000 });
         const data = response?.data || response;
         console.log('my-favorites response:', data);
         
@@ -52,7 +53,8 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       // Fallback to general favorites endpoint (GET /favorites/)
       if (favoritesData.length === 0 || !favoritesData) {
         try {
-          const response = await apiClient.get('/favorites/');
+          // Increase timeout for favorites (60 seconds - may include full listing details)
+          const response = await apiClient.get('/favorites/', undefined, { timeout: 60000 });
           const data = response?.data || response;
           console.log('General favorites response:', data);
           

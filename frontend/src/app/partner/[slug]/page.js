@@ -92,7 +92,7 @@ export async function generateMetadata({ params }) {
         title: partner.company_name,
         description: partner.description,
         type: 'website',
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/partner/${partner.slug}`,
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/partner/${partner.slug}`,
         images: partner.logo
           ? [
               {

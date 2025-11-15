@@ -368,11 +368,25 @@ export class ApiClient {
       
       // Extract the base URL for cleaner error message
       const baseUrl = this.baseURL;
-      const friendlyMessage = `Unable to connect to the server at ${baseUrl}. Please ensure:
+      const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
+      
+      let friendlyMessage = `Unable to connect to the server at ${baseUrl}.`;
+      
+      if (isLocalhost) {
+        friendlyMessage += `\n\nThe backend server is not running. To start it:\n\n` +
+          `Option 1 - Using Docker Compose:\n` +
+          `  docker-compose up\n\n` +
+          `Option 2 - Manual Django server:\n` +
+          `  cd backend/airbcar_backend\n` +
+          `  python manage.py runserver\n\n` +
+          `Once the server is running, refresh this page.`;
+      } else {
+        friendlyMessage += `\n\nPlease ensure:
 - The backend server is running
 - The server is accessible at ${baseUrl}
 - Your internet connection is active
 - CORS is properly configured on the backend`;
+      }
       
       console.error('🔴 Network Error:', {
         message: friendlyMessage,

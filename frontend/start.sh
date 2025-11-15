@@ -23,8 +23,8 @@ fi
 echo "Starting Next.js application..."
 
 # Use dev mode instead of production build to avoid memory issues
-echo "[start.sh] Starting Next.js in development mode on 0.0.0.0:3000"
+echo "[start.sh] Starting Next.js in development mode on 0.0.0.0:${PORT:-3001}"
 export NODE_ENV=development
 export HOSTNAME=0.0.0.0
-export PORT=3000
+export PORT=${PORT:-3001}
 exec pnpm run dev

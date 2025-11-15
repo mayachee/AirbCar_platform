@@ -26,4 +26,5 @@ WORKDIR /app/airbcar_backend
 EXPOSE 8000
 
 # Use environment PORT for Render/Railway compatibility
-CMD ["sh", "-c", "gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
+# Use fewer workers in development to reduce memory usage
+CMD ["sh", "-c", "gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${GUNICORN_WORKERS:-1} --timeout 60"]

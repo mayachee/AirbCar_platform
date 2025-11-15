@@ -175,7 +175,8 @@ export class UserService {
     try {
       console.log('📡 Trying /favorites/my-favorites/ endpoint...');
       // Try my-favorites endpoint first (returns full details)
-      const response = await apiClient.get('/favorites/my-favorites/')
+      // Increase timeout for favorites (60 seconds - may include full listing details)
+      const response = await apiClient.get('/favorites/my-favorites/', undefined, { timeout: 60000 })
       console.log('✅ userService.getFavorites() - Raw response:', response);
       
       const data = response?.data || response
@@ -210,7 +211,8 @@ export class UserService {
       // Fallback to general favorites endpoint
       try {
         console.log('📡 Trying /favorites/ endpoint...');
-        const response = await apiClient.get('/favorites/')
+        // Increase timeout for favorites (60 seconds - may include full listing details)
+        const response = await apiClient.get('/favorites/', undefined, { timeout: 60000 })
         console.log('✅ userService.getFavorites() - Fallback response:', response);
         
         const data = response?.data || response

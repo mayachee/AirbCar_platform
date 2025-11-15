@@ -1,6 +1,0 @@
-# Ignore Next.js build files from OneDrive sync
-.next/
-.next-local/
-out/
-node_modules/.cache/
-*.log

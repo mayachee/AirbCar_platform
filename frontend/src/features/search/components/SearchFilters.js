@@ -62,11 +62,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-      </div>
-
+    <div className="bg-white sticky top-6">
       {/* Price Range */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-3">
