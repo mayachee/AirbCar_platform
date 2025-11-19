@@ -1,0 +1,10 @@
+# OneDrive ignore file
+# This prevents OneDrive from syncing these directories
+# which can cause symlink issues on Windows
+
+.next/
+.next-local/
+out/
+node_modules/.cache/
+.cache/
+

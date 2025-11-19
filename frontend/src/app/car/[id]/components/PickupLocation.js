@@ -1,4 +1,11 @@
 export default function PickupLocation({ vehicle }) {
+  if (!vehicle) {
+    return null
+  }
+
+  // Get address from various possible field names
+  const address = vehicle.fullAddress || vehicle.address || vehicle.location || 'Location will be provided after booking'
+
   return (
     <div className="bg-white rounded-xl border p-6 mb-8">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Pickup & return location</h3>
@@ -8,7 +15,7 @@ export default function PickupLocation({ vehicle }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
         <div>
-          <p className="font-medium text-gray-900">{vehicle.fullAddress}</p>
+          <p className="font-medium text-gray-900">{address}</p>
           <p className="text-sm text-gray-600 mt-1">
             Exact location will be provided after booking confirmation
           </p>

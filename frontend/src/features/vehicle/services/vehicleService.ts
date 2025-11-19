@@ -42,7 +42,8 @@ export class VehicleService {
   }
 
   async getVehicle(vehicleId: number) {
-    return apiClient.get(`/listings/${vehicleId}/`, undefined, { timeout: 20000 })
+    // Increase timeout for vehicle details (60 seconds - may include complex relationships)
+    return apiClient.get(`/listings/${vehicleId}/`, undefined, { timeout: 60000 })
   }
 
   async createVehicle(vehicleData: Partial<Vehicle>) {

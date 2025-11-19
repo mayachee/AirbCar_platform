@@ -10,7 +10,10 @@ export default function SearchResults({
   isFavorite, 
   favoritesLoading
 }) {
-  if (filteredCars.length === 0) {
+  // Ensure filteredCars is always an array
+  const cars = Array.isArray(filteredCars) ? filteredCars : [];
+  
+  if (cars.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-600 mb-4">
@@ -26,7 +29,7 @@ export default function SearchResults({
 
   return (
     <>
-      {filteredCars.map((car) => {
+      {cars.map((car) => {
         return (
           <VehicleCard
             key={car.id}

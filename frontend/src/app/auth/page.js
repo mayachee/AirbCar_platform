@@ -267,7 +267,7 @@ function AuthForm() {
             theme: 'outline',
             size: 'large',
             text: 'signin_with',
-            width: '100%',
+            width: signInContainer.offsetWidth || 300,
             type: 'standard',
           })
         } catch (error) {
@@ -283,7 +283,7 @@ function AuthForm() {
             theme: 'outline',
             size: 'large',
             text: 'signup_with',
-            width: '100%',
+            width: signUpContainer.offsetWidth || 300,
             type: 'standard',
           })
         } catch (error) {

@@ -30,7 +30,29 @@ const itemVariants = {
 }
 
 export default function BookingSidebar({ vehicle, searchDetails, selectedDates, onBookNow, onChangeDates }) {
-  const totalPrice = (vehicle.price * searchDetails.duration).toLocaleString()
+  if (!vehicle) {
+    return null
+  }
+
+  // Safely get price with fallback
+  const price = vehicle.price || vehicle.price_per_day || vehicle.dailyRate || 0
+  const duration = searchDetails?.duration || 1
+  const totalPrice = (price * duration).toLocaleString()
+  
+  // Safely get insurance info
+  const insurance = vehicle.insurance || {}
+  const insuranceCoverage = insurance.coverage || 'Full coverage included'
+  const insuranceDeductible = insurance.deductible || '500 MAD'
+  
+  // Safely get mileage info
+  const mileage = vehicle.mileage || {}
+  const mileageIncluded = mileage.included || 200
+  const mileageOverage = mileage.overage || '5 MAD/km'
+  
+  // Safely get availability info
+  const availability = vehicle.availability || {}
+  const advanceNotice = availability.advanceNotice || '24 hours'
+  const minTripLength = availability.minTripLength || '1 day'
   
   return (
     <div className="lg:col-span-1">
@@ -63,7 +85,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 delay: 0.2,
               }}
             >
-              {vehicle.price} MAD
+              {price} MAD
             </motion.div>
             <motion.div
               className="text-gray-600"
@@ -115,12 +137,12 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             variants={itemVariants}
           >
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">{searchDetails.duration} {searchDetails.duration === 1 ? 'day' : 'days'} rental</span>
-              <span className="font-medium">{(vehicle.price * searchDetails.duration).toLocaleString()} MAD</span>
+              <span className="text-gray-600">{duration} {duration === 1 ? 'day' : 'days'} rental</span>
+              <span className="font-medium">{(price * duration).toLocaleString()} MAD</span>
             </div>
             <div className="flex justify-between items-center font-semibold text-lg">
               <span>Total</span>
-              <span>{(vehicle.price * searchDetails.duration).toLocaleString()} MAD</span>
+              <span>{(price * duration).toLocaleString()} MAD</span>
             </div>
           </motion.div>
 
@@ -160,8 +182,8 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
               </motion.svg>
               <div>
                 <div className="font-medium text-green-800">Protected by insurance</div>
-                <div className="text-sm text-green-700">{vehicle.insurance.coverage}</div>
-                <div className="text-xs text-green-600 mt-1">Deductible: {vehicle.insurance.deductible}</div>
+                <div className="text-sm text-green-700">{insuranceCoverage}</div>
+                <div className="text-xs text-green-600 mt-1">Deductible: {insuranceDeductible}</div>
               </div>
             </div>
           </motion.div>
@@ -177,7 +199,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>{vehicle.mileage.included} km included</span>
+                <span>{mileageIncluded} km included</span>
               </div>
               <div className="flex items-center text-sm">
                 <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,9 +228,9 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             variants={itemVariants}
           >
             <div className="text-xs text-gray-500 space-y-1">
-              <div>Extra km: {vehicle.mileage.overage}</div>
-              <div>Advance notice: {vehicle.availability.advanceNotice}</div>
-              <div>Min trip: {vehicle.availability.minTripLength}</div>
+              <div>Extra km: {mileageOverage}</div>
+              <div>Advance notice: {advanceNotice}</div>
+              <div>Min trip: {minTripLength}</div>
             </div>
           </motion.div>
         </motion.div>

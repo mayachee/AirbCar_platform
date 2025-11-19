@@ -27,4 +27,4 @@ EXPOSE 8000
 
 # Use environment PORT for Render/Railway compatibility
 # Use fewer workers in development to reduce memory usage
-CMD ["sh", "-c", "gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${GUNICORN_WORKERS:-1} --timeout 60"]
+CMD ["sh", "-c", "gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30"]

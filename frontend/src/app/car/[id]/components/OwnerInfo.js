@@ -1,11 +1,16 @@
 import Link from 'next/link'
 
 export default function OwnerInfo({ vehicle }) {
-  if (!vehicle?.owner) {
+  if (!vehicle) {
     return null
   }
 
-  const owner = vehicle.owner
+  // Get owner/partner info from various possible field names
+  const owner = vehicle.owner || vehicle.partner || (vehicle.partner_id ? { id: vehicle.partner_id } : null)
+  
+  if (!owner) {
+    return null
+  }
   
   // Use logo if available, otherwise use profile picture, otherwise fallback to avatar
   const logoUrl = owner.logo || owner.profilePicture
@@ -126,7 +131,7 @@ export default function OwnerInfo({ vehicle }) {
               <span className="text-sm text-green-600 font-medium">Verified Partner</span>
             </div>
           )}
-          {owner.languages && owner.languages.length > 0 && (
+          {owner.languages && Array.isArray(owner.languages) && owner.languages.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {owner.languages.map((lang, index) => (
                 <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">

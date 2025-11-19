@@ -40,6 +40,9 @@ function SearchContent() {
     clearFilters
   } = useSearch(initialFilters);
 
+  // Ensure filteredCars is always an array
+  const safeFilteredCars = Array.isArray(filteredCars) ? filteredCars : [];
+
   // Use favorites hook
   const { isFavorite, toggleFavorite, loading: favoritesLoading } = useFavorites();
 
@@ -174,14 +177,14 @@ function SearchContent() {
         </div>
 
             {/* Quick Stats */}
-            {!loading && filteredCars.length > 0 && (
+            {!loading && safeFilteredCars.length > 0 && (
               <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-base text-gray-300">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
                     <Car className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <div className="font-bold text-white text-lg">{filteredCars.length}</div>
+                    <div className="font-bold text-white text-lg">{safeFilteredCars.length}</div>
                     <div className="text-sm">available cars</div>
                   </div>
                 </div>
@@ -204,10 +207,10 @@ function SearchContent() {
                   </span>
                 ) : (
                   <>
-                    {filteredCars.length > 0 ? (
+                    {safeFilteredCars.length > 0 ? (
                       <>
-                        <span className="text-orange-600">{filteredCars.length}</span>{' '}
-                        <span className="font-normal text-gray-700">car{filteredCars.length === 1 ? '' : 's'} found</span>
+                        <span className="text-orange-600">{safeFilteredCars.length}</span>{' '}
+                        <span className="font-normal text-gray-700">car{safeFilteredCars.length === 1 ? '' : 's'} found</span>
                       </>
                     ) : hasSearchCriteria ? (
                       'No cars found'
@@ -437,7 +440,7 @@ function SearchContent() {
                   : 'space-y-4'
                 }>
               <SearchResults
-                filteredCars={filteredCars}
+                filteredCars={safeFilteredCars}
                 onViewDetails={handleViewDetails}
                 onToggleFavorite={handleToggleFavorite}
                 isFavorite={isFavorite}
@@ -449,11 +452,11 @@ function SearchContent() {
           </div>
 
           {/* Results Footer */}
-          {!loading && filteredCars.length > 0 && filteredCars.length >= 12 && (
+          {!loading && safeFilteredCars.length > 0 && safeFilteredCars.length >= 12 && (
             <div className="mt-16 pt-8 border-t border-gray-200 text-center">
               <p className="text-base text-gray-500">
-                Showing <span className="font-bold text-gray-900">{filteredCars.length}</span> results
-                {filteredCars.length >= 12 && '. Scroll to see more.'}
+                Showing <span className="font-bold text-gray-900">{safeFilteredCars.length}</span> results
+                {safeFilteredCars.length >= 12 && '. Scroll to see more.'}
               </p>
             </div>
           )}

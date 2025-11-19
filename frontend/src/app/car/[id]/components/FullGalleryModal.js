@@ -1,4 +1,14 @@
 export default function FullGalleryModal({ vehicle, currentImageIndex, onClose, onSelectImage }) {
+  // Safely get images array with fallback
+  const images = vehicle?.images || []
+  const hasImages = images.length > 0
+  const safeIndex = Math.min(currentImageIndex, images.length - 1)
+  const currentImage = images[safeIndex] || images[0] || '/carsymbol.jpg'
+
+  if (!hasImages) {
+    return null
+  }
+
   return (
     <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
       <button
@@ -11,8 +21,8 @@ export default function FullGalleryModal({ vehicle, currentImageIndex, onClose, 
       </button>
       <div className="max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center p-4">
         <img
-          src={vehicle.images[currentImageIndex] || '/carsymbol.jpg'}
-          alt={`${vehicle.name} - Image ${currentImageIndex + 1}`}
+          src={currentImage}
+          alt={`${vehicle?.name || 'Vehicle'} - Image ${safeIndex + 1}`}
           className="max-w-full max-h-full object-contain"
           loading="lazy"
           onError={(e) => {
@@ -20,17 +30,19 @@ export default function FullGalleryModal({ vehicle, currentImageIndex, onClose, 
           }}
         />
       </div>
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {vehicle.images.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => onSelectImage(index)}
-            className={`w-3 h-3 rounded-full ${
-              currentImageIndex === index ? 'bg-white' : 'bg-white/50'
-            }`}
-          />
-        ))}
-      </div>
+      {images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => onSelectImage(index)}
+              className={`w-3 h-3 rounded-full ${
+                safeIndex === index ? 'bg-white' : 'bg-white/50'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

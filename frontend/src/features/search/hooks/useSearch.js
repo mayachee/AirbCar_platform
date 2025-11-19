@@ -18,9 +18,49 @@ export const useSearch = (initialFilters = {}) => {
         setLoading(true);
         setError(null);
         const response = await searchService.searchVehicles(filters);
-        const data = response.data || response;
-        setVehicles(data || []);
-        setFilteredVehicles(data || []);
+        
+        // Debug logging
+        console.log('🔍 Search API Response:', {
+          responseType: typeof response,
+          isArray: Array.isArray(response),
+          hasData: !!response?.data,
+          dataType: typeof response?.data,
+          dataIsArray: Array.isArray(response?.data),
+          nestedData: response?.data?.data,
+          nestedDataIsArray: Array.isArray(response?.data?.data)
+        });
+        
+        // Handle different response structures from API client
+        let data = [];
+        if (Array.isArray(response)) {
+          data = response;
+        } else if (response?.data) {
+          // API client wraps response: { data: {...}, success: true }
+          // Backend returns: { data: [], count: 0, message: "..." }
+          // So we need to check response.data.data
+          if (Array.isArray(response.data)) {
+            // Direct array (unlikely but handle it)
+            data = response.data;
+          } else if (response.data?.data && Array.isArray(response.data.data)) {
+            // Nested structure: { data: { data: [...], count: 12 } }
+            data = response.data.data;
+          } else if (response.data?.results && Array.isArray(response.data.results)) {
+            // Paginated response
+            data = response.data.results;
+          } else {
+            // Fallback: try to extract any array from response.data
+            console.warn('⚠️ Unexpected response structure:', {
+              response,
+              dataKeys: response.data ? Object.keys(response.data) : 'no data',
+              dataValue: response.data
+            });
+            data = [];
+          }
+        }
+        
+        console.log('✅ Extracted vehicles:', data.length, 'items');
+        setVehicles(data);
+        setFilteredVehicles(data);
       } catch (err) {
         // Handle timeout and network errors gracefully
         if (err?.isTimeoutError || err?.isNetworkError) {
@@ -77,8 +117,30 @@ export const useSearch = (initialFilters = {}) => {
       setLoading(true);
       setError(null);
       const response = await searchService.searchVehicles(filters);
-      const data = response.data || response;
-      setVehicles(data || []);
+      // Handle different response structures from API client
+      let data = [];
+      if (Array.isArray(response)) {
+        data = response;
+      } else if (response?.data) {
+        // API client wraps response: { data: {...}, success: true }
+        // Backend returns: { data: [], count: 0, message: "..." }
+        // So we need to check response.data.data
+        if (Array.isArray(response.data)) {
+          // Direct array (unlikely but handle it)
+          data = response.data;
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          // Nested structure: { data: { data: [...], count: 12 } }
+          data = response.data.data;
+        } else if (response.data?.results && Array.isArray(response.data.results)) {
+          // Paginated response
+          data = response.data.results;
+        } else {
+          // Fallback: try to extract any array from response.data
+          console.warn('Unexpected response structure in refetch:', response);
+          data = [];
+        }
+      }
+      setVehicles(data);
     } catch (err) {
       // Handle timeout and network errors gracefully
       if (err?.isTimeoutError || err?.isNetworkError) {
