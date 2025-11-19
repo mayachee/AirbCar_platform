@@ -168,12 +168,13 @@ class PublicPartnerSerializer(serializers.ModelSerializer):
     user = UserBriefSerializer(read_only=True)
     total_listings = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
+    total_bookings = serializers.SerializerMethodField()
     
     class Meta:
         model = Partner
         fields = ['id', 'company_name', 'slug', 'description', 'logo', 'website', 'phone', 
             'address', 'city', 'business_type', 'verification_status', 'created_at', 'listings', 'user', 
-            'total_listings', 'average_rating']
+            'total_listings', 'average_rating', 'total_bookings']
         read_only_fields = ['id', 'verification_status', 'created_at']
     
     def get_total_listings(self, obj):
@@ -185,6 +186,12 @@ class PublicPartnerSerializer(serializers.ModelSerializer):
         from django.db.models import Avg
         ratings = obj.listings.filter(rating__isnull=False).aggregate(Avg('rating'))['rating__avg']
         return round(ratings, 1) if ratings else 0.0
+    
+    def get_total_bookings(self, obj):
+        """Get total number of bookings for this partner's listings"""
+        # Count all bookings for listings owned by this partner
+        # Booking is already imported at the top of the file
+        return Booking.objects.filter(listing__partner=obj).count()
 
 class ListingSerializer(serializers.ModelSerializer):
     partner = serializers.PrimaryKeyRelatedField(read_only=True)
