@@ -21,6 +21,12 @@ const nextConfig = {
     cpus: 1,
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
   },
+  // Allow cross-origin requests from Docker network IP
+  allowedDevOrigins: [
+    'http://172.18.240.1:3001',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+  ],
   // Moved from experimental (Next.js 15+)
   serverExternalPackages: [],
   images: {
@@ -41,6 +47,9 @@ const nextConfig = {
       '@': path.resolve(__dirname, 'src'),
     };
 
+    // Always disable symlink resolution to avoid OneDrive issues on Windows
+    config.resolve.symlinks = false;
+
     // Optimize for development
     if (dev && !isServer) {
       // Enhanced watch options for Windows/OneDrive compatibility
@@ -53,9 +62,6 @@ const nextConfig = {
           '**/.git/**',
         ],
       };
-      
-      // Disable symlink resolution to avoid OneDrive issues
-      config.resolve.symlinks = false;
     }
 
     return config;

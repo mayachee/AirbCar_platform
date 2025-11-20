@@ -22,10 +22,13 @@ urlpatterns = [
     
     # Bookings endpoints
     path('bookings/', views.BookingListView.as_view(), name='booking-list'),
+    path('bookings/pending-requests/', views.BookingPendingRequestsView.as_view(), name='booking-pending-requests'),
+    path('bookings/upcoming/', views.BookingUpcomingView.as_view(), name='booking-upcoming'),
     path('bookings/<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'),
     
     # Partners endpoints
     path('partners/', views.PartnerListView.as_view(), name='partner-list'),
+    path('partners/me/', views.PartnerMeView.as_view(), name='partner-me'),
     path('partners/<int:pk>/', views.PartnerDetailView.as_view(), name='partner-detail'),
     
     # Auth endpoints (basic - will need JWT implementation)
@@ -33,5 +36,10 @@ urlpatterns = [
     path('api/register/', views.RegisterView.as_view(), name='register'),
     path('api/token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'),
     path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify-token'),
+    path('api/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
+    path('api/resend-verification/', views.ResendVerificationEmailView.as_view(), name='resend-verification'),
+    path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('api/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('api/auth/google/', views.GoogleAuthView.as_view(), name='google-auth'),
 ]
 

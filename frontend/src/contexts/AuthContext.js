@@ -172,14 +172,43 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const register = async (firstName, lastName, email, password) => {
+  const register = async (registrationData) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'
+      
+      // Handle both old format (separate params) and new format (object)
+      let firstName, lastName, email, password, role, businessName, taxId, businessType
+      
+      if (typeof registrationData === 'object' && !registrationData.firstName) {
+        // New format: object with all data
+        firstName = registrationData.firstName || registrationData.first_name
+        lastName = registrationData.lastName || registrationData.last_name
+        email = registrationData.email
+        password = registrationData.password
+        role = registrationData.role || 'customer'
+        businessName = registrationData.businessName || registrationData.business_name
+        taxId = registrationData.taxId || registrationData.tax_id
+        businessType = registrationData.businessType || registrationData.business_type || 'individual'
+      } else {
+        // Old format: separate parameters (backward compatibility)
+        firstName = registrationData.firstName || registrationData
+        lastName = registrationData.lastName
+        email = registrationData.email
+        password = registrationData.password
+        role = 'customer'
+      }
+      
       const requestBody = { 
         first_name: firstName,
         last_name: lastName,
         email, 
-        password 
+        password,
+        role,
+        ...(role === 'partner' && businessName && taxId && {
+          business_name: businessName,
+          tax_id: taxId,
+          business_type: businessType,
+        }),
       }
       
       console.log('Registering user:', { apiUrl, requestBody: { ...requestBody, password: '***' } })

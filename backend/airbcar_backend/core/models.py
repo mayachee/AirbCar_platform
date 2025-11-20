@@ -4,6 +4,9 @@ Django models for AirbCar platform.
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+from django.conf import settings
+import secrets
 import json
 
 
@@ -44,6 +47,38 @@ class Partner(models.Model):
 
     def __str__(self):
         return self.business_name
+
+
+class EmailVerification(models.Model):
+    """Email verification token model."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='email_verifications')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['user', 'is_used']),
+        ]
+    
+    def __str__(self):
+        return f"Verification for {self.user.email}"
+    
+    def is_expired(self):
+        """Check if the verification token has expired."""
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        """Check if the verification token is valid (not used and not expired)."""
+        return not self.is_used and not self.is_expired()
+    
+    @staticmethod
+    def generate_token():
+        """Generate a secure random token."""
+        return secrets.token_urlsafe(32)
 
 
 class Listing(models.Model):
@@ -208,4 +243,36 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review by {self.user.username} for {self.listing} - {self.rating} stars"
+
+
+class PasswordReset(models.Model):
+    """Password reset token model."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_resets')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['token']),
+            models.Index(fields=['user', 'is_used']),
+        ]
+    
+    def __str__(self):
+        return f"Password reset for {self.user.email}"
+    
+    def is_expired(self):
+        """Check if the reset token has expired."""
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        """Check if the reset token is valid (not used and not expired)."""
+        return not self.is_used and not self.is_expired()
+    
+    @staticmethod
+    def generate_token():
+        """Generate a secure random token."""
+        return secrets.token_urlsafe(32)
 

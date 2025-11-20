@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { apiClient } from '@/lib/api/client'
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -15,15 +16,15 @@ const resetPasswordSchema = z.object({
   path: ["confirmPassword"],
 })
 
-export default function ResetPassword() {
+function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [token, setToken] = useState('')
-  const [uid, setUid] = useState('')
+  const [tokenValid, setTokenValid] = useState(null)
   const [isClient, setIsClient] = useState(false)
-  const [debugInfo, setDebugInfo] = useState('Initializing...')
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const {
     register,
@@ -33,65 +34,54 @@ export default function ResetPassword() {
     resolver: zodResolver(resetPasswordSchema),
   })
 
-  // Extract URL parameters from window.location (client-side only)
+  // Extract token from URL and validate it
   useEffect(() => {
-    console.log('useEffect triggered')
-    setDebugInfo('useEffect running...')
+    setIsClient(true)
     
-    if (typeof window === 'undefined') {
-      setDebugInfo('Window is undefined (SSR)')
+    const tokenFromUrl = searchParams.get('token')
+    
+    if (!tokenFromUrl) {
+      setError('Invalid reset link. Please check your email for the correct link.')
+      setTokenValid(false)
       return
     }
     
-    setIsClient(true)
-    setDebugInfo('Window exists, parsing URL...')
+    setToken(tokenFromUrl)
     
-    try {
-      const fullUrl = window.location.href
-      const search = window.location.search
-      console.log('Full URL:', fullUrl)
-      console.log('Search params:', search)
-      
-      const params = new URLSearchParams(search)
-      const tokenFromUrl = params.get('token')
-      const uidFromUrl = params.get('uid')
-      
-      setDebugInfo(`Found token: ${!!tokenFromUrl}, uid: ${!!uidFromUrl}`)
-      console.log('Reset password URL params:', { 
-        tokenFromUrl, 
-        uidFromUrl, 
-        fullUrl,
-        search,
-        paramKeys: Array.from(params.keys())
-      })
-      
-      if (tokenFromUrl && uidFromUrl) {
-        setToken(tokenFromUrl)
-        setUid(uidFromUrl)
-        setError('')
-        setDebugInfo('Token and UID set successfully!')
-        console.log('Token and UID set successfully', { token: tokenFromUrl.substring(0, 20), uid: uidFromUrl })
-      } else {
-        const errorMsg = 'Invalid reset link. Please check your email for the correct link.'
-        console.error('Missing token or UID:', { 
-          token: tokenFromUrl, 
-          uid: uidFromUrl,
-          hasToken: !!tokenFromUrl,
-          hasUid: !!uidFromUrl
-        })
-        setError(errorMsg)
-        setDebugInfo(`Error: Missing ${!tokenFromUrl ? 'token' : ''} ${!uidFromUrl ? 'uid' : ''}`)
+    // Validate token with backend
+    const validateToken = async () => {
+      try {
+        const response = await apiClient.get(
+          `/api/password-reset/confirm/?token=${encodeURIComponent(tokenFromUrl)}`,
+          undefined,
+          { skipAuth: true }
+        )
+        
+        if (response.data?.valid) {
+          setTokenValid(true)
+          setError('')
+        } else {
+          setTokenValid(false)
+          setError(response.data?.error || 'Invalid or expired reset link.')
+        }
+      } catch (err) {
+        console.error('Error validating token:', err)
+        setTokenValid(false)
+        setError(err.message || 'Invalid or expired reset link.')
       }
-    } catch (err) {
-      console.error('Error parsing reset password URL:', err)
-      setError('Invalid reset link. Please check your email for the correct link.')
-      setDebugInfo(`Error: ${err.message}`)
     }
-  }, [])
+    
+    validateToken()
+  }, [searchParams])
 
   const onSubmit = async (data) => {
-    if (!token || !uid) {
+    if (!token) {
       setError('Invalid reset token. Please check your email for the correct link.')
+      return
+    }
+
+    if (!tokenValid) {
+      setError('Invalid or expired reset link. Please request a new one.')
       return
     }
 
@@ -99,42 +89,26 @@ export default function ResetPassword() {
     setError('')
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'
-      const encodedUid = encodeURIComponent(uid)
-      const encodedToken = encodeURIComponent(token)
-      const apiEndpoint = `${apiUrl}/api/reset-password/${encodedUid}/${encodedToken}/`
-      
-      console.log('Sending password reset request to:', apiEndpoint)
-      console.log('UID:', uid, 'Token:', token.substring(0, 20) + '...')
-      
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await apiClient.post(
+        '/api/password-reset/confirm/',
+        {
+          token: token,
           password: data.password,
-        }),
-      })
-      
-      console.log('Response status:', response.status, response.statusText)
+        },
+        { skipAuth: true }
+      )
 
-      if (response.ok) {
+      if (response.data?.reset) {
         setSuccess(true)
         setTimeout(() => {
           router.push('/auth/signin')
         }, 3000)
       } else {
-        try {
-          const errorData = await response.json()
-          setError(errorData.error || errorData.message || 'Failed to reset password. The link may have expired.')
-        } catch (parseError) {
-          setError('Failed to reset password. The link may have expired or is invalid.')
-        }
+        setError(response.data?.error || 'Failed to reset password. Please try again.')
       }
     } catch (error) {
       console.error('Password reset error:', error)
-      setError('Network error. Please check your connection and try again.')
+      setError(error.message || 'Failed to reset password. The link may have expired or is invalid.')
     } finally {
       setIsLoading(false)
     }
@@ -187,7 +161,7 @@ export default function ResetPassword() {
     )
   }
 
-  if (error && (!token || !uid)) {
+  if (error && (!token || tokenValid === false)) {
     return (
       <div className="min-h-screen flex">
         <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white">
@@ -235,15 +209,6 @@ export default function ResetPassword() {
             <p className="mt-2 text-sm text-gray-600">
               Enter your new password below.
             </p>
-            {/* Debug info - always show in dev */}
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-              <p><strong>Debug Info:</strong> {debugInfo}</p>
-              <p><strong>Client:</strong> {isClient ? '✓' : '✗'}</p>
-              <p><strong>Token:</strong> {token ? `✓ Set (${token.substring(0, 20)}...)` : '✗ Missing'}</p>
-              <p><strong>UID:</strong> {uid ? `✓ Set (${uid})` : '✗ Missing'}</p>
-              <p><strong>URL:</strong> {typeof window !== 'undefined' ? window.location.href : 'N/A'}</p>
-              <p><strong>Button Enabled:</strong> {(!isLoading && token && uid) ? 'Yes' : 'No'}</p>
-            </div>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {error && (
@@ -300,10 +265,10 @@ export default function ResetPassword() {
             <div className="space-y-4">
               <button
                 type="submit"
-                disabled={isLoading || !token || !uid}
+                disabled={isLoading || !token || tokenValid !== true}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLoading ? 'Updating password...' : 'Update password'}
+                {isLoading ? 'Updating password...' : tokenValid === null ? 'Validating link...' : 'Update password'}
               </button>
               <Link
                 href="/auth/signin"
@@ -324,5 +289,20 @@ export default function ResetPassword() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ResetPassword />
+    </Suspense>
   )
 }

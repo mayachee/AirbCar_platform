@@ -15,7 +15,19 @@ export const partnerService = {
   },
 
   async getPartnerProfile() {
-    return apiClient.get('/partners/me/')
+    try {
+      return await apiClient.get('/partners/me/')
+    } catch (error) {
+      // If 404 and error message indicates missing profile, return a structured response
+      if (error?.status === 404 && error?.message?.includes('Partner profile not found')) {
+        return {
+          data: null,
+          has_partner_profile: false,
+          error: error.message
+        }
+      }
+      throw error
+    }
   },
 
   async getPartnerById(partnerId) {
@@ -100,11 +112,32 @@ export const partnerService = {
   // Dashboard & Analytics
   async getDashboardData() {
     // Get all partner data in parallel
-    const [partner, bookings, pendingRequests] = await Promise.all([
+    const [partnerResult, bookings, pendingRequests] = await Promise.allSettled([
       this.getPartnerProfile(),
       this.getBookings(),
       this.getPendingRequests()
     ])
+    
+    // Handle partner profile result
+    const partner = partnerResult.status === 'fulfilled' 
+      ? partnerResult.value 
+      : { data: null, has_partner_profile: false, error: partnerResult.reason?.message }
+    
+    // If partner profile doesn't exist, return early with empty data
+    if (!partner.data && partner.has_partner_profile === false) {
+      return {
+        partner: null,
+        vehicles: [],
+        bookings: bookings.status === 'fulfilled' ? (bookings.value.data || []) : [],
+        pendingRequests: pendingRequests.status === 'fulfilled' ? (pendingRequests.value.data || []) : [],
+        has_partner_profile: false,
+        error: partner.error || 'Partner profile not found'
+      }
+    }
+    
+    // Extract data from fulfilled promises
+    const bookingsData = bookings.status === 'fulfilled' ? bookings.value : { data: [] }
+    const pendingData = pendingRequests.status === 'fulfilled' ? pendingRequests.value : { data: [] }
 
     // Fetch full vehicle details - get listings from the listings endpoint filtered by partner
     let vehiclesData = [];
@@ -119,14 +152,15 @@ export const partnerService = {
     } catch (error) {
       console.error('Error fetching full vehicle details:', error);
       // Fallback to brief listings from partner profile
-      vehiclesData = partner.data.listings || [];
+      vehiclesData = partner.data?.listings || [];
     }
 
     return {
       partner: partner.data,
       vehicles: vehiclesData, // Full vehicle details
-      bookings: bookings.data || [],
-      pendingRequests: pendingRequests.data || []
+      bookings: bookingsData.data || [],
+      pendingRequests: pendingData.data || [],
+      has_partner_profile: true
     }
   },
 

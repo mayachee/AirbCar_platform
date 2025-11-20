@@ -10,4 +10,5 @@ gunicorn==22.0.0
 python-dotenv==1.0.1
 supabase==2.6.0
 httpx[http2]
+requests==2.31.0
 setuptools>=56.0.0 

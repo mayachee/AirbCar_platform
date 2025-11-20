@@ -10,6 +10,8 @@ from django.db.models import Q, F, DecimalField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
+from django.conf import settings
+import traceback
 
 from .models import Listing, Booking, Favorite, Review, Partner, User
 from .serializers import (
@@ -138,7 +140,7 @@ class ListingListView(APIView):
             import traceback
             error_msg = str(e)
             error_type = type(e).__name__
-            if DEBUG:
+            if settings.DEBUG:
                 print(f"Error in ListingListView ({error_type}): {error_msg}")
                 print(traceback.format_exc())
             return Response({
@@ -181,7 +183,7 @@ class ListingDetailView(APIView):
             import traceback
             error_msg = str(e)
             error_type = type(e).__name__
-            if DEBUG:
+            if settings.DEBUG:
                 print(f"Error in ListingDetailView ({error_type}): {error_msg}")
                 print(traceback.format_exc())
             return Response({
@@ -378,6 +380,68 @@ class BookingListView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
 
+class BookingPendingRequestsView(APIView):
+    """Get pending booking requests for partner."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        if request.user.role != 'partner':
+            return Response({
+                'error': 'Only partners can view pending requests'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            partner = Partner.objects.get(user=request.user)
+            # Get bookings with status 'pending' for this partner
+            bookings = Booking.objects.filter(partner=partner, status='pending')
+            serializer = BookingSerializer(bookings, many=True)
+            return Response({
+                'data': serializer.data
+            })
+        except Partner.DoesNotExist:
+            return Response({
+                'error': 'Partner profile not found',
+                'data': []
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+class BookingUpcomingView(APIView):
+    """Get upcoming bookings."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from django.utils import timezone
+        
+        if request.user.role == 'admin':
+            # Admins see all upcoming bookings
+            bookings = Booking.objects.filter(
+                pickup_date__gte=timezone.now().date(),
+                status__in=['confirmed', 'active']
+            )
+        elif request.user.role == 'partner':
+            try:
+                partner = Partner.objects.get(user=request.user)
+                bookings = Booking.objects.filter(
+                    partner=partner,
+                    pickup_date__gte=timezone.now().date(),
+                    status__in=['confirmed', 'active']
+                )
+            except Partner.DoesNotExist:
+                bookings = Booking.objects.none()
+        else:
+            # Customers see their own upcoming bookings
+            bookings = Booking.objects.filter(
+                customer=request.user,
+                pickup_date__gte=timezone.now().date(),
+                status__in=['confirmed', 'active']
+            )
+        
+        serializer = BookingSerializer(bookings, many=True)
+        return Response({
+            'data': serializer.data
+        })
+
+
 class BookingDetailView(APIView):
     """Get booking by ID."""
     permission_classes = [IsAuthenticated]
@@ -413,6 +477,42 @@ class PartnerListView(APIView):
         return Response({
             'data': serializer.data
         })
+
+
+class PartnerMeView(APIView):
+    """Get current user's partner profile."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            # Get partner profile for current user
+            partner = Partner.objects.get(user=request.user)
+            serializer = PartnerSerializer(partner)
+            return Response({
+                'data': serializer.data
+            })
+        except Partner.DoesNotExist:
+            return Response({
+                'error': 'Partner profile not found. Please complete your partner registration.',
+                'has_partner_profile': False
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    def patch(self, request):
+        """Update current user's partner profile."""
+        try:
+            partner = Partner.objects.get(user=request.user)
+            serializer = PartnerSerializer(partner, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'data': serializer.data,
+                    'message': 'Partner profile updated successfully'
+                })
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Partner.DoesNotExist:
+            return Response({
+                'error': 'Partner profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 class PartnerDetailView(APIView):
@@ -453,35 +553,65 @@ class LoginView(APIView):
         try:
             user = User.objects.get(email=email)
             # Check password
-            if not user.check_password(password):
+            password_valid = user.check_password(password)
+            if settings.DEBUG:
+                print(f"Login attempt for {email}: password_valid={password_valid}, is_active={user.is_active}, is_verified={user.is_verified}")
+            
+            if not password_valid:
                 user = None
+                if settings.DEBUG:
+                    print(f"Password check failed for {email}")
         except User.DoesNotExist:
+            if settings.DEBUG:
+                print(f"User with email {email} not found")
             # Try to authenticate with email as username (for backward compatibility)
             user = authenticate(username=email, password=password)
+            if user and settings.DEBUG:
+                print(f"Authenticated via username field for {email}")
         
         # If still None, try username field
         if user is None:
             try:
                 user = User.objects.get(username=email)
-                if not user.check_password(password):
+                password_valid = user.check_password(password)
+                if settings.DEBUG:
+                    print(f"Login attempt via username field for {email}: password_valid={password_valid}")
+                if not password_valid:
                     user = None
             except User.DoesNotExist:
+                if settings.DEBUG:
+                    print(f"User with username {email} not found")
                 pass
         
         if user is None:
+            if settings.DEBUG:
+                print(f"Login failed: Invalid email or password for {email}")
             return Response({
                 'error': 'Invalid email or password'
             }, status=status.HTTP_401_UNAUTHORIZED)
         
         # Check if user is active
         if not user.is_active:
-            return Response({
-                'error': 'Account is disabled. Please contact support.'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+            if not user.is_verified:
+                if settings.DEBUG:
+                    print(f"Login blocked: Email not verified for {email}")
+                return Response({
+                    'error': 'Please verify your email address before logging in. Check your inbox for the verification link.',
+                    'email_not_verified': True
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            else:
+                if settings.DEBUG:
+                    print(f"Login blocked: Account disabled for {email}")
+                return Response({
+                    'error': 'Account is disabled. Please contact support.'
+                }, status=status.HTTP_401_UNAUTHORIZED)
         
         # Generate tokens
         refresh = RefreshToken.for_user(user)
         user_serializer = UserSerializer(user)
+        
+        if settings.DEBUG:
+            print(f"Login successful for {email}")
         
         return Response({
             'access': str(refresh.access_token),
@@ -496,38 +626,89 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
+        from .utils import send_verification_email
+        
         email = request.data.get('email')
         password = request.data.get('password')
         first_name = request.data.get('first_name', '')
         last_name = request.data.get('last_name', '')
         role = request.data.get('role', 'customer')
         
+        # Partner-specific fields
+        business_name = request.data.get('business_name', '')
+        tax_id = request.data.get('tax_id', '')
+        business_type = request.data.get('business_type', 'individual')
+        
         if not email or not password:
             return Response({
                 'error': 'Email and password are required'
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate partner fields if role is partner
+        if role == 'partner':
+            if not business_name or not business_name.strip():
+                return Response({
+                    'error': 'Business name is required for partner registration'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            if not tax_id or not tax_id.strip():
+                return Response({
+                    'error': 'Tax ID is required for partner registration'
+                }, status=status.HTTP_400_BAD_REQUEST)
         
         if User.objects.filter(email=email).exists():
             return Response({
                 'error': 'User with this email already exists'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Create user
-        user = User.objects.create_user(
-            username=email,
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            role=role
-        )
-        
-        user_serializer = UserSerializer(user)
-        
-        return Response({
-            'data': user_serializer.data,
-            'message': 'User created successfully'
-        }, status=status.HTTP_201_CREATED)
+        try:
+            # Create user (initially inactive until email is verified)
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                role=role,
+                is_active=False,  # User must verify email before activation
+                is_verified=False
+            )
+            
+            # Create partner profile if role is partner
+            if role == 'partner':
+                Partner.objects.create(
+                    user=user,
+                    business_name=business_name.strip(),
+                    tax_id=tax_id.strip(),
+                    business_type=business_type,
+                    is_verified=False  # Partners need verification
+                )
+            
+            # Send verification email
+            verification = send_verification_email(user)
+            
+            if verification:
+                user_serializer = UserSerializer(user)
+                return Response({
+                    'data': user_serializer.data,
+                    'message': 'Account created successfully! Please check your email to verify your account.',
+                    'email_sent': True
+                }, status=status.HTTP_201_CREATED)
+            else:
+                # If email sending fails, still create the user but warn them
+                user_serializer = UserSerializer(user)
+                return Response({
+                    'data': user_serializer.data,
+                    'message': 'Account created, but verification email could not be sent. Please contact support.',
+                    'email_sent': False
+                }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error during registration: {error_msg}")
+                print(traceback.format_exc())
+            return Response({
+                'error': 'An error occurred during registration'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class RefreshTokenView(APIView):
@@ -568,3 +749,385 @@ class VerifyTokenView(APIView):
             'is_partner': request.user.role == 'partner',
             'role': request.user.role
         })
+
+
+class VerifyEmailView(APIView):
+    """Verify user email address."""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        from .utils import verify_email_token
+        
+        token = request.query_params.get('token')
+        
+        if not token:
+            return Response({
+                'error': 'Verification token is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        success, user, message = verify_email_token(token)
+        
+        if success:
+            user_serializer = UserSerializer(user)
+            return Response({
+                'message': message,
+                'user': user_serializer.data,
+                'verified': True
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'error': message,
+                'verified': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResendVerificationEmailView(APIView):
+    """Resend verification email."""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        from .utils import send_verification_email
+        
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({
+                'error': 'Email is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            # Check if already verified
+            if user.is_verified:
+                return Response({
+                    'message': 'Email is already verified',
+                    'already_verified': True
+                }, status=status.HTTP_200_OK)
+            
+            # Send new verification email
+            verification = send_verification_email(user)
+            
+            if verification:
+                return Response({
+                    'message': 'Verification email sent successfully. Please check your inbox.',
+                    'email_sent': True
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Failed to send verification email. Please try again later.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not (security best practice)
+            return Response({
+                'message': 'If an account with this email exists, a verification email has been sent.'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error resending verification email: {error_msg}")
+                print(traceback.format_exc())
+            return Response({
+                'error': 'An error occurred while sending verification email'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PasswordResetRequestView(APIView):
+    """Request password reset email."""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        from .utils import send_password_reset_email
+        
+        email = request.data.get('email')
+        
+        if not email:
+            return Response({
+                'error': 'Email is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            # Send password reset email
+            password_reset = send_password_reset_email(user)
+            
+            if password_reset:
+                # Don't reveal if email exists or not (security best practice)
+                return Response({
+                    'message': 'If an account with this email exists, a password reset link has been sent.',
+                    'email_sent': True
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Failed to send password reset email. Please try again later.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not (security best practice)
+            return Response({
+                'message': 'If an account with this email exists, a password reset link has been sent.'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error sending password reset email: {error_msg}")
+                print(traceback.format_exc())
+            return Response({
+                'error': 'An error occurred while sending password reset email'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GoogleAuthView(APIView):
+    """Google OAuth authentication."""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        import requests
+        import json
+        
+        id_token = request.data.get('id_token')
+        
+        if not id_token:
+            return Response({
+                'error': 'ID token is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Verify the Google ID token
+            # Google's token info endpoint
+            token_info_url = f'https://oauth2.googleapis.com/tokeninfo?id_token={id_token}'
+            response = requests.get(token_info_url, timeout=10)
+            
+            if response.status_code != 200:
+                return Response({
+                    'error': 'Invalid Google token'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            token_data = response.json()
+            
+            # Extract user information from token
+            google_email = token_data.get('email')
+            google_name = token_data.get('name', '')
+            google_first_name = token_data.get('given_name', '')
+            google_last_name = token_data.get('family_name', '')
+            google_picture = token_data.get('picture', '')
+            
+            if not google_email:
+                return Response({
+                    'error': 'Email not provided by Google'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if user exists
+            try:
+                user = User.objects.get(email=google_email)
+                # Update user info if needed
+                if google_first_name and not user.first_name:
+                    user.first_name = google_first_name
+                if google_last_name and not user.last_name:
+                    user.last_name = google_last_name
+                if google_picture and not user.profile_picture:
+                    user.profile_picture = google_picture
+                user.save()
+            except User.DoesNotExist:
+                # Create new user
+                # Generate a random password (user won't need it for Google auth)
+                import secrets
+                random_password = secrets.token_urlsafe(32)
+                
+                # Split name if full name is provided but first/last are not
+                if not google_first_name and google_name:
+                    name_parts = google_name.split(' ', 1)
+                    google_first_name = name_parts[0]
+                    google_last_name = name_parts[1] if len(name_parts) > 1 else ''
+                
+                user = User.objects.create_user(
+                    username=google_email,
+                    email=google_email,
+                    password=random_password,  # Random password, user will use Google to sign in
+                    first_name=google_first_name or '',
+                    last_name=google_last_name or '',
+                    is_verified=True,  # Google emails are already verified
+                    is_active=True
+                )
+                
+                # Set profile picture if available
+                if google_picture:
+                    user.profile_picture = google_picture
+                    user.save()
+            
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            user_serializer = UserSerializer(user)
+            
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': user_serializer.data,
+                'message': 'Google sign-in successful'
+            }, status=status.HTTP_200_OK)
+            
+        except requests.RequestException as e:
+            if settings.DEBUG:
+                print(f"Error verifying Google token: {e}")
+            return Response({
+                'error': 'Failed to verify Google token'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error during Google authentication: {error_msg}")
+                print(traceback.format_exc())
+            return Response({
+                'error': 'An error occurred during Google authentication'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PasswordResetConfirmView(APIView):
+    """Confirm password reset with token."""
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        from .utils import reset_password_with_token
+        from django.db import OperationalError
+        
+        token = request.data.get('token')
+        new_password = request.data.get('password') or request.data.get('new_password')
+        
+        if not token:
+            return Response({
+                'error': 'Reset token is required',
+                'reset': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not new_password:
+            return Response({
+                'error': 'New password is required',
+                'reset': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate password length
+        if len(new_password) < 6:
+            return Response({
+                'error': 'Password must be at least 6 characters long',
+                'reset': False
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            success, user, message = reset_password_with_token(token, new_password)
+            
+            if success:
+                user_serializer = UserSerializer(user)
+                return Response({
+                    'message': message,
+                    'user': user_serializer.data,
+                    'reset': True
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': message,
+                    'reset': False
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except OperationalError as e:
+            # Database connection error
+            if settings.DEBUG:
+                print(f"Database connection error during password reset: {e}")
+            return Response({
+                'error': 'Database connection error. Please try again later.',
+                'reset': False
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            # Catch any other unexpected errors
+            if settings.DEBUG:
+                print(f"Unexpected error during password reset: {e}")
+                traceback.print_exc()
+            return Response({
+                'error': 'An error occurred while resetting your password. Please try again.',
+                'reset': False
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get(self, request):
+        """Verify if reset token is valid (for frontend to check before showing reset form)."""
+        from .utils import verify_password_reset_token
+        from .models import PasswordReset
+        from django.utils import timezone
+        from django.db import OperationalError
+        
+        token = request.query_params.get('token')
+        
+        if not token:
+            return Response({
+                'valid': False,
+                'error': 'Reset token is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check token details for better error messages
+        try:
+            password_reset = PasswordReset.objects.get(token=token)
+            if password_reset.is_used:
+                return Response({
+                    'valid': False,
+                    'error': 'This password reset link has already been used. Please request a new one.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if password_reset.is_expired():
+                return Response({
+                    'valid': False,
+                    'error': 'Password reset link has expired. Please request a new one.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except PasswordReset.DoesNotExist:
+            return Response({
+                'valid': False,
+                'error': 'Invalid password reset link.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except OperationalError as e:
+            # Database connection error
+            if settings.DEBUG:
+                print(f"Database connection error in password reset validation: {e}")
+            return Response({
+                'valid': False,
+                'error': 'Database connection error. Please try again later.'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            # Catch any other unexpected errors
+            if settings.DEBUG:
+                print(f"Unexpected error in password reset validation: {e}")
+                import traceback
+                traceback.print_exc()
+            return Response({
+                'valid': False,
+                'error': 'An error occurred while validating the reset link. Please try again.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Verify token using utility function
+        try:
+            success, user, message = verify_password_reset_token(token)
+            
+            if success:
+                return Response({
+                    'valid': True,
+                    'message': message
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'valid': False,
+                    'error': message
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except OperationalError as e:
+            # Database connection error during verification
+            if settings.DEBUG:
+                print(f"Database connection error during token verification: {e}")
+            return Response({
+                'valid': False,
+                'error': 'Database connection error. Please try again later.'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            # Catch any other unexpected errors
+            if settings.DEBUG:
+                print(f"Unexpected error during token verification: {e}")
+                import traceback
+                traceback.print_exc()
+            return Response({
+                'valid': False,
+                'error': 'An error occurred while validating the reset link. Please try again.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

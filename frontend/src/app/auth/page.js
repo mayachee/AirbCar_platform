@@ -18,10 +18,20 @@ const signUpSchema = z.object({
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  isPartner: z.boolean().optional().default(false),
+  businessName: z.string().optional(),
+  taxId: z.string().optional(),
+  businessType: z.enum(['individual', 'company']).optional(),
+}).refine((data) => {
+  // If signing up as partner, business name and tax ID are required
+  if (data.isPartner) {
+    return data.businessName && data.businessName.trim().length > 0 && 
+           data.taxId && data.taxId.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Business name and Tax ID are required for partner registration",
+  path: ["businessName"],
 })
 
 function AuthForm() {
@@ -29,6 +39,7 @@ function AuthForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [redirectMessage, setRedirectMessage] = useState('')
   const [user, setUser] = useState(null)
   const [googleReady, setGoogleReady] = useState(false)
   const router = useRouter()
@@ -178,9 +189,17 @@ function AuthForm() {
     register: registerSignUp,
     handleSubmit: handleSignUpSubmit,
     formState: { errors: signUpErrors },
+    watch: watchSignUp,
   } = useForm({
     resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      isPartner: false,
+      businessType: 'individual',
+    },
   })
+  
+  // Watch isPartner field to show/hide partner fields
+  const isPartnerSignup = watchSignUp('isPartner') || false
 
   const onSignInSubmit = async (data) => {
     setIsLoading(true)
@@ -210,41 +229,71 @@ function AuthForm() {
     setSuccess(false)
 
     try {
-      const result = await registerUser(data.firstName, data.lastName, data.email, data.password)
+      // Prepare registration data
+      const registrationData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        role: data.isPartner ? 'partner' : 'customer',
+        // Partner-specific fields
+        ...(data.isPartner && {
+          businessName: data.businessName,
+          taxId: data.taxId,
+          businessType: data.businessType || 'individual',
+        }),
+      }
+      
+      const result = await registerUser(registrationData)
       
       if (result.success) {
         setSuccess(true)
         
-        // Get user data from the token to determine redirection
-        const token = localStorage.getItem('access_token')
+        // Determine redirect path based on registration data (immediate check)
         let redirectPath = '/'
+        let redirectMessage = "You're now signed in. Redirecting to home page..."
         
-        if (token) {
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]))
-            const userRole = payload.role || 'user'
-            const isPartner = payload.is_partner || false
-            const isStaff = payload.is_staff || false
-            const isSuperuser = payload.is_superuser || false
-            
-            // Smart redirection based on user role
-            if (isStaff || isSuperuser || userRole === 'admin') {
-              redirectPath = '/admin/dashboard'
-            } else if (isPartner || userRole === 'partner') {
-              redirectPath = '/partner/dashboard'
-            } else {
+        // Check if user signed up as partner
+        if (data.isPartner) {
+          redirectPath = '/partner/dashboard'
+          redirectMessage = "Partner account created! Redirecting to your dashboard..."
+        } else {
+          // Get user data from the token to determine redirection for regular users
+          const token = localStorage.getItem('access_token')
+          if (token) {
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]))
+              const userRole = payload.role || 'user'
+              const isPartner = payload.is_partner || false
+              const isStaff = payload.is_staff || false
+              const isSuperuser = payload.is_superuser || false
+              
+              // Smart redirection based on user role
+              if (isStaff || isSuperuser || userRole === 'admin') {
+                redirectPath = '/admin/dashboard'
+                redirectMessage = "Redirecting to admin dashboard..."
+              } else if (isPartner || userRole === 'partner') {
+                redirectPath = '/partner/dashboard'
+                redirectMessage = "Redirecting to partner dashboard..."
+              } else {
+                redirectPath = '/'
+                redirectMessage = "You're now signed in. Redirecting to home page..."
+              }
+            } catch (tokenError) {
+              console.error('Error parsing token:', tokenError)
               redirectPath = '/'
             }
-          } catch (tokenError) {
-            console.error('Error parsing token:', tokenError)
-            redirectPath = '/'
           }
         }
         
-        // Redirect after successful registration
+        // Store redirect message for display
+        setRedirectMessage(redirectMessage)
+        setSuccess(true)
+        
+        // Redirect immediately (or after short delay for better UX)
         setTimeout(() => {
           router.push(redirectPath)
-        }, 2000)
+        }, 1500)
       } else {
         setError(result.error || 'Registration failed. Please try again.')
       }
@@ -360,7 +409,7 @@ function AuthForm() {
                 transition={{ delay: 0.5 }}
                 className="text-base text-gray-600"
               >
-                You&apos;re now signed in. Redirecting to home page...
+                {redirectMessage || "You're now signed in. Redirecting..."}
               </motion.p>
             </motion.div>
           </div>
@@ -824,28 +873,86 @@ function AuthForm() {
                 </div>
 
                 <div>
-                  <label htmlFor="signup-confirmPassword" className="block text-sm font-semibold text-gray-800 mb-2">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                    <input
-                      {...registerSignUp('confirmPassword')}
-                      id="signup-confirmPassword"
-                      type="password"
-                      autoComplete="new-password"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
-                      placeholder="Confirm your password"
-                    />
-                  </div>
                   {signUpErrors.confirmPassword && (
                     <p className="mt-1 text-sm text-red-600">{signUpErrors.confirmPassword.message}</p>
                   )}
                 </div>
+
+                {/* Partner Signup Toggle */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center">
+                    <input
+                      {...registerSignUp('isPartner')}
+                      id="signup-isPartner"
+                      type="checkbox"
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="signup-isPartner" className="ml-2 block text-sm font-semibold text-gray-800">
+                      Sign up as a partner (rent out your car)
+                    </label>
+                  </div>
+                  <p className="mt-1 ml-6 text-xs text-gray-500">
+                    Partners can list and rent out their vehicles on Airbcar
+                  </p>
+                </div>
+
+                {/* Partner-specific fields */}
+                {isPartnerSignup && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4 pt-4 border-t border-gray-200"
+                  >
+                    <div>
+                      <label htmlFor="signup-businessName" className="block text-sm font-semibold text-gray-800 mb-2">
+                        Business Name <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                        </div>
+                        <input
+                          {...registerSignUp('businessName')}
+                          id="signup-businessName"
+                          type="text"
+                          className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                          placeholder="Enter your business name"
+                        />
+                      </div>
+                      {signUpErrors.businessName && (
+                        <p className="mt-1 text-sm text-red-600">{signUpErrors.businessName.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="signup-taxId" className="block text-sm font-semibold text-gray-800 mb-2">
+                        Tax ID / Registration Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <input
+                          {...registerSignUp('taxId')}
+                          id="signup-taxId"
+                          type="text"
+                          className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                          placeholder="Enter your tax ID or registration number"
+                        />
+                      </div>
+                      {signUpErrors.taxId && (
+                        <p className="mt-1 text-sm text-red-600">{signUpErrors.taxId.message}</p>
+                      )}
+                    </div>
+
+                  </motion.div>
+                )}
               </div>
 
               <div className="space-y-4">

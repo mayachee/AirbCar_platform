@@ -7,6 +7,8 @@ export function usePartnerData() {
   const [vehicles, setVehicles] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [partnerData, setPartnerData] = useState(null);
+  const [hasPartnerProfile, setHasPartnerProfile] = useState(true);
+  const [partnerError, setPartnerError] = useState(null);
   const [stats, setStats] = useState({
     totalVehicles: 0,
     activeBookings: 0,
@@ -20,9 +22,30 @@ export function usePartnerData() {
   const fetchPartnerData = async () => {
     try {
       setLoading(true);
+      setPartnerError(null);
       
       // Use the new dashboard data method
       const dashboardData = await partnerService.getDashboardData();
+      
+      // Check if partner profile exists
+      if (dashboardData.has_partner_profile === false) {
+        setHasPartnerProfile(false);
+        setPartnerError(dashboardData.error || 'Partner profile not found');
+        setPartnerData(null);
+        setVehicles([]);
+        setBookings([]);
+        setStats({
+          totalVehicles: 0,
+          activeBookings: 0,
+          monthlyEarnings: 0,
+          completedRentals: 0,
+          pendingRequests: 0,
+          averageRating: 0
+        });
+        return;
+      }
+      
+      setHasPartnerProfile(true);
       const statsData = await partnerService.getStats();
       
       console.log('Partner dashboard data:', {
@@ -47,6 +70,15 @@ export function usePartnerData() {
         status: error?.status,
         data: error?.data
       });
+      
+      // Check if it's a "partner profile not found" error
+      if (error?.status === 404 && error?.message?.includes('Partner profile not found')) {
+        setHasPartnerProfile(false);
+        setPartnerError(error.message);
+      } else {
+        setPartnerError(error.message || 'Failed to load partner data');
+      }
+      
       // Set empty arrays on error to prevent undefined issues
       setVehicles([]);
       setBookings([]);
@@ -162,6 +194,8 @@ export function usePartnerData() {
     partnerData,
     stats,
     loading,
+    hasPartnerProfile,
+    partnerError,
     addVehicle,
     updateVehicle,
     deleteVehicle,
