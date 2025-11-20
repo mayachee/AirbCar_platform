@@ -13,8 +13,21 @@ export const useUserStats = () => {
     setError(null);
 
     try {
-      const data = await userService.getUserStats();
-      setStats(data);
+      const response = await userService.getUserStats();
+      // Handle both direct data and wrapped response
+      let data = response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        data = response.data;
+      }
+      // Ensure we always have a stats object
+      setStats(data || {
+        total_bookings: 0,
+        upcoming_bookings: 0,
+        past_bookings: 0,
+        total_favorites: 0,
+        pending_bookings: 0,
+        completed_bookings: 0
+      });
     } catch (err) {
       // Silently handle 404 errors - stats endpoint might not be implemented yet
       if (err.message?.includes('404')) {

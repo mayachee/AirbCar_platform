@@ -140,12 +140,21 @@ export class ApiClient {
             // Try to parse as JSON
             try {
               errorData = JSON.parse(errorText);
-              // Only log parsed error data if it contains useful fields
-              const hasUsefulFields = errorData && typeof errorData === 'object' && (
-                (errorData as any).detail || (errorData as any).error || (errorData as any).message
-              );
-              if (hasUsefulFields) {
-              console.error('Parsed error data:', errorData);
+              // Always log parsed error data if it's a valid object (even if empty)
+              if (errorData && typeof errorData === 'object') {
+                // If errorData is empty, add default error message
+                if (Object.keys(errorData).length === 0) {
+                  errorData = {
+                    error: `HTTP ${response.status}: ${response.statusText}`,
+                    detail: errorText || `Server returned empty error response`,
+                    status: response.status
+                  };
+                }
+                // Only log if it has useful fields or if it's a meaningful error
+                const hasUsefulFields = (errorData as any).detail || (errorData as any).error || (errorData as any).message;
+                if (hasUsefulFields || response.status >= 400) {
+                  console.error('Parsed error data:', errorData);
+                }
               }
             } catch (parseError) {
               // If JSON parsing fails, use the text as error message

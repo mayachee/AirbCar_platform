@@ -22,7 +22,19 @@ function BookingPageContent() {
   const [vehicle, setVehicle] = useState(null)
   const [vehicleLoading, setVehicleLoading] = useState(true)
 
-  const carId = searchParams.get('carId')
+  // Try multiple parameter name variations for vehicle ID
+  const carId = searchParams.get('carId') || 
+                searchParams.get('vehicle_id') || 
+                searchParams.get('vehicleId') || 
+                searchParams.get('listing_id') || 
+                searchParams.get('listingId') ||
+                searchParams.get('id') ||
+                searchParams.get('listing') ||
+                null
+  
+  // Clean carId - remove whitespace and validate
+  const cleanCarId = carId ? String(carId).trim() : null
+  const validCarId = cleanCarId && cleanCarId !== '' && !isNaN(Number(cleanCarId)) ? cleanCarId : null
   // Try multiple parameter name variations - also trim whitespace and check for empty strings
   const pickupDateRaw = searchParams.get('pickupDate') || searchParams.get('pickup_date') || searchParams.get('startDate')
   const returnDateRaw = searchParams.get('returnDate') || searchParams.get('dropoffDate') || searchParams.get('return_date') || searchParams.get('endDate')
@@ -35,7 +47,8 @@ function BookingPageContent() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       console.log('Booking page URL params:', {
-        carId,
+        carId: validCarId,
+        rawCarId: carId,
         pickupDate,
         returnDate,
         totalPrice,
@@ -43,7 +56,7 @@ function BookingPageContent() {
         allParams: Object.fromEntries(searchParams.entries())
       })
     }
-  }, [carId, pickupDate, returnDate, totalPrice, duration, searchParams])
+  }, [validCarId, carId, pickupDate, returnDate, totalPrice, duration, searchParams])
 
   // Fetch full user profile with identity documents
   useEffect(() => {
@@ -71,21 +84,27 @@ function BookingPageContent() {
   // Fetch vehicle details
   useEffect(() => {
     const fetchVehicle = async () => {
-      if (!carId) return
+      if (!validCarId) {
+        setVehicleLoading(false)
+        return
+      }
       
       try {
         setVehicleLoading(true)
-        const response = await apiClient.get(`/listings/${carId}/`)
-        setVehicle(response.data)
+        const response = await apiClient.get(`/listings/${validCarId}/`)
+        // Handle different response structures
+        const vehicleData = response?.data?.data || response?.data || response
+        setVehicle(vehicleData)
       } catch (err) {
         console.error('Error fetching vehicle:', err)
+        setError(`Failed to load vehicle details: ${err.message || 'Unknown error'}`)
       } finally {
         setVehicleLoading(false)
       }
     }
     
     fetchVehicle()
-  }, [carId])
+  }, [validCarId])
 
   useEffect(() => {
     if (!authLoading && !authUser) {
@@ -93,9 +112,15 @@ function BookingPageContent() {
     }
   }, [authUser, authLoading, router])
 
-  const handleCreateBooking = async (specialRequest = '', licenseFile = null, paymentMethod = 'online') => {
-    if (!carId) {
+  const handleCreateBooking = async (specialRequest = '', licenseFiles = null, paymentMethod = 'online', identityDocuments = null) => {
+    if (!validCarId) {
       setError('Car ID is missing. Please go back and select a vehicle.')
+      // Try to redirect to search if no vehicle ID
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          router.push('/search')
+        }, 2000)
+      }
       return
     }
 
@@ -139,9 +164,9 @@ function BookingPageContent() {
       return
     }
 
-    // License file is optional but recommended
-    if (!licenseFile) {
-      console.warn('No license file provided - booking will proceed without it')
+    // License files are optional but recommended
+    if (!licenseFiles || (!licenseFiles.front && !licenseFiles.back)) {
+      console.warn('No license files provided - booking will proceed without them')
     }
 
     try {
@@ -156,16 +181,59 @@ function BookingPageContent() {
 
       // Create FormData to handle file upload
       const formData = new FormData()
-      formData.append('listing', carId)
+      formData.append('listing', validCarId)
+      formData.append('listing_id', validCarId) // Also add listing_id for compatibility
+      
+      // Add dates in multiple formats for compatibility
+      if (pickupDate) {
+        formData.append('pickup_date', pickupDate)
+        formData.append('pickupDate', pickupDate)
+        // Extract date from startTime if it's a full datetime
+        const pickupDateOnly = pickupDate.includes('T') ? pickupDate.split('T')[0] : pickupDate
+        formData.append('pickup_date', pickupDateOnly)
+      }
+      
+      if (returnDate) {
+        formData.append('return_date', returnDate)
+        formData.append('returnDate', returnDate)
+        // Extract date from endTime if it's a full datetime
+        const returnDateOnly = returnDate.includes('T') ? returnDate.split('T')[0] : returnDate
+        formData.append('return_date', returnDateOnly)
+      }
+      
+      // Add times
       formData.append('start_time', startTime.toISOString())
       formData.append('end_time', endTime.toISOString())
+      formData.append('pickup_time', startTime.toISOString())
+      formData.append('return_time', endTime.toISOString())
+      
       formData.append('price', totalPrice || 0)
+      formData.append('total_amount', totalPrice || 0)
       formData.append('request_message', specialRequest || 'Booking request from website')
       formData.append('payment_method', paymentMethod || 'online') // 'online' or 'cash'
-      // Only append license file if provided
-      if (licenseFile) {
-        formData.append('driver_license', licenseFile)
+      
+      // Append identity documents if provided
+      if (identityDocuments) {
+        if (identityDocuments.front) {
+          formData.append('id_front_document', identityDocuments.front)
+        }
+        if (identityDocuments.back) {
+          formData.append('id_back_document', identityDocuments.back)
+        }
       }
+      
+      // Append license files if provided
+      if (licenseFiles) {
+        if (licenseFiles.front) {
+          formData.append('license_front_document', licenseFiles.front)
+        }
+        if (licenseFiles.back) {
+          formData.append('license_back_document', licenseFiles.back)
+        }
+      }
+      
+      // Note: If you want to allow users to upload id_front_document and id_back_document
+      // during booking, add those fields to the BookingForm component and append them here
 
       // Don't set Content-Type - let the browser set it with the boundary
       const response = await apiClient.post('/bookings/', formData)
@@ -250,9 +318,9 @@ function BookingPageContent() {
                 <p className="text-sm text-yellow-700 mb-3">
                   Please go back to the car listing page and select pickup and return dates before booking.
                 </p>
-                {carId && (
+                {validCarId && (
                   <button
-                    onClick={() => router.push(`/car/${carId}${window.location.search}`)}
+                    onClick={() => router.push(`/car/${validCarId}${window.location.search}`)}
                     className="text-sm font-medium text-yellow-800 hover:text-yellow-900 underline"
                   >
                     Go to car details page →

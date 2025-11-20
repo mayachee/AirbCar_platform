@@ -111,7 +111,7 @@ export class VehicleService {
 
   async toggleFavorite(vehicleId: number) {
     // POST to create a favorite, or use the existing one if it exists
-    return apiClient.post('/favorites/', { listing: vehicleId })
+    return apiClient.post('/favorites/', { listing_id: vehicleId, listing: vehicleId })
   }
 
   async getFavorites() {
@@ -123,9 +123,35 @@ export class VehicleService {
     // Find the favorite by listing ID and delete it
     try {
       const favorites = await this.getFavorites();
-      const favoriteList = favorites.data || [];
-      const favorite = favoriteList.find((fav: any) => fav.listing?.id === vehicleId || fav.listing === vehicleId);
-      if (favorite) {
+      
+      // Handle different response structures - use type assertion for flexibility
+      const favoritesResponse = favorites as any;
+      let favoriteList: any[] = [];
+      
+      if (Array.isArray(favoritesResponse.data)) {
+        favoriteList = favoritesResponse.data;
+      } else if (Array.isArray(favoritesResponse.favorites)) {
+        favoriteList = favoritesResponse.favorites;
+      } else if (Array.isArray(favoritesResponse)) {
+        favoriteList = favoritesResponse;
+      } else if (favoritesResponse.data && Array.isArray(favoritesResponse.data.data)) {
+        favoriteList = favoritesResponse.data.data;
+      } else if (favoritesResponse.data && Array.isArray(favoritesResponse.data.favorites)) {
+        favoriteList = favoritesResponse.data.favorites;
+      }
+      
+      // Ensure favoriteList is an array
+      if (!Array.isArray(favoriteList)) {
+        console.warn('favoriteList is not an array:', favoriteList);
+        favoriteList = [];
+      }
+      
+      const favorite = favoriteList.find((fav: any) => {
+        const listingId = fav.listing?.id || fav.listing || fav.listing_id;
+        return listingId === vehicleId || listingId === String(vehicleId);
+      });
+      
+      if (favorite && favorite.id) {
         return apiClient.delete(`/favorites/${favorite.id}/`);
       } else {
         throw new Error('Favorite not found');

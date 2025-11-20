@@ -64,9 +64,20 @@ export class AuthService {
     expiry_date?: string
     nationality?: string
     default_currency?: string
-  }) {
+  }, method: 'PATCH' | 'POST' | 'PUT' = 'PATCH') {
     if (typeof FormData !== 'undefined' && profileData instanceof FormData) {
+      if (method === 'POST') {
+        return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData)
+      } else if (method === 'PUT') {
+        return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData)
+      }
       return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData)
+    }
+    
+    if (method === 'POST') {
+      return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData)
+    } else if (method === 'PUT') {
+      return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData)
     }
     return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData)
   }

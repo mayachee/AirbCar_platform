@@ -145,6 +145,20 @@ export class UserService {
     return response.data
   }
 
+  /**
+   * Change user password
+   * @param {string} oldPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise} Success message
+   */
+  async changePassword(oldPassword, newPassword) {
+    const response = await apiClient.post('/users/me/change-password/', {
+      old_password: oldPassword,
+      new_password: newPassword
+    })
+    return response.data || response
+  }
+
   // ============ DELETE OPERATIONS ============
   /**
    * Delete user
@@ -281,24 +295,29 @@ export class UserService {
       }
 
       // Get user's favorites to find the matching favorite entry
+      // listingId could be either a Favorite entry ID or a listing/vehicle ID
       const favoritesResponse = await this.getFavorites()
       const favorites = favoritesResponse.data || []
       
-      // Find the favorite entry that matches this listing
-      const favorite = favorites.find(fav => {
-        const favListing = fav.listing || fav.vehicle || fav
-        const favListingId = favListing?.id || favListing
-        const favId = fav.id || fav.vehicle_id || fav.listing_id
-        return (
-          favListingId === listingId || 
-          favListing === listingId || 
-          fav.listing?.id === listingId ||
-          favId === listingId ||
-          fav.vehicle?.id === listingId
-        )
-      }) || favorites.find(fav => fav.id === listingId)
+      // First, check if listingId is already a Favorite entry ID
+      let favorite = favorites.find(fav => fav.id === listingId)
+      
+      // If not found, search by listing/vehicle ID
+      if (!favorite) {
+        favorite = favorites.find(fav => {
+          const favListing = fav.listing || fav.vehicle || fav
+          const favListingId = favListing?.id || favListing
+          return (
+            favListingId === listingId || 
+            favListing === listingId || 
+            fav.listing?.id === listingId ||
+            fav.vehicle?.id === listingId
+          )
+        })
+      }
       
       if (favorite && favorite.id) {
+        // Use the Favorite entry ID (favorite.id) for deletion
         const response = await apiClient.delete(`/favorites/${favorite.id}/`)
         return response.data || response
       } else {
@@ -320,6 +339,87 @@ export class UserService {
         return { success: true, message: 'Favorite already removed' }
       }
       throw error
+    }
+  }
+
+  // ============ STATISTICS OPERATIONS ============
+  /**
+   * Get user statistics (bookings count, favorites count, etc.)
+   * @returns {Promise} User statistics
+   */
+  async getUserStats() {
+    try {
+      // Try to get stats from a dedicated endpoint if it exists
+      try {
+        const response = await apiClient.get('/users/me/stats/')
+        return response.data || response
+      } catch (statsError) {
+        // If stats endpoint doesn't exist, calculate stats from other endpoints
+        console.log('Stats endpoint not available, calculating from other data')
+        
+        const stats = {
+          total_bookings: 0,
+          upcoming_bookings: 0,
+          past_bookings: 0,
+          total_favorites: 0,
+          pending_bookings: 0,
+          completed_bookings: 0
+        }
+
+        try {
+          // Get bookings using apiClient directly
+          const bookingsResponse = await apiClient.get('/bookings/')
+          const bookings = Array.isArray(bookingsResponse.data) 
+            ? bookingsResponse.data 
+            : (Array.isArray(bookingsResponse) ? bookingsResponse : [])
+          
+          stats.total_bookings = bookings.length
+          
+          // Calculate upcoming and past bookings
+          const now = new Date()
+          bookings.forEach(booking => {
+            const pickupDate = new Date(booking.pickup_date || booking.start_date || booking.start_time)
+            if (pickupDate >= now) {
+              stats.upcoming_bookings++
+            } else {
+              stats.past_bookings++
+            }
+            
+            if (booking.status === 'pending') {
+              stats.pending_bookings++
+            } else if (booking.status === 'completed') {
+              stats.completed_bookings++
+            }
+          })
+        } catch (bookingsError) {
+          console.warn('Could not load bookings for stats:', bookingsError.message)
+        }
+
+        try {
+          // Get favorites
+          const favoritesResponse = await this.getFavorites()
+          const favorites = Array.isArray(favoritesResponse.data) 
+            ? favoritesResponse.data 
+            : (Array.isArray(favoritesResponse) ? favoritesResponse : [])
+          
+          stats.total_favorites = favorites.length
+        } catch (favoritesError) {
+          console.warn('Could not load favorites for stats:', favoritesError.message)
+        }
+
+        return stats
+      }
+    } catch (error) {
+      console.error('Error getting user stats:', error)
+      // Return default stats on error
+      return {
+        total_bookings: 0,
+        upcoming_bookings: 0,
+        past_bookings: 0,
+        total_favorites: 0,
+        pending_bookings: 0,
+        completed_bookings: 0
+      }
     }
   }
 }

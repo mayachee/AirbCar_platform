@@ -177,9 +177,10 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
     // Get the favorite ID (the Favorite object ID from backend)
     // OR the listing/vehicle ID as fallback
     const favoriteId = favorite.id; // This is the Favorite entry ID from backend
-    const vehicleId = favorite.vehicle?.id || favorite.vehicle_id || favorite.listing?.id || favorite.id;
+    const vehicleId = favorite.vehicle?.id || favorite.vehicle_id || favorite.listing?.id;
     
-    // Use favorite ID if it exists (preferred), otherwise use vehicle/listing ID
+    // Use favorite.id (Favorite entry ID) if available - this is what the backend expects
+    // favorite.id is the ID of the Favorite entry in the database, not the listing ID
     const idToUse = favoriteId || vehicleId;
     setRemovingFavorite(idToUse);
     

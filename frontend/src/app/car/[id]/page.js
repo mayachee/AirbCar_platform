@@ -58,15 +58,26 @@ function CarDetailsContent() {
 
   // Navigation handlers
   const handleBooking = () => {
-    if (!vehicle) return
+    if (!vehicle) {
+      console.error('Cannot book: vehicle data is not loaded')
+      return
+    }
+    
+    // Get vehicle ID from multiple possible locations
+    const vehicleId = vehicle.id || vehicle.listing_id || params.id
+    if (!vehicleId) {
+      console.error('Cannot book: vehicle ID is missing', { vehicle, params })
+      return
+    }
     
     const totalPrice = (vehicle.price * searchDetails.duration) + 25
     const bookingUrl = buildBookingUrl({
-      vehicleId: vehicle.id,
+      vehicleId: String(vehicleId), // Ensure it's a string
       searchDetails,
       totalPrice
     })
     
+    console.log('Navigating to booking:', { vehicleId, bookingUrl, vehicle })
     router.push(bookingUrl)
   }
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
 import { useAccount, useFavorites, useBookings, useUserStats } from '@/features/user';
+import { mapFrontendToBackend, mapBackendToFrontend, validateAccountData } from '@/features/user/types/accountData';
 
 export const useAccountPage = () => {
   const router = useRouter();
@@ -14,6 +15,7 @@ export const useAccountPage = () => {
     saveMessage,
     emailVerified,
     calculateProfileCompletion,
+    validateData,
     updateAccountData,
     handleFieldChange,
     refreshVerificationStatus,
@@ -84,31 +86,24 @@ export const useAccountPage = () => {
     setSaveMessage('');
 
     try {
-      // Prepare profile data - map frontend camelCase to backend snake_case
-      const profileData = {
-        first_name: accountData.firstName,
-        last_name: accountData.lastName,
-        phone_number: accountData.phoneNumber,
-        date_of_birth: accountData.dateOfBirth || null,
-        address: accountData.address,
-        city: accountData.city,
-        country_of_residence: accountData.country, // Use country_of_residence as per backend model
-        postal_code: accountData.postalCode || null,
-        license_number: accountData.licenseNumber,
-        license_origin_country: accountData.licenseCountry,
-        issue_date: accountData.licenseIssueDate || null,
-        expiry_date: accountData.licenseExpiryDate || null,
-        nationality: accountData.placeOfBirth || null
-      };
+      // Validate data before saving
+      const validation = validateData();
+      if (!validation.isValid) {
+        const firstError = Object.values(validation.errors)[0];
+        setSaveMessage(`Validation error: ${firstError}`);
+        setSaving(false);
+        return;
+      }
 
-      // Remove null/undefined/empty string values
-      Object.keys(profileData).forEach(key => {
-        if (profileData[key] === null || profileData[key] === undefined || profileData[key] === '') {
-          delete profileData[key];
-        }
-      });
+      // Map frontend camelCase to backend snake_case
+      const profileData = mapFrontendToBackend(accountData);
 
-      const hasDocumentUploads = Boolean(accountData.idFrontDocumentFile || accountData.idBackDocumentFile);
+      const hasDocumentUploads = Boolean(
+        accountData.idFrontDocumentFile || 
+        accountData.idBackDocumentFile ||
+        accountData.licenseFrontDocumentFile ||
+        accountData.licenseBackDocumentFile
+      );
 
       let response;
       if (hasDocumentUploads) {
@@ -120,10 +115,16 @@ export const useAccountPage = () => {
         });
 
         if (accountData.idFrontDocumentFile) {
-          formData.append('id_front_document_url', accountData.idFrontDocumentFile);
+          formData.append('id_front_document', accountData.idFrontDocumentFile);
         }
         if (accountData.idBackDocumentFile) {
-          formData.append('id_back_document_url', accountData.idBackDocumentFile);
+          formData.append('id_back_document', accountData.idBackDocumentFile);
+        }
+        if (accountData.licenseFrontDocumentFile) {
+          formData.append('license_front_document', accountData.licenseFrontDocumentFile);
+        }
+        if (accountData.licenseBackDocumentFile) {
+          formData.append('license_back_document', accountData.licenseBackDocumentFile);
         }
 
         response = await authService.updateProfile(formData);
@@ -137,29 +138,24 @@ export const useAccountPage = () => {
       localStorage.removeItem('accountForm');
       setHasLocalDraft(false);
       
-      // Transform backend response (snake_case) to frontend format (camelCase)
+      // Refresh user data from backend to get updated URLs
+      const userResponse = await authService.getCurrentUser();
+      const updatedData = userResponse?.data || userResponse;
+      
+      // Map backend response to frontend format
+      const mappedData = mapBackendToFrontend(updatedData);
+      
+      // Preserve file uploads and previews if they exist
       updateAccountData({
-        firstName: updatedUserData.first_name || accountData.firstName,
-        lastName: updatedUserData.last_name || accountData.lastName,
-        email: updatedUserData.email || accountData.email,
-        phoneNumber: updatedUserData.phone_number || accountData.phoneNumber,
-        dateOfBirth: updatedUserData.date_of_birth || accountData.dateOfBirth,
-        placeOfBirth: updatedUserData.nationality || accountData.placeOfBirth,
-        address: updatedUserData.address || accountData.address,
-        city: updatedUserData.city || accountData.city,
-        country: updatedUserData.country_of_residence || accountData.country,
-        postalCode: updatedUserData.postal_code || accountData.postalCode,
-        licenseNumber: updatedUserData.license_number || accountData.licenseNumber,
-        licenseCountry: updatedUserData.license_origin_country || accountData.licenseCountry,
-        licenseIssueDate: updatedUserData.issue_date || accountData.licenseIssueDate,
-        licenseExpiryDate: updatedUserData.expiry_date || accountData.licenseExpiryDate,
-        profileImage: updatedUserData.profile_picture || accountData.profileImage,
-        idFrontDocumentUrl: updatedUserData.id_front_document_url || accountData.idFrontDocumentUrl,
-        idBackDocumentUrl: updatedUserData.id_back_document_url || accountData.idBackDocumentUrl,
-        idFrontDocumentFile: null,
-        idBackDocumentFile: null,
-        idFrontDocumentPreview: '',
-        idBackDocumentPreview: ''
+        ...mappedData,
+        idFrontDocumentFile: accountData.idFrontDocumentFile,
+        idBackDocumentFile: accountData.idBackDocumentFile,
+        idFrontDocumentPreview: accountData.idFrontDocumentPreview,
+        idBackDocumentPreview: accountData.idBackDocumentPreview,
+        licenseFrontDocumentFile: accountData.licenseFrontDocumentFile,
+        licenseBackDocumentFile: accountData.licenseBackDocumentFile,
+        licenseFrontDocumentPreview: accountData.licenseFrontDocumentPreview,
+        licenseBackDocumentPreview: accountData.licenseBackDocumentPreview
       });
 
       if (accountData.idFrontDocumentPreview) {
@@ -167,6 +163,12 @@ export const useAccountPage = () => {
       }
       if (accountData.idBackDocumentPreview) {
         URL.revokeObjectURL(accountData.idBackDocumentPreview);
+      }
+      if (accountData.licenseFrontDocumentPreview) {
+        URL.revokeObjectURL(accountData.licenseFrontDocumentPreview);
+      }
+      if (accountData.licenseBackDocumentPreview) {
+        URL.revokeObjectURL(accountData.licenseBackDocumentPreview);
       }
       
       setTimeout(() => setSaveMessage(''), 3000);
@@ -204,25 +206,22 @@ export const useAccountPage = () => {
       const userResponse = await authService.getCurrentUser();
       const updatedData = userResponse?.data || userResponse;
       
-      // Transform backend response (snake_case) to frontend format (camelCase)
+      // Map backend response to frontend format
+      const mappedData = mapBackendToFrontend(updatedData);
+      
+      // Use profile picture from upload response if available, otherwise from full user data
+      const profileImage = updatedUserData.profile_picture_url || 
+                          updatedUserData.profile_picture || 
+                          mappedData.profileImage || 
+                          '/default-avatar.svg';
+      
       updateAccountData({
-        firstName: updatedData.first_name || accountData.firstName,
-        lastName: updatedData.last_name || accountData.lastName,
-        email: updatedData.email || accountData.email,
-        phoneNumber: updatedData.phone_number || accountData.phoneNumber,
-        dateOfBirth: updatedData.date_of_birth || accountData.dateOfBirth,
-        placeOfBirth: updatedData.nationality || accountData.placeOfBirth,
-        address: updatedData.address || accountData.address,
-        city: updatedData.city || accountData.city,
-        country: updatedData.country_of_residence || accountData.country,
-        postalCode: updatedData.postal_code || accountData.postalCode,
-        licenseNumber: updatedData.license_number || accountData.licenseNumber,
-        licenseCountry: updatedData.license_origin_country || accountData.licenseCountry,
-        licenseIssueDate: updatedData.issue_date || accountData.licenseIssueDate,
-        licenseExpiryDate: updatedData.expiry_date || accountData.licenseExpiryDate,
-        profileImage: updatedData.profile_picture || updatedUserData.profile_picture || '/default-avatar.svg',
-        idFrontDocumentUrl: updatedData.id_front_document_url || accountData.idFrontDocumentUrl,
-        idBackDocumentUrl: updatedData.id_back_document_url || accountData.idBackDocumentUrl
+        ...mappedData,
+        profileImage,
+        idFrontDocumentFile: null,
+        idBackDocumentFile: null,
+        idFrontDocumentPreview: '',
+        idBackDocumentPreview: ''
       });
     } catch (error) {
       console.error('Error uploading profile picture:', error);
@@ -235,8 +234,13 @@ export const useAccountPage = () => {
     if (!confirm('Are you sure you want to remove this car from your favorites?')) {
       return;
     }
-    const vehicleId = favorite.vehicle?.id || favorite.vehicle_id || favorite.id;
-    await removeFavorite(vehicleId);
+    // Use favorite.id (the Favorite entry ID) if available, otherwise fall back to listing/vehicle ID
+    // The backend expects the Favorite entry ID for DELETE /favorites/<id>/
+    const favoriteId = favorite.id; // This is the Favorite entry ID from the database
+    const vehicleId = favorite.vehicle?.id || favorite.vehicle_id || favorite.listing?.id || favorite.id;
+    // Prefer favorite.id (Favorite entry ID) over vehicle/listing ID
+    const idToUse = favoriteId || vehicleId;
+    await removeFavorite(idToUse);
   };
 
   const handleBookNow = (car) => {

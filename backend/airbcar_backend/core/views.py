@@ -196,18 +196,148 @@ class FavoriteListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        favorites = Favorite.objects.filter(user=request.user).select_related('listing', 'listing__partner')
-        serializer = FavoriteSerializer(favorites, many=True)
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'data': [],
+                    'favorites': [],
+                    'listings': [],
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # Limit results and optimize query to prevent timeout
+            favorites = Favorite.objects.filter(user=request.user).select_related(
+                'listing', 
+                'listing__partner'
+            )[:50]  # Limit to 50 favorites to prevent timeout
+            
+            serializer = FavoriteSerializer(favorites, many=True, context={'request': request})
+            
+            # Return in format expected by frontend
+            favorites_data = serializer.data
+            
+            return Response({
+                'data': favorites_data,
+                'favorites': favorites_data,  # Alternative format
+                'listings': [fav['listing'] for fav in favorites_data if fav.get('listing')],
+                'message': 'Favorites retrieved successfully'
+            })
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ FavoriteListView Error: {str(e)}")
+                traceback.print_exc()
+            
+            # Return empty arrays instead of error to prevent page crash
+            return Response({
+                'data': [],
+                'favorites': [],
+                'listings': [],
+                'error': 'Failed to load favorites. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_200_OK)  # Return 200 with empty data instead of 500
+    
+    def post(self, request):
+        """Add a listing to favorites."""
+        listing_id = request.data.get('listing_id') or request.data.get('listing')
         
-        # Return in format expected by frontend
-        favorites_data = serializer.data
+        if not listing_id:
+            return Response({
+                'error': 'listing_id is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        return Response({
-            'data': favorites_data,
-            'favorites': favorites_data,  # Alternative format
-            'listings': [fav['listing'] for fav in favorites_data if fav.get('listing')],
-            'message': 'Favorites retrieved successfully'
-        })
+        try:
+            listing = Listing.objects.get(pk=listing_id)
+            favorite, created = Favorite.objects.get_or_create(
+                user=request.user,
+                listing=listing
+            )
+            
+            if created:
+                serializer = FavoriteSerializer(favorite)
+                return Response({
+                    'data': serializer.data,
+                    'message': 'Favorite added successfully'
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    'message': 'Listing already in favorites'
+                }, status=status.HTTP_200_OK)
+        except Listing.DoesNotExist:
+            return Response({
+                'error': 'Listing not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+class MyFavoritesView(APIView):
+    """Get current user's favorites with full listing details."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get all favorites for the current user with full listing details."""
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'favorites': [],
+                    'listings': [],
+                    'data': [],
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # Limit results and optimize query to prevent timeout
+            favorites = Favorite.objects.filter(user=request.user).select_related(
+                'listing', 
+                'listing__partner',
+                'listing__partner__user'
+            )[:50]  # Limit to 50 favorites to prevent timeout
+            
+            serializer = FavoriteSerializer(favorites, many=True, context={'request': request})
+            favorites_data = serializer.data
+            
+            # Extract listings from favorites safely
+            listings = []
+            for fav in favorites_data:
+                if fav and isinstance(fav, dict) and fav.get('listing'):
+                    listings.append(fav['listing'])
+            
+            return Response({
+                'favorites': favorites_data,
+                'listings': listings,
+                'data': favorites_data,
+                'message': 'Favorites retrieved successfully'
+            })
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ MyFavoritesView Error: {str(e)}")
+                traceback.print_exc()
+            
+            # Return empty arrays instead of error to prevent page crash
+            return Response({
+                'favorites': [],
+                'listings': [],
+                'data': [],
+                'error': 'Failed to load favorites. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_200_OK)  # Return 200 with empty data instead of 500
     
     def post(self, request):
         """Add a listing to favorites."""
@@ -258,16 +388,57 @@ class FavoriteDetailView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
     
     def delete(self, request, pk):
+        """Delete a favorite by its ID."""
         try:
-            favorite = Favorite.objects.get(pk=pk, user=request.user)
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # Try to get the favorite - check if it exists and belongs to the user
+            try:
+                favorite = Favorite.objects.get(pk=pk, user=request.user)
+            except Favorite.DoesNotExist:
+                # Check if favorite exists but belongs to another user
+                if Favorite.objects.filter(pk=pk).exists():
+                    return Response({
+                        'error': 'Favorite not found or you do not have permission to delete it'
+                    }, status=status.HTTP_403_FORBIDDEN)
+                else:
+                    return Response({
+                        'error': 'Favorite not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Delete the favorite
+            favorite_id = favorite.id
             favorite.delete()
+            
+            if settings.DEBUG:
+                print(f"✅ Favorite {favorite_id} deleted successfully for user {request.user.username}")
+            
             return Response({
-                'message': 'Favorite removed successfully'
-            }, status=status.HTTP_204_NO_CONTENT)
-        except Favorite.DoesNotExist:
+                'message': 'Favorite removed successfully',
+                'id': favorite_id
+            }, status=status.HTTP_200_OK)  # Changed from 204 to 200 to include message
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ FavoriteDetailView.delete Error: {str(e)}")
+                traceback.print_exc()
+            
             return Response({
-                'error': 'Favorite not found'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'error': 'Failed to delete favorite. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UserListView(APIView):
@@ -288,15 +459,546 @@ class UserListView(APIView):
         })
 
 
-class UserMeView(APIView):
-    """Get current user."""
+class ChangePasswordView(APIView):
+    """Change user password."""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """Change password for authenticated user."""
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        
+        if not old_password or not new_password:
+            return Response({
+                'error': 'Both old_password and new_password are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = request.user
+        
+        # Verify old password
+        if not user.check_password(old_password):
+            return Response({
+                'error': 'Current password is incorrect'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate new password
+        if len(new_password) < 8:
+            return Response({
+                'error': 'New password must be at least 8 characters long'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Set new password
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({
+            'message': 'Password changed successfully'
+        }, status=status.HTTP_200_OK)
+
+
+class ReviewListView(APIView):
+    """List reviews with optional filters."""
+    permission_classes = [AllowAny]  # Allow anyone to view reviews
+    
+    def get(self, request):
+        """Get reviews with optional filters."""
+        listing_id = request.query_params.get('listing')
+        sort = request.query_params.get('sort', 'newest')  # newest, oldest, highest, lowest
+        rating = request.query_params.get('rating')
+        page = int(request.query_params.get('page', 1))
+        limit = int(request.query_params.get('limit', 20))
+        search = request.query_params.get('search')
+        my_listings = request.query_params.get('my_listings') == 'true'
+        
+        queryset = Review.objects.filter(is_published=True)
+        
+        # Filter by listing
+        if listing_id:
+            queryset = queryset.filter(listing_id=listing_id)
+        
+        # Filter by rating
+        if rating:
+            try:
+                rating_int = int(rating)
+                queryset = queryset.filter(rating=rating_int)
+            except ValueError:
+                pass
+        
+        # Filter by user's listings (for partners)
+        if my_listings and request.user.is_authenticated and request.user.role == 'partner':
+            try:
+                partner = request.user.partner_profile
+                partner_listing_ids = Listing.objects.filter(partner=partner).values_list('id', flat=True)
+                queryset = queryset.filter(listing_id__in=partner_listing_ids)
+            except Partner.DoesNotExist:
+                queryset = queryset.none()
+        
+        # Search in comments
+        if search:
+            queryset = queryset.filter(comment__icontains=search)
+        
+        # Sort
+        if sort == 'newest':
+            queryset = queryset.order_by('-created_at')
+        elif sort == 'oldest':
+            queryset = queryset.order_by('created_at')
+        elif sort == 'highest':
+            queryset = queryset.order_by('-rating', '-created_at')
+        elif sort == 'lowest':
+            queryset = queryset.order_by('rating', '-created_at')
+        
+        # Pagination
+        start = (page - 1) * limit
+        end = start + limit
+        reviews = queryset[start:end]
+        
+        serializer = ReviewSerializer(reviews, many=True, context={'request': request})
+        
+        return Response({
+            'data': serializer.data,
+            'count': queryset.count(),
+            'page': page,
+            'limit': limit,
+            'has_more': end < queryset.count()
+        })
+
+
+class CanReviewView(APIView):
+    """Check if user can review a listing."""
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        serializer = UserSerializer(request.user)
+        """Check if current user can review a listing."""
+        listing_id = request.query_params.get('listing')
+        booking_id = request.query_params.get('booking')
+        
+        if not listing_id:
+            return Response({
+                'error': 'Listing ID is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            listing = Listing.objects.get(pk=listing_id)
+        except Listing.DoesNotExist:
+            return Response({
+                'error': 'Listing not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        user = request.user
+        
+        # Check if user already reviewed this listing
+        existing_review = Review.objects.filter(listing=listing, user=user).first()
+        if existing_review:
+            return Response({
+                'can_review': False,
+                'reason': 'You have already reviewed this listing',
+                'has_completed_booking': False,
+                'existing_review_id': existing_review.id
+            })
+        
+        # Check if user has a completed booking for this listing
+        has_completed_booking = Booking.objects.filter(
+            listing=listing,
+            customer=user,
+            status='completed'
+        ).exists()
+        
+        # If booking_id is provided, check if it's a valid completed booking
+        if booking_id:
+            try:
+                booking = Booking.objects.get(
+                    pk=booking_id,
+                    listing=listing,
+                    customer=user,
+                    status='completed'
+                )
+                return Response({
+                    'can_review': True,
+                    'has_completed_booking': True,
+                    'booking_id': booking.id
+                })
+            except Booking.DoesNotExist:
+                return Response({
+                    'can_review': False,
+                    'reason': 'Invalid or incomplete booking',
+                    'has_completed_booking': False
+                })
+        
+        # If no booking_id, check if user has any completed booking
+        if has_completed_booking:
+            return Response({
+                'can_review': True,
+                'has_completed_booking': True
+            })
+        
         return Response({
-            'data': serializer.data
+            'can_review': False,
+            'reason': 'You must complete a booking before reviewing',
+            'has_completed_booking': False
         })
+
+
+class UserMeView(APIView):
+    """Get, create/update, and delete current user profile."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get current user profile."""
+        user = request.user
+        if settings.DEBUG:
+            print(f"🔍 UserMeView GET - User: {user.username}, Email: {user.email}")
+            print(f"📋 User fields - first_name: {user.first_name}, last_name: {user.last_name}, phone: {user.phone_number}")
+        
+        serializer = UserSerializer(user, context={'request': request})
+        serialized_data = serializer.data
+        
+        if settings.DEBUG:
+            print(f"📤 Serialized data keys: {list(serialized_data.keys())}")
+            print(f"📤 Profile picture: {serialized_data.get('profile_picture_url')}")
+        
+        return Response({
+            'data': serialized_data
+        })
+    
+    def post(self, request):
+        """Create or fully update current user profile (full update, not partial)."""
+        user = request.user
+        
+        # Handle file uploads to Supabase
+        from .supabase_storage import upload_file_to_supabase, generate_file_path, delete_file_from_supabase
+        
+        # Process id_front_document if provided
+        if 'id_front_document' in request.FILES:
+            file = request.FILES['id_front_document']
+            # Delete old file from Supabase if exists
+            if user.id_front_document_url:
+                old_url = user.id_front_document_url
+                if 'storage/v1/object/public' in old_url:
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'identity_documents')
+            supabase_url = upload_file_to_supabase(
+                file,
+                'identity-documents',
+                file_path,
+                file.content_type
+            )
+            
+            if supabase_url:
+                request.data._mutable = True
+                request.data['id_front_document_url'] = supabase_url
+                request.data['id_front_document'] = None  # Clear local file
+                request.data._mutable = False
+        
+        # Process id_back_document if provided
+        if 'id_back_document' in request.FILES:
+            file = request.FILES['id_back_document']
+            # Delete old file from Supabase if exists
+            if user.id_back_document_url:
+                old_url = user.id_back_document_url
+                if 'storage/v1/object/public' in old_url:
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'identity_documents')
+            supabase_url = upload_file_to_supabase(
+                file,
+                'identity-documents',
+                file_path,
+                file.content_type
+            )
+            
+            if supabase_url:
+                request.data._mutable = True
+                request.data['id_back_document_url'] = supabase_url
+                request.data['id_back_document'] = None  # Clear local file
+                request.data._mutable = False
+        
+        # Process license_front_document if provided
+        if 'license_front_document' in request.FILES:
+            file = request.FILES['license_front_document']
+            # Delete old file from Supabase if exists
+            if user.license_front_document_url:
+                old_url = user.license_front_document_url
+                if 'storage/v1/object/public' in old_url:
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'license_documents')
+            supabase_url = upload_file_to_supabase(file, 'identity-documents', file_path)
+            
+            if supabase_url:
+                request.data._mutable = True
+                request.data['license_front_document_url'] = supabase_url
+                request.data['license_front_document'] = None  # Clear local file
+                request.data._mutable = False
+        
+        # Process license_back_document if provided
+        if 'license_back_document' in request.FILES:
+            file = request.FILES['license_back_document']
+            # Delete old file from Supabase if exists
+            if user.license_back_document_url:
+                old_url = user.license_back_document_url
+                if 'storage/v1/object/public' in old_url:
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'license_documents')
+            supabase_url = upload_file_to_supabase(file, 'identity-documents', file_path)
+            
+            if supabase_url:
+                request.data._mutable = True
+                request.data['license_back_document_url'] = supabase_url
+                request.data['license_back_document'] = None  # Clear local file
+                request.data._mutable = False
+        
+        serializer = UserSerializer(user, data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'data': serializer.data,
+                'message': 'Profile created/updated successfully'
+            }, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """Partially update current user profile."""
+        user = request.user
+        
+        # Handle file uploads to Supabase
+        from .supabase_storage import upload_file_to_supabase, generate_file_path, delete_file_from_supabase
+        
+        # Process id_front_document if provided
+        if 'id_front_document' in request.FILES:
+            file = request.FILES['id_front_document']
+            # Delete old file from Supabase if exists
+            if user.id_front_document_url:
+                old_url = user.id_front_document_url
+                if 'storage/v1/object/public' in old_url:
+                    # Extract path from Supabase URL
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'identity_documents')
+            supabase_url = upload_file_to_supabase(
+                file,
+                'identity-documents',  # Bucket name
+                file_path,
+                file.content_type
+            )
+            
+            if supabase_url:
+                # Store the Supabase URL in the dedicated URL field
+                request.data._mutable = True
+                request.data['id_front_document_url'] = supabase_url
+                # Clear the local file field
+                request.data['id_front_document'] = None
+                request.data._mutable = False
+        
+        # Process id_back_document if provided
+        if 'id_back_document' in request.FILES:
+            file = request.FILES['id_back_document']
+            # Delete old file from Supabase if exists
+            if user.id_back_document_url:
+                old_url = user.id_back_document_url
+                if 'storage/v1/object/public' in old_url:
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'identity_documents')
+            supabase_url = upload_file_to_supabase(
+                file,
+                'identity-documents',
+                file_path,
+                file.content_type
+            )
+            
+            if supabase_url:
+                request.data._mutable = True
+                request.data['id_back_document_url'] = supabase_url
+                request.data['id_back_document'] = None  # Clear local file
+                request.data._mutable = False
+        
+        # Process license_front_document if provided
+        if 'license_front_document' in request.FILES:
+            file = request.FILES['license_front_document']
+            # Delete old file from Supabase if exists
+            if user.license_front_document_url:
+                old_url = user.license_front_document_url
+                if 'storage/v1/object/public' in old_url:
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'license_documents')
+            supabase_url = upload_file_to_supabase(
+                file,
+                'identity-documents',
+                file_path,
+                file.content_type
+            )
+            
+            if supabase_url:
+                request.data._mutable = True
+                request.data['license_front_document_url'] = supabase_url
+                request.data['license_front_document'] = None
+                request.data._mutable = False
+        
+        # Process license_back_document if provided
+        if 'license_back_document' in request.FILES:
+            file = request.FILES['license_back_document']
+            # Delete old file from Supabase if exists
+            if user.license_back_document_url:
+                old_url = user.license_back_document_url
+                if 'storage/v1/object/public' in old_url:
+                    parts = old_url.split('/storage/v1/object/public/')
+                    if len(parts) > 1:
+                        bucket_and_path = parts[1]
+                        bucket_name = bucket_and_path.split('/')[0]
+                        file_path = '/'.join(bucket_and_path.split('/')[1:])
+                        delete_file_from_supabase(bucket_name, file_path)
+            
+            # Upload new file to Supabase
+            file_path = generate_file_path(user.id, file.name, 'license_documents')
+            supabase_url = upload_file_to_supabase(
+                file,
+                'identity-documents',
+                file_path,
+                file.content_type
+            )
+            
+            if supabase_url:
+                request.data._mutable = True
+                request.data['license_back_document_url'] = supabase_url
+                request.data['license_back_document'] = None
+                request.data._mutable = False
+        
+        serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'data': serializer.data,
+                'message': 'Profile updated successfully'
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self, request):
+        """Fully update current user profile (same as POST)."""
+        return self.post(request)
+    
+    def delete(self, request):
+        """Delete current user account."""
+        user = request.user
+        try:
+            # Soft delete: deactivate the account instead of deleting
+            user.is_active = False
+            user.save()
+            return Response({
+                'message': 'Account deleted successfully'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'error': f'Failed to delete account: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UserStatsView(APIView):
+    """Get current user statistics."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get statistics for the current user."""
+        try:
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            user = request.user
+            now = timezone.now().date()
+            
+            # Get bookings count
+            bookings = Booking.objects.filter(customer=user)
+            total_bookings = bookings.count()
+            
+            # Calculate upcoming and past bookings
+            upcoming_bookings = bookings.filter(pickup_date__gte=now).count()
+            past_bookings = bookings.filter(pickup_date__lt=now).count()
+            
+            # Count by status
+            pending_bookings = bookings.filter(status='pending').count()
+            completed_bookings = bookings.filter(status='completed').count()
+            
+            # Get favorites count
+            total_favorites = Favorite.objects.filter(user=user).count()
+            
+            return Response({
+                'total_bookings': total_bookings,
+                'upcoming_bookings': upcoming_bookings,
+                'past_bookings': past_bookings,
+                'pending_bookings': pending_bookings,
+                'completed_bookings': completed_bookings,
+                'total_favorites': total_favorites
+            })
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ UserStatsView Error: {str(e)}")
+                traceback.print_exc()
+            
+            # Return default stats on error
+            return Response({
+                'total_bookings': 0,
+                'upcoming_bookings': 0,
+                'past_bookings': 0,
+                'pending_bookings': 0,
+                'completed_bookings': 0,
+                'total_favorites': 0,
+                'error': 'Failed to load statistics. Please try again later.'
+            }, status=status.HTTP_200_OK)
 
 
 class UserDetailView(APIView):
@@ -327,26 +1029,58 @@ class BookingListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        # Users see their own bookings, partners see their listings' bookings, admins see all
-        if request.user.role == 'admin':
-            bookings = Booking.objects.all()
-        elif request.user.role == 'partner':
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
             try:
-                partner = request.user.partner_profile
-                bookings = Booking.objects.filter(partner=partner)
-            except Partner.DoesNotExist:
-                bookings = Booking.objects.none()
-        else:
-            bookings = Booking.objects.filter(customer=request.user)
-        
-        serializer = BookingSerializer(bookings, many=True)
-        return Response({
-            'data': serializer.data
-        })
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'data': [],
+                    'count': 0,
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # Users see their own bookings, partners see their listings' bookings, admins see all
+            # Use select_related to optimize queries and limit results to prevent timeout
+            # Reduced limit to 50 for better performance
+            if request.user.role == 'admin':
+                bookings = Booking.objects.all().select_related('listing', 'customer', 'partner').order_by('-created_at')[:50]
+            elif request.user.role == 'partner':
+                try:
+                    partner = request.user.partner_profile
+                    bookings = Booking.objects.filter(partner=partner).select_related('listing', 'customer', 'partner').order_by('-created_at')[:50]
+                except Partner.DoesNotExist:
+                    bookings = Booking.objects.none()
+            else:
+                bookings = Booking.objects.filter(customer=request.user).select_related('listing', 'customer', 'partner').order_by('-created_at')[:50]
+            
+            serializer = BookingSerializer(bookings, many=True, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'count': len(serializer.data)
+            })
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ BookingListView Error: {str(e)}")
+                traceback.print_exc()
+            
+            # Return empty array instead of error to prevent page crash
+            return Response({
+                'data': [],
+                'error': 'Failed to load bookings. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_200_OK)  # Return 200 with empty data instead of 500
     
     def post(self, request):
         """Create a new booking."""
-        listing_id = request.data.get('listing_id') or request.data.get('vehicleId')
+        listing_id = request.data.get('listing_id') or request.data.get('listing') or request.data.get('vehicleId')
         
         if not listing_id:
             return Response({
@@ -356,20 +1090,146 @@ class BookingListView(APIView):
         try:
             listing = Listing.objects.get(pk=listing_id, is_available=True)
             
+            # Handle file uploads to Supabase
+            from .supabase_storage import upload_file_to_supabase, generate_file_path
+            
+            # Process id_front_document if provided
+            id_front_document_url = None
+            if 'id_front_document' in request.FILES:
+                file = request.FILES['id_front_document']
+                file_path = generate_file_path(request.user.id, file.name, 'booking_documents')
+                supabase_url = upload_file_to_supabase(
+                    file,
+                    'identity-documents',
+                    file_path,
+                    file.content_type
+                )
+                if supabase_url:
+                    id_front_document_url = supabase_url
+            
+            # Process id_back_document if provided
+            id_back_document_url = None
+            if 'id_back_document' in request.FILES:
+                file = request.FILES['id_back_document']
+                file_path = generate_file_path(request.user.id, file.name, 'booking_documents')
+                supabase_url = upload_file_to_supabase(
+                    file,
+                    'identity-documents',
+                    file_path,
+                    file.content_type
+                )
+                if supabase_url:
+                    id_back_document_url = supabase_url
+            
+            # Parse dates - try multiple parameter names
+            pickup_date_str = (
+                request.data.get('pickup_date') or 
+                request.data.get('pickupDate') or 
+                request.data.get('pickup_date') or
+                request.data.get('start_date')
+            )
+            return_date_str = (
+                request.data.get('return_date') or 
+                request.data.get('returnDate') or 
+                request.data.get('return_date') or
+                request.data.get('end_date')
+            )
+            
+            # Also check start_time and end_time for dates (they might contain full datetime)
+            if not pickup_date_str:
+                start_time_str = request.data.get('start_time') or request.data.get('startTime')
+                if start_time_str:
+                    pickup_date_str = start_time_str.split('T')[0] if 'T' in start_time_str else start_time_str
+            
+            if not return_date_str:
+                end_time_str = request.data.get('end_time') or request.data.get('endTime')
+                if end_time_str:
+                    return_date_str = end_time_str.split('T')[0] if 'T' in end_time_str else end_time_str
+            
+            # Handle datetime strings (ISO format)
+            from datetime import datetime
+            pickup_date = None
+            return_date = None
+            
+            if pickup_date_str:
+                try:
+                    # Try parsing as ISO datetime first
+                    if 'T' in str(pickup_date_str):
+                        pickup_date = datetime.fromisoformat(str(pickup_date_str).replace('Z', '+00:00')).date()
+                    else:
+                        # Try different date formats
+                        for fmt in ['%Y-%m-%d', '%Y/%m/%d', '%d-%m-%Y', '%d/%m/%Y']:
+                            try:
+                                pickup_date = datetime.strptime(str(pickup_date_str), fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                except (ValueError, AttributeError) as e:
+                    if settings.DEBUG:
+                        print(f"❌ Error parsing pickup_date: {pickup_date_str}, error: {e}")
+            
+            if return_date_str:
+                try:
+                    # Try parsing as ISO datetime first
+                    if 'T' in str(return_date_str):
+                        return_date = datetime.fromisoformat(str(return_date_str).replace('Z', '+00:00')).date()
+                    else:
+                        # Try different date formats
+                        for fmt in ['%Y-%m-%d', '%Y/%m/%d', '%d-%m-%Y', '%d/%m/%Y']:
+                            try:
+                                return_date = datetime.strptime(str(return_date_str), fmt).date()
+                                break
+                            except ValueError:
+                                continue
+                except (ValueError, AttributeError) as e:
+                    if settings.DEBUG:
+                        print(f"❌ Error parsing return_date: {return_date_str}, error: {e}")
+            
+            # Validate that dates are present
+            if not pickup_date or not return_date:
+                return Response({
+                    'error': 'pickup_date and return_date are required. Please provide valid dates.',
+                    'details': {
+                        'pickup_date_received': pickup_date_str,
+                        'return_date_received': return_date_str,
+                        'pickup_date_parsed': str(pickup_date) if pickup_date else None,
+                        'return_date_parsed': str(return_date) if return_date else None
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Parse times from datetime strings or use defaults
+            pickup_time_str = request.data.get('pickup_time') or request.data.get('start_time')
+            return_time_str = request.data.get('return_time') or request.data.get('end_time')
+            
+            from django.utils.dateparse import parse_time
+            pickup_time = parse_time(pickup_time_str) if pickup_time_str else None
+            return_time = parse_time(return_time_str) if return_time_str else None
+            
+            # Get payment method (default to 'online' if not provided)
+            payment_method = request.data.get('payment_method') or request.data.get('paymentMethod') or 'online'
+            # Validate payment method
+            if payment_method not in ['online', 'cash']:
+                payment_method = 'online'  # Default to online if invalid
+            
             # Create booking
             booking = Booking.objects.create(
                 listing=listing,
                 customer=request.user,
                 partner=listing.partner,
-                pickup_date=request.data.get('pickup_date') or request.data.get('pickupDate'),
-                return_date=request.data.get('return_date') or request.data.get('returnDate'),
+                pickup_date=pickup_date,
+                return_date=return_date,
+                pickup_time=pickup_time or datetime.strptime('10:00:00', '%H:%M:%S').time(),
+                return_time=return_time or datetime.strptime('18:00:00', '%H:%M:%S').time(),
                 pickup_location=request.data.get('pickup_location', listing.location),
                 return_location=request.data.get('return_location', listing.location),
-                total_amount=request.data.get('total_amount', listing.price_per_day),
-                special_requests=request.data.get('special_requests', '')
+                total_amount=request.data.get('total_amount') or request.data.get('price') or listing.price_per_day,
+                special_requests=request.data.get('special_requests') or request.data.get('request_message', ''),
+                payment_method=payment_method,
+                id_front_document_url=id_front_document_url,
+                id_back_document_url=id_back_document_url
             )
             
-            serializer = BookingSerializer(booking)
+            serializer = BookingSerializer(booking, context={'request': request})
             return Response({
                 'data': serializer.data,
                 'message': 'Booking created successfully'
@@ -378,6 +1238,14 @@ class BookingListView(APIView):
             return Response({
                 'error': 'Listing not found or not available'
             }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ BookingListView.post Error: {str(e)}")
+                traceback.print_exc()
+            return Response({
+                'error': f'Failed to create booking: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BookingPendingRequestsView(APIView):

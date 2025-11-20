@@ -21,7 +21,35 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    id_front_document = models.ImageField(upload_to='identity_documents/', blank=True, null=True, help_text='Front side of identity document (local storage)')
+    id_back_document = models.ImageField(upload_to='identity_documents/', blank=True, null=True, help_text='Back side of identity document (local storage)')
+    # Supabase Storage URLs (for new uploads)
+    id_front_document_url = models.URLField(blank=True, null=True, help_text='Supabase URL for front identity document')
+    id_back_document_url = models.URLField(blank=True, null=True, help_text='Supabase URL for back identity document')
     is_verified = models.BooleanField(default=False)
+    
+    # Personal Information
+    date_of_birth = models.DateField(blank=True, null=True)
+    nationality = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Address Information
+    address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    country_of_residence = models.CharField(max_length=100, blank=True, null=True)
+    postal_code = models.CharField(max_length=20, blank=True, null=True)
+    
+    # License Information
+    license_number = models.CharField(max_length=100, blank=True, null=True)
+    license_origin_country = models.CharField(max_length=100, blank=True, null=True)
+    issue_date = models.DateField(blank=True, null=True)
+    expiry_date = models.DateField(blank=True, null=True)
+    # License Documents (Front and Back)
+    license_front_document = models.ImageField(upload_to='license_documents/', blank=True, null=True, help_text='Front side of driver license')
+    license_back_document = models.ImageField(upload_to='license_documents/', blank=True, null=True, help_text='Back side of driver license')
+    license_front_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for front license document hosted on Supabase')
+    license_back_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for back license document hosted on Supabase')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -173,6 +201,11 @@ class Booking(models.Model):
         ('refunded', 'Refunded'),
     ]
     
+    PAYMENT_METHOD_CHOICES = [
+        ('online', 'Online'),
+        ('cash', 'Cash'),
+    ]
+    
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='bookings')
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='bookings')
@@ -193,9 +226,16 @@ class Booking(models.Model):
     # Status
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='online', help_text='Payment method: online or cash')
     
     # Additional
     special_requests = models.TextField(blank=True, null=True)
+    
+    # Identity Documents (uploaded during booking)
+    id_front_document = models.ImageField(upload_to='booking_documents/', blank=True, null=True, help_text='Front side of identity document uploaded during booking')
+    id_back_document = models.ImageField(upload_to='booking_documents/', blank=True, null=True, help_text='Back side of identity document uploaded during booking')
+    id_front_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for front identity document hosted on Supabase')
+    id_back_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for back identity document hosted on Supabase')
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

@@ -10,11 +10,97 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     """User serializer."""
+    profile_picture_url = serializers.SerializerMethodField()
+    id_front_document_url = serializers.SerializerMethodField()
+    id_back_document_url = serializers.SerializerMethodField()
+    license_front_document_url = serializers.SerializerMethodField()
+    license_back_document_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 
-                  'phone_number', 'profile_picture', 'is_verified', 'date_joined']
-        read_only_fields = ['id', 'date_joined']
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'role', 
+            'phone_number', 'profile_picture', 'profile_picture_url',
+            'id_front_document', 'id_front_document_url',
+            'id_back_document', 'id_back_document_url',
+            'license_front_document', 'license_front_document_url',
+            'license_back_document', 'license_back_document_url',
+            'is_verified', 'date_joined',
+            # Personal Information
+            'date_of_birth', 'nationality',
+            # Address Information
+            'address', 'city', 'country', 'country_of_residence', 'postal_code',
+            # License Information
+            'license_number', 'license_origin_country', 'issue_date', 'expiry_date'
+        ]
+        read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
+        extra_kwargs = {
+            'id_front_document': {'write_only': True},  # Don't return in API, use URL instead
+            'id_back_document': {'write_only': True},    # Don't return in API, use URL instead
+            'license_front_document': {'write_only': True},  # Don't return in API, use URL instead
+            'license_back_document': {'write_only': True},    # Don't return in API, use URL instead
+        }
+    
+    def get_profile_picture_url(self, obj):
+        """Return full URL for profile picture."""
+        if obj.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+            return obj.profile_picture.url
+        return None
+    
+    def get_id_front_document_url(self, obj):
+        """Return full URL for front identity document."""
+        # Priority: Supabase URL > Local file URL
+        if obj.id_front_document_url:
+            return obj.id_front_document_url
+        
+        if obj.id_front_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.id_front_document.url)
+            return obj.id_front_document.url
+        return None
+    
+    def get_id_back_document_url(self, obj):
+        """Return full URL for back identity document."""
+        # Priority: Supabase URL > Local file URL
+        if obj.id_back_document_url:
+            return obj.id_back_document_url
+        
+        if obj.id_back_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.id_back_document.url)
+            return obj.id_back_document.url
+        return None
+    
+    def get_license_front_document_url(self, obj):
+        """Return full URL for front license document."""
+        # Priority: Supabase URL > Local file URL
+        if obj.license_front_document_url:
+            return obj.license_front_document_url
+        
+        if obj.license_front_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.license_front_document.url)
+            return obj.license_front_document.url
+        return None
+    
+    def get_license_back_document_url(self, obj):
+        """Return full URL for back license document."""
+        # Priority: Supabase URL > Local file URL
+        if obj.license_back_document_url:
+            return obj.license_back_document_url
+        
+        if obj.license_back_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.license_back_document.url)
+            return obj.license_back_document.url
+        return None
 
 
 class PartnerSerializer(serializers.ModelSerializer):
@@ -93,16 +179,50 @@ class BookingSerializer(serializers.ModelSerializer):
     listing = ListingSerializer(read_only=True)
     customer = UserSerializer(read_only=True)
     partner = PartnerSerializer(read_only=True)
+    id_front_document_url = serializers.SerializerMethodField()
+    id_back_document_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Booking
         fields = [
             'id', 'listing', 'customer', 'partner', 'pickup_date', 'return_date',
             'pickup_time', 'return_time', 'pickup_location', 'return_location',
-            'total_amount', 'status', 'payment_status', 'special_requests',
+            'total_amount', 'status', 'payment_status', 'payment_method', 'special_requests',
+            'id_front_document', 'id_front_document_url',
+            'id_back_document', 'id_back_document_url',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'id_front_document': {'write_only': True},  # Don't return in API, use URL instead
+            'id_back_document': {'write_only': True},    # Don't return in API, use URL instead
+        }
+    
+    def get_id_front_document_url(self, obj):
+        """Return full URL for front identity document."""
+        # Priority: Supabase URL > Local file URL
+        if obj.id_front_document_url:
+            return obj.id_front_document_url
+        
+        if obj.id_front_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.id_front_document.url)
+            return obj.id_front_document.url
+        return None
+    
+    def get_id_back_document_url(self, obj):
+        """Return full URL for back identity document."""
+        # Priority: Supabase URL > Local file URL
+        if obj.id_back_document_url:
+            return obj.id_back_document_url
+        
+        if obj.id_back_document:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.id_back_document.url)
+            return obj.id_back_document.url
+        return None
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

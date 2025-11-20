@@ -76,13 +76,13 @@ DATABASES = {
         'PORT': os.environ.get('DATABASE_PORT', '5432'),
         'OPTIONS': {
             'sslmode': 'require',
-            'connect_timeout': 5,  # 5 second connection timeout
+            'connect_timeout': 10,  # 10 second connection timeout
             'keepalives': 1,
             'keepalives_idle': 30,
             'keepalives_interval': 10,
             'keepalives_count': 5,
         },
-        'CONN_MAX_AGE': 300,  # Keep connections alive for 5 minutes
+        'CONN_MAX_AGE': 0,  # Close connections after each request to avoid stale connections
     }
 }
 
@@ -143,6 +143,29 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Allow all HTTP methods including DELETE
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Allow all headers
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # JWT Settings
 from datetime import timedelta

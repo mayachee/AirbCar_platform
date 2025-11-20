@@ -31,14 +31,26 @@ export default function ProfileTab({
       let allBookings = [];
       try {
         const bookingsResponse = await apiClient.get('/bookings/');
-        allBookings = bookingsResponse.data || [];
+        // Ensure allBookings is always an array
+        const responseData = bookingsResponse.data;
+        if (Array.isArray(responseData)) {
+          allBookings = responseData;
+        } else if (responseData && Array.isArray(responseData.results)) {
+          allBookings = responseData.results;
+        } else if (responseData && Array.isArray(responseData.data)) {
+          allBookings = responseData.data;
+        } else {
+          allBookings = [];
+        }
       } catch (err) {
         if (!err.message?.includes('404') && err.status !== 404) {
           console.error('Error fetching bookings:', err);
         }
+        allBookings = [];
       }
 
-      const combinedBookings = [...allBookings];
+      // Ensure allBookings is always an array before spreading
+      const combinedBookings = Array.isArray(allBookings) ? [...allBookings] : [];
       
       // Filter upcoming bookings
       const now = new Date();
@@ -53,10 +65,19 @@ export default function ProfileTab({
       let favoritesCount = 0;
       try {
         const favoritesResponse = await apiClient.get('/favorites/');
-        const favoritesData = favoritesResponse.data || [];
+        const responseData = favoritesResponse.data;
+        let favoritesData = [];
+        if (Array.isArray(responseData)) {
+          favoritesData = responseData;
+        } else if (responseData && Array.isArray(responseData.data)) {
+          favoritesData = responseData.data;
+        } else if (responseData && Array.isArray(responseData.favorites)) {
+          favoritesData = responseData.favorites;
+        }
         favoritesCount = favoritesData.length;
       } catch (err) {
         // Silently handle 404
+        favoritesCount = 0;
       }
 
       // Use fetched stats or calculate from bookings

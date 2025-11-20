@@ -6,8 +6,14 @@ import { useRouter } from 'next/navigation'
 export default function BookingForm({ onConfirm, onCancel, loading, error, user }) {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [specialRequest, setSpecialRequest] = useState('')
-  const [licenseFile, setLicenseFile] = useState(null)
-  const [licensePreview, setLicensePreview] = useState(null)
+  const [licenseFrontFile, setLicenseFrontFile] = useState(null)
+  const [licenseFrontPreview, setLicenseFrontPreview] = useState(null)
+  const [licenseBackFile, setLicenseBackFile] = useState(null)
+  const [licenseBackPreview, setLicenseBackPreview] = useState(null)
+  const [idFrontFile, setIdFrontFile] = useState(null)
+  const [idFrontPreview, setIdFrontPreview] = useState(null)
+  const [idBackFile, setIdBackFile] = useState(null)
+  const [idBackPreview, setIdBackPreview] = useState(null)
   const [validationErrors, setValidationErrors] = useState({})
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('online') // 'online' or 'cash'
@@ -21,13 +27,28 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
   // Check if user already has identity documents in database
   const hasIdentityDocuments = useMemo(() => {
     if (!user) return false
-    // Check if user has ID documents (front or back) or license number
+    // Check if user has ID documents (front or back) or license documents or license number
     return !!(
       user.id_front_document_url || 
       user.id_back_document_url || 
+      user.license_front_document_url ||
+      user.license_back_document_url ||
       user.license_number
     )
   }, [user])
+  
+  // Check if user has uploaded documents in this booking form
+  const hasUploadedDocuments = useMemo(() => {
+    return !!(
+      licenseFrontFile || 
+      licenseBackFile || 
+      idFrontFile || 
+      idBackFile
+    )
+  }, [licenseFrontFile, licenseBackFile, idFrontFile, idBackFile])
+  
+  // Check if user has documents (either in profile or uploaded in form)
+  const hasAnyDocuments = hasIdentityDocuments || hasUploadedDocuments
 
   const loginUrl = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -53,7 +74,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
     return Object.keys(errors).length === 0
   }
 
-  const handleFileChange = (e) => {
+  const handleLicenseFrontChange = (e) => {
     if (!isAuthenticated) {
       router.push(loginUrl)
       return
@@ -65,7 +86,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
       if (!validTypes.includes(file.type)) {
         setValidationErrors({
           ...validationErrors,
-          license: 'Please upload a valid image (JPG, PNG, WebP) or PDF file'
+          licenseFront: 'Please upload a valid image (JPG, PNG, WebP) or PDF file'
         })
         return
       }
@@ -73,23 +94,62 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
       if (file.size > 5 * 1024 * 1024) {
         setValidationErrors({
           ...validationErrors,
-          license: 'File size must be less than 5MB'
+          licenseFront: 'File size must be less than 5MB'
         })
         return
       }
-      setLicenseFile(file)
-      setValidationErrors({ ...validationErrors, license: null })
+      setLicenseFrontFile(file)
+      setValidationErrors({ ...validationErrors, licenseFront: null })
       const reader = new FileReader()
       reader.onloadend = () => {
-        setLicensePreview(reader.result)
+        setLicenseFrontPreview(reader.result)
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleRemoveLicense = () => {
-    setLicenseFile(null)
-    setLicensePreview(null)
+  const handleLicenseBackChange = (e) => {
+    if (!isAuthenticated) {
+      router.push(loginUrl)
+      return
+    }
+    const file = e.target.files[0]
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
+      if (!validTypes.includes(file.type)) {
+        setValidationErrors({
+          ...validationErrors,
+          licenseBack: 'Please upload a valid image (JPG, PNG, WebP) or PDF file'
+        })
+        return
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setValidationErrors({
+          ...validationErrors,
+          licenseBack: 'File size must be less than 5MB'
+        })
+        return
+      }
+      setLicenseBackFile(file)
+      setValidationErrors({ ...validationErrors, licenseBack: null })
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setLicenseBackPreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveLicenseFront = () => {
+    setLicenseFrontFile(null)
+    setLicenseFrontPreview(null)
+  }
+
+  const handleRemoveLicenseBack = () => {
+    setLicenseBackFile(null)
+    setLicenseBackPreview(null)
   }
 
   const handleConfirm = () => {
@@ -113,7 +173,17 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
   const handleConfirmBooking = () => {
     setShowConfirmDialog(false)
     // Pass payment method along with other data
-    onConfirm(specialRequest, licenseFile || null, paymentMethod)
+    // Pass both license files (front and back) as an object
+    const licenseFiles = {
+      front: licenseFrontFile || null,
+      back: licenseBackFile || null
+    }
+    // Pass identity documents (front and back) as an object
+    const identityDocuments = {
+      front: idFrontFile || null,
+      back: idBackFile || null
+    }
+    onConfirm(specialRequest, licenseFiles, paymentMethod, identityDocuments)
   }
 
   return (
@@ -200,107 +270,396 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user 
           </div>
         </div>
 
-        {/* Driver's License Upload */}
-        <div>
-          <label htmlFor="licenseFile" className="block text-sm font-medium text-gray-700 mb-2">
-            Driver's License <span className="text-gray-400 font-normal">(Optional but recommended)</span>
-          </label>
-          Confirm Booking          
-          {/* Show message if documents already exist */}
-          {hasIdentityDocuments && !licenseFile && (
-            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
+        {/* Documents Status Check */}
+        <div className="mb-6">
+          <div className={`border rounded-lg p-4 ${
+            hasAnyDocuments 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-yellow-50 border-yellow-200'
+          }`}>
+            <div className="flex items-start gap-3">
+              {hasAnyDocuments ? (
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-green-900 mb-1">Identity Documents Found</h4>
-                  <p className="text-sm text-green-800">
-                    We found identity documents in your profile. You can proceed with booking or upload a new document if needed.
-                  </p>
-                  {(user.id_front_document_url || user.id_back_document_url) && (
-                    <p className="text-xs text-green-700 mt-2">
-                      Documents: {user.id_front_document_url ? 'Front ID' : ''}
-                      {user.id_front_document_url && user.id_back_document_url ? ' + ' : ''}
-                      {user.id_back_document_url ? 'Back ID' : ''}
+              ) : (
+                <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              )}
+              <div className="flex-1">
+                <h4 className={`text-sm font-semibold mb-1 ${
+                  hasAnyDocuments ? 'text-green-900' : 'text-yellow-900'
+                }`}>
+                  {hasAnyDocuments ? 'Documents Status: Ready ✓' : 'Documents Status: Missing ⚠️'}
+                </h4>
+                {hasAnyDocuments ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-green-800">
+                      You have documents available for this booking.
                     </p>
-                  )}
-                  {user.license_number && (
-                    <p className="text-xs text-green-700 mt-1">
-                      License Number: {user.license_number}
+                    {hasIdentityDocuments && (
+                      <div className="text-xs text-green-700 space-y-1">
+                        <p className="font-medium">From your profile:</p>
+                        {(user.id_front_document_url || user.id_back_document_url) && (
+                          <p>• Identity Documents: {user.id_front_document_url ? 'Front' : ''}{user.id_front_document_url && user.id_back_document_url ? ' + ' : ''}{user.id_back_document_url ? 'Back' : ''}</p>
+                        )}
+                        {(user.license_front_document_url || user.license_back_document_url) && (
+                          <p>• License: {user.license_front_document_url ? 'Front' : ''}{user.license_front_document_url && user.license_back_document_url ? ' + ' : ''}{user.license_back_document_url ? 'Back' : ''}</p>
+                        )}
+                        {user.license_number && (
+                          <p>• License Number: {user.license_number}</p>
+                        )}
+                      </div>
+                    )}
+                    {hasUploadedDocuments && (
+                      <div className="text-xs text-green-700 space-y-1 mt-2">
+                        <p className="font-medium">Uploaded in this form:</p>
+                        {licenseFrontFile && <p>• License Front: {licenseFrontFile.name}</p>}
+                        {licenseBackFile && <p>• License Back: {licenseBackFile.name}</p>}
+                        {idFrontFile && <p>• ID Front: {idFrontFile.name}</p>}
+                        {idBackFile && <p>• ID Back: {idBackFile.name}</p>}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-yellow-800 mb-2">
+                      No documents found. Please upload your documents below to complete your booking.
                     </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {!licenseFile ? (
-            <div className="mt-1">
-              <label
-                htmlFor="licenseFile"
-                className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors group"
-              >
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <svg className="w-10 h-10 mb-3 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <p className="mb-2 text-sm text-gray-500">
-                    <span className="font-semibold text-orange-600 group-hover:text-orange-700">Click to upload</span> or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">JPG, PNG, WebP or PDF (MAX. 5MB)</p>
-                  {hasIdentityDocuments && (
-                    <p className="text-xs text-orange-600 mt-2 font-medium">
-                      Note: You already have documents on file. Uploading a new document will replace the existing one.
+                    <p className="text-xs text-yellow-700">
+                      Uploading documents helps speed up the approval process and is required for verification.
                     </p>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  id="licenseFile"
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
-                  onChange={handleFileChange}
-                  disabled={loading || !isAuthenticated}
-                  className="hidden"
-                />
-              </label>
-            </div>
-          ) : (
-            <div className="mt-1">
-              <div className="flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
-                {licensePreview && licenseFile.type.startsWith('image/') && (
-                  <img src={licensePreview} alt="License preview" className="w-20 h-20 object-cover rounded border border-gray-300" />
-                )}
-                {licenseFile.type === 'application/pdf' && (
-                  <div className="w-20 h-20 bg-red-100 rounded border border-red-300 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{licenseFile.name}</p>
-                  <p className="text-xs text-gray-500">{(licenseFile.size / 1024).toFixed(1)} KB</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRemoveLicense}
-                  disabled={loading}
-                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                  title="Remove file"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
             </div>
-          )}
-          {validationErrors.license && (
-            <p className="mt-2 text-sm text-red-600">{validationErrors.license}</p>
-          )}
-          <p className="mt-2 text-xs text-gray-500">Uploading your license helps speed up the approval process</p>
+          </div>
+        </div>
+
+        {/* Driver's License Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Driver's License <span className="text-gray-400 font-normal">(Optional but recommended)</span>
+          </label>
+
+          {/* License Front Upload */}
+          <div className="mt-4">
+            <label htmlFor="licenseFrontFile" className="block text-sm font-medium text-gray-700 mb-2">
+              License Front (Recto)
+            </label>
+            {!licenseFrontFile ? (
+              <div className="mt-1">
+                <label
+                  htmlFor="licenseFrontFile"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors group"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg className="w-10 h-10 mb-3 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold text-orange-600 group-hover:text-orange-700">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">JPG, PNG, WebP or PDF (MAX. 5MB)</p>
+                  </div>
+                  <input
+                    type="file"
+                    id="licenseFrontFile"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                    onChange={handleLicenseFrontChange}
+                    disabled={loading || !isAuthenticated}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="mt-1">
+                <div className="flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                  {licenseFrontPreview && licenseFrontFile.type.startsWith('image/') && (
+                    <img src={licenseFrontPreview} alt="License front preview" className="w-20 h-20 object-cover rounded border border-gray-300" />
+                  )}
+                  {licenseFrontFile.type === 'application/pdf' && (
+                    <div className="w-20 h-20 bg-red-100 rounded border border-red-300 flex items-center justify-center">
+                      <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{licenseFrontFile.name}</p>
+                    <p className="text-xs text-gray-500">{(licenseFrontFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveLicenseFront}
+                    disabled={loading}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Remove file"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            {validationErrors.licenseFront && (
+              <p className="mt-2 text-sm text-red-600">{validationErrors.licenseFront}</p>
+            )}
+          </div>
+
+          {/* License Back Upload */}
+          <div className="mt-4">
+            <label htmlFor="licenseBackFile" className="block text-sm font-medium text-gray-700 mb-2">
+              License Back (Verso)
+            </label>
+            {!licenseBackFile ? (
+              <div className="mt-1">
+                <label
+                  htmlFor="licenseBackFile"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors group"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg className="w-10 h-10 mb-3 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold text-orange-600 group-hover:text-orange-700">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">JPG, PNG, WebP or PDF (MAX. 5MB)</p>
+                  </div>
+                  <input
+                    type="file"
+                    id="licenseBackFile"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                    onChange={handleLicenseBackChange}
+                    disabled={loading || !isAuthenticated}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="mt-1">
+                <div className="flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                  {licenseBackPreview && licenseBackFile.type.startsWith('image/') && (
+                    <img src={licenseBackPreview} alt="License back preview" className="w-20 h-20 object-cover rounded border border-gray-300" />
+                  )}
+                  {licenseBackFile.type === 'application/pdf' && (
+                    <div className="w-20 h-20 bg-red-100 rounded border border-red-300 flex items-center justify-center">
+                      <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{licenseBackFile.name}</p>
+                    <p className="text-xs text-gray-500">{(licenseBackFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveLicenseBack}
+                    disabled={loading}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Remove file"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            {validationErrors.licenseBack && (
+              <p className="mt-2 text-sm text-red-600">{validationErrors.licenseBack}</p>
+            )}
+          </div>
+          <p className="mt-4 text-xs text-gray-500">Uploading your license helps speed up the approval process</p>
+        </div>
+
+        {/* Identity Documents Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Identity Documents <span className="text-gray-400 font-normal">(Optional but recommended)</span>
+          </label>
+          <p className="text-sm text-gray-600 mb-4">
+            Upload clear photos of the front and back of your ID card or passport.
+          </p>
+          
+          {/* Identity Front Upload */}
+          <div className="mt-4">
+            <label htmlFor="idFrontFile" className="block text-sm font-medium text-gray-700 mb-2">
+              ID Front (Recto)
+            </label>
+            {!idFrontFile ? (
+              <div className="mt-1">
+                <label
+                  htmlFor="idFrontFile"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors group"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg className="w-10 h-10 mb-3 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold text-orange-600 group-hover:text-orange-700">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">JPG, PNG, WebP or PDF (MAX. 5MB)</p>
+                  </div>
+                  <input
+                    type="file"
+                    id="idFrontFile"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (file) {
+                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
+                        if (!validTypes.includes(file.type)) {
+                          setValidationErrors({ ...validationErrors, idFront: 'Please upload a valid image (JPG, PNG, WebP) or PDF file' })
+                          return
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          setValidationErrors({ ...validationErrors, idFront: 'File size must be less than 5MB' })
+                          return
+                        }
+                        setIdFrontFile(file)
+                        setValidationErrors({ ...validationErrors, idFront: null })
+                        const reader = new FileReader()
+                        reader.onloadend = () => setIdFrontPreview(reader.result)
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    disabled={loading || !isAuthenticated}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="mt-1">
+                <div className="flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                  {idFrontPreview && idFrontFile.type.startsWith('image/') && (
+                    <img src={idFrontPreview} alt="ID front preview" className="w-20 h-20 object-cover rounded border border-gray-300" />
+                  )}
+                  {idFrontFile.type === 'application/pdf' && (
+                    <div className="w-20 h-20 bg-red-100 rounded border border-red-300 flex items-center justify-center">
+                      <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{idFrontFile.name}</p>
+                    <p className="text-xs text-gray-500">{(idFrontFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIdFrontFile(null)
+                      setIdFrontPreview(null)
+                    }}
+                    disabled={loading}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Remove file"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            {validationErrors.idFront && (
+              <p className="mt-2 text-sm text-red-600">{validationErrors.idFront}</p>
+            )}
+          </div>
+
+          {/* Identity Back Upload */}
+          <div className="mt-4">
+            <label htmlFor="idBackFile" className="block text-sm font-medium text-gray-700 mb-2">
+              ID Back (Verso)
+            </label>
+            {!idBackFile ? (
+              <div className="mt-1">
+                <label
+                  htmlFor="idBackFile"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors group"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg className="w-10 h-10 mb-3 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold text-orange-600 group-hover:text-orange-700">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">JPG, PNG, WebP or PDF (MAX. 5MB)</p>
+                  </div>
+                  <input
+                    type="file"
+                    id="idBackFile"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files[0]
+                      if (file) {
+                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']
+                        if (!validTypes.includes(file.type)) {
+                          setValidationErrors({ ...validationErrors, idBack: 'Please upload a valid image (JPG, PNG, WebP) or PDF file' })
+                          return
+                        }
+                        if (file.size > 5 * 1024 * 1024) {
+                          setValidationErrors({ ...validationErrors, idBack: 'File size must be less than 5MB' })
+                          return
+                        }
+                        setIdBackFile(file)
+                        setValidationErrors({ ...validationErrors, idBack: null })
+                        const reader = new FileReader()
+                        reader.onloadend = () => setIdBackPreview(reader.result)
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                    disabled={loading || !isAuthenticated}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="mt-1">
+                <div className="flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                  {idBackPreview && idBackFile.type.startsWith('image/') && (
+                    <img src={idBackPreview} alt="ID back preview" className="w-20 h-20 object-cover rounded border border-gray-300" />
+                  )}
+                  {idBackFile.type === 'application/pdf' && (
+                    <div className="w-20 h-20 bg-red-100 rounded border border-red-300 flex items-center justify-center">
+                      <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{idBackFile.name}</p>
+                    <p className="text-xs text-gray-500">{(idBackFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIdBackFile(null)
+                      setIdBackPreview(null)
+                    }}
+                    disabled={loading}
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Remove file"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+            {validationErrors.idBack && (
+              <p className="mt-2 text-sm text-red-600">{validationErrors.idBack}</p>
+            )}
+          </div>
+          <p className="mt-4 text-xs text-gray-500">Uploading your identity documents helps speed up the approval process</p>
         </div>
 
         {/* Special Requests */}

@@ -13,11 +13,14 @@ urlpatterns = [
     
     # Favorites endpoints
     path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'),
+    path('favorites/my-favorites/', views.MyFavoritesView.as_view(), name='my-favorites'),
     path('favorites/<int:pk>/', views.FavoriteDetailView.as_view(), name='favorite-detail'),
     
     # Users endpoints
     path('users/', views.UserListView.as_view(), name='user-list'),
     path('users/me/', views.UserMeView.as_view(), name='user-me'),
+    path('users/me/stats/', views.UserStatsView.as_view(), name='user-stats'),
+    path('users/me/change-password/', views.ChangePasswordView.as_view(), name='change-password'),
     path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
     
     # Bookings endpoints
@@ -30,6 +33,10 @@ urlpatterns = [
     path('partners/', views.PartnerListView.as_view(), name='partner-list'),
     path('partners/me/', views.PartnerMeView.as_view(), name='partner-me'),
     path('partners/<int:pk>/', views.PartnerDetailView.as_view(), name='partner-detail'),
+    
+    # Reviews endpoints
+    path('reviews/', views.ReviewListView.as_view(), name='review-list'),
+    path('reviews/can_review/', views.CanReviewView.as_view(), name='can-review'),
     
     # Auth endpoints
     path('api/login/', views.LoginView.as_view(), name='login'),

@@ -1,35 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/api';
+import {
+  DEFAULT_ACCOUNT_DATA,
+  mapBackendToFrontend,
+  calculateProfileCompletion as calcCompletion,
+  validateAccountData
+} from '@/features/user/types/accountData';
 
 export const useAccount = () => {
   const { user } = useAuth();
   
-  const [accountData, setAccountData] = useState({
-    firstName: user?.first_name || '',
-    lastName: user?.last_name || '',
-    email: user?.email || '',
-    phoneNumber: user?.phone_number || '',
-    dateOfBirth: user?.date_of_birth || '',
-    placeOfBirth: user?.place_of_birth || '',
-    profileImage: user?.profile_picture || '/default-avatar.svg',
-    address: user?.address || '',
-    city: user?.city || '',
-    country: user?.country || '',
-    postalCode: user?.postal_code || '',
-    licenseNumber: user?.license_number || '',
-    licenseCountry: user?.license_country || '',
-    licenseIssueDate: user?.license_issue_date || '',
-    licenseExpiryDate: user?.license_expiry_date || '',
-    idFrontDocumentUrl: user?.id_front_document_url || '',
-    idBackDocumentUrl: user?.id_back_document_url || '',
-    idFrontDocumentFile: null,
-    idBackDocumentFile: null,
-    idFrontDocumentPreview: '',
-    idBackDocumentPreview: ''
-  });
+  // Initialize with default values, then merge with user data
+  const initialData = useMemo(() => {
+    if (!user) return DEFAULT_ACCOUNT_DATA;
+    return mapBackendToFrontend(user);
+  }, [user]);
+  
+  const [accountData, setAccountData] = useState(initialData);
 
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -37,65 +27,86 @@ export const useAccount = () => {
 
   // Load user data from backend
   const loadUserData = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('⚠️ loadUserData: No user found');
+      return;
+    }
 
     try {
+      console.log('🔄 Loading user data from backend...');
       const response = await authService.getCurrentUser();
-      // Unwrap ApiResponse - the actual data is in response.data
-      const userData = response?.data || response;
+      console.log('📥 Raw response:', response);
+      console.log('📥 Response type:', typeof response);
+      console.log('📥 Response keys:', Object.keys(response || {}));
       
-      setAccountData(prev => ({
-        ...prev,
-        firstName: userData.first_name || prev.firstName,
-        lastName: userData.last_name || prev.lastName,
-        email: userData.email || prev.email,
-        phoneNumber: userData.phone_number || prev.phoneNumber,
-        dateOfBirth: userData.date_of_birth || prev.dateOfBirth,
-        placeOfBirth: userData.nationality || prev.placeOfBirth,
-        address: userData.address || prev.address,
-        city: userData.city || prev.city,
-        country: userData.country_of_residence || prev.country,
-        postalCode: userData.postal_code || prev.postalCode,
-        licenseNumber: userData.license_number || prev.licenseNumber,
-        licenseCountry: userData.license_origin_country || prev.licenseCountry,
-        licenseIssueDate: userData.issue_date || prev.licenseIssueDate,
-        licenseExpiryDate: userData.expiry_date || prev.licenseExpiryDate,
-        profileImage: userData.profile_picture || prev.profileImage || '/default-avatar.svg',
-        idFrontDocumentUrl: userData.id_front_document_url || prev.idFrontDocumentUrl,
-        idBackDocumentUrl: userData.id_back_document_url || prev.idBackDocumentUrl,
-        idFrontDocumentFile: null,
-        idBackDocumentFile: null,
-        idFrontDocumentPreview: '',
-        idBackDocumentPreview: ''
-      }));
+      // Handle different response structures
+      let userData = null;
+      
+      // Check if response has a data property
+      if (response && typeof response === 'object') {
+        if ('data' in response) {
+          // Response is { data: { data: {...} } } or { data: {...} }
+          const innerData = response.data;
+          if (innerData && typeof innerData === 'object' && 'data' in innerData) {
+            // Double nested: { data: { data: {...} } }
+            userData = innerData.data;
+          } else {
+            // Single nested: { data: {...} }
+            userData = innerData;
+          }
+        } else {
+          // Response is the data directly
+          userData = response;
+        }
+      }
+      
+      console.log('📦 Extracted userData:', userData);
+      console.log('📦 userData type:', typeof userData);
+      console.log('📦 userData keys:', userData ? Object.keys(userData) : 'null');
+      
+      if (!userData || (typeof userData === 'object' && Object.keys(userData).length === 0)) {
+        console.error('❌ No user data received from backend or data is empty');
+        return;
+      }
+      
+      // Map backend data to frontend format
+      const mappedData = mapBackendToFrontend(userData);
+      console.log('🔄 Mapped data:', mappedData);
+      
+      // Preserve file uploads and previews
+      setAccountData(prev => {
+        const newData = {
+          ...mappedData,
+          idFrontDocumentFile: prev.idFrontDocumentFile,
+          idBackDocumentFile: prev.idBackDocumentFile,
+          idFrontDocumentPreview: prev.idFrontDocumentPreview,
+          idBackDocumentPreview: prev.idBackDocumentPreview
+        };
+        console.log('✅ Updated accountData:', newData);
+        return newData;
+      });
+      
       setEmailVerified(!!(userData?.email_verified || userData?.is_verified));
+      console.log('✅ User data loaded successfully');
     } catch (error) {
-      // Silently handle backend errors - user can still use the form with cached data
+      console.error('❌ Error loading user data:', error);
+      // Show error to user instead of silently failing
       if (error.message?.includes('Failed to fetch')) {
-        console.log('Backend is not available, using cached user data');
+        console.error('🔴 Backend is not available');
       } else {
-        console.warn('Could not load user data from backend:', error.message);
+        console.error('🔴 Could not load user data from backend:', error.message);
       }
     }
   }, [user]);
 
   // Calculate profile completion percentage
   const calculateProfileCompletion = useCallback(() => {
-    const fields = [
-      accountData.firstName,
-      accountData.lastName,
-      accountData.dateOfBirth,
-      accountData.phoneNumber,
-      accountData.address,
-      accountData.city,
-      accountData.country,
-      accountData.licenseNumber,
-      accountData.licenseCountry,
-      accountData.licenseIssueDate
-    ];
-    
-    const completedFields = fields.filter(field => field && field.trim() !== '').length;
-    return Math.round((completedFields / fields.length) * 100);
+    return calcCompletion(accountData);
+  }, [accountData]);
+
+  // Validate account data
+  const validateData = useCallback(() => {
+    return validateAccountData(accountData);
   }, [accountData]);
 
   // Update account data
@@ -147,8 +158,12 @@ export const useAccount = () => {
 
   // Load data when user changes
   useEffect(() => {
+    console.log('🔄 useAccount useEffect triggered', { user: user?.username, hasUser: !!user });
     if (user) {
+      console.log('✅ User found, loading data...');
       loadUserData();
+    } else {
+      console.log('⚠️ No user found, skipping data load');
     }
   }, [user, loadUserData]);
 
@@ -161,6 +176,7 @@ export const useAccount = () => {
     setSaveMessage,
     emailVerified,
     calculateProfileCompletion,
+    validateData,
     updateAccountData,
     handleFieldChange,
     refreshVerificationStatus,
