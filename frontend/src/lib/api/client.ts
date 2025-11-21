@@ -28,6 +28,7 @@ export class ApiClient {
       headers = {},
       body,
       params,
+      timeout = method === 'GET' ? 60000 : 30000, // 60s for GET, 30s for others
       skipAuth = false,
       cache = 'default'
     } = config;
@@ -80,8 +81,7 @@ export class ApiClient {
     }
 
     // Add timeout to prevent hanging requests
-    // Use longer timeout for reviews and complex queries (30 seconds default)
-    const timeout = config.timeout || 30000; // 30 seconds default
+    // Use timeout from config or default (60s for GET, 30s for others)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 

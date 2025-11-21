@@ -65,7 +65,7 @@ export default function Restrictions({ vehicle }) {
             <div className="p-2 bg-orange-100 rounded-lg mr-3">
               <Shield className="w-5 h-5 text-orange-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900">Partner Information</h3>
+            <h3 className="text-xl font-bold text-gray-900">Owner Information</h3>
           </div>
 
           <div className="space-y-4">

@@ -1090,17 +1090,26 @@ class BookingListView(APIView):
             
             # Users see their own bookings, partners see their listings' bookings, admins see all
             # Use select_related to optimize queries and limit results to prevent timeout
-            # Reduced limit to 50 for better performance
+            # Reduced limit to 30 for better performance and faster response
+            base_query = Booking.objects.select_related(
+                'listing', 
+                'customer', 
+                'partner',
+                'partner__user',
+                'listing__partner',
+                'listing__partner__user'
+            ).order_by('-created_at')[:30]
+            
             if request.user.role == 'admin':
-                bookings = Booking.objects.all().select_related('listing', 'customer', 'partner').order_by('-created_at')[:50]
+                bookings = base_query
             elif request.user.role == 'partner':
                 try:
                     partner = request.user.partner_profile
-                    bookings = Booking.objects.filter(partner=partner).select_related('listing', 'customer', 'partner').order_by('-created_at')[:50]
+                    bookings = base_query.filter(partner=partner)
                 except Partner.DoesNotExist:
                     bookings = Booking.objects.none()
             else:
-                bookings = Booking.objects.filter(customer=request.user).select_related('listing', 'customer', 'partner').order_by('-created_at')[:50]
+                bookings = base_query.filter(customer=request.user)
             
             serializer = BookingSerializer(bookings, many=True, context={'request': request})
             return Response({
@@ -1137,7 +1146,7 @@ class BookingListView(APIView):
             listing = Listing.objects.get(pk=listing_id, is_available=True)
             
             # Handle file uploads to Supabase
-            from .supabase_storage import upload_file_to_supabase, generate_file_path
+            from .supabase_storage import upload_file_to_supabase, generate_file_path, delete_file_from_supabase
             
             # Process id_front_document if provided
             id_front_document_url = None
@@ -1166,6 +1175,70 @@ class BookingListView(APIView):
                 )
                 if supabase_url:
                     id_back_document_url = supabase_url
+            
+            # Process license_front_document if provided - also save to user profile
+            license_front_document_url = None
+            if 'license_front_document' in request.FILES:
+                file = request.FILES['license_front_document']
+                # Delete old file from Supabase if exists
+                if request.user.license_front_document_url:
+                    old_url = request.user.license_front_document_url
+                    if 'storage/v1/object/public' in old_url:
+                        parts = old_url.split('/storage/v1/object/public/')
+                        if len(parts) > 1:
+                            bucket_and_path = parts[1]
+                            bucket_name = bucket_and_path.split('/')[0]
+                            file_path_old = '/'.join(bucket_and_path.split('/')[1:])
+                            delete_file_from_supabase(bucket_name, file_path_old)
+                
+                # Upload new file to Supabase
+                file_path = generate_file_path(request.user.id, file.name, 'license_documents')
+                supabase_url = upload_file_to_supabase(
+                    file,
+                    'license-documents',
+                    file_path,
+                    file.content_type
+                )
+                if supabase_url:
+                    license_front_document_url = supabase_url
+                    # Save to user profile
+                    request.user.license_front_document_url = supabase_url
+                    request.user.save(update_fields=['license_front_document_url'])
+            elif request.user.license_front_document_url:
+                # Use existing document from profile
+                license_front_document_url = request.user.license_front_document_url
+            
+            # Process license_back_document if provided - also save to user profile
+            license_back_document_url = None
+            if 'license_back_document' in request.FILES:
+                file = request.FILES['license_back_document']
+                # Delete old file from Supabase if exists
+                if request.user.license_back_document_url:
+                    old_url = request.user.license_back_document_url
+                    if 'storage/v1/object/public' in old_url:
+                        parts = old_url.split('/storage/v1/object/public/')
+                        if len(parts) > 1:
+                            bucket_and_path = parts[1]
+                            bucket_name = bucket_and_path.split('/')[0]
+                            file_path_old = '/'.join(bucket_and_path.split('/')[1:])
+                            delete_file_from_supabase(bucket_name, file_path_old)
+                
+                # Upload new file to Supabase
+                file_path = generate_file_path(request.user.id, file.name, 'license_documents')
+                supabase_url = upload_file_to_supabase(
+                    file,
+                    'license-documents',
+                    file_path,
+                    file.content_type
+                )
+                if supabase_url:
+                    license_back_document_url = supabase_url
+                    # Save to user profile
+                    request.user.license_back_document_url = supabase_url
+                    request.user.save(update_fields=['license_back_document_url'])
+            elif request.user.license_back_document_url:
+                # Use existing document from profile
+                license_back_document_url = request.user.license_back_document_url
             
             # Parse dates - try multiple parameter names
             pickup_date_str = (

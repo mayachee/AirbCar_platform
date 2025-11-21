@@ -31,7 +31,7 @@ export default function BookingSummary({ duration, pickupDate, returnDate, total
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
-        <h2 className="text-lg font-semibold text-white">Booking Summary</h2>
+        <h2 className="text-lg font-semibold text-black">Booking Summary</h2>
       </div>
       <div className="p-6 space-y-4">
         {pickupDate && (

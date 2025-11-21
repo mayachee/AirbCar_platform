@@ -142,18 +142,18 @@ function CarDetailsContent() {
                 <VehicleDetails vehicle={vehicle} />
               </AnimatedSection>
 
-              <AnimatedSection index={4}>
-                <OwnerInfo vehicle={vehicle} />
+              <AnimatedSection index={6}>
+                <Restrictions vehicle={vehicle} />
               </AnimatedSection>
 
               <AnimatedSection index={5}>
                 <PickupLocation vehicle={vehicle} />
               </AnimatedSection>
 
-              <AnimatedSection index={6}>
-                <Restrictions vehicle={vehicle} />
+              <AnimatedSection index={4}>
+                <OwnerInfo vehicle={vehicle} />
               </AnimatedSection>
-
+              
               <AnimatedSection index={7}>
                 <Reviews vehicle={vehicle} />
               </AnimatedSection>

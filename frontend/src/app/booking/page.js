@@ -67,7 +67,22 @@ function BookingPageContent() {
         setUserLoading(true)
         const response = await authService.getProfile()
         // The response might be wrapped in ApiResponse or direct data
-        const userData = response?.data || response
+        // Handle nested response structure: { data: { data: {...} } } or { data: {...} }
+        let userData = response?.data || response
+        if (userData?.data && typeof userData.data === 'object') {
+          userData = userData.data
+        }
+        
+        // Debug logging in development
+        if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+          console.log('🔍 Booking Page - User Data:', {
+            hasUserData: !!userData,
+            hasLicenseFront: !!(userData?.license_front_document_url),
+            hasLicenseBack: !!(userData?.license_back_document_url),
+            licenseFields: userData ? Object.keys(userData).filter(k => k.includes('license')) : []
+          })
+        }
+        
         setUser(userData)
       } catch (err) {
         console.error('Error fetching user profile:', err)
@@ -112,7 +127,7 @@ function BookingPageContent() {
     }
   }, [authUser, authLoading, router])
 
-  const handleCreateBooking = async (specialRequest = '', licenseFiles = null, paymentMethod = 'online', identityDocuments = null) => {
+  const handleCreateBooking = async (specialRequest = '', licenseFiles = null, paymentMethod = 'online') => {
     if (!validCarId) {
       setError('Car ID is missing. Please go back and select a vehicle.')
       // Try to redirect to search if no vehicle ID
@@ -212,16 +227,6 @@ function BookingPageContent() {
       formData.append('request_message', specialRequest || 'Booking request from website')
       formData.append('payment_method', paymentMethod || 'online') // 'online' or 'cash'
       
-      // Append identity documents if provided
-      if (identityDocuments) {
-        if (identityDocuments.front) {
-          formData.append('id_front_document', identityDocuments.front)
-        }
-        if (identityDocuments.back) {
-          formData.append('id_back_document', identityDocuments.back)
-        }
-      }
-      
       // Append license files if provided
       if (licenseFiles) {
         if (licenseFiles.front) {
@@ -232,9 +237,6 @@ function BookingPageContent() {
         }
       }
       
-      // Note: If you want to allow users to upload id_front_document and id_back_document
-      // during booking, add those fields to the BookingForm component and append them here
-
       // Don't set Content-Type - let the browser set it with the boundary
       const response = await apiClient.post('/bookings/', formData)
       
