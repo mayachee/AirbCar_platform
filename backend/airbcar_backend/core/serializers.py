@@ -106,13 +106,41 @@ class UserSerializer(serializers.ModelSerializer):
 class PartnerSerializer(serializers.ModelSerializer):
     """Partner serializer."""
     user = UserSerializer(read_only=True)
+    logo_url = serializers.SerializerMethodField()
+    companyName = serializers.CharField(source='business_name', read_only=True)
+    businessName = serializers.CharField(source='business_name', read_only=True)
     
     class Meta:
         model = Partner
         fields = ['id', 'user', 'business_name', 'business_type', 'business_license',
-                  'tax_id', 'bank_account', 'is_verified', 'rating', 'review_count',
-                  'total_bookings', 'total_earnings', 'created_at']
-        read_only_fields = ['id', 'created_at']
+                  'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
+                  'total_bookings', 'total_earnings', 'created_at', 'companyName', 'businessName']
+        read_only_fields = ['id', 'created_at', 'logo_url']
+    
+    def get_logo_url(self, obj):
+        """Return full URL for partner logo."""
+        # Priority: Supabase URL > Local file URL > User profile picture
+        if obj.logo_url:
+            return obj.logo_url
+        
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            return obj.logo.url
+        
+        # Fallback to user's profile picture
+        if obj.user and obj.user.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.user.profile_picture.url)
+            return obj.user.profile_picture.url
+        
+        # Fallback to user's profile_picture_url if available
+        if obj.user and hasattr(obj.user, 'profile_picture_url') and obj.user.profile_picture_url:
+            return obj.user.profile_picture_url
+        
+        return None
 
 
 class ListingSerializer(serializers.ModelSerializer):

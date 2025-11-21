@@ -1,6 +1,25 @@
+import Link from 'next/link'
+import { AlertTriangle, Shield, Phone, Mail, MapPin, Clock, CheckCircle, XCircle, Info } from 'lucide-react'
+
 export default function Restrictions({ vehicle }) {
   if (!vehicle) {
     return null
+  }
+
+  // Get owner/partner info from various possible field names
+  const owner = vehicle.owner || vehicle.partner || vehicle.listing?.partner || (vehicle.partner_id ? { id: vehicle.partner_id } : null)
+  const companyName = owner?.companyName || owner?.business_name || owner?.businessName || owner?.name || 'Partner'
+  const partnerSlug = owner?.slug || owner?.partnerId || owner?.id
+
+  // Debug: Log vehicle data to console (remove in production)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('🔍 Restrictions Component - Vehicle Data:', {
+      hasVehicle: !!vehicle,
+      hasOwner: !!owner,
+      ownerKeys: owner ? Object.keys(owner) : [],
+      companyName,
+      partnerSlug
+    })
   }
 
   // Safely get restrictions array
@@ -20,18 +39,191 @@ export default function Restrictions({ vehicle }) {
   const displayRestrictions = restrictions.length > 0 ? restrictions : defaultRestrictions
 
   return (
-    <div className="bg-white rounded-xl border p-6 mb-8">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Car rules & restrictions</h3>
-      <div className="space-y-2">
-        {displayRestrictions.map((restriction, index) => (
-          <div key={index} className="flex items-start space-x-2">
-            <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <span className="text-sm text-gray-700">{restriction}</span>
+    <div className="space-y-6 mb-8">
+      {/* Car Rules & Restrictions */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <div className="flex items-center mb-5">
+          <div className="p-2 bg-red-50 rounded-lg mr-3">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
           </div>
-        ))}
+          <h3 className="text-xl font-bold text-gray-900">Car Rules & Restrictions</h3>
+        </div>
+        <div className="space-y-3">
+          {displayRestrictions.map((restriction, index) => (
+            <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+              <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-gray-700 leading-relaxed">{restriction}</span>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Partner Information */}
+      {owner && (
+        <div className="bg-gradient-to-br from-orange-50 to-white rounded-xl border border-orange-200 shadow-sm p-6">
+          <div className="flex items-center mb-5">
+            <div className="p-2 bg-orange-100 rounded-lg mr-3">
+              <Shield className="w-5 h-5 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">Partner Information</h3>
+          </div>
+
+          <div className="space-y-4">
+            {/* Partner Logo and Company Name */}
+            {companyName && (
+              <div className="flex items-start space-x-4 pb-4 border-b border-orange-200">
+                {/* Logo */}
+                {partnerSlug ? (
+                  <Link 
+                    href={`/partner/${partnerSlug}`}
+                    className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    {owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture ? (
+                      <img 
+                        src={owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture} 
+                        alt={companyName}
+                        className="w-16 h-16 rounded-xl object-cover border-2 border-orange-200 shadow-sm"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white text-xl font-bold border-2 border-orange-200 shadow-sm"
+                      style={{ display: (owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture) ? 'none' : 'flex' }}
+                    >
+                      {companyName[0]?.toUpperCase() || 'P'}
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex-shrink-0">
+                    {owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture ? (
+                      <img 
+                        src={owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture} 
+                        alt={companyName}
+                        className="w-16 h-16 rounded-xl object-cover border-2 border-orange-200 shadow-sm"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white text-xl font-bold border-2 border-orange-200 shadow-sm"
+                      style={{ display: (owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture) ? 'none' : 'flex' }}
+                    >
+                      {companyName[0]?.toUpperCase() || 'P'}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Company Name */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 mb-1">Hosted by</p>
+                  {partnerSlug ? (
+                    <Link 
+                      href={`/partner/${partnerSlug}`}
+                      className="text-lg font-bold text-gray-900 hover:text-orange-600 transition-colors block truncate"
+                    >
+                      {companyName}
+                    </Link>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-900 truncate">{companyName}</p>
+                  )}
+                  {owner.businessType && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
+                      {owner.businessType}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Contact Information */}
+            {(owner.phone || owner.email || owner.phone_number) && (
+              <div className="pt-3 border-t border-orange-200">
+                <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Contact Information</p>
+                <div className="space-y-2">
+                  {(owner.phone || owner.phone_number) && (
+                    <div className="flex items-center space-x-3">
+                      <Phone className="w-4 h-4 text-orange-600" />
+                      <a 
+                        href={`tel:${owner.phone || owner.phone_number}`}
+                        className="text-sm text-gray-700 hover:text-orange-600 transition-colors"
+                      >
+                        {owner.phone || owner.phone_number}
+                      </a>
+                    </div>
+                  )}
+                  {owner.email && (
+                    <div className="flex items-center space-x-3">
+                      <Mail className="w-4 h-4 text-orange-600" />
+                      <a 
+                        href={`mailto:${owner.email}`}
+                        className="text-sm text-gray-700 hover:text-orange-600 transition-colors"
+                      >
+                        {owner.email}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Location */}
+            {(owner.city || owner.address || owner.location) && (
+              <div className="pt-3 border-t border-orange-200">
+                <div className="flex items-start space-x-3">
+                  <MapPin className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 mb-1">Location</p>
+                    <p className="text-sm text-gray-700">
+                      {[owner.city, owner.address, owner.location].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Response Time */}
+            {owner.responseTime && (
+              <div className="pt-3 border-t border-orange-200">
+                <div className="flex items-center space-x-3">
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Response Time</p>
+                    <p className="text-sm font-medium text-gray-700">{owner.responseTime}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Verified Badge */}
+            {owner.verified && (
+              <div className="pt-3 border-t border-orange-200">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-700">Verified Partner</span>
+                </div>
+              </div>
+            )}
+
+            {/* View Partner Profile Link */}
+            {partnerSlug && (
+              <div className="pt-4 border-t border-orange-200">
+                <Link
+                  href={`/partner/${partnerSlug}`}
+                  className="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-semibold text-orange-600 bg-white border border-orange-300 rounded-lg hover:bg-orange-50 hover:border-orange-400 transition-colors"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  View Partner Profile
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

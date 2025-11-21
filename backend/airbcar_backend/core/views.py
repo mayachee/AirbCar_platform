@@ -160,34 +160,55 @@ class ListingDetailView(APIView):
         
         try:
             # Test database connection first
-            connection.ensure_connection()
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.',
+                    'message': 'Service temporarily unavailable'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
-            listing = Listing.objects.get(pk=pk, is_available=True)
-            serializer = ListingSerializer(listing)
+            # Try to get listing - don't filter by is_available to show even unavailable listings
+            try:
+                listing = Listing.objects.select_related('partner', 'partner__user').get(pk=pk)
+            except Listing.DoesNotExist:
+                return Response({
+                    'error': 'Listing not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Serialize with context for URL building
+            serializer = ListingSerializer(listing, context={'request': request})
+            
             return Response({
                 'data': serializer.data,
                 'message': 'Listing retrieved successfully'
             })
-        except Listing.DoesNotExist:
-            return Response({
-                'error': 'Listing not found'
-            }, status=status.HTTP_404_NOT_FOUND)
         except OperationalError as db_err:
-            # Database connection error
+            # Close connection on error to force reconnection
+            connection.close()
+            if settings.DEBUG:
+                print(f"❌ ListingDetailView DB Error: {str(db_err)}")
             return Response({
                 'error': 'Database connection error. Please try again later.',
                 'message': 'Service temporarily unavailable'
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as e:
+            # Close connection on error to force reconnection
+            try:
+                connection.close()
+            except:
+                pass
+            
             # Handle other errors
             import traceback
             error_msg = str(e)
             error_type = type(e).__name__
             if settings.DEBUG:
-                print(f"Error in ListingDetailView ({error_type}): {error_msg}")
-                print(traceback.format_exc())
+                print(f"❌ ListingDetailView Error ({error_type}): {error_msg}")
+                traceback.print_exc()
             return Response({
-                'error': 'An error occurred while fetching the listing'
+                'error': 'An error occurred while fetching the listing',
+                'message': str(e) if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -644,21 +665,46 @@ class UserMeView(APIView):
     
     def get(self, request):
         """Get current user profile."""
-        user = request.user
-        if settings.DEBUG:
-            print(f"🔍 UserMeView GET - User: {user.username}, Email: {user.email}")
-            print(f"📋 User fields - first_name: {user.first_name}, last_name: {user.last_name}, phone: {user.phone_number}")
-        
-        serializer = UserSerializer(user, context={'request': request})
-        serialized_data = serializer.data
-        
-        if settings.DEBUG:
-            print(f"📤 Serialized data keys: {list(serialized_data.keys())}")
-            print(f"📤 Profile picture: {serialized_data.get('profile_picture_url')}")
-        
-        return Response({
-            'data': serialized_data
-        })
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            user = request.user
+            if settings.DEBUG:
+                print(f"🔍 UserMeView GET - User: {user.username}, Email: {user.email}")
+                print(f"📋 User fields - first_name: {user.first_name}, last_name: {user.last_name}, phone: {user.phone_number}")
+            
+            serializer = UserSerializer(user, context={'request': request})
+            serialized_data = serializer.data
+            
+            if settings.DEBUG:
+                print(f"📤 Serialized data keys: {list(serialized_data.keys())}")
+                print(f"📤 Profile picture: {serialized_data.get('profile_picture_url')}")
+            
+            return Response({
+                'data': serialized_data
+            })
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ UserMeView.get Error: {str(e)}")
+                traceback.print_exc()
+            
+            return Response({
+                'error': 'Failed to load user data. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
         """Create or fully update current user profile (full update, not partial)."""
@@ -1310,6 +1356,100 @@ class BookingUpcomingView(APIView):
         })
 
 
+class BookingCancelView(APIView):
+    """Cancel a booking."""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        """Cancel a booking by ID."""
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # Get the booking
+            try:
+                booking = Booking.objects.select_related('customer', 'partner', 'listing').get(pk=pk)
+            except Booking.DoesNotExist:
+                return Response({
+                    'error': 'Booking not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check permissions: customer can cancel their own bookings, partner can cancel their listings' bookings, admin can cancel any
+            user = request.user
+            can_cancel = False
+            
+            if user.role == 'admin':
+                can_cancel = True
+            elif user.role == 'partner':
+                # Partner can cancel bookings for their listings
+                try:
+                    partner = user.partner_profile
+                    can_cancel = (booking.partner == partner)
+                except Partner.DoesNotExist:
+                    can_cancel = False
+            else:
+                # Customer can cancel their own bookings
+                can_cancel = (booking.customer == user)
+            
+            if not can_cancel:
+                return Response({
+                    'error': 'You do not have permission to cancel this booking'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Check if booking can be cancelled
+            if booking.status == 'cancelled':
+                return Response({
+                    'error': 'Booking is already cancelled',
+                    'booking': BookingSerializer(booking, context={'request': request}).data
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if booking.status == 'completed':
+                return Response({
+                    'error': 'Cannot cancel a completed booking'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Cancel the booking
+            booking.status = 'cancelled'
+            
+            # If payment was made, mark payment status as refunded (or keep as paid if already processed)
+            if booking.payment_status == 'paid':
+                # Optionally set to refunded, or leave as paid if refund is handled separately
+                # booking.payment_status = 'refunded'
+                pass
+            
+            booking.save()
+            
+            if settings.DEBUG:
+                print(f"✅ Booking {booking.id} cancelled by {user.username}")
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'message': 'Booking cancelled successfully'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ BookingCancelView Error: {str(e)}")
+                traceback.print_exc()
+            
+            return Response({
+                'error': 'Failed to cancel booking. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class BookingDetailView(APIView):
     """Get booking by ID."""
     permission_classes = [IsAuthenticated]
@@ -1389,15 +1529,44 @@ class PartnerDetailView(APIView):
     
     def get(self, request, pk):
         try:
-            partner = Partner.objects.get(pk=pk)
-            serializer = PartnerSerializer(partner)
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            partner = Partner.objects.select_related('user').prefetch_related('listings').get(pk=pk)
+            serializer = PartnerSerializer(partner, context={'request': request})
+            
+            # Get partner's listings
+            listings = partner.listings.all()
+            from .serializers import ListingSerializer
+            listings_serializer = ListingSerializer(listings, many=True, context={'request': request})
+            
+            partner_data = serializer.data
+            partner_data['listings'] = listings_serializer.data
+            partner_data['vehicles'] = listings_serializer.data  # Alias for compatibility
+            
             return Response({
-                'data': serializer.data
+                'data': partner_data
             })
         except Partner.DoesNotExist:
             return Response({
                 'error': 'Partner not found'
             }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ PartnerDetailView Error: {str(e)}")
+                traceback.print_exc()
+            return Response({
+                'error': 'Failed to load partner details. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class LoginView(APIView):

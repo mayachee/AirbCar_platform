@@ -42,7 +42,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
   // Safely get insurance info
   const insurance = vehicle.insurance || {}
   const insuranceCoverage = insurance.coverage || 'Full coverage included'
-  const insuranceDeductible = insurance.deductible || '500 MAD'
+  const insuranceDeductible = insurance.deductible || '5000 MAD'
   
   // Safely get mileage info
   const mileage = vehicle.mileage || {}
