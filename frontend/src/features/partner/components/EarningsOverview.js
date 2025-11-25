@@ -12,7 +12,7 @@ const iconMap = {
   CheckCircle
 };
 
-export default function EarningsOverview({ stats, detailed = false }) {
+export default function EarningsOverview({ earnings, stats, detailed = false }) {
   const [earningsData, setEarningsData] = useState({
     totalEarnings: 0,
     monthlyEarnings: 0,
@@ -23,7 +23,17 @@ export default function EarningsOverview({ stats, detailed = false }) {
   });
 
   useEffect(() => {
-    if (stats) {
+    // Use earnings from backend if available, otherwise fall back to stats
+    if (earnings) {
+      setEarningsData({
+        totalEarnings: earnings.totalEarnings || 0,
+        monthlyEarnings: earnings.monthlyEarnings || 0,
+        pendingPayouts: earnings.pendingPayouts || 0,
+        completedPayouts: earnings.completedPayouts || 0,
+        averagePerBooking: earnings.averagePerBooking || 0,
+        growthRate: earnings.growthRate || 0
+      });
+    } else if (stats) {
       setEarningsData({
         totalEarnings: stats.totalEarnings || 0,
         monthlyEarnings: stats.monthlyEarnings || 0,
@@ -33,7 +43,7 @@ export default function EarningsOverview({ stats, detailed = false }) {
         growthRate: stats.growthRate || 0
       });
     }
-  }, [stats]);
+  }, [earnings, stats]);
 
   const earningsCards = [
     {

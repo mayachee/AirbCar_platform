@@ -34,8 +34,13 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
   const getVehicleAvailability = (vehicleId, date) => {
     if (!bookings) return 'available';
     
+    // Ensure bookings is an array
+    const bookingsArray = Array.isArray(bookings) 
+      ? bookings 
+      : (bookings?.data || bookings?.results || []);
+    
     const dateStr = date.toISOString().split('T')[0];
-    const vehicleBookings = bookings.filter(booking => 
+    const vehicleBookings = bookingsArray.filter(booking => 
       booking.listing?.id === vehicleId && 
       booking.status === 'accepted'
     );
@@ -76,7 +81,12 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
   const getVehicleStats = (vehicleId) => {
     if (!bookings) return { totalBookings: 0, utilization: 0 };
     
-    const vehicleBookings = bookings.filter(booking => 
+    // Ensure bookings is an array
+    const bookingsArray = Array.isArray(bookings) 
+      ? bookings 
+      : (bookings?.data || bookings?.results || []);
+    
+    const vehicleBookings = bookingsArray.filter(booking => 
       booking.listing?.id === vehicleId && 
       booking.status === 'accepted'
     );

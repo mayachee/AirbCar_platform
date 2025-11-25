@@ -142,13 +142,34 @@ export default function PartnerDashboard() {
   };
 
   const handleDeleteVehicle = async (vehicle) => {
-    if (confirm(`Are you sure you want to delete ${vehicle.brand} ${vehicle.model}?`)) {
+    const vehicleName = `${vehicle.brand || vehicle.make || 'Vehicle'} ${vehicle.model || ''}`.trim();
+    const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
+    const fullVehicleName = `${vehicleName}${vehicleYear}`;
+    
+    const confirmMessage = `⚠️ Delete Vehicle Confirmation\n\n` +
+      `Are you sure you want to delete "${fullVehicleName}"?\n\n` +
+      `This action will:\n` +
+      `• Permanently remove the vehicle from your listings\n` +
+      `• Cancel any pending bookings for this vehicle\n` +
+      `• Remove the vehicle from customer favorites\n` +
+      `• This action cannot be undone\n\n` +
+      `Type "DELETE" to confirm:`;
+    
+    const userInput = window.prompt(confirmMessage);
+    
+    if (userInput === 'DELETE') {
       try {
         await deleteVehicle(vehicle.id);
+        alert(`✅ Vehicle "${fullVehicleName}" has been deleted successfully.`);
         refetch();
       } catch (error) {
         console.error('Error deleting vehicle:', error);
+        const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle. Please try again.';
+        alert(`❌ Error: ${errorMessage}`);
       }
+    } else if (userInput !== null) {
+      // User typed something but not "DELETE"
+      alert('⚠️ Deletion cancelled. You must type "DELETE" to confirm.');
     }
   };
 

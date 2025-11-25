@@ -158,10 +158,29 @@ export function AuthProvider({ children }) {
         
         return { success: true, user: data.user }
       } else {
-        const errorData = await response.json()
+        let errorData
+        try {
+          errorData = await response.json()
+        } catch (e) {
+          // If response is not JSON, try to get text
+          const text = await response.text()
+          return { 
+            success: false, 
+            error: text || `Server error (${response.status})` 
+          }
+        }
+        
+        // Extract error message - check multiple possible fields
+        const errorMessage = errorData.error || 
+                            errorData.detail || 
+                            errorData.message || 
+                            (errorData.non_field_errors && (Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors)) ||
+                            'Invalid email or password'
+        
         return { 
           success: false, 
-          error: errorData.detail || 'Invalid email or password' 
+          error: errorMessage,
+          emailNotVerified: errorData.email_not_verified || false
         }
       }
     } catch {
@@ -176,27 +195,16 @@ export function AuthProvider({ children }) {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'
       
-      // Handle both old format (separate params) and new format (object)
-      let firstName, lastName, email, password, role, businessName, taxId, businessType
-      
-      if (typeof registrationData === 'object' && !registrationData.firstName) {
-        // New format: object with all data
-        firstName = registrationData.firstName || registrationData.first_name
-        lastName = registrationData.lastName || registrationData.last_name
-        email = registrationData.email
-        password = registrationData.password
-        role = registrationData.role || 'customer'
-        businessName = registrationData.businessName || registrationData.business_name
-        taxId = registrationData.taxId || registrationData.tax_id
-        businessType = registrationData.businessType || registrationData.business_type || 'individual'
-      } else {
-        // Old format: separate parameters (backward compatibility)
-        firstName = registrationData.firstName || registrationData
-        lastName = registrationData.lastName
-        email = registrationData.email
-        password = registrationData.password
-        role = 'customer'
-      }
+      // Extract registration data (handles both camelCase and snake_case)
+      const firstName = registrationData.firstName || registrationData.first_name
+      const lastName = registrationData.lastName || registrationData.last_name
+      const email = registrationData.email
+      const password = registrationData.password
+      const role = registrationData.role || 'customer'
+      const businessName = registrationData.businessName || registrationData.business_name
+      const taxId = registrationData.taxId || registrationData.tax_id
+      const businessType = registrationData.businessType || registrationData.business_type || 'individual'
+      const phoneNumber = registrationData.phoneNumber || registrationData.phone_number
       
       const requestBody = { 
         first_name: firstName,
@@ -204,6 +212,7 @@ export function AuthProvider({ children }) {
         email, 
         password,
         role,
+        ...(phoneNumber && { phone_number: phoneNumber }),
         ...(role === 'partner' && businessName && taxId && {
           business_name: businessName,
           tax_id: taxId,

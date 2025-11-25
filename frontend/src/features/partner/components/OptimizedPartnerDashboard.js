@@ -50,6 +50,10 @@ export default function OptimizedPartnerDashboard() {
     bookings,
     partnerData,
     stats,
+    earnings,
+    analytics,
+    reviews,
+    activity,
     dataLoading,
     
     // Computed
@@ -221,11 +225,14 @@ export default function OptimizedPartnerDashboard() {
               quickStats={quickStats}
               pendingRequests={pendingRequests}
               upcomingBookings={upcomingBookings}
-              recentActivity={recentActivity}
+              recentActivity={activity || []}
               vehicles={vehicles}
               bookings={bookings}
               partnerData={partnerData}
               stats={stats}
+              earnings={earnings}
+              analytics={analytics}
+              reviews={reviews}
               dataLoading={dataLoading}
               processingBooking={processingBooking}
               handleAddVehicle={handleAddVehicle}

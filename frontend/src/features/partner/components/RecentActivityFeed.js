@@ -6,9 +6,11 @@ export default function RecentActivityFeed({ activities }) {
   const getActivityIcon = (type) => {
     const iconProps = { className: "h-5 w-5" };
     switch (type) {
+      case 'booking':
       case 'booking_created': return <Calendar {...iconProps} />;
       case 'payment_received': return <DollarSign {...iconProps} />;
       case 'vehicle_added': return <Car {...iconProps} />;
+      case 'review':
       case 'review_received': return <Star {...iconProps} />;
       case 'booking_cancelled': return <X {...iconProps} />;
       default: return <FileText {...iconProps} />;
@@ -17,12 +19,14 @@ export default function RecentActivityFeed({ activities }) {
 
   const getActivityColor = (type) => {
     switch (type) {
-      case 'booking_created': return 'text-blue-600';
-      case 'payment_received': return 'text-green-600';
-      case 'vehicle_added': return 'text-purple-600';
-      case 'review_received': return 'text-yellow-600';
-      case 'booking_cancelled': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'booking':
+      case 'booking_created': return 'text-blue-600 dark:text-blue-400';
+      case 'payment_received': return 'text-green-600 dark:text-green-400';
+      case 'vehicle_added': return 'text-purple-600 dark:text-purple-400';
+      case 'review':
+      case 'review_received': return 'text-yellow-600 dark:text-yellow-400';
+      case 'booking_cancelled': return 'text-red-600 dark:text-red-400';
+      default: return 'text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -53,8 +57,13 @@ export default function RecentActivityFeed({ activities }) {
             {getActivityIcon(activity.type)}
           </div>
           <div className="flex-1 min-w-0">
+            {activity.title && (
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                {activity.title}
+              </p>
+            )}
             <p className={`text-sm font-medium ${getActivityColor(activity.type)}`}>
-              {activity.message}
+              {activity.message || activity.title}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {formatTimeAgo(activity.timestamp)}

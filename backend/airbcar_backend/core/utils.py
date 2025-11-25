@@ -77,7 +77,27 @@ def verify_email_token(token):
         tuple: (success: bool, user: User or None, message: str)
     """
     try:
-        verification = EmailVerification.objects.get(token=token, is_used=False)
+        # First, try to find the token (even if used)
+        try:
+            verification = EmailVerification.objects.get(token=token)
+        except EmailVerification.DoesNotExist:
+            return False, None, "Invalid verification link. The token does not exist."
+        
+        user = verification.user
+        
+        # Check if user is already verified
+        if user.is_verified and user.is_active:
+            return True, user, "Email is already verified. You can now sign in."
+        
+        # Check if token is already used
+        if verification.is_used:
+            # If user is not verified but token is used, allow re-verification
+            if not user.is_verified:
+                # Reset the token and allow verification
+                verification.is_used = False
+                verification.save()
+            else:
+                return False, None, "This verification link has already been used. Your email is already verified."
         
         # Check if token is expired
         if verification.is_expired():
@@ -87,17 +107,16 @@ def verify_email_token(token):
         verification.is_used = True
         verification.save()
         
-        # Mark user as verified
-        user = verification.user
+        # Mark user as verified and activate account
         user.is_verified = True
-        user.is_active = True  # Activate account upon verification
+        user.is_active = True
         user.save()
         
         return True, user, "Email verified successfully!"
-    except EmailVerification.DoesNotExist:
-        return False, None, "Invalid verification link."
     except Exception as e:
         print(f"Error verifying email token: {e}")
+        import traceback
+        traceback.print_exc()
         return False, None, "An error occurred during verification."
 
 

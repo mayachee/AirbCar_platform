@@ -17,6 +17,10 @@ export function usePartnerData() {
     pendingRequests: 0,
     averageRating: 0
   });
+  const [earnings, setEarnings] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
+  const [reviews, setReviews] = useState(null);
+  const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchPartnerData = async () => {
@@ -27,8 +31,13 @@ export function usePartnerData() {
       // Use the new dashboard data method
       const dashboardData = await partnerService.getDashboardData();
       
+      console.log('usePartnerData - Full dashboardData:', dashboardData);
+      console.log('usePartnerData - dashboardData.partner:', dashboardData.partner);
+      console.log('usePartnerData - has_partner_profile:', dashboardData.has_partner_profile);
+      
       // Check if partner profile exists
       if (dashboardData.has_partner_profile === false) {
+        console.log('usePartnerData - Partner profile not found');
         setHasPartnerProfile(false);
         setPartnerError(dashboardData.error || 'Partner profile not found');
         setPartnerData(null);
@@ -48,20 +57,80 @@ export function usePartnerData() {
       setHasPartnerProfile(true);
       const statsData = await partnerService.getStats();
       
-      console.log('Partner dashboard data:', {
+      console.log('usePartnerData - Partner dashboard data:', {
         partner: dashboardData.partner,
+        partnerType: typeof dashboardData.partner,
+        partnerKeys: dashboardData.partner ? Object.keys(dashboardData.partner) : 'null',
         phone_number: dashboardData.partner?.phone_number,
         business_type: dashboardData.partner?.business_type,
+        business_name: dashboardData.partner?.business_name,
+        tax_id: dashboardData.partner?.tax_id,
         phone: dashboardData.partner?.phone, // Check if phone field exists
         vehiclesCount: dashboardData.vehicles?.length || 0,
         vehicles: dashboardData.vehicles,
         bookingsCount: dashboardData.bookings?.length || 0
       });
       
+      // Ensure we're setting the partner data correctly
+      if (!dashboardData.partner) {
+        console.warn('usePartnerData - WARNING: dashboardData.partner is null/undefined!');
+        console.warn('usePartnerData - dashboardData keys:', Object.keys(dashboardData));
+      }
+      
       setPartnerData(dashboardData.partner);
-      setVehicles(dashboardData.vehicles || []);
+      // Ensure vehicles is always an array
+      const vehiclesList = Array.isArray(dashboardData.vehicles) ? dashboardData.vehicles : [];
+      console.log('usePartnerData - Setting vehicles from dashboardData:', vehiclesList.length, vehiclesList);
+      
+      // Merge with existing vehicles to avoid losing locally added ones
+      setVehicles(prev => {
+        // If we have existing vehicles and new vehicles, merge them (avoid duplicates)
+        if (prev.length > 0 && vehiclesList.length > 0) {
+          const merged = [...prev];
+          vehiclesList.forEach(newVehicle => {
+            if (newVehicle.id && !merged.some(v => v.id === newVehicle.id)) {
+              merged.push(newVehicle);
+            }
+          });
+          console.log('usePartnerData - Merged vehicles:', merged.length, merged);
+          return merged;
+        }
+        // If we have existing vehicles but no new ones, keep existing (might be a fetch issue)
+        if (prev.length > 0 && vehiclesList.length === 0) {
+          console.log('usePartnerData - Keeping existing vehicles (no new data from API):', prev.length);
+          return prev;
+        }
+        // Otherwise use the new list
+        return vehiclesList;
+      });
+      
       setBookings(dashboardData.bookings || []);
       setStats(statsData);
+
+      // Fetch additional data in parallel
+      try {
+        const [earningsData, analyticsData, reviewsData, activityData] = await Promise.allSettled([
+          partnerService.getEarnings(),
+          partnerService.getAnalytics('30d'),
+          partnerService.getReviews(),
+          partnerService.getActivity()
+        ]);
+
+        if (earningsData.status === 'fulfilled') {
+          setEarnings(earningsData.value?.data?.data || earningsData.value?.data || null);
+        }
+        if (analyticsData.status === 'fulfilled') {
+          setAnalytics(analyticsData.value?.data?.data || analyticsData.value?.data || null);
+        }
+        if (reviewsData.status === 'fulfilled') {
+          setReviews(reviewsData.value?.data?.data || reviewsData.value?.data || null);
+        }
+        if (activityData.status === 'fulfilled') {
+          setActivity(activityData.value?.data?.data || activityData.value?.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching additional partner data:', err);
+      }
 
     } catch (error) {
       console.error('Error fetching partner data:', error);
@@ -89,12 +158,56 @@ export function usePartnerData() {
 
   const addVehicle = async (vehicleData) => {
     try {
-      const response = await partnerService.addVehicle(vehicleData);
-      const newVehicle = response.data;
-      setVehicles(prev => [...prev, newVehicle]);
-      return newVehicle;
+      // Check if this is a bulk create
+      if (vehicleData.bulk && vehicleData.vehicles) {
+        const response = await partnerService.addVehiclesBulk(vehicleData.vehicles);
+        // API client wraps: { data: backendResponse, success: true }
+        // Backend returns: { data: [...], created_count: N, ... }
+        // So we need: response.data.data
+        const newVehicles = response.data?.data || response.data || [];
+        console.log('Bulk create response:', response);
+        console.log('New vehicles:', newVehicles);
+        if (Array.isArray(newVehicles) && newVehicles.length > 0) {
+          setVehicles(prev => {
+            const updated = [...prev, ...newVehicles];
+            console.log('Updated vehicles list (bulk):', updated.length, updated);
+            return updated;
+          });
+        }
+        return newVehicles;
+      } else {
+        const response = await partnerService.addVehicle(vehicleData);
+        console.log('Add vehicle response:', response);
+        // API client wraps: { data: backendResponse, success: true }
+        // Backend returns: { data: {...}, message: '...' }
+        // So we need: response.data.data
+        const newVehicle = response.data?.data || response.data;
+        console.log('New vehicle extracted:', newVehicle);
+        if (newVehicle && newVehicle.id) {
+          setVehicles(prev => {
+            // Check if vehicle already exists (avoid duplicates)
+            const exists = prev.some(v => v.id === newVehicle.id);
+            if (exists) {
+              console.log('Vehicle already in list, updating:', newVehicle.id);
+              return prev.map(v => v.id === newVehicle.id ? newVehicle : v);
+            } else {
+              const updated = [...prev, newVehicle];
+              console.log('Updated vehicles list (single):', updated.length, updated);
+              return updated;
+            }
+          });
+        } else {
+          console.warn('New vehicle missing or invalid:', newVehicle);
+        }
+        return newVehicle;
+      }
     } catch (error) {
       console.error('Error adding vehicle:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error?.status,
+        data: error?.data
+      });
       throw error;
     }
   };
@@ -160,20 +273,28 @@ export function usePartnerData() {
   const getPendingRequests = async () => {
     try {
       const response = await partnerService.getPendingRequests();
-      return response.data;
+      // API client wraps: { data: backendResponse, success: true }
+      // Backend returns: { data: [...], count: N }
+      // So we need: response.data.data or response.data
+      const data = response?.data?.data || response?.data || [];
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error fetching pending requests:', error);
-      throw error;
+      return [];
     }
   };
 
   const getUpcomingBookings = async () => {
     try {
       const response = await partnerService.getUpcomingBookings();
-      return response.data;
+      // API client wraps: { data: backendResponse, success: true }
+      // Backend returns: { data: [...], count: N }
+      // So we need: response.data.data or response.data
+      const data = response?.data?.data || response?.data || [];
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error('Error fetching upcoming bookings:', error);
-      throw error;
+      return [];
     }
   };
 
@@ -193,6 +314,10 @@ export function usePartnerData() {
     bookings,
     partnerData,
     stats,
+    earnings,
+    analytics,
+    reviews,
+    activity,
     loading,
     hasPartnerProfile,
     partnerError,

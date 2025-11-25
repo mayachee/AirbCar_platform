@@ -5,6 +5,7 @@ import { X, Calendar, Clock, User, Car, DollarSign, MessageSquare, MapPin, Phone
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminService } from '@/features/admin/services/adminService';
+import CustomerDocuments from '@/features/partner/components/CustomerDocuments';
 
 export default function BookingDetailsModal({ booking, isOpen, onClose, onAction, actionLoading, userType = 'user', onDelete }) {
   const { user: currentUser } = useAuth();
@@ -136,6 +137,7 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onAction
     { id: 'overview', label: 'Overview', icon: FileText },
     { id: 'timeline', label: 'Timeline', icon: Activity },
     { id: 'details', label: 'Details', icon: SettingsIcon },
+    ...(userType === 'partner' || userType === 'admin' ? [{ id: 'customer', label: 'Customer Documents', icon: User }] : []),
   ];
 
   const TabButton = ({ tab, isActive, onClick }) => {
@@ -488,6 +490,16 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onAction
                         <p className="text-sm text-gray-500">No timeline events available</p>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Customer Documents Tab - Partner/Admin Only */}
+                {(userType === 'partner' || userType === 'admin') && activeTab === 'customer' && (
+                  <div className="space-y-6">
+                    <CustomerDocuments 
+                      bookingId={displayBooking.id} 
+                      customer={displayBooking.customer || displayBooking.user}
+                    />
                   </div>
                 )}
 

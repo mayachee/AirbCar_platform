@@ -3,76 +3,40 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, Car, Users, BarChart3, PieChart } from 'lucide-react';
 
-export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
+export default function AdvancedAnalytics({ analytics, stats, bookings, vehicles }) {
   const [timeRange, setTimeRange] = useState('30d');
   const [chartType, setChartType] = useState('revenue');
 
-  // Mock data for demonstration - replace with real data
-  const generateMockData = (range) => {
-    const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-    const data = [];
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      
-      data.push({
-        date: date.toISOString().split('T')[0],
-        revenue: Math.floor(Math.random() * 500) + 100,
-        bookings: Math.floor(Math.random() * 10) + 1,
-        vehicles: Math.floor(Math.random() * 5) + 1
-      });
-    }
-    
-    return data;
+  // Use analytics from backend if available
+  const chartData = analytics?.revenueByDay || [];
+  const revenueTrend = analytics?.revenueTrend || 0;
+  const bookingsTrend = analytics?.bookingsTrend || 0;
+  const totalRevenue = analytics?.totalRevenue || 0;
+  const totalBookings = analytics?.totalBookings || bookings?.length || 0;
+  const activeVehicles = analytics?.activeVehicles || vehicles?.filter(v => v.is_available)?.length || 0;
+  const averageDailyRate = analytics?.averageDailyRate || (vehicles?.length ? vehicles.reduce((sum, v) => sum + (v.price_per_day || 0), 0) / vehicles.length : 0);
+
+  // Trends from backend analytics
+  const trends = {
+    revenue: revenueTrend,
+    bookings: bookingsTrend,
+    vehicles: 0
   };
 
-  const [chartData, setChartData] = useState(generateMockData(timeRange));
+  // Use backend data if available, otherwise calculate from bookings/vehicles
+  const statusDistribution = analytics?.statusDistribution 
+    ? Object.entries(analytics.statusDistribution).map(([status, count]) => ({
+        status,
+        count,
+        percentage: totalBookings > 0 ? (count / totalBookings) * 100 : 0
+      }))
+    : (bookings ? bookings.reduce((acc, booking) => {
+        acc[booking.status] = (acc[booking.status] || 0) + 1;
+        return acc;
+      }, {}) : []);
 
-  useEffect(() => {
-    setChartData(generateMockData(timeRange));
-  }, [timeRange]);
-
-  const calculateTrends = () => {
-    if (chartData.length < 2) return { revenue: 0, bookings: 0, vehicles: 0 };
-    
-    const firstHalf = chartData.slice(0, Math.floor(chartData.length / 2));
-    const secondHalf = chartData.slice(Math.floor(chartData.length / 2));
-    
-    const firstAvgRevenue = firstHalf.reduce((sum, d) => sum + d.revenue, 0) / firstHalf.length;
-    const secondAvgRevenue = secondHalf.reduce((sum, d) => sum + d.revenue, 0) / secondHalf.length;
-    
-    const firstAvgBookings = firstHalf.reduce((sum, d) => sum + d.bookings, 0) / firstHalf.length;
-    const secondAvgBookings = secondHalf.reduce((sum, d) => sum + d.bookings, 0) / secondHalf.length;
-    
-    return {
-      revenue: ((secondAvgRevenue - firstAvgRevenue) / firstAvgRevenue) * 100,
-      bookings: ((secondAvgBookings - firstAvgBookings) / firstAvgBookings) * 100,
-      vehicles: 0 // Static for now
-    };
-  };
-
-  const trends = calculateTrends();
-
-  const getStatusDistribution = () => {
-    if (!bookings) return [];
-    
-    const statusCounts = bookings.reduce((acc, booking) => {
-      acc[booking.status] = (acc[booking.status] || 0) + 1;
-      return acc;
-    }, {});
-    
-    return Object.entries(statusCounts).map(([status, count]) => ({
-      status,
-      count,
-      percentage: (count / bookings.length) * 100
-    }));
-  };
-
-  const getVehiclePerformance = () => {
-    if (!vehicles || !bookings) return [];
-    
-    return vehicles.map(vehicle => {
+  const vehiclePerformance = analytics?.vehiclePerformance || 
+    (vehicles && bookings ? vehicles.map(vehicle => {
       const vehicleBookings = bookings.filter(b => b.listing?.id === vehicle.id);
       const totalRevenue = vehicleBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
       const bookingCount = vehicleBookings.length;
@@ -82,13 +46,9 @@ export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
         name: `${vehicle.make} ${vehicle.model}`,
         revenue: totalRevenue,
         bookings: bookingCount,
-        utilization: bookingCount > 0 ? (bookingCount / 30) * 100 : 0 // Assuming 30 days
+        utilization: bookingCount > 0 ? (bookingCount / 30) * 100 : 0
       };
-    }).sort((a, b) => b.revenue - a.revenue);
-  };
-
-  const statusDistribution = getStatusDistribution();
-  const vehiclePerformance = getVehiclePerformance();
+    }).sort((a, b) => b.revenue - a.revenue) : []);
 
   const ChartBar = ({ data, maxValue, color = 'bg-blue-500' }) => (
     <div className="flex items-end space-x-1 h-32">
@@ -143,7 +103,7 @@ export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${chartData.reduce((sum, d) => sum + d.revenue, 0).toLocaleString()}
+                ${totalRevenue.toLocaleString()}
               </p>
             </div>
             <div className={`flex items-center space-x-1 ${
@@ -160,7 +120,7 @@ export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Bookings</p>
               <p className="text-2xl font-bold text-gray-900">
-                {chartData.reduce((sum, d) => sum + d.bookings, 0)}
+                {totalBookings}
               </p>
             </div>
             <div className={`flex items-center space-x-1 ${
@@ -176,7 +136,7 @@ export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Active Vehicles</p>
-              <p className="text-2xl font-bold text-gray-900">{vehicles?.length || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">{activeVehicles}</p>
             </div>
             <Car className="h-6 w-6 text-gray-400" />
           </div>
@@ -187,7 +147,7 @@ export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
             <div>
               <p className="text-sm font-medium text-gray-600">Avg. Daily Rate</p>
               <p className="text-2xl font-bold text-gray-900">
-                ${vehicles?.length ? Math.round(vehicles.reduce((sum, v) => sum + (v.price_per_day || 0), 0) / vehicles.length) : 0}
+                ${Math.round(averageDailyRate)}
               </p>
             </div>
             <DollarSign className="h-6 w-6 text-gray-400" />
@@ -201,11 +161,11 @@ export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h4 className="text-md font-semibold text-gray-900 mb-4">Revenue Trend</h4>
           <ChartBar
-            data={chartData.map(d => ({
+            data={chartData.length > 0 ? chartData.map(d => ({
               label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              value: d.revenue
-            }))}
-            maxValue={Math.max(...chartData.map(d => d.revenue))}
+              value: d.revenue || 0
+            })) : [{ label: 'No data', value: 0 }]}
+            maxValue={chartData.length > 0 ? Math.max(...chartData.map(d => d.revenue || 0), 1) : 1}
             color="bg-green-500"
           />
         </div>
@@ -214,11 +174,11 @@ export default function AdvancedAnalytics({ stats, bookings, vehicles }) {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h4 className="text-md font-semibold text-gray-900 mb-4">Bookings Trend</h4>
           <ChartBar
-            data={chartData.map(d => ({
+            data={chartData.length > 0 ? chartData.map(d => ({
               label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              value: d.bookings
-            }))}
-            maxValue={Math.max(...chartData.map(d => d.bookings))}
+              value: d.bookings || 0
+            })) : [{ label: 'No data', value: 0 }]}
+            maxValue={chartData.length > 0 ? Math.max(...chartData.map(d => d.bookings || 0), 1) : 1}
             color="bg-blue-500"
           />
         </div>

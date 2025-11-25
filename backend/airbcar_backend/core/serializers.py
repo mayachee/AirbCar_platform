@@ -169,6 +169,23 @@ class ListingSerializer(serializers.ModelSerializer):
     reviewCount = serializers.IntegerField(source='review_count', read_only=True)
     name = serializers.SerializerMethodField()
     
+    # Make all model fields optional for partial updates
+    make = serializers.CharField(required=False, allow_blank=False)
+    model = serializers.CharField(required=False, allow_blank=False)
+    year = serializers.IntegerField(required=False)
+    color = serializers.CharField(required=False, allow_blank=False)
+    transmission = serializers.ChoiceField(choices=Listing.TRANSMISSION_CHOICES, required=False)
+    fuel_type = serializers.ChoiceField(choices=Listing.FUEL_TYPE_CHOICES, required=False)
+    seating_capacity = serializers.IntegerField(required=False)
+    vehicle_style = serializers.ChoiceField(choices=Listing.STYLE_CHOICES, required=False)
+    price_per_day = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    location = serializers.CharField(required=False, allow_blank=False)
+    vehicle_description = serializers.CharField(required=False, allow_blank=True)
+    available_features = serializers.JSONField(required=False)
+    images = serializers.JSONField(required=False)
+    is_available = serializers.BooleanField(required=False)
+    instant_booking = serializers.BooleanField(required=False)
+    
     class Meta:
         model = Listing
         fields = [
@@ -182,11 +199,17 @@ class ListingSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'name'
         ]
         # Only include actual model fields, aliases are handled in to_representation
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'rating', 'review_count', 'is_verified']
     
     def get_name(self, obj):
         """Return formatted vehicle name."""
         return f"{obj.make} {obj.model} {obj.year}"
+    
+    def validate(self, data):
+        """Custom validation for listing data."""
+        # When doing partial updates, only validate fields that are present
+        # This allows partial updates without requiring all fields
+        return data
     
     def to_representation(self, instance):
         """Customize output to match frontend expectations."""
@@ -199,6 +222,52 @@ class ListingSerializer(serializers.ModelSerializer):
             data['verified'] = data.get('is_verified', False)
         if 'reviewCount' not in data:
             data['reviewCount'] = data.get('review_count', 0)
+        
+        # Process images to ensure full URLs
+        if 'images' in data and data['images']:
+            request = self.context.get('request')
+            processed_images = []
+            for img in data['images']:
+                if isinstance(img, str):
+                    # If it's a relative path starting with /media/, make it absolute
+                    if img.startswith('/media/'):
+                        # Always use BACKEND_URL for media files to avoid frontend host issues
+                        from django.conf import settings
+                        backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                        img = f"{backend_url}{img}"
+                    # If it's already an absolute URL but points to wrong host, fix it
+                    elif img.startswith('http://') or img.startswith('https://'):
+                        # Check if it's pointing to frontend instead of backend
+                        if '/media/' in img:
+                            from django.conf import settings
+                            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                            # Extract the media path
+                            media_path = '/media/' + img.split('/media/')[1]
+                            img = f"{backend_url}{media_path}"
+                    processed_images.append(img)
+                elif isinstance(img, dict):
+                    # If it's an object, process the url field
+                    if 'url' in img:
+                        url = img['url']
+                        if url.startswith('/media/'):
+                            # Always use BACKEND_URL for media files to avoid frontend host issues
+                            from django.conf import settings
+                            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                            url = f"{backend_url}{url}"
+                            img['url'] = url
+                        # If it's already an absolute URL but points to wrong host, fix it
+                        elif (url.startswith('http://') or url.startswith('https://')) and '/media/' in url:
+                            from django.conf import settings
+                            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                            # Extract the media path
+                            media_path = '/media/' + url.split('/media/')[1]
+                            url = f"{backend_url}{media_path}"
+                            img['url'] = url
+                    processed_images.append(img)
+                else:
+                    processed_images.append(img)
+            data['images'] = processed_images
+        
         return data
 
 

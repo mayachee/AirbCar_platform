@@ -7,14 +7,20 @@ import { Star, Loader2, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/contexts/ToastContext';
 
-export default function CustomerReviewsManagement({ vehicles }) {
+export default function CustomerReviewsManagement({ vehicles, reviews: reviewsData }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToast } = useToast();
 
   useEffect(() => {
-    loadReviews();
-  }, []);
+    // Use reviews from props if available (from backend), otherwise load from service
+    if (reviewsData?.reviews) {
+      setReviews(reviewsData.reviews || []);
+      setLoading(false);
+    } else {
+      loadReviews();
+    }
+  }, [reviewsData]);
 
   const loadReviews = async () => {
     try {

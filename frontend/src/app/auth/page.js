@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/contexts/AuthContext'
 import { motion } from 'framer-motion'
+import { isValidMoroccanPhone } from '@/lib/utils'
 
 const signInSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -17,6 +18,7 @@ const signUpSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email'),
+  phoneNumber: z.string().optional(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   isPartner: z.boolean().optional().default(false),
   businessName: z.string().optional(),
@@ -32,6 +34,15 @@ const signUpSchema = z.object({
 }, {
   message: "Business name and Tax ID are required for partner registration",
   path: ["businessName"],
+}).refine((data) => {
+  // Validate phone number if provided
+  if (data.phoneNumber && data.phoneNumber.trim()) {
+    return isValidMoroccanPhone(data.phoneNumber);
+  }
+  return true;
+}, {
+  message: "Please enter a valid Moroccan phone number",
+  path: ["phoneNumber"],
 })
 
 function AuthForm() {
@@ -60,6 +71,16 @@ function AuthForm() {
   }, [mode])
 
   // Load and initialize Google Identity Services
+  // NOTE: To fix "The given origin is not allowed" error:
+  // 1. Go to https://console.cloud.google.com/apis/credentials
+  // 2. Select your OAuth 2.0 Client ID (712108051146-g9ksbf313hhl7n3nt69ot8np7gtvvd8o)
+  // 3. Add authorized JavaScript origins:
+  //    - http://localhost:3001
+  //    - http://127.0.0.1:3001
+  //    - Your production domain (if applicable)
+  // 4. Add authorized redirect URIs:
+  //    - http://localhost:3001
+  //    - http://127.0.0.1:3001
   useEffect(() => {
     const initGoogleSignIn = async () => {
       const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
@@ -234,6 +255,7 @@ function AuthForm() {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
+        phoneNumber: data.phoneNumber || undefined,
         password: data.password,
         role: data.isPartner ? 'partner' : 'customer',
         // Partner-specific fields
@@ -249,16 +271,16 @@ function AuthForm() {
       if (result.success) {
         setSuccess(true)
         
-        // Determine redirect path based on registration data (immediate check)
+        // Determine redirect path based on registration data
         let redirectPath = '/'
         let redirectMessage = "You're now signed in. Redirecting to home page..."
         
-        // Check if user signed up as partner
+        // PRIORITY 1: If user signed up as partner, ALWAYS redirect to partner dashboard
         if (data.isPartner) {
           redirectPath = '/partner/dashboard'
           redirectMessage = "Partner account created! Redirecting to your dashboard..."
         } else {
-          // Get user data from the token to determine redirection for regular users
+          // For regular users, check token to determine redirection
           const token = localStorage.getItem('access_token')
           if (token) {
             try {
@@ -273,6 +295,7 @@ function AuthForm() {
                 redirectPath = '/admin/dashboard'
                 redirectMessage = "Redirecting to admin dashboard..."
               } else if (isPartner || userRole === 'partner') {
+                // Double-check: if token shows partner role, redirect to partner dashboard
                 redirectPath = '/partner/dashboard'
                 redirectMessage = "Redirecting to partner dashboard..."
               } else {
@@ -290,10 +313,11 @@ function AuthForm() {
         setRedirectMessage(redirectMessage)
         setSuccess(true)
         
-        // Redirect immediately (or after short delay for better UX)
+        // Redirect immediately for partners, slight delay for others
+        const redirectDelay = data.isPartner ? 500 : 1500
         setTimeout(() => {
           router.push(redirectPath)
-        }, 1500)
+        }, redirectDelay)
       } else {
         setError(result.error || 'Registration failed. Please try again.')
       }
@@ -845,6 +869,30 @@ function AuthForm() {
                   </div>
                   {signUpErrors.email && (
                     <p className="mt-1 text-sm text-red-600">{signUpErrors.email.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="signup-phoneNumber" className="block text-sm font-semibold text-gray-800 mb-2">
+                    Phone Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <input
+                      {...registerSignUp('phoneNumber')}
+                      id="signup-phoneNumber"
+                      type="tel"
+                      autoComplete="tel"
+                      className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                      placeholder="+212 6XX-XXXXXX"
+                    />
+                  </div>
+                  {signUpErrors.phoneNumber && (
+                    <p className="mt-1 text-sm text-red-600">{signUpErrors.phoneNumber.message}</p>
                   )}
                 </div>
 

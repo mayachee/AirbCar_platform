@@ -6,32 +6,46 @@ import { Star, TrendingUp, MessageSquare, TrendingDown, BarChart3, ThumbsUp, Loa
 import { motion } from 'framer-motion';
 import { useToast } from '@/contexts/ToastContext';
 
-export default function ReviewAnalytics() {
+export default function ReviewAnalytics({ reviews: reviewsData }) {
   const { addToast } = useToast();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadAnalytics();
-  }, []);
+    // Use reviews data from props if available (from backend)
+    if (reviewsData) {
+      // Calculate additional analytics from reviews data
+      const reviews = reviewsData.reviews || [];
+      const recent30Days = new Date();
+      recent30Days.setDate(recent30Days.getDate() - 30);
+      
+      const recentReviews = reviews.filter(r => {
+        const reviewDate = new Date(r.createdAt || r.created_at);
+        return reviewDate >= recent30Days;
+      });
+      
+      setAnalytics({
+        averageRating: reviewsData.averageRating || 0,
+        totalReviews: reviewsData.totalReviews || reviews.length || 0,
+        ratingDistribution: reviewsData.ratingDistribution || {},
+        reviewsByVehicle: reviewsData.reviewsByVehicle || [],
+        recentReviews30Days: recentReviews.length,
+        totalHelpfulVotes: 0, // Not available in current data
+        reviewsWithResponses: 0 // Not available in current data
+      });
+      setLoading(false);
+    } else {
+      // No reviews data available, show empty state
+      setLoading(false);
+      setAnalytics(null);
+    }
+  }, [reviewsData]);
 
   const loadAnalytics = async () => {
-    try {
-      setLoading(true);
-      const response = await reviewService.getReviewAnalytics();
-      setAnalytics(response);
-    } catch (err) {
-      console.error('Error loading review analytics:', err);
-      // If user is not a partner or endpoint doesn't exist, show empty state
-      if (err?.status === 403 || err?.status === 404) {
-        setAnalytics(null);
-      } else {
-        addToast('Failed to load review analytics', 'error');
-        setAnalytics(null);
-      }
-    } finally {
-      setLoading(false);
-    }
+    // Don't try to load from non-existent endpoint
+    // Reviews data should come from props (partnerService.getReviews())
+    setLoading(false);
+    setAnalytics(null);
   };
 
   if (loading) {
@@ -66,8 +80,9 @@ export default function ReviewAnalytics() {
   }
 
   const ratingPercentage = (rating) => {
-    const count = analytics.rating_distribution[rating] || 0;
-    const total = analytics.total_reviews || 1;
+    const ratingDist = analytics.ratingDistribution || analytics.rating_distribution || {};
+    const count = ratingDist[rating] || 0;
+    const total = analytics.totalReviews || analytics.total_reviews || 1;
     return (count / total) * 100;
   };
 
@@ -84,7 +99,7 @@ export default function ReviewAnalytics() {
             <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Avg Rating</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.average_rating}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.averageRating || analytics.average_rating || 0}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Out of 5.0</p>
         </motion.div>
 
@@ -98,9 +113,9 @@ export default function ReviewAnalytics() {
             <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Total Reviews</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.total_reviews}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalReviews || analytics.total_reviews || 0}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {analytics.recent_reviews_30_days} in last 30 days
+            {analytics.recentReviews30Days || analytics.recent_reviews_30_days || 0} in last 30 days
           </p>
         </motion.div>
 
@@ -114,7 +129,7 @@ export default function ReviewAnalytics() {
             <ThumbsUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Helpful Votes</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.total_helpful_votes}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalHelpfulVotes || analytics.total_helpful_votes || 0}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Community engagement</p>
         </motion.div>
 
@@ -128,7 +143,7 @@ export default function ReviewAnalytics() {
             <BarChart3 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
             <span className="text-sm text-gray-600 dark:text-gray-400">With Responses</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.reviews_with_responses}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.reviewsWithResponses || analytics.reviews_with_responses || 0}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">You've responded to</p>
         </motion.div>
       </div>
@@ -138,7 +153,8 @@ export default function ReviewAnalytics() {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Rating Distribution</h3>
         <div className="space-y-4">
           {[5, 4, 3, 2, 1].map((rating) => {
-            const count = analytics.rating_distribution[rating] || 0;
+            const ratingDist = analytics.ratingDistribution || analytics.rating_distribution || {};
+            const count = ratingDist[rating] || 0;
             const percentage = ratingPercentage(rating);
             return (
               <div key={rating} className="flex items-center gap-4">
@@ -168,35 +184,38 @@ export default function ReviewAnalytics() {
         </div>
       </div>
 
-      {/* Top Reviewed Listings */}
-      {analytics.top_listings && analytics.top_listings.length > 0 && (
+      {/* Top Reviewed Vehicles */}
+      {analytics.reviewsByVehicle && analytics.reviewsByVehicle.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Top Reviewed Vehicles</h3>
           <div className="space-y-3">
-            {analytics.top_listings.map((listing, index) => (
-              <motion.div
-                key={listing.listing__id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {listing.listing__make} {listing.listing__model}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {listing.review_count} reviews
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    {listing.avg_rating?.toFixed(1) || '0.0'}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
+            {analytics.reviewsByVehicle
+              .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
+              .slice(0, 5)
+              .map((vehicle, index) => (
+                <motion.div
+                  key={vehicle.vehicleId}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {vehicle.vehicleName}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {vehicle.reviewCount || 0} review{vehicle.reviewCount !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                    <span className="text-lg font-bold text-gray-900 dark:text-white">
+                      {vehicle.averageRating?.toFixed(1) || '0.0'}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
           </div>
         </div>
       )}

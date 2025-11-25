@@ -5,6 +5,7 @@ import { Search, Calendar, Clock, User, Car, CheckCircle, XCircle, Eye, MessageS
 import { bookingService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
+import CustomerDocuments from '@/features/partner/components/CustomerDocuments';
 
 export default function ImprovedBookingManagement({ 
   bookings: propBookings = [], 

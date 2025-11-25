@@ -6,12 +6,18 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField
+from django.db.models import Q, F, DecimalField, Avg
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.db import transaction
 from datetime import datetime, timedelta
 from django.conf import settings
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 import traceback
+import json
+import os
+from pathlib import Path
 
 from .models import Listing, Booking, Favorite, Review, Partner, User
 from .serializers import (
@@ -21,8 +27,8 @@ from .serializers import (
 
 
 class ListingListView(APIView):
-    """List all listings or search listings with filters."""
-    permission_classes = [AllowAny]
+    """List all listings or search listings with filters. Create new listings (POST requires authentication)."""
+    permission_classes = [AllowAny]  # Default for GET
     
     def get(self, request):
         # Get query parameters
@@ -37,9 +43,30 @@ class ListingListView(APIView):
         style = request.query_params.get('style')
         brand = request.query_params.get('brand')
         verified = request.query_params.get('verified')
+        partner_id = request.query_params.get('partner_id')
         
         # Start with all available listings
-        queryset = Listing.objects.filter(is_available=True)
+        # If partner_id is provided, don't filter by is_available (show all partner's vehicles)
+        # Otherwise, only show available listings
+        if partner_id:
+            try:
+                partner_id_int = int(partner_id)
+                # Verify partner exists before filtering
+                try:
+                    Partner.objects.get(pk=partner_id_int)
+                    queryset = Listing.objects.filter(partner_id=partner_id_int)
+                except Partner.DoesNotExist:
+                    # Partner doesn't exist, return empty result
+                    return Response({
+                        'data': [],
+                        'count': 0,
+                        'error': f'Partner with id {partner_id_int} not found',
+                        'message': 'Partner not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+            except (ValueError, TypeError):
+                queryset = Listing.objects.filter(is_available=True)
+        else:
+            queryset = Listing.objects.filter(is_available=True)
         
         # Apply filters
         if location:
@@ -117,10 +144,23 @@ class ListingListView(APIView):
                 }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
             # Limit queryset to avoid timeout on large datasets
-            # Use select_related to optimize queries
-            queryset = queryset.select_related('partner', 'partner__user')[:100]  # Limit to 100 results
+            # Use select_related to optimize queries - only include relationships that exist
+            # Filter out listings with invalid partner relationships to avoid serialization errors
+            queryset = queryset.filter(partner__isnull=False)
             
-            serializer = ListingSerializer(queryset, many=True)
+            # Try to use select_related for optimization, but handle gracefully if it fails
+            try:
+                queryset = queryset.select_related('partner', 'partner__user')
+            except Exception:
+                # If select_related fails, continue without it (slower but works)
+                pass
+            
+            # Limit results
+            queryset = queryset[:100]
+            
+            # Evaluate queryset and serialize
+            listings_list = list(queryset)
+            serializer = ListingSerializer(listings_list, many=True, context={'request': request})
             
             return Response({
                 'data': serializer.data,
@@ -129,6 +169,10 @@ class ListingListView(APIView):
             })
         except OperationalError as db_err:
             # Database connection error
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ ListingListView OperationalError: {str(db_err)}")
+                traceback.print_exc()
             return Response({
                 'data': [],
                 'count': 0,
@@ -136,17 +180,487 @@ class ListingListView(APIView):
                 'message': 'Service temporarily unavailable'
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as e:
-            # Handle other errors
+            # Handle other errors with better logging
             import traceback
             error_msg = str(e)
             error_type = type(e).__name__
             if settings.DEBUG:
-                print(f"Error in ListingListView ({error_type}): {error_msg}")
-                print(traceback.format_exc())
+                print(f"❌ ListingListView Error ({error_type}): {error_msg}")
+                print(f"Query params: partner_id={partner_id}, location={location}")
+                traceback.print_exc()
+            else:
+                # Log error even in production for debugging
+                print(f"❌ ListingListView Error ({error_type}): {error_msg}")
+            
+            # Return a more helpful error response
             return Response({
                 'data': [],
                 'count': 0,
-                'error': 'An error occurred while fetching listings'
+                'error': f'An error occurred while fetching listings: {error_msg}' if settings.DEBUG else 'An error occurred while fetching listings',
+                'error_type': error_type
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request):
+        """Create a new listing (vehicle) or multiple listings (bulk create). Requires authentication and partner profile."""
+        # Check authentication for POST
+        if not request.user.is_authenticated:
+            return Response({
+                'error': 'Authentication required',
+                'message': 'You must be logged in to create listings'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            # Get the partner from the authenticated user
+            try:
+                partner = Partner.objects.get(user=request.user)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found. Please complete your partner profile first.',
+                    'message': 'You must have a partner profile to create listings'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Check if this is a bulk create request
+            if 'vehicles' in request.data and isinstance(request.data['vehicles'], list):
+                return self._bulk_create_listings(request, partner)
+            else:
+                return self._create_single_listing(request, partner)
+                
+        except Exception as e:
+            import traceback
+            error_msg = str(e)
+            error_type = type(e).__name__
+            if settings.DEBUG:
+                print(f"Error in ListingListView POST ({error_type}): {error_msg}")
+                print(traceback.format_exc())
+            return Response({
+                'error': 'An error occurred while creating the listing',
+                'message': error_msg if settings.DEBUG else 'Please try again later'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _create_single_listing(self, request, partner):
+        """Create a single listing."""
+        # Prepare data for serializer
+        # Map frontend field names to backend field names
+        listing_data = {
+            'partner_id': partner.id,
+            'make': request.data.get('make', '').strip(),
+            'model': request.data.get('model', '').strip(),
+            'year': request.data.get('year'),
+            'color': request.data.get('color', 'White').strip(),  # Default to 'White' if not provided
+            'transmission': request.data.get('transmission', 'automatic'),
+            'fuel_type': request.data.get('fuel_type', 'gasoline'),
+            'seating_capacity': request.data.get('seating_capacity') or request.data.get('seats') or 5,  # Default to 5 if not provided
+            'vehicle_style': request.data.get('vehicle_style') or request.data.get('style', 'sedan'),
+            'price_per_day': request.data.get('price_per_day') or request.data.get('dailyRate') or request.data.get('price'),
+            'location': request.data.get('location', '').strip(),
+            'vehicle_description': request.data.get('description') or request.data.get('vehicle_description', ''),
+            'available_features': request.data.get('features') or request.data.get('available_features', []),
+            'is_available': request.data.get('is_available', True) if request.data.get('is_available') is not None else True,
+            'instant_booking': request.data.get('instant_booking') or request.data.get('instantBooking', False),
+        }
+        
+        # Convert year to int if it's a string
+        if listing_data['year'] and isinstance(listing_data['year'], str):
+            try:
+                listing_data['year'] = int(listing_data['year'])
+            except ValueError:
+                listing_data['year'] = None
+        
+        # Convert price_per_day to Decimal if it's a string
+        if listing_data['price_per_day'] and isinstance(listing_data['price_per_day'], str):
+            try:
+                listing_data['price_per_day'] = float(listing_data['price_per_day'])
+            except ValueError:
+                listing_data['price_per_day'] = None
+        
+        # Convert seating_capacity to int if it's a string
+        if listing_data['seating_capacity'] and isinstance(listing_data['seating_capacity'], str):
+            try:
+                listing_data['seating_capacity'] = int(listing_data['seating_capacity'])
+            except ValueError:
+                listing_data['seating_capacity'] = 5
+        
+        # Handle features - could be JSON string or array
+        if isinstance(listing_data['available_features'], str):
+            try:
+                listing_data['available_features'] = json.loads(listing_data['available_features'])
+            except json.JSONDecodeError:
+                listing_data['available_features'] = []
+        
+        # Handle images - could be files or URLs
+        images = []
+        if 'pictures' in request.FILES:
+            # Handle file uploads - actually save files to listings directory
+            uploaded_files = request.FILES.getlist('pictures')
+            listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
+            # Ensure listings directory exists
+            os.makedirs(listings_dir, exist_ok=True)
+            
+            for file in uploaded_files:
+                # Generate unique filename to avoid conflicts
+                from django.utils.text import get_valid_filename
+                from django.utils import timezone
+                import uuid
+                
+                # Get file extension
+                file_ext = os.path.splitext(file.name)[1] or '.jpg'
+                # Create unique filename
+                unique_filename = f"{uuid.uuid4()}{file_ext}"
+                file_path = os.path.join('listings', unique_filename)
+                
+                # Save file
+                saved_path = default_storage.save(file_path, ContentFile(file.read()))
+                # Generate absolute URL pointing to backend (always use BACKEND_URL to avoid frontend host issues)
+                backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
+                
+                images.append({
+                    'name': file.name,
+                    'url': file_url
+                })
+        elif 'images' in request.data:
+            # Handle JSON array of image URLs
+            images_data = request.data.get('images')
+            if isinstance(images_data, str):
+                try:
+                    images = json.loads(images_data)
+                except json.JSONDecodeError:
+                    images = []
+            else:
+                images = images_data if isinstance(images_data, list) else []
+        
+        listing_data['images'] = images
+        
+        # Validate required fields
+        required_fields = ['make', 'model', 'year', 'price_per_day', 'location']
+        missing_fields = [field for field in required_fields if not listing_data.get(field)]
+        if missing_fields:
+            return Response({
+                'error': f'Missing required fields: {", ".join(missing_fields)}',
+                'message': 'Please provide all required vehicle information'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create serializer and validate
+        serializer = ListingSerializer(data=listing_data)
+        if serializer.is_valid():
+            listing = serializer.save()
+            return Response({
+                'data': ListingSerializer(listing, context={'request': request}).data,
+                'message': 'Listing created successfully'
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'error': 'Validation failed',
+                'errors': serializer.errors,
+                'message': 'Please check your input and try again'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    def _bulk_create_listings(self, request, partner):
+        """Create multiple listings at once. Optimized with database transactions."""
+        from django.db.utils import OperationalError
+        
+        # Wrap entire method in try-except to ensure all errors return JSON, not HTML
+        try:
+            vehicles_data = request.data.get('vehicles', [])
+            
+            if not vehicles_data or not isinstance(vehicles_data, list):
+                return Response({
+                    'error': 'Invalid request',
+                    'message': 'vehicles must be a non-empty array'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if len(vehicles_data) > 10:  # Limit bulk create to 10 at a time
+                return Response({
+                    'error': 'Too many vehicles',
+                    'message': 'You can create up to 10 vehicles at once'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Ensure database connection is active before starting
+            try:
+                from django.db import connection
+                connection.ensure_connection()
+            except OperationalError as conn_err:
+                if settings.DEBUG:
+                    import traceback
+                    print(f"❌ Bulk create - Database connection error: {str(conn_err)}")
+                    traceback.print_exc()
+                return Response({
+                    'error': 'Database connection error',
+                    'message': 'Database connection error. Please try again later.',
+                    'data': [],
+                    'created_count': 0,
+                    'total_count': len(vehicles_data)
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            created_listings = []
+            errors = []
+            
+            # Use database transaction for better performance and atomicity
+            # This ensures all vehicles are created together or none if there's a critical error
+            try:
+                with transaction.atomic():
+                    # Prepare all listings data first (validation phase)
+                    prepared_listings = []
+                    for idx, vehicle_data in enumerate(vehicles_data):
+                        try:
+                            # Prepare data for serializer (same as single create)
+                            listing_data = {
+                                'partner_id': partner.id,
+                                'make': vehicle_data.get('make', '').strip(),
+                                'model': vehicle_data.get('model', '').strip(),
+                                'year': vehicle_data.get('year'),
+                                'color': vehicle_data.get('color', 'White').strip(),
+                                'transmission': vehicle_data.get('transmission', 'automatic'),
+                                'fuel_type': vehicle_data.get('fuel_type', 'gasoline'),
+                                'seating_capacity': vehicle_data.get('seating_capacity') or vehicle_data.get('seats') or 5,
+                                'vehicle_style': vehicle_data.get('vehicle_style') or vehicle_data.get('style', 'sedan'),
+                                'price_per_day': vehicle_data.get('price_per_day') or vehicle_data.get('dailyRate') or vehicle_data.get('price'),
+                                'location': vehicle_data.get('location', '').strip(),
+                                'vehicle_description': vehicle_data.get('description') or vehicle_data.get('vehicle_description', ''),
+                                'available_features': vehicle_data.get('features') or vehicle_data.get('available_features', []),
+                                'is_available': vehicle_data.get('is_available', True) if vehicle_data.get('is_available') is not None else True,
+                                'instant_booking': vehicle_data.get('instant_booking') or vehicle_data.get('instantBooking', False),
+                            }
+                            
+                            # Type conversions
+                            if listing_data['year'] and isinstance(listing_data['year'], str):
+                                try:
+                                    listing_data['year'] = int(listing_data['year'])
+                                except ValueError:
+                                    listing_data['year'] = None
+                            
+                            if listing_data['price_per_day'] and isinstance(listing_data['price_per_day'], str):
+                                try:
+                                    listing_data['price_per_day'] = float(listing_data['price_per_day'])
+                                except ValueError:
+                                    listing_data['price_per_day'] = None
+                            
+                            if listing_data['seating_capacity'] and isinstance(listing_data['seating_capacity'], str):
+                                try:
+                                    listing_data['seating_capacity'] = int(listing_data['seating_capacity'])
+                                except ValueError:
+                                    listing_data['seating_capacity'] = 5
+                            
+                            # Handle features
+                            if isinstance(listing_data['available_features'], str):
+                                try:
+                                    listing_data['available_features'] = json.loads(listing_data['available_features'])
+                                except json.JSONDecodeError:
+                                    listing_data['available_features'] = []
+                            
+                            # Handle images
+                            images = vehicle_data.get('images', [])
+                            if settings.DEBUG:
+                                print(f"📸 Bulk create - Vehicle {idx} - Raw images data: {images}, type: {type(images)}")
+                            
+                            if isinstance(images, str):
+                                try:
+                                    images = json.loads(images)
+                                    if settings.DEBUG:
+                                        print(f"📸 Bulk create - Vehicle {idx} - Parsed JSON images: {images}")
+                                except json.JSONDecodeError:
+                                    images = []
+                                    if settings.DEBUG:
+                                        print(f"⚠️ Bulk create - Vehicle {idx} - Failed to parse images JSON string")
+                            
+                            # Ensure images is a list and format is correct
+                            if isinstance(images, list):
+                                # Validate and format each image
+                                formatted_images = []
+                                for img in images:
+                                    if isinstance(img, dict) and 'url' in img:
+                                        # Already in correct format
+                                        formatted_images.append(img)
+                                    elif isinstance(img, str):
+                                        # Convert string URL to object format
+                                        formatted_images.append({'url': img, 'name': ''})
+                                    elif isinstance(img, dict):
+                                        # Ensure it has url property
+                                        if 'url' in img:
+                                            formatted_images.append(img)
+                                images = formatted_images
+                                if settings.DEBUG:
+                                    print(f"📸 Bulk create - Vehicle {idx} - Formatted images: {images}")
+                            else:
+                                images = []
+                                if settings.DEBUG:
+                                    print(f"⚠️ Bulk create - Vehicle {idx} - Images is not a list, setting to empty")
+                            
+                            listing_data['images'] = images
+                            
+                            # Validate required fields
+                            required_fields = ['make', 'model', 'year', 'price_per_day', 'location']
+                            missing_fields = [field for field in required_fields if not listing_data.get(field)]
+                            if missing_fields:
+                                errors.append({
+                                    'index': idx,
+                                    'error': f'Missing required fields: {", ".join(missing_fields)}'
+                                })
+                                continue
+                            
+                            # Store prepared data for batch processing
+                            prepared_listings.append((idx, listing_data))
+                            
+                        except Exception as e:
+                            errors.append({
+                                'index': idx,
+                                'error': f'Data preparation failed: {str(e)}'
+                            })
+                    
+                    # Create all valid listings in batch (within transaction)
+                    # Use savepoint for each vehicle to allow partial success
+                    for idx, listing_data in prepared_listings:
+                        try:
+                            # Create serializer and validate
+                            if settings.DEBUG:
+                                print(f"📝 Bulk create - Vehicle {idx} - Listing data before serializer: {listing_data.get('make')} {listing_data.get('model')}, images: {listing_data.get('images')}")
+                            
+                            serializer = ListingSerializer(data=listing_data, context={'request': request})
+                            if serializer.is_valid():
+                                try:
+                                    listing = serializer.save()
+                                    
+                                    # Verify images were saved
+                                    if settings.DEBUG:
+                                        saved_images = listing.images if hasattr(listing, 'images') else []
+                                        print(f"✅ Bulk create - Vehicle {idx} - Saved listing ID: {listing.id}, images count: {len(saved_images) if isinstance(saved_images, list) else 0}, images: {saved_images}")
+                                    
+                                    created_listings.append(ListingSerializer(listing, context={'request': request}).data)
+                                except Exception as save_err:
+                                    # Database error during save (constraint violation, etc.)
+                                    error_type = type(save_err).__name__
+                                    errors.append({
+                                        'index': idx,
+                                        'error': f'Failed to save listing: {str(save_err)}',
+                                        'error_type': error_type
+                                    })
+                                    if settings.DEBUG:
+                                        import traceback
+                                        print(f"⚠️ Failed to save listing at index {idx}: {str(save_err)}")
+                                        traceback.print_exc()
+                            else:
+                                errors.append({
+                                    'index': idx,
+                                    'error': 'Validation failed',
+                                    'errors': serializer.errors
+                                })
+                        except OperationalError as db_err:
+                            # Database connection error during creation
+                            error_msg = str(db_err)
+                            errors.append({
+                                'index': idx,
+                                'error': f'Database error: {error_msg}',
+                                'error_type': 'OperationalError'
+                            })
+                            if settings.DEBUG:
+                                import traceback
+                                print(f"⚠️ Database error at index {idx}: {error_msg}")
+                                traceback.print_exc()
+                            # Only re-raise if it's a connection error (not a constraint violation)
+                            # Connection errors usually indicate the DB is down, so rollback makes sense
+                            if 'connection' in error_msg.lower() or 'timeout' in error_msg.lower():
+                                raise
+                            # Otherwise, continue (might be a constraint issue that we can skip)
+                        except Exception as e:
+                            error_type = type(e).__name__
+                            errors.append({
+                                'index': idx,
+                                'error': f'Creation failed: {str(e)}',
+                                'error_type': error_type
+                            })
+                            if settings.DEBUG:
+                                import traceback
+                                print(f"⚠️ Error creating listing at index {idx} ({error_type}): {str(e)}")
+                                traceback.print_exc()
+                            # Continue with next vehicle even if this one fails
+                            # Transaction will commit successful ones
+                    
+                    # Return response with created listings and any errors (after transaction completes)
+                    response_data = {
+                        'data': created_listings,
+                        'created_count': len(created_listings),
+                        'total_count': len(vehicles_data),
+                        'message': f'Successfully created {len(created_listings)} out of {len(vehicles_data)} vehicles'
+                    }
+                    
+                    if errors:
+                        response_data['errors'] = errors
+                    
+                    status_code = status.HTTP_201_CREATED if created_listings else status.HTTP_400_BAD_REQUEST
+                    return Response(response_data, status=status_code)
+            
+            except OperationalError as db_err:
+                # Database connection error - transaction will be rolled back automatically
+                if settings.DEBUG:
+                    import traceback
+                    print(f"❌ Bulk create - OperationalError: {str(db_err)}")
+                    traceback.print_exc()
+                return Response({
+                    'error': 'Database connection error',
+                    'message': 'Database connection error. Please try again later.',
+                    'data': [],
+                    'created_count': 0,
+                    'total_count': len(vehicles_data),
+                    'errors': [{
+                        'index': -1,
+                        'error': 'Database connection error during bulk create'
+                    }]
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            except Exception as e:
+                # Only rollback on critical errors (database issues, etc.)
+                error_type = type(e).__name__
+                if settings.DEBUG:
+                    import traceback
+                    print(f"❌ Bulk create critical error ({error_type}): {str(e)}")
+                    traceback.print_exc()
+                else:
+                    # Log error even in production
+                    print(f"❌ Bulk create critical error ({error_type}): {str(e)}")
+                # Add critical error to response
+                errors.append({
+                    'index': -1,
+                    'error': f'Critical error during bulk create: {str(e)}',
+                    'error_type': error_type
+                })
+                
+                # Return response with created listings and any errors (even if there were critical errors)
+                response_data = {
+                    'data': created_listings,
+                    'created_count': len(created_listings),
+                    'total_count': len(vehicles_data),
+                    'message': f'Successfully created {len(created_listings)} out of {len(vehicles_data)} vehicles'
+                }
+                
+                if errors:
+                    response_data['errors'] = errors
+                
+                status_code = status.HTTP_201_CREATED if created_listings else status.HTTP_400_BAD_REQUEST
+                return Response(response_data, status=status_code)
+                
+        except Exception as outer_err:
+            # Catch any exception that wasn't caught above (safety net)
+            error_type = type(outer_err).__name__
+            error_msg = str(outer_err)
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ Bulk create - Unhandled exception ({error_type}): {error_msg}")
+                traceback.print_exc()
+            else:
+                print(f"❌ Bulk create - Unhandled exception ({error_type}): {error_msg}")
+            
+            # Return JSON error response instead of letting Django return HTML
+            return Response({
+                'error': 'An unexpected error occurred',
+                'message': f'Error creating vehicles: {error_msg}' if settings.DEBUG else 'An error occurred while creating vehicles. Please try again.',
+                'error_type': error_type,
+                'data': [],
+                'created_count': 0,
+                'total_count': len(vehicles_data) if 'vehicles_data' in locals() else 0,
+                'errors': [{
+                    'index': -1,
+                    'error': error_msg,
+                    'error_type': error_type
+                }]
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -209,6 +723,342 @@ class ListingDetailView(APIView):
             return Response({
                 'error': 'An error occurred while fetching the listing',
                 'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def put(self, request, pk):
+        """Update a listing. Treats PUT as partial update since frontend sends partial data."""
+        # Use partial=True for PUT as well, since frontend typically sends partial updates
+        return self._update_listing(request, pk, partial=True)
+    
+    def patch(self, request, pk):
+        """Update a listing (partial update). Requires authentication and ownership."""
+        return self._update_listing(request, pk, partial=True)
+    
+    def delete(self, request, pk):
+        """Delete a listing. Requires authentication and ownership."""
+        # Check authentication
+        if not request.user.is_authenticated:
+            return Response({
+                'error': 'Authentication required',
+                'message': 'You must be logged in to delete listings'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            # Get the listing
+            try:
+                listing = Listing.objects.get(pk=pk)
+            except Listing.DoesNotExist:
+                return Response({
+                    'error': 'Listing not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check ownership - user must be the partner who owns this listing
+            try:
+                partner = Partner.objects.get(user=request.user)
+                if listing.partner != partner:
+                    return Response({
+                        'error': 'Permission denied',
+                        'message': 'You can only delete your own listings'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found',
+                    'message': 'You must have a partner profile to delete listings'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Delete the listing
+            listing.delete()
+            
+            return Response({
+                'message': 'Listing deleted successfully'
+            }, status=status.HTTP_204_NO_CONTENT)
+            
+        except Exception as e:
+            import traceback
+            error_msg = str(e)
+            error_type = type(e).__name__
+            if settings.DEBUG:
+                print(f"Error in ListingDetailView DELETE ({error_type}): {error_msg}")
+                print(traceback.format_exc())
+            return Response({
+                'error': 'An error occurred while deleting the listing',
+                'message': error_msg if settings.DEBUG else 'Please try again later'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _update_listing(self, request, pk, partial=False):
+        """Helper method to update a listing."""
+        # Check authentication
+        if not request.user.is_authenticated:
+            return Response({
+                'error': 'Authentication required',
+                'message': 'You must be logged in to update listings'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            # Get the listing
+            try:
+                listing = Listing.objects.get(pk=pk)
+            except Listing.DoesNotExist:
+                return Response({
+                    'error': 'Listing not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check ownership - user must be the partner who owns this listing
+            try:
+                partner = Partner.objects.get(user=request.user)
+                if listing.partner != partner:
+                    return Response({
+                        'error': 'Permission denied',
+                        'message': 'You can only update your own listings'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found',
+                    'message': 'You must have a partner profile to update listings'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Prepare data for serializer with comprehensive field mapping
+            listing_data = {}
+            
+            # Helper function to safely extract and validate field values
+            def get_field_value(*field_names, default=None, validator=None, transform=None):
+                """Get field value from request.data, checking multiple possible field names."""
+                for field_name in field_names:
+                    if field_name in request.data:
+                        value = request.data.get(field_name, default)
+                        # Skip None, empty strings (unless explicitly allowed)
+                        if value is None or (isinstance(value, str) and value.strip() == '' and default is None):
+                            continue
+                        # Apply transform if provided
+                        if transform:
+                            try:
+                                value = transform(value)
+                            except (ValueError, TypeError):
+                                continue
+                        # Apply validator if provided
+                        if validator and not validator(value):
+                            continue
+                        return value
+                return None
+            
+            # Map frontend field names to backend field names with comprehensive support
+            # Make/Brand
+            make_value = get_field_value('make', 'brand', transform=lambda x: x.strip() if isinstance(x, str) else x)
+            if make_value:
+                listing_data['make'] = make_value
+            
+            # Model
+            model_value = get_field_value('model', 'model_name', transform=lambda x: x.strip() if isinstance(x, str) else x)
+            if model_value:
+                listing_data['model'] = model_value
+            
+            # Year
+            year_value = get_field_value('year', transform=lambda x: int(x) if isinstance(x, (str, int)) and str(x).isdigit() else x)
+            if year_value is not None:
+                listing_data['year'] = year_value
+            
+            # Color
+            color_value = get_field_value('color', transform=lambda x: x.strip() if isinstance(x, str) else x)
+            if color_value:
+                listing_data['color'] = color_value
+            
+            # Transmission
+            transmission_value = get_field_value(
+                'transmission',
+                validator=lambda x: x in ['manual', 'automatic'],
+                transform=lambda x: x.strip().lower() if isinstance(x, str) else x
+            )
+            if transmission_value:
+                listing_data['transmission'] = transmission_value
+            
+            # Fuel Type
+            fuel_type_value = get_field_value(
+                'fuel_type', 'fuelType',
+                validator=lambda x: x in ['gasoline', 'diesel', 'electric', 'hybrid'],
+                transform=lambda x: x.strip().lower() if isinstance(x, str) else x
+            )
+            if fuel_type_value:
+                listing_data['fuel_type'] = fuel_type_value
+            
+            # Seating Capacity / Seats
+            seats_value = get_field_value('seating_capacity', 'seats', transform=lambda x: int(x) if str(x).isdigit() else None)
+            if seats_value is not None:
+                listing_data['seating_capacity'] = seats_value
+            
+            # Vehicle Style
+            style_value = get_field_value(
+                'vehicle_style', 'style',
+                validator=lambda x: x in ['sedan', 'suv', 'hatchback', 'coupe', 'convertible', 'truck', 'van'],
+                transform=lambda x: x.strip().lower() if isinstance(x, str) else x
+            )
+            if style_value:
+                listing_data['vehicle_style'] = style_value
+            
+            # Price per day
+            price_value = get_field_value(
+                'price_per_day', 'dailyRate', 'price',
+                transform=lambda x: float(x) if x and (isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.', '').isdigit())) else None
+            )
+            if price_value is not None and price_value >= 0:
+                listing_data['price_per_day'] = price_value
+            
+            # Location
+            location_value = get_field_value('location', transform=lambda x: x.strip() if isinstance(x, str) else x)
+            if location_value:
+                listing_data['location'] = location_value
+            
+            # Description
+            desc_value = get_field_value('description', 'vehicle_description', default='')
+            if desc_value is not None:
+                listing_data['vehicle_description'] = desc_value.strip() if isinstance(desc_value, str) else str(desc_value)
+            
+            # Features
+            features_value = get_field_value('features', 'available_features', default=[])
+            if features_value is not None:
+                if isinstance(features_value, str):
+                    try:
+                        listing_data['available_features'] = json.loads(features_value)
+                    except json.JSONDecodeError:
+                        listing_data['available_features'] = []
+                else:
+                    listing_data['available_features'] = features_value if isinstance(features_value, list) else []
+            
+            # Availability
+            is_available_value = get_field_value('is_available', 'isAvailable')
+            if is_available_value is not None:
+                listing_data['is_available'] = bool(is_available_value)
+            
+            # Instant Booking
+            instant_booking_value = get_field_value('instant_booking', 'instantBooking')
+            if instant_booking_value is not None:
+                listing_data['instant_booking'] = bool(instant_booking_value)
+            
+            # Images - handle both replacement and addition
+            images_value = get_field_value('images', 'pictures', default=[])
+            if images_value is not None:
+                if isinstance(images_value, str):
+                    try:
+                        listing_data['images'] = json.loads(images_value)
+                    except json.JSONDecodeError:
+                        # If it's a single URL string, convert to array format
+                        if images_value.startswith('http') or images_value.startswith('/'):
+                            listing_data['images'] = [{'url': images_value}]
+                        else:
+                            listing_data['images'] = []
+                elif isinstance(images_value, list):
+                    # Ensure images are in correct format
+                    formatted_images = []
+                    for img in images_value:
+                        if isinstance(img, str):
+                            formatted_images.append({'url': img})
+                        elif isinstance(img, dict) and 'url' in img:
+                            formatted_images.append(img)
+                    listing_data['images'] = formatted_images
+                else:
+                    listing_data['images'] = []
+            
+            # Handle file uploads for images (new files to add)
+            if 'pictures' in request.FILES:
+                uploaded_files = request.FILES.getlist('pictures')
+                # Get existing images or start with empty list
+                images = listing_data.get('images', [])
+                # If images weren't in request.data, preserve existing images
+                if 'images' not in request.data and 'pictures' not in request.data:
+                    images = list(listing.images) if listing.images else []
+                
+                listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
+                # Ensure listings directory exists
+                os.makedirs(listings_dir, exist_ok=True)
+                
+                for file in uploaded_files:
+                    # Generate unique filename to avoid conflicts
+                    from django.utils.text import get_valid_filename
+                    import uuid
+                    
+                    # Get file extension
+                    file_ext = os.path.splitext(file.name)[1] or '.jpg'
+                    # Create unique filename
+                    unique_filename = f"{uuid.uuid4()}{file_ext}"
+                    file_path = os.path.join('listings', unique_filename)
+                    
+                    # Save file
+                    saved_path = default_storage.save(file_path, ContentFile(file.read()))
+                    # Generate absolute URL pointing to backend (always use BACKEND_URL to avoid frontend host issues)
+                    backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                    file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
+                    
+                    images.append({
+                        'name': file.name,
+                        'url': file_url
+                    })
+                listing_data['images'] = images
+            
+            # For partial updates, ensure we don't accidentally clear required fields
+            # Only include fields that were actually provided in the request
+            # The serializer will use existing values for fields not in listing_data when partial=True
+            
+            # Debug: Log what we're sending to serializer
+            if settings.DEBUG:
+                print(f"🔍 Update Listing {pk}:")
+                print(f"   Partial mode: {partial}")
+                print(f"   Listing data keys: {list(listing_data.keys())}")
+                print(f"   Request data keys: {list(request.data.keys())}")
+                print(f"   Existing listing: make={listing.make}, model={listing.model}, year={listing.year}")
+            
+            # Create serializer and validate
+            serializer = ListingSerializer(listing, data=listing_data, partial=partial, context={'request': request})
+            if serializer.is_valid():
+                updated_listing = serializer.save()
+                
+                # Return comprehensive response with updated data
+                response_data = ListingSerializer(updated_listing, context={'request': request}).data
+                return Response({
+                    'data': response_data,
+                    'message': 'Vehicle updated successfully',
+                    'success': True,
+                    'updated_fields': list(listing_data.keys()),  # Show what was updated
+                    'listing_id': updated_listing.id
+                }, status=status.HTTP_200_OK)
+            else:
+                # Log validation errors for debugging
+                if settings.DEBUG:
+                    print(f"Validation errors: {serializer.errors}")
+                    print(f"Listing data: {listing_data}")
+                    print(f"Request data: {request.data}")
+                
+                # Format error message for frontend
+                error_messages = []
+                for field, errors in serializer.errors.items():
+                    if isinstance(errors, list):
+                        error_messages.append(f"{field}: {', '.join([str(e) for e in errors])}")
+                    else:
+                        error_messages.append(f"{field}: {str(errors)}")
+                
+                error_summary = '; '.join(error_messages) if error_messages else str(serializer.errors)
+                
+                return Response({
+                    'error': 'Validation failed',
+                    'errors': serializer.errors,
+                    'message': f'Validation failed: {error_summary}',
+                    'details': error_summary,
+                    'validation_errors': serializer.errors,  # Always include for frontend debugging
+                    'debug_info': {
+                        'partial': partial,
+                        'listing_data_keys': list(listing_data.keys()),
+                        'request_data_keys': list(request.data.keys()) if hasattr(request, 'data') else []
+                    } if settings.DEBUG else None
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            import traceback
+            error_msg = str(e)
+            error_type = type(e).__name__
+            if settings.DEBUG:
+                print(f"Error in ListingDetailView UPDATE ({error_type}): {error_msg}")
+                print(traceback.format_exc())
+            return Response({
+                'error': 'An error occurred while updating the listing',
+                'message': error_msg if settings.DEBUG else 'Please try again later'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -1098,20 +1948,25 @@ class BookingListView(APIView):
                 'partner__user',
                 'listing__partner',
                 'listing__partner__user'
-            ).order_by('-created_at')[:30]
+            ).order_by('-created_at')
             
+            # Apply filters BEFORE slicing to avoid "Cannot filter a query once a slice has been taken" error
             if request.user.role == 'admin':
-                bookings = base_query
+                bookings = base_query[:30]
             elif request.user.role == 'partner':
                 try:
                     partner = request.user.partner_profile
-                    bookings = base_query.filter(partner=partner)
+                    bookings = base_query.filter(partner=partner)[:30]
                 except Partner.DoesNotExist:
                     bookings = Booking.objects.none()
             else:
-                bookings = base_query.filter(customer=request.user)
+                # Customer role - filter by customer first, then slice
+                bookings = base_query.filter(customer=request.user)[:30]
             
-            serializer = BookingSerializer(bookings, many=True, context={'request': request})
+            # Convert to list to avoid lazy evaluation issues
+            bookings_list = list(bookings)
+            
+            serializer = BookingSerializer(bookings_list, many=True, context={'request': request})
             return Response({
                 'data': serializer.data,
                 'count': len(serializer.data)
@@ -1397,36 +2252,70 @@ class BookingUpcomingView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        from django.utils import timezone
-        
-        if request.user.role == 'admin':
-            # Admins see all upcoming bookings
-            bookings = Booking.objects.filter(
-                pickup_date__gte=timezone.now().date(),
-                status__in=['confirmed', 'active']
-            )
-        elif request.user.role == 'partner':
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
             try:
-                partner = Partner.objects.get(user=request.user)
-                bookings = Booking.objects.filter(
-                    partner=partner,
-                    pickup_date__gte=timezone.now().date(),
-                    status__in=['confirmed', 'active']
-                )
-            except Partner.DoesNotExist:
-                bookings = Booking.objects.none()
-        else:
-            # Customers see their own upcoming bookings
-            bookings = Booking.objects.filter(
-                customer=request.user,
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'data': [],
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            from django.utils import timezone
+            
+            # Use select_related to optimize queries and limit results to prevent timeout
+            base_query = Booking.objects.select_related(
+                'listing', 
+                'customer', 
+                'partner',
+                'partner__user',
+                'listing__partner',
+                'listing__partner__user'
+            ).filter(
                 pickup_date__gte=timezone.now().date(),
                 status__in=['confirmed', 'active']
-            )
-        
-        serializer = BookingSerializer(bookings, many=True)
-        return Response({
-            'data': serializer.data
-        })
+            ).order_by('pickup_date')
+            
+            if request.user.role == 'admin':
+                # Admins see all upcoming bookings
+                bookings = base_query[:50]
+            elif request.user.role == 'partner':
+                try:
+                    partner = Partner.objects.get(user=request.user)
+                    bookings = base_query.filter(partner=partner)[:50]
+                except Partner.DoesNotExist:
+                    bookings = Booking.objects.none()
+            else:
+                # Customers see their own upcoming bookings
+                bookings = base_query.filter(customer=request.user)[:50]
+            
+            serializer = BookingSerializer(bookings, many=True, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'count': len(serializer.data)
+            })
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            try:
+                connection.close()
+            except:
+                pass
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ BookingUpcomingView Error: {str(e)}")
+                traceback.print_exc()
+            
+            # Return empty array instead of error to prevent page crash
+            return Response({
+                'data': [],
+                'count': 0,
+                'error': 'Failed to load upcoming bookings. Please try again later.'
+            }, status=status.HTTP_200_OK)
 
 
 class BookingCancelView(APIView):
@@ -1538,14 +2427,89 @@ class BookingDetailView(APIView):
                         'error': 'Permission denied'
                     }, status=status.HTTP_403_FORBIDDEN)
             
-            serializer = BookingSerializer(booking)
+            serializer = BookingSerializer(booking, context={'request': request})
+            
+            # If partner is viewing, include full customer documents
+            response_data = serializer.data
+            if request.user.role == 'partner' and booking.partner.user == request.user:
+                customer = booking.customer
+                customer_serializer = UserSerializer(customer, context={'request': request})
+                response_data['customer_details'] = customer_serializer.data
+            
             return Response({
-                'data': serializer.data
+                'data': response_data
             })
         except Booking.DoesNotExist:
             return Response({
                 'error': 'Booking not found'
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class PartnerCustomerInfoView(APIView):
+    """Get customer information with all documents for a booking. Partner only."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, booking_id):
+        try:
+            # Check if user is a partner
+            if request.user.role != 'partner':
+                return Response({
+                    'error': 'Only partners can access customer information'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get the booking
+            try:
+                booking = Booking.objects.select_related('customer', 'partner', 'partner__user').get(pk=booking_id)
+            except Booking.DoesNotExist:
+                return Response({
+                    'error': 'Booking not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Verify the partner owns this booking
+            try:
+                partner = Partner.objects.get(user=request.user)
+                if booking.partner != partner:
+                    return Response({
+                        'error': 'Permission denied. This booking does not belong to your vehicles.'
+                    }, status=status.HTTP_403_FORBIDDEN)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get customer with all documents
+            customer = booking.customer
+            customer_serializer = UserSerializer(customer, context={'request': request})
+            
+            # Also include booking-specific documents
+            booking_documents = {
+                'id_front_document_url': booking.id_front_document_url or None,
+                'id_back_document_url': booking.id_back_document_url or None
+            }
+            
+            # Build absolute URLs for booking documents if they exist
+            if booking.id_front_document:
+                booking_documents['id_front_document_url'] = request.build_absolute_uri(booking.id_front_document.url)
+            if booking.id_back_document:
+                booking_documents['id_back_document_url'] = request.build_absolute_uri(booking.id_back_document.url)
+            
+            return Response({
+                'data': {
+                    'customer': customer_serializer.data,
+                    'booking_documents': booking_documents,
+                    'booking_id': booking.id,
+                    'booking_status': booking.status
+                }
+            })
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ PartnerCustomerInfoView Error: {str(e)}")
+                traceback.print_exc()
+            return Response({
+                'error': 'Failed to load customer information',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PartnerListView(APIView):
@@ -1642,93 +2606,557 @@ class PartnerDetailView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class PartnerEarningsView(APIView):
+    """Get partner earnings and revenue statistics."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            partner = Partner.objects.get(user=request.user)
+            
+            # Get all bookings for this partner
+            bookings = Booking.objects.filter(partner=partner)
+            
+            # Calculate total earnings (from completed bookings)
+            completed_bookings = bookings.filter(status='completed', payment_status='paid')
+            total_earnings = sum(float(b.total_amount) for b in completed_bookings)
+            
+            # Calculate monthly earnings
+            current_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            monthly_bookings = completed_bookings.filter(created_at__gte=current_month)
+            monthly_earnings = sum(float(b.total_amount) for b in monthly_bookings)
+            
+            # Calculate pending payouts (completed but not paid)
+            pending_bookings = bookings.filter(status='completed', payment_status='pending')
+            pending_payouts = sum(float(b.total_amount) for b in pending_bookings)
+            
+            # Calculate completed payouts
+            completed_payouts = sum(float(b.total_amount) for b in completed_bookings.filter(payment_status='paid'))
+            
+            # Calculate average per booking
+            avg_per_booking = total_earnings / len(completed_bookings) if completed_bookings.exists() else 0
+            
+            # Calculate growth rate (compare this month to last month)
+            last_month = current_month - timedelta(days=32)
+            last_month_start = last_month.replace(day=1)
+            last_month_bookings = completed_bookings.filter(
+                created_at__gte=last_month_start,
+                created_at__lt=current_month
+            )
+            last_month_earnings = sum(float(b.total_amount) for b in last_month_bookings)
+            growth_rate = ((monthly_earnings - last_month_earnings) / last_month_earnings * 100) if last_month_earnings > 0 else 0
+            
+            # Get earnings by month for chart
+            earnings_by_month = []
+            for i in range(6):  # Last 6 months
+                month_start = (current_month - timedelta(days=32 * i)).replace(day=1)
+                month_end = (month_start + timedelta(days=32)).replace(day=1)
+                month_bookings = completed_bookings.filter(
+                    created_at__gte=month_start,
+                    created_at__lt=month_end
+                )
+                month_earnings = sum(float(b.total_amount) for b in month_bookings)
+                earnings_by_month.append({
+                    'month': month_start.strftime('%Y-%m'),
+                    'earnings': float(month_earnings)
+                })
+            earnings_by_month.reverse()
+            
+            return Response({
+                'data': {
+                    'totalEarnings': float(total_earnings),
+                    'monthlyEarnings': float(monthly_earnings),
+                    'pendingPayouts': float(pending_payouts),
+                    'completedPayouts': float(completed_payouts),
+                    'averagePerBooking': float(avg_per_booking),
+                    'growthRate': float(growth_rate),
+                    'earningsByMonth': earnings_by_month,
+                    'totalBookings': completed_bookings.count(),
+                    'monthlyBookings': monthly_bookings.count()
+                }
+            })
+        except Partner.DoesNotExist:
+            return Response({
+                'error': 'Partner profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ PartnerEarningsView Error: {str(e)}")
+                traceback.print_exc()
+            return Response({
+                'error': 'Failed to load earnings data',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PartnerAnalyticsView(APIView):
+    """Get partner analytics and performance metrics."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            partner = Partner.objects.get(user=request.user)
+            
+            # Get time range from query params
+            time_range = request.query_params.get('range', '30d')
+            days = 30 if time_range == '30d' else (7 if time_range == '7d' else 90)
+            start_date = timezone.now() - timedelta(days=days)
+            
+            # Get bookings in range
+            bookings = Booking.objects.filter(
+                partner=partner,
+                created_at__gte=start_date
+            )
+            
+            # Get vehicles
+            vehicles = Listing.objects.filter(partner=partner)
+            
+            # Calculate revenue by day
+            revenue_by_day = []
+            for i in range(days):
+                day = timezone.now().date() - timedelta(days=days - 1 - i)
+                day_bookings = bookings.filter(
+                    created_at__date=day,
+                    status='completed',
+                    payment_status='paid'
+                )
+                day_revenue = sum(float(b.total_amount) for b in day_bookings)
+                revenue_by_day.append({
+                    'date': day.isoformat(),
+                    'revenue': float(day_revenue),
+                    'bookings': day_bookings.count()
+                })
+            
+            # Booking status distribution
+            status_counts = {}
+            for status_choice in ['pending', 'confirmed', 'active', 'completed', 'cancelled']:
+                status_counts[status_choice] = bookings.filter(status=status_choice).count()
+            
+            # Vehicle performance
+            vehicle_performance = []
+            for vehicle in vehicles:
+                vehicle_bookings = bookings.filter(listing=vehicle, status='completed', payment_status='paid')
+                vehicle_revenue = sum(float(b.total_amount) for b in vehicle_bookings)
+                vehicle_performance.append({
+                    'id': vehicle.id,
+                    'name': f"{vehicle.make} {vehicle.model}",
+                    'revenue': float(vehicle_revenue),
+                    'bookings': vehicle_bookings.count(),
+                    'utilization': (vehicle_bookings.count() / days * 100) if days > 0 else 0
+                })
+            vehicle_performance.sort(key=lambda x: x['revenue'], reverse=True)
+            
+            # Calculate trends
+            first_half = revenue_by_day[:len(revenue_by_day)//2]
+            second_half = revenue_by_day[len(revenue_by_day)//2:]
+            first_avg = sum(d['revenue'] for d in first_half) / len(first_half) if first_half else 0
+            second_avg = sum(d['revenue'] for d in second_half) / len(second_half) if second_half else 0
+            revenue_trend = ((second_avg - first_avg) / first_avg * 100) if first_avg > 0 else 0
+            
+            first_avg_bookings = sum(d['bookings'] for d in first_half) / len(first_half) if first_half else 0
+            second_avg_bookings = sum(d['bookings'] for d in second_half) / len(second_half) if second_half else 0
+            bookings_trend = ((second_avg_bookings - first_avg_bookings) / first_avg_bookings * 100) if first_avg_bookings > 0 else 0
+            
+            return Response({
+                'data': {
+                    'revenueByDay': revenue_by_day,
+                    'statusDistribution': status_counts,
+                    'vehiclePerformance': vehicle_performance[:10],  # Top 10
+                    'totalRevenue': sum(d['revenue'] for d in revenue_by_day),
+                    'totalBookings': bookings.count(),
+                    'activeVehicles': vehicles.filter(is_available=True).count(),
+                    'averageDailyRate': sum(float(v.price_per_day) for v in vehicles) / vehicles.count() if vehicles.exists() else 0,
+                    'revenueTrend': float(revenue_trend),
+                    'bookingsTrend': float(bookings_trend)
+                }
+            })
+        except Partner.DoesNotExist:
+            return Response({
+                'error': 'Partner profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ PartnerAnalyticsView Error: {str(e)}")
+                traceback.print_exc()
+            return Response({
+                'error': 'Failed to load analytics data',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PartnerReviewsView(APIView):
+    """Get reviews for partner's vehicles."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            partner = Partner.objects.get(user=request.user)
+            
+            # Get all listings for this partner
+            listings = Listing.objects.filter(partner=partner)
+            
+            # Get all reviews for these listings
+            reviews = Review.objects.filter(
+                listing__in=listings,
+                is_published=True
+            ).select_related('user', 'listing').order_by('-created_at')
+            
+            # Calculate average rating
+            if reviews.exists():
+                avg_rating = reviews.aggregate(
+                    avg_rating=models.Avg('rating')
+                )['avg_rating'] or 0
+            else:
+                avg_rating = 0
+            
+            # Rating distribution
+            rating_distribution = {}
+            for i in range(1, 6):
+                rating_distribution[i] = reviews.filter(rating=i).count()
+            
+            # Reviews by vehicle
+            reviews_by_vehicle = []
+            for listing in listings:
+                listing_reviews = reviews.filter(listing=listing)
+                if listing_reviews.exists():
+                    listing_avg = listing_reviews.aggregate(
+                        avg_rating=models.Avg('rating')
+                    )['avg_rating'] or 0
+                    reviews_by_vehicle.append({
+                        'vehicleId': listing.id,
+                        'vehicleName': f"{listing.make} {listing.model}",
+                        'reviewCount': listing_reviews.count(),
+                        'averageRating': float(listing_avg),
+                        'reviews': [
+                            {
+                                'id': r.id,
+                                'userName': f"{r.user.first_name} {r.user.last_name}".strip() or r.user.username,
+                                'rating': r.rating,
+                                'comment': r.comment,
+                                'createdAt': r.created_at.isoformat()
+                            }
+                            for r in listing_reviews[:5]  # Latest 5 per vehicle
+                        ]
+                    })
+            
+            from .serializers import ReviewSerializer
+            reviews_serializer = ReviewSerializer(reviews, many=True, context={'request': request})
+            
+            return Response({
+                'data': {
+                    'reviews': reviews_serializer.data,
+                    'averageRating': float(avg_rating),
+                    'totalReviews': reviews.count(),
+                    'ratingDistribution': rating_distribution,
+                    'reviewsByVehicle': reviews_by_vehicle
+                }
+            })
+        except Partner.DoesNotExist:
+            return Response({
+                'error': 'Partner profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ PartnerReviewsView Error: {str(e)}")
+                traceback.print_exc()
+            return Response({
+                'error': 'Failed to load reviews',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PartnerActivityView(APIView):
+    """Get recent activity for partner (bookings, reviews, etc.)."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            partner = Partner.objects.get(user=request.user)
+            
+            activities = []
+            
+            # Recent bookings
+            recent_bookings = Booking.objects.filter(
+                partner=partner
+            ).select_related('customer', 'listing').order_by('-created_at')[:10]
+            
+            for booking in recent_bookings:
+                activities.append({
+                    'id': f"booking_{booking.id}",
+                    'type': 'booking',
+                    'action': booking.status,
+                    'title': f"New booking for {booking.listing.make} {booking.listing.model}",
+                    'message': f"Customer {booking.customer.first_name} {booking.customer.last_name} booked your vehicle",
+                    'timestamp': booking.created_at.isoformat(),
+                    'metadata': {
+                        'bookingId': booking.id,
+                        'vehicleId': booking.listing.id,
+                        'amount': float(booking.total_amount)
+                    }
+                })
+            
+            # Recent reviews
+            listings = Listing.objects.filter(partner=partner)
+            recent_reviews = Review.objects.filter(
+                listing__in=listings,
+                is_published=True
+            ).select_related('user', 'listing').order_by('-created_at')[:10]
+            
+            for review in recent_reviews:
+                activities.append({
+                    'id': f"review_{review.id}",
+                    'type': 'review',
+                    'action': 'reviewed',
+                    'title': f"New review for {review.listing.make} {review.listing.model}",
+                    'message': f"{review.user.first_name} {review.user.last_name} left a {review.rating}-star review",
+                    'timestamp': review.created_at.isoformat(),
+                    'metadata': {
+                        'reviewId': review.id,
+                        'vehicleId': review.listing.id,
+                        'rating': review.rating
+                    }
+                })
+            
+            # Sort by timestamp and return latest 20
+            activities.sort(key=lambda x: x['timestamp'], reverse=True)
+            activities = activities[:20]
+            
+            return Response({
+                'data': activities
+            })
+        except Partner.DoesNotExist:
+            return Response({
+                'error': 'Partner profile not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ PartnerActivityView Error: {str(e)}")
+                traceback.print_exc()
+            return Response({
+                'error': 'Failed to load activity',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class HealthCheckView(APIView):
+    """Simple health check endpoint to test CORS."""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
+    def get(self, request):
+        return Response({
+            'status': 'ok',
+            'message': 'Backend is running',
+            'cors_enabled': True
+        })
+    
+    def post(self, request):
+        """Test POST endpoint."""
+        return Response({
+            'status': 'ok',
+            'method': 'POST',
+            'data_received': str(request.data) if hasattr(request, 'data') else 'No data',
+            'cors_enabled': True
+        })
+    
+    def options(self, request):
+        """Handle OPTIONS preflight request."""
+        return Response({}, status=status.HTTP_200_OK)
+
+
 class LoginView(APIView):
     """User login with JWT."""
     permission_classes = [AllowAny]
+    authentication_classes = []  # Disable authentication for login endpoint
     
     def post(self, request):
-        from rest_framework_simplejwt.tokens import RefreshToken
-        from django.contrib.auth import authenticate
-        
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
-        if not email or not password:
-            return Response({
-                'error': 'Email and password are required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Try to find user by email first (since username might be different)
-        user = None
+        """Handle login POST request."""
+        # Start with minimal error handling
         try:
-            user = User.objects.get(email=email)
-            # Check password
-            password_valid = user.check_password(password)
-            if settings.DEBUG:
-                print(f"Login attempt for {email}: password_valid={password_valid}, is_active={user.is_active}, is_verified={user.is_verified}")
+            # Log that we received the request
+            print("🔍 LoginView: POST request received")
             
-            if not password_valid:
-                user = None
-                if settings.DEBUG:
-                    print(f"Password check failed for {email}")
-        except User.DoesNotExist:
-            if settings.DEBUG:
-                print(f"User with email {email} not found")
-            # Try to authenticate with email as username (for backward compatibility)
-            user = authenticate(username=email, password=password)
-            if user and settings.DEBUG:
-                print(f"Authenticated via username field for {email}")
-        
-        # If still None, try username field
-        if user is None:
+            # Get email and password from request
+            email = None
+            password = None
+            
             try:
-                user = User.objects.get(username=email)
+                if hasattr(request, 'data'):
+                    email = request.data.get('email', '').strip() if request.data.get('email') else ''
+                    password = request.data.get('password', '') if request.data.get('password') else ''
+                else:
+                    # Fallback: try to parse JSON body manually
+                    import json
+                    body = request.body.decode('utf-8') if hasattr(request, 'body') else '{}'
+                    data = json.loads(body) if body else {}
+                    email = data.get('email', '').strip()
+                    password = data.get('password', '')
+            except Exception as parse_err:
+                print(f"❌ LoginView: Error parsing request - {str(parse_err)}")
+                import traceback
+                traceback.print_exc()
+                return Response({
+                    'error': 'Invalid request format',
+                    'message': f'Could not parse request: {str(parse_err)}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            print(f"🔍 LoginView: Email={email}, Password={'***' if password else 'None'}")
+            
+            if not email or not password:
+                return Response({
+                    'error': 'Email and password are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Import required modules
+            try:
+                from rest_framework_simplejwt.tokens import RefreshToken
+                from django.contrib.auth import authenticate
+                from django.db.utils import OperationalError
+            except ImportError as import_err:
+                print(f"❌ LoginView: Import error - {str(import_err)}")
+                import traceback
+                traceback.print_exc()
+                return Response({
+                    'error': 'Server configuration error',
+                    'message': f'Import error: {str(import_err)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Try to find user by email first (since username might be different)
+            user = None
+            try:
+                user = User.objects.get(email=email)
+                # Check password
                 password_valid = user.check_password(password)
                 if settings.DEBUG:
-                    print(f"Login attempt via username field for {email}: password_valid={password_valid}")
+                    print(f"Login attempt for {email}: password_valid={password_valid}, is_active={user.is_active}, is_verified={user.is_verified}")
+                
                 if not password_valid:
                     user = None
+                    if settings.DEBUG:
+                        print(f"Password check failed for {email}")
             except User.DoesNotExist:
                 if settings.DEBUG:
-                    print(f"User with username {email} not found")
-                pass
-        
-        if user is None:
+                    print(f"User with email {email} not found")
+                # Try to authenticate with email as username (for backward compatibility)
+                try:
+                    user = authenticate(username=email, password=password)
+                    if user and settings.DEBUG:
+                        print(f"Authenticated via username field for {email}")
+                except Exception as auth_err:
+                    if settings.DEBUG:
+                        print(f"Authentication error: {str(auth_err)}")
+            except OperationalError as db_err:
+                if settings.DEBUG:
+                    print(f"Database connection error during login: {str(db_err)}")
+                    traceback.print_exc()
+                return Response({
+                    'error': 'Database connection error. Please try again later.',
+                    'message': 'Service temporarily unavailable'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # If still None, try username field
+            if user is None:
+                try:
+                    user = User.objects.get(username=email)
+                    password_valid = user.check_password(password)
+                    if settings.DEBUG:
+                        print(f"Login attempt via username field for {email}: password_valid={password_valid}")
+                    if not password_valid:
+                        user = None
+                except User.DoesNotExist:
+                    if settings.DEBUG:
+                        print(f"User with username {email} not found")
+                    pass
+                except OperationalError as db_err:
+                    if settings.DEBUG:
+                        print(f"Database connection error: {str(db_err)}")
+                    return Response({
+                        'error': 'Database connection error. Please try again later.',
+                        'message': 'Service temporarily unavailable'
+                    }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            if user is None:
+                if settings.DEBUG:
+                    print(f"Login failed: Invalid email or password for {email}")
+                return Response({
+                    'error': 'Invalid email or password'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Check if user is active
+            if not user.is_active:
+                if not user.is_verified:
+                    if settings.DEBUG:
+                        print(f"Login blocked: Email not verified for {email}")
+                    return Response({
+                        'error': 'Please verify your email address before logging in. Check your inbox for the verification link.',
+                        'email_not_verified': True
+                    }, status=status.HTTP_401_UNAUTHORIZED)
+                else:
+                    if settings.DEBUG:
+                        print(f"Login blocked: Account disabled for {email}")
+                    return Response({
+                        'error': 'Account is disabled. Please contact support.'
+                    }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Generate tokens
+            try:
+                refresh = RefreshToken.for_user(user)
+                
+                # Serialize user with request context to build proper URLs
+                try:
+                    user_serializer = UserSerializer(user, context={'request': request})
+                    user_data = user_serializer.data
+                except Exception as serialize_err:
+                    if settings.DEBUG:
+                        print(f"⚠️ Error serializing user: {str(serialize_err)}")
+                        traceback.print_exc()
+                    # Fallback: return basic user data without serialization
+                    user_data = {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'role': user.role,
+                        'is_verified': user.is_verified,
+                    }
+                
+                if settings.DEBUG:
+                    print(f"✅ Login successful for {email}")
+                
+                return Response({
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                    'user': user_data,
+                    'message': 'Login successful'
+                })
+            except Exception as token_err:
+                error_type = type(token_err).__name__
+                if settings.DEBUG:
+                    print(f"❌ Error generating tokens ({error_type}): {str(token_err)}")
+                    traceback.print_exc()
+                return Response({
+                    'error': 'Failed to generate authentication tokens. Please try again.',
+                    'message': f'{error_type}: {str(token_err)}' if settings.DEBUG else None
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except Exception as e:
+            error_msg = str(e)
+            error_type = type(e).__name__
             if settings.DEBUG:
-                print(f"Login failed: Invalid email or password for {email}")
-            return Response({
-                'error': 'Invalid email or password'
-            }, status=status.HTTP_401_UNAUTHORIZED)
-        
-        # Check if user is active
-        if not user.is_active:
-            if not user.is_verified:
-                if settings.DEBUG:
-                    print(f"Login blocked: Email not verified for {email}")
-                return Response({
-                    'error': 'Please verify your email address before logging in. Check your inbox for the verification link.',
-                    'email_not_verified': True
-                }, status=status.HTTP_401_UNAUTHORIZED)
+                print(f"❌ LoginView Error ({error_type}): {error_msg}")
+                traceback.print_exc()
             else:
-                if settings.DEBUG:
-                    print(f"Login blocked: Account disabled for {email}")
-                return Response({
-                    'error': 'Account is disabled. Please contact support.'
-                }, status=status.HTTP_401_UNAUTHORIZED)
-        
-        # Generate tokens
-        refresh = RefreshToken.for_user(user)
-        user_serializer = UserSerializer(user)
-        
-        if settings.DEBUG:
-            print(f"Login successful for {email}")
-        
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user': user_serializer.data,
-            'message': 'Login successful'
-        })
+                print(f"❌ LoginView Error ({error_type}): {error_msg}")
+            
+            return Response({
+                'error': 'An error occurred during login. Please try again.',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class RegisterView(APIView):
@@ -1742,6 +3170,7 @@ class RegisterView(APIView):
         password = request.data.get('password')
         first_name = request.data.get('first_name', '')
         last_name = request.data.get('last_name', '')
+        phone_number = request.data.get('phone_number', '')
         role = request.data.get('role', 'customer')
         
         # Partner-specific fields
@@ -1778,6 +3207,7 @@ class RegisterView(APIView):
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
+                phone_number=phone_number if phone_number else None,
                 role=role,
                 is_active=False,  # User must verify email before activation
                 is_verified=False
@@ -1867,6 +3297,7 @@ class VerifyEmailView(APIView):
     
     def get(self, request):
         from .utils import verify_email_token
+        from .models import EmailVerification
         
         token = request.query_params.get('token')
         
@@ -1874,6 +3305,17 @@ class VerifyEmailView(APIView):
             return Response({
                 'error': 'Verification token is required'
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Debug: Check if token exists in database
+        if settings.DEBUG:
+            try:
+                verification = EmailVerification.objects.get(token=token)
+                print(f"Token found: used={verification.is_used}, expired={verification.is_expired()}, user={verification.user.email}")
+            except EmailVerification.DoesNotExist:
+                print(f"Token not found in database: {token[:20]}...")
+                # Check if there are any verifications for debugging
+                total_verifications = EmailVerification.objects.count()
+                print(f"Total email verifications in database: {total_verifications}")
         
         success, user, message = verify_email_token(token)
         

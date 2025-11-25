@@ -29,15 +29,23 @@ urlpatterns = [
     path('bookings/upcoming/', views.BookingUpcomingView.as_view(), name='booking-upcoming'),
     path('bookings/<int:pk>/cancel/', views.BookingCancelView.as_view(), name='booking-cancel'),
     path('bookings/<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'),
+    path('bookings/<int:booking_id>/customer-info/', views.PartnerCustomerInfoView.as_view(), name='booking-customer-info'),
     
     # Partners endpoints
     path('partners/', views.PartnerListView.as_view(), name='partner-list'),
     path('partners/me/', views.PartnerMeView.as_view(), name='partner-me'),
+    path('partners/me/earnings/', views.PartnerEarningsView.as_view(), name='partner-earnings'),
+    path('partners/me/analytics/', views.PartnerAnalyticsView.as_view(), name='partner-analytics'),
+    path('partners/me/reviews/', views.PartnerReviewsView.as_view(), name='partner-reviews'),
+    path('partners/me/activity/', views.PartnerActivityView.as_view(), name='partner-activity'),
     path('partners/<int:pk>/', views.PartnerDetailView.as_view(), name='partner-detail'),
     
     # Reviews endpoints
     path('reviews/', views.ReviewListView.as_view(), name='review-list'),
     path('reviews/can_review/', views.CanReviewView.as_view(), name='can-review'),
+    
+    # Health check endpoint
+    path('api/health/', views.HealthCheckView.as_view(), name='health'),
     
     # Auth endpoints
     path('api/login/', views.LoginView.as_view(), name='login'),

@@ -16,6 +16,7 @@ services:
         reservations:
           memory: 512M
     environment:
+      DEBUG: "True"
       DATABASE_NAME: postgres
       DATABASE_USER: postgres.wtbmqtmmdobfvvecinif
       DATABASE_PASSWORD: Mayache+123455
@@ -32,6 +33,7 @@ services:
       EMAIL_HOST_USER: ayacheyassine2000@gmail.com
       EMAIL_HOST_PASSWORD: rmqjpvkmekdiugnz
       FRONTEND_URL: http://172.18.240.1:3001
+      BACKEND_URL: http://localhost:8000
       DEFAULT_FROM_EMAIL: ayacheyassine2000@gmail.com
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
       

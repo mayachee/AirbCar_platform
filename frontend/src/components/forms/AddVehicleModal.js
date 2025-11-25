@@ -95,22 +95,65 @@ export default function AddVehicleModal({
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkCount, setBulkCount] = useState(3);
 
   useEffect(() => {
     if (vehicleData && Object.keys(vehicleData).length > 0) {
+      // Handle images - convert from backend format (images array with url objects) to form format
+      let existingImages = [];
+      if (vehicleData.images && Array.isArray(vehicleData.images) && vehicleData.images.length > 0) {
+        // Extract URLs from image objects (format: {url: "...", name: "..."} or just URL strings)
+        existingImages = vehicleData.images.map(img => {
+          if (typeof img === 'string') {
+            return img; // Already a URL string
+          } else if (img && img.url) {
+            return img.url; // Extract URL from object
+          }
+          return null;
+        }).filter(Boolean); // Remove any null values
+      } else if (vehicleData.pictures && Array.isArray(vehicleData.pictures)) {
+        // Fallback to pictures if images not available
+        existingImages = vehicleData.pictures;
+      }
+      
       setFormData({
-        make: vehicleData.make || '',
-        model: vehicleData.model || '',
+        make: vehicleData.make || vehicleData.brand || '',
+        model: vehicleData.model || vehicleData.model_name || '',
         year: vehicleData.year || '',
-        price_per_day: vehicleData.price_per_day || '',
+        price_per_day: vehicleData.price_per_day || vehicleData.dailyRate || vehicleData.price || '',
         location: vehicleData.location || '',
         description: vehicleData.description || vehicleData.vehicle_description || '',
-        features: vehicleData.features || [],
-        fuel_type: vehicleData.fuel_type || 'gasoline',
+        features: vehicleData.features || vehicleData.available_features || [],
+        fuel_type: vehicleData.fuel_type || vehicleData.fuelType || 'gasoline',
         transmission: vehicleData.transmission || 'automatic',
         seating_capacity: vehicleData.seating_capacity || vehicleData.seats || '',
+        vehicle_style: vehicleData.vehicle_style || vehicleData.style || '',
+        color: vehicleData.color || '',
         vehicle_condition: vehicleData.vehicle_condition || 'excellent',
-        pictures: vehicleData.pictures || []
+        pictures: existingImages, // Use existing images from database
+        is_available: vehicleData.is_available !== undefined ? vehicleData.is_available : (vehicleData.isAvailable !== undefined ? vehicleData.isAvailable : true),
+        instant_booking: vehicleData.instant_booking !== undefined ? vehicleData.instant_booking : (vehicleData.instantBooking !== undefined ? vehicleData.instantBooking : false)
+      });
+    } else {
+      // Reset form when no vehicle data (for new vehicle)
+      setFormData({
+        make: '',
+        model: '',
+        year: '',
+        price_per_day: '',
+        location: '',
+        description: '',
+        features: [],
+        fuel_type: 'gasoline',
+        transmission: 'automatic',
+        seating_capacity: '',
+        vehicle_style: '',
+        color: '',
+        vehicle_condition: 'excellent',
+        pictures: [],
+        is_available: true,
+        instant_booking: false
       });
     }
   }, [vehicleData]);
@@ -138,6 +181,222 @@ export default function AddVehicleModal({
         ? prev.features.filter(f => f !== feature)
         : [...prev.features, feature]
     }));
+  };
+
+  const handleBulkCreate = async (count) => {
+    // Validate form first
+    const validationErrors = {};
+    if (!formData.make) validationErrors.make = 'Make is required';
+    if (!formData.model) validationErrors.model = 'Model is required';
+    if (!formData.year) validationErrors.year = 'Year is required';
+    if (!formData.price_per_day) validationErrors.price_per_day = 'Price per day is required';
+    if (!formData.location) validationErrors.location = 'Location is required';
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // Prepare images array from formData.pictures
+      // Separate File objects (new uploads) from URL strings (existing images)
+      const pictureFiles = formData.pictures ? formData.pictures.filter(p => p instanceof File) : [];
+      const existingImageUrls = formData.pictures ? formData.pictures.filter(p => {
+        // Include strings and objects with url property (but not File objects)
+        return (typeof p === 'string') || (typeof p === 'object' && p !== null && p.url && !(p instanceof File));
+      }) : [];
+      
+      // Debug: Log what we have in formData.pictures
+      console.log('📸 Bulk create - formData.pictures:', {
+        raw: formData.pictures,
+        length: formData.pictures?.length || 0,
+        types: formData.pictures?.map(p => typeof p) || [],
+        pictureFilesCount: pictureFiles.length,
+        existingImageUrlsCount: existingImageUrls.length
+      });
+      
+      // If we have File objects, we need to upload them first to get URLs
+      let uploadedImageUrls = [];
+      if (pictureFiles.length > 0) {
+        console.log('📤 Bulk create - Uploading image files first...');
+        try {
+          // Upload files to get URLs - create a temporary vehicle or use image upload endpoint
+          // For now, we'll create a single vehicle with the images first, then use those URLs
+          // This is a workaround - ideally we'd have a dedicated image upload endpoint
+          
+          // Create FormData for image upload
+          const uploadFormData = new FormData();
+          pictureFiles.forEach((file, index) => {
+            uploadFormData.append('pictures', file);
+          });
+          
+          // Also include basic vehicle data for the temporary vehicle
+          uploadFormData.append('make', formData.make);
+          uploadFormData.append('model', formData.model);
+          uploadFormData.append('year', formData.year);
+          uploadFormData.append('price_per_day', formData.price_per_day);
+          uploadFormData.append('location', formData.location);
+          uploadFormData.append('description', formData.description || '');
+          uploadFormData.append('fuel_type', formData.fuel_type);
+          uploadFormData.append('transmission', formData.transmission);
+          uploadFormData.append('seating_capacity', formData.seating_capacity || 5);
+          uploadFormData.append('vehicle_style', 'sedan');
+          uploadFormData.append('color', 'White');
+          uploadFormData.append('is_available', 'false'); // Make it unavailable so it's not shown
+          
+          // Upload images by creating a temporary vehicle
+          const tempVehicleResponse = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'}/listings/`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            },
+            body: uploadFormData
+          });
+          
+          if (tempVehicleResponse.ok) {
+            const tempVehicleData = await tempVehicleResponse.json();
+            const tempImages = tempVehicleData?.data?.images || tempVehicleData?.images || [];
+            
+            // Extract URLs from the uploaded images
+            uploadedImageUrls = tempImages.map(img => {
+              if (typeof img === 'string') {
+                return { url: img, name: '' };
+              } else if (img && img.url) {
+                return { url: img.url, name: img.name || '' };
+              }
+              return null;
+            }).filter(Boolean);
+            
+            console.log('✅ Bulk create - Images uploaded successfully:', uploadedImageUrls);
+            
+            // Delete the temporary vehicle after extracting image URLs
+            if (tempVehicleData?.data?.id) {
+              try {
+                await fetch(`${process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'}/listings/${tempVehicleData.data.id}/`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                  }
+                });
+                console.log('🗑️ Bulk create - Temporary vehicle deleted');
+              } catch (deleteError) {
+                console.warn('⚠️ Failed to delete temporary vehicle (non-critical):', deleteError);
+              }
+            }
+          } else {
+            console.error('⚠️ Failed to upload images:', await tempVehicleResponse.text());
+          }
+        } catch (uploadError) {
+          console.error('❌ Error uploading images:', uploadError);
+          // Continue without uploaded images - user can add them later
+        }
+      }
+      
+      // Prepare existing images array for backend (convert URLs to objects with url property)
+      const existingImages = existingImageUrls.map(item => {
+        // If it's already an object with url property, use it as is
+        if (typeof item === 'object' && item !== null && item.url) {
+          return { url: item.url, name: item.name || '' };
+        }
+        // If it's a string URL, convert to object
+        if (typeof item === 'string') {
+          return { url: item, name: '' };
+        }
+        return null;
+      }).filter(Boolean); // Remove any null values
+      
+      // Combine uploaded images with existing image URLs
+      const imagesArray = [...uploadedImageUrls, ...existingImages];
+      
+      // Debug logging
+      console.log('📸 Bulk create - Images preparation:', {
+        pictureFiles: pictureFiles.length,
+        existingImageUrls: existingImageUrls.length,
+        uploadedImageUrls: uploadedImageUrls.length,
+        existingImages: existingImages,
+        imagesArray: imagesArray,
+        imagesArrayLength: imagesArray.length
+      });
+      
+      // Warn if no images at all
+      if (imagesArray.length === 0) {
+        console.warn('⚠️ No images found in form. Vehicles will be created without images.');
+      }
+      
+      // Prepare base vehicle data
+      const baseVehicleData = {
+        make: formData.make,
+        model: formData.model,
+        year: formData.year,
+        price_per_day: formData.price_per_day,
+        location: formData.location,
+        description: formData.description || '',
+        features: formData.features || [],
+        fuel_type: formData.fuel_type,
+        transmission: formData.transmission,
+        seating_capacity: formData.seating_capacity || 5,
+        vehicle_style: 'sedan',
+        color: 'White',
+        is_available: true,
+        instant_booking: false,
+        images: imagesArray // Include existing image URLs (new file uploads not supported in bulk)
+      };
+
+      // Create array of vehicles (all with same data including images)
+      // Deep clone to ensure each vehicle has its own images array
+      const vehiclesArray = Array(count).fill(null).map(() => ({
+        ...baseVehicleData,
+        images: JSON.parse(JSON.stringify(imagesArray)) // Deep clone images array
+      }));
+
+      // Debug: Log the vehicles array to verify images are included
+      console.log('🚗 Bulk create - Vehicles array:', {
+        count: vehiclesArray.length,
+        firstVehicle: {
+          make: vehiclesArray[0]?.make,
+          model: vehiclesArray[0]?.model,
+          imagesCount: vehiclesArray[0]?.images?.length || 0,
+          images: vehiclesArray[0]?.images
+        }
+      });
+
+      // Call onSubmit - parent component will handle the API call to avoid duplication
+      await onSubmit({ vehicles: vehiclesArray, bulk: true });
+      
+      // Show success message
+      alert(`✅ Successfully created ${count} vehicle${count > 1 ? 's' : ''}!`);
+      
+      // Reset form after successful submission
+      setFormData({
+        make: '',
+        model: '',
+        year: '',
+        price_per_day: '',
+        location: '',
+        description: '',
+        features: [],
+        fuel_type: 'gasoline',
+        transmission: 'automatic',
+        seating_capacity: '',
+        vehicle_condition: 'excellent',
+        pictures: []
+      });
+      setErrors({});
+      setBulkMode(false);
+      
+      // Close modal after successful creation
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error creating vehicles in bulk:', error);
+      setErrors({
+        submit: error?.data?.message || error?.message || `Failed to create ${count} vehicles. Please try again.`
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileUpload = (e) => {
@@ -256,11 +515,19 @@ export default function AddVehicleModal({
       
       // Create FormData if there are pictures to upload
       let dataToSend;
-      const pictureFiles = formData.pictures.filter(p => p instanceof File);
       
-      if (pictureFiles.length > 0) {
-        // Use FormData for file uploads
-        console.log('📎 Using FormData (files detected)');
+      // Separate File objects (new uploads) from URL strings (existing images)
+      const pictureFiles = formData.pictures ? formData.pictures.filter(p => p instanceof File) : [];
+      const existingImageUrls = formData.pictures ? formData.pictures.filter(p => typeof p === 'string') : [];
+      
+      // Prepare existing images array for backend
+      const existingImages = existingImageUrls.map(url => {
+        return typeof url === 'string' ? { url } : url;
+      });
+      
+      if (pictureFiles.length > 0 || existingImages.length > 0) {
+        // Use FormData if there are files to upload OR existing images to preserve
+        console.log('📎 Using FormData (files or existing images detected)');
         dataToSend = new FormData();
         
         // Append all text fields - ensure numeric values are converted to strings for FormData
@@ -291,9 +558,16 @@ export default function AddVehicleModal({
           }
         });
         
-        // Append picture files
+        // Include existing images in the images array
+        if (existingImages.length > 0) {
+          dataToSend.append('images', JSON.stringify(existingImages));
+          console.log('📸 Including existing images:', existingImages);
+        }
+        
+        // Append new picture files
         pictureFiles.forEach((file) => {
           dataToSend.append('pictures', file);
+          console.log('📤 Adding new file:', file.name);
         });
         
         // Debug: Log FormData contents
@@ -306,10 +580,17 @@ export default function AddVehicleModal({
             console.log(`  ${pair[0]}: "${value}" (type: ${typeof value})`);
           }
         }
-      } else {
-        // Use JSON if no files - ensure proper data types
-        console.log('📄 Using JSON (no files)');
-        dataToSend = vehicleData;
+        } else {
+        // Use JSON if no files but include existing images
+        console.log('📄 Using JSON (no new files, but may have existing images)');
+        if (existingImages.length > 0) {
+          dataToSend = {
+            ...vehicleData,
+            images: existingImages
+          };
+        } else {
+          dataToSend = vehicleData;
+        }
       }
       
       console.log('🚀 Sending vehicle data:', dataToSend instanceof FormData ? 'FormData (see above)' : JSON.stringify(dataToSend, null, 2));
@@ -413,7 +694,7 @@ export default function AddVehicleModal({
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -437,20 +718,34 @@ export default function AddVehicleModal({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Make *
               </label>
-              <select
-                name="make"
-                value={formData.make}
-                onChange={handleInputChange}
-                required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.make ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select Make</option>
-                {CAR_MAKES.map(make => (
-                  <option key={make} value={make}>{make}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="make"
+                  value={formData.make}
+                  onChange={handleInputChange}
+                  list="make-list"
+                  placeholder="Type or select a make"
+                  autoComplete="off"
+                  required
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    errors.make ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                <datalist id="make-list">
+                  {CAR_MAKES.map(make => (
+                    <option key={make} value={make} />
+                  ))}
+                </datalist>
+                {formData.make && CAR_MAKES.includes(formData.make) && (
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-xs">
+                    ✓
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.make ? `${CAR_MAKES.filter(m => m.toLowerCase().includes(formData.make.toLowerCase())).length} suggestion(s)` : 'Type to see suggestions or select from list'}
+              </p>
               {errors.make && <p className="text-red-500 text-xs mt-1">{errors.make}</p>}
             </div>
 
@@ -458,20 +753,34 @@ export default function AddVehicleModal({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Model *
               </label>
-              <select
-                name="model"
-                value={formData.model}
-                onChange={handleInputChange}
-                required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.model ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select Model</option>
-                {UNIQUE_CAR_MODELS.map((model, index) => (
-                  <option key={`${model}-${index}`} value={model}>{model}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="model"
+                  value={formData.model}
+                  onChange={handleInputChange}
+                  list="model-list"
+                  placeholder="Type or select a model"
+                  autoComplete="off"
+                  required
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    errors.model ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                <datalist id="model-list">
+                  {UNIQUE_CAR_MODELS.map((model, index) => (
+                    <option key={`${model}-${index}`} value={model} />
+                  ))}
+                </datalist>
+                {formData.model && UNIQUE_CAR_MODELS.includes(formData.model) && (
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 text-xs">
+                    ✓
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.model ? `${UNIQUE_CAR_MODELS.filter(m => m.toLowerCase().includes(formData.model.toLowerCase())).length} suggestion(s)` : 'Type to see suggestions or select from list'}
+              </p>
               {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
             </div>
 
@@ -682,23 +991,51 @@ export default function AddVehicleModal({
             </div>
             
             {formData.pictures.length > 0 && (
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
-                {formData.pictures.map((picture, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={typeof picture === 'string' ? picture : URL.createObjectURL(picture)}
-                      alt={`Vehicle ${index + 1}`}
-                      className="w-full h-20 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removePicture(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  {formData.pictures.filter(p => p instanceof File).length > 0 && 
+                   formData.pictures.filter(p => typeof p === 'string').length > 0
+                    ? 'Existing images and new uploads:'
+                    : formData.pictures[0] instanceof File
+                    ? 'New images to upload:'
+                    : 'Existing images:'}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {formData.pictures.map((picture, index) => {
+                    // Handle both File objects (new uploads) and URL strings (existing images)
+                    const imageSrc = picture instanceof File 
+                      ? URL.createObjectURL(picture) 
+                      : picture;
+                    const isExistingImage = typeof picture === 'string';
+                    
+                    return (
+                      <div key={index} className="relative group">
+                        <img
+                          src={imageSrc}
+                          alt={`Vehicle ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.target.src = '/default-avatar.svg';
+                          }}
+                        />
+                        {isExistingImage && (
+                          <span className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded">
+                            Existing
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removePicture(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
+                          title={isExistingImage ? "Remove image" : "Remove uploaded image"}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -707,6 +1044,42 @@ export default function AddVehicleModal({
           {errors.submit && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <p className="text-sm text-red-700">{errors.submit}</p>
+            </div>
+          )}
+
+          {/* Bulk Create Options */}
+          {Object.keys(vehicleData).length === 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-blue-900 mb-3">Quick Create Multiple Vehicles</p>
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setBulkMode(true);
+                    setBulkCount(3);
+                    await handleBulkCreate(3);
+                  }}
+                  disabled={loading}
+                  className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                >
+                  {loading && bulkCount === 3 ? 'Creating...' : 'Create 3 Vehicles'}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setBulkMode(true);
+                    setBulkCount(5);
+                    await handleBulkCreate(5);
+                  }}
+                  disabled={loading}
+                  className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                >
+                  {loading && bulkCount === 5 ? 'Creating...' : 'Create 5 Vehicles'}
+                </button>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                Uses current form data as template for all vehicles
+              </p>
             </div>
           )}
 

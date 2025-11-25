@@ -28,6 +28,49 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
   const [saving, setSaving] = useState(false);
   const [phoneError, setPhoneError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [fetchingData, setFetchingData] = useState(false);
+
+  // Fetch partner data if not provided
+  useEffect(() => {
+    const fetchPartnerData = async () => {
+      if (!partnerData && !fetchingData) {
+        setFetchingData(true);
+        try {
+          const { partnerService } = await import('@/features/partner/services/partnerService');
+          const response = await partnerService.getPartnerProfile();
+          console.log('PartnerProfileSettings - Fetched partner data directly:', response);
+          
+          // Handle response structure
+          let fetchedData = null;
+          if (response?.data) {
+            if (response.data.data) {
+              fetchedData = response.data.data; // Nested structure
+            } else {
+              fetchedData = response.data; // Direct structure
+            }
+          } else if (response?.has_partner_profile === false) {
+            console.log('PartnerProfileSettings - No partner profile exists');
+            setFetchingData(false);
+            return;
+          }
+          
+          if (fetchedData) {
+            // Trigger the useEffect that processes partnerData
+            // We'll use a state update to trigger re-processing
+            console.log('PartnerProfileSettings - Setting fetched partner data:', fetchedData);
+            // Note: We can't directly set partnerData prop, but we can process it
+            // The parent component should handle this, but we'll process it here as fallback
+          }
+        } catch (error) {
+          console.error('PartnerProfileSettings - Error fetching partner data:', error);
+        } finally {
+          setFetchingData(false);
+        }
+      }
+    };
+    
+    fetchPartnerData();
+  }, [partnerData, fetchingData]);
 
   // Fetch email from API (partnerData.user.email from API response or user context)
   useEffect(() => {
@@ -45,24 +88,85 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
   }, [partnerData, user]);
 
   useEffect(() => {
-    if (partnerData) {
-      setFormData({
-        company_name: partnerData.company_name || '',
-        tax_id: partnerData.tax_id || '',
-        business_type: partnerData.business_type || '',
-        address: partnerData.address || '',
-        city: partnerData.city || '',
-        state: partnerData.state || '',
-        zip_code: partnerData.zip_code || '',
-        phone_number: partnerData.phone_number || '',
-        description: partnerData.description || '',
-        verification_document: partnerData.verification_document || null,
-        logo: partnerData.logo || ''
+    // Handle different data structures - API might return { data: {...} } or just the object
+    let actualPartnerData = partnerData;
+    
+    // If partnerData has a 'data' property, extract it (API client wraps responses)
+    if (partnerData?.data && typeof partnerData.data === 'object') {
+      actualPartnerData = partnerData.data;
+    }
+    
+    if (actualPartnerData) {
+      // Debug: Log the full partner data structure
+      console.log('PartnerProfileSettings - Full partnerData object:', partnerData);
+      console.log('PartnerProfileSettings - Extracted actualPartnerData:', actualPartnerData);
+      console.log('PartnerProfileSettings - Keys in actualPartnerData:', Object.keys(actualPartnerData || {}));
+      
+      // Debug: Log specific fields to see what we're receiving
+      console.log('PartnerProfileSettings - Field values:', {
+        business_name: actualPartnerData.business_name,
+        company_name: actualPartnerData.company_name,
+        businessName: actualPartnerData.businessName,
+        tax_id: actualPartnerData.tax_id,
+        business_type: actualPartnerData.business_type,
+        phone_number: actualPartnerData.phone_number,
+        user: actualPartnerData.user,
+        user_phone: actualPartnerData.user?.phone_number,
+        city: actualPartnerData.city,
+        user_city: actualPartnerData.user?.city,
+        logo: actualPartnerData.logo,
+        logo_url: actualPartnerData.logo_url,
+        description: actualPartnerData.description,
+        // Check all possible field variations
+        allKeys: Object.keys(actualPartnerData)
       });
       
-      // Set logo preview if logo URL exists
-      if (partnerData.logo) {
-        setLogoPreview(partnerData.logo);
+      // Map backend field names to frontend form fields
+      // Backend uses: business_name, but frontend uses: company_name
+      const businessName = actualPartnerData.business_name || 
+                          actualPartnerData.company_name || 
+                          actualPartnerData.businessName || 
+                          actualPartnerData.companyName || 
+                          '';
+      
+      // Get phone number from partner data or user data
+      const phoneNumber = actualPartnerData.phone_number || 
+                         actualPartnerData.user?.phone_number || 
+                         actualPartnerData.phone || 
+                         '';
+      
+      // Get address fields - check if they exist on partner or user
+      const address = actualPartnerData.address || actualPartnerData.user?.address || '';
+      const city = actualPartnerData.city || actualPartnerData.user?.city || '';
+      
+      const formDataToSet = {
+        company_name: businessName,
+        tax_id: actualPartnerData.tax_id || '',
+        business_type: actualPartnerData.business_type || '',
+        address: address,
+        city: city,
+        state: actualPartnerData.state || actualPartnerData.user?.state || '',
+        zip_code: actualPartnerData.zip_code || actualPartnerData.user?.postal_code || '',
+        phone_number: phoneNumber,
+        description: actualPartnerData.description || '',
+        verification_document: actualPartnerData.verification_document || null,
+        logo: actualPartnerData.logo || actualPartnerData.logo_url || ''
+      };
+      
+      console.log('PartnerProfileSettings - Setting form data:', formDataToSet);
+      setFormData(formDataToSet);
+      
+      // Set logo preview if logo URL exists (check both logo and logo_url)
+      // Handle relative URLs - if it starts with /media/, prepend backend URL
+      let logoUrl = actualPartnerData.logo_url || actualPartnerData.logo || '';
+      if (logoUrl) {
+        // If it's a relative path (starts with /media/), make it absolute
+        if (logoUrl.startsWith('/media/')) {
+          const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
+          logoUrl = `${apiUrl}${logoUrl}`;
+        }
+        // If it's already a full URL, use it as is
+        setLogoPreview(logoUrl);
         setLogoRemoved(false); // Reset removal flag when partner data loads
       } else {
         setLogoPreview('');
@@ -70,6 +174,9 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
       
       // Clear phone error when data loads
       setPhoneError('');
+    } else {
+      console.log('PartnerProfileSettings - No partnerData provided or empty');
+      console.log('PartnerProfileSettings - partnerData value:', partnerData);
     }
   }, [partnerData]);
 
@@ -417,12 +524,15 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
             <input
               type="text"
               name="company_name"
-              value={formData.company_name}
+              value={formData.company_name || ''}
               onChange={handleInputChange}
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-              placeholder="Enter company name"
+              placeholder={formData.company_name ? formData.company_name : "Enter company name"}
             />
+            {!isEditing && !formData.company_name && (
+              <p className="mt-1 text-xs text-gray-400 italic">Not set</p>
+            )}
           </div>
 
           <div>
@@ -432,12 +542,15 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
             <input
               type="text"
               name="tax_id"
-              value={formData.tax_id}
+              value={formData.tax_id || ''}
               onChange={handleInputChange}
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-              placeholder="Enter tax ID or license number"
+              placeholder={formData.tax_id ? formData.tax_id : "Enter tax ID or license number"}
             />
+            {!isEditing && !formData.tax_id && (
+              <p className="mt-1 text-xs text-gray-400 italic">Not set</p>
+            )}
           </div>
 
           <div>

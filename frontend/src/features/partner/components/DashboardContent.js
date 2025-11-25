@@ -85,13 +85,16 @@ const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType
 export default function DashboardContent({
   currentView,
   quickStats,
-  pendingRequests,
-  upcomingBookings,
+  pendingRequests: pendingRequestsProp,
+  upcomingBookings: upcomingBookingsProp,
   recentActivity,
   vehicles,
   bookings,
   partnerData,
   stats,
+  earnings,
+  analytics,
+  reviews,
   dataLoading,
   processingBooking,
   handleAddVehicle,
@@ -105,6 +108,10 @@ export default function DashboardContent({
   refetch
 }) {
   const router = useRouter();
+  
+  // Ensure pendingRequests and upcomingBookings are always arrays
+  const pendingRequests = Array.isArray(pendingRequestsProp) ? pendingRequestsProp : [];
+  const upcomingBookings = Array.isArray(upcomingBookingsProp) ? upcomingBookingsProp : [];
 
   return (
     <div className="flex-1 p-4 sm:p-6 overflow-auto">
@@ -289,7 +296,7 @@ export default function DashboardContent({
             </ComponentLoader>
             
             <ComponentLoader>
-              <EarningsOverview stats={stats} />
+              <EarningsOverview earnings={earnings} stats={stats} />
             </ComponentLoader>
           </div>
         </div>
@@ -326,13 +333,14 @@ export default function DashboardContent({
 
       {currentView === 'earnings' && (
         <ComponentLoader>
-          <EarningsOverview stats={stats} detailed={true} />
+          <EarningsOverview earnings={earnings} stats={stats} detailed={true} />
         </ComponentLoader>
       )}
 
       {currentView === 'analytics' && (
         <ComponentLoader>
           <AdvancedAnalytics
+            analytics={analytics}
             stats={stats}
             bookings={bookings}
             vehicles={vehicles}
@@ -354,12 +362,12 @@ export default function DashboardContent({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <ComponentLoader>
-                <CustomerReviewsManagement vehicles={vehicles} />
+                <CustomerReviewsManagement vehicles={vehicles} reviews={reviews} />
               </ComponentLoader>
             </div>
             <div className="lg:col-span-1">
               <ComponentLoader>
-                <ReviewAnalytics />
+                <ReviewAnalytics reviews={reviews} />
               </ComponentLoader>
             </div>
           </div>

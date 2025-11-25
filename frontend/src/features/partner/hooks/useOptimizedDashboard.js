@@ -24,7 +24,7 @@ export function useOptimizedDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState('light');
   const [notifications, setNotifications] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
+  // Use activity from usePartnerData instead of separate state
   const [isOnline, setIsOnline] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [backendAvailable, setBackendAvailable] = useState(true);
@@ -36,6 +36,10 @@ export function useOptimizedDashboard() {
     bookings,
     partnerData,
     stats,
+    earnings,
+    analytics,
+    reviews,
+    activity,
     loading: dataLoading,
     addVehicle,
     updateVehicle,
@@ -160,36 +164,24 @@ export function useOptimizedDashboard() {
   const fetchPendingRequests = useCallback(async () => {
     try {
       const requests = await getPendingRequests();
-      setPendingRequests(requests);
+      // Ensure requests is always an array
+      const requestsArray = Array.isArray(requests) ? requests : (requests?.data || requests?.results || []);
+      setPendingRequests(requestsArray);
     } catch (error) {
       console.warn('Could not fetch pending requests, using mock data:', error);
-      setPendingRequests([
-        {
-          id: 1,
-          listing: { make: 'Toyota', model: 'Camry' },
-          start_time: new Date().toISOString(),
-          end_time: new Date(Date.now() + 86400000).toISOString(),
-          user: { first_name: 'John', last_name: 'Doe' }
-        }
-      ]);
+      setPendingRequests([]);
     }
   }, [getPendingRequests]);
 
   const fetchUpcomingBookings = useCallback(async () => {
     try {
       const upcoming = await getUpcomingBookings();
-      setUpcomingBookings(upcoming);
+      // Ensure upcoming is always an array
+      const upcomingArray = Array.isArray(upcoming) ? upcoming : (upcoming?.data || upcoming?.results || []);
+      setUpcomingBookings(upcomingArray);
     } catch (error) {
       console.warn('Could not fetch upcoming bookings, using mock data:', error);
-      setUpcomingBookings([
-        {
-          id: 1,
-          listing: { make: 'Honda', model: 'Civic' },
-          start_time: new Date(Date.now() + 86400000).toISOString(),
-          end_time: new Date(Date.now() + 172800000).toISOString(),
-          user: { first_name: 'Sarah', last_name: 'Johnson' }
-        }
-      ]);
+      setUpcomingBookings([]);
     }
   }, [getUpcomingBookings]);
 
@@ -210,31 +202,67 @@ export function useOptimizedDashboard() {
   }, []);
 
   const handleDeleteVehicle = useCallback(async (vehicle) => {
-    if (confirm(`Are you sure you want to delete ${vehicle.brand} ${vehicle.model}?`)) {
+    const vehicleName = `${vehicle.brand || vehicle.make || 'Vehicle'} ${vehicle.model || ''}`.trim();
+    const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
+    const fullVehicleName = `${vehicleName}${vehicleYear}`;
+    
+    const confirmMessage = `⚠️ Delete Vehicle Confirmation\n\n` +
+      `Are you sure you want to delete "${fullVehicleName}"?\n\n` +
+      `This action will:\n` +
+      `• Permanently remove the vehicle from your listings\n` +
+      `• Cancel any pending bookings for this vehicle\n` +
+      `• Remove the vehicle from customer favorites\n` +
+      `• This action cannot be undone\n\n` +
+      `Type "DELETE" to confirm:`;
+    
+    // Use a more detailed confirmation
+    const userInput = window.prompt(confirmMessage);
+    
+    if (userInput === 'DELETE') {
       try {
         await deleteVehicle(vehicle.id);
+        showToast(`✅ Vehicle "${fullVehicleName}" has been deleted successfully.`, 'success');
         refetch();
       } catch (error) {
         console.error('Error deleting vehicle:', error);
+        const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle. Please try again.';
+        showToast(`❌ Error: ${errorMessage}`, 'error');
       }
+    } else if (userInput !== null) {
+      // User typed something but not "DELETE"
+      showToast('⚠️ Deletion cancelled. You must type "DELETE" to confirm.', 'warning');
     }
-  }, [deleteVehicle, refetch]);
+  }, [deleteVehicle, refetch, showToast]);
 
   const handleVehicleSubmit = useCallback(async (vehicleData) => {
     try {
       if (selectedVehicle) {
         await updateVehicle(selectedVehicle.id, vehicleData);
+        showToast('Vehicle updated successfully!', 'success');
       } else {
-        await addVehicle(vehicleData);
+        const result = await addVehicle(vehicleData);
+        console.log('Vehicle added, result:', result);
+        if (result && (result.id || (Array.isArray(result) && result.length > 0))) {
+          showToast('Vehicle added successfully!', 'success');
+        } else {
+          console.warn('Vehicle added but result is invalid:', result);
+          showToast('Vehicle may have been added, refreshing list...', 'warning');
+        }
       }
       setShowAddVehicleModal(false);
       setShowEditVehicleModal(false);
       setSelectedVehicle(null);
-      refetch();
+      // Refetch to ensure we have the latest data from the server
+      // Add a small delay to ensure the database has been updated
+      setTimeout(() => {
+        refetch();
+      }, 500);
     } catch (error) {
       console.error('Error saving vehicle:', error);
+      const errorMessage = error?.data?.message || error?.message || 'Failed to save vehicle. Please try again.';
+      showToast(errorMessage, 'error');
     }
-  }, [selectedVehicle, updateVehicle, addVehicle, refetch]);
+  }, [selectedVehicle, updateVehicle, addVehicle, refetch, showToast]);
 
   const handleAcceptRequest = useCallback(async (bookingId) => {
     if (processingBooking === bookingId) return;
@@ -360,7 +388,7 @@ export function useOptimizedDashboard() {
       ];
 
       setNotifications(mockNotifications);
-      setRecentActivity(mockActivity);
+      // Activity is now fetched from backend via usePartnerData
       
       Promise.allSettled([
         fetchPendingRequests(),
@@ -407,7 +435,10 @@ export function useOptimizedDashboard() {
     sidebarCollapsed,
     theme,
     notifications,
-    recentActivity,
+    recentActivity: activity || [],
+    earnings,
+    analytics,
+    reviews,
     isOnline,
     initialLoadComplete,
     backendAvailable,

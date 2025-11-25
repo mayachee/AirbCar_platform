@@ -43,6 +43,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.EnsureCorsHeadersMiddleware',  # Ensure CORS headers even on errors
 ]
 
 ROOT_URLCONF = 'airbcar_backend.urls'
@@ -135,14 +136,23 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
+# Always allow all origins in development (including Docker)
+# This ensures CORS works even if DEBUG is not properly set
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for development
+CORS_ALLOW_CREDENTIALS = True
+
+# Also explicitly allow common development origins
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    # Docker network IPs (common Docker bridge network IPs)
+    "http://172.18.240.1:3001",
+    "http://172.18.240.1:3000",
 ]
-
-CORS_ALLOW_CREDENTIALS = True
 
 # Allow all HTTP methods including DELETE
 CORS_ALLOW_METHODS = [
@@ -187,4 +197,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'no
 
 # Frontend URL for email verification links
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3001')
+
+# Backend URL for media files and API
+BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8000')
 
