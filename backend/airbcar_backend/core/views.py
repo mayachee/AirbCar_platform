@@ -6,10 +6,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg
+from django.db.models import Q, F, DecimalField, Avg, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from django.db import transaction
+from django.db import transaction, OperationalError
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -158,8 +158,32 @@ class ListingListView(APIView):
             # Limit results
             queryset = queryset[:100]
             
-            # Evaluate queryset and serialize
-            listings_list = list(queryset)
+            # Evaluate queryset with retry logic for connection issues
+            listings_list = []
+            max_retries = 3
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                try:
+                    # Close any stale connections before retry
+                    if retry_count > 0:
+                        from django.db import connection
+                        connection.close()
+                    
+                    # Evaluate queryset and serialize
+                    listings_list = list(queryset)
+                    break  # Success, exit retry loop
+                    
+                except OperationalError as retry_err:
+                    retry_count += 1
+                    if retry_count >= max_retries:
+                        # Final attempt failed, re-raise to outer handler
+                        raise
+                    # Wait before retry (exponential backoff)
+                    import time
+                    time.sleep(0.5 * retry_count)
+                    continue
+            
             serializer = ListingSerializer(listings_list, many=True, context={'request': request})
             
             return Response({
@@ -1317,8 +1341,8 @@ class UserListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        # Only admins can list all users
-        if request.user.role != 'admin':
+        # Only admins or superusers can list all users
+        if request.user.role != 'admin' and not request.user.is_superuser:
             return Response({
                 'error': 'Permission denied'
             }, status=status.HTTP_403_FORBIDDEN)
@@ -1902,8 +1926,8 @@ class UserDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
-        # Users can only view their own profile unless admin
-        if request.user.pk != pk and request.user.role != 'admin':
+        # Users can only view their own profile unless admin or superuser
+        if request.user.pk != pk and request.user.role != 'admin' and not request.user.is_superuser:
             return Response({
                 'error': 'Permission denied'
             }, status=status.HTTP_403_FORBIDDEN)
@@ -1951,7 +1975,7 @@ class BookingListView(APIView):
             ).order_by('-created_at')
             
             # Apply filters BEFORE slicing to avoid "Cannot filter a query once a slice has been taken" error
-            if request.user.role == 'admin':
+            if request.user.role == 'admin' or request.user.is_superuser:
                 bookings = base_query[:30]
             elif request.user.role == 'partner':
                 try:
@@ -2279,8 +2303,8 @@ class BookingUpcomingView(APIView):
                 status__in=['confirmed', 'active']
             ).order_by('pickup_date')
             
-            if request.user.role == 'admin':
-                # Admins see all upcoming bookings
+            if request.user.role == 'admin' or request.user.is_superuser:
+                # Admins and superusers see all upcoming bookings
                 bookings = base_query[:50]
             elif request.user.role == 'partner':
                 try:
@@ -2343,11 +2367,11 @@ class BookingCancelView(APIView):
                     'error': 'Booking not found'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Check permissions: customer can cancel their own bookings, partner can cancel their listings' bookings, admin can cancel any
+            # Check permissions: customer can cancel their own bookings, partner can cancel their listings' bookings, admin/superuser can cancel any
             user = request.user
             can_cancel = False
             
-            if user.role == 'admin':
+            if user.role == 'admin' or user.is_superuser:
                 can_cancel = True
             elif user.role == 'partner':
                 # Partner can cancel bookings for their listings
@@ -2421,7 +2445,7 @@ class BookingDetailView(APIView):
             booking = Booking.objects.get(pk=pk)
             
             # Check permissions
-            if request.user.role != 'admin' and booking.customer != request.user:
+            if request.user.role != 'admin' and not request.user.is_superuser and booking.customer != request.user:
                 if request.user.role == 'partner' and booking.partner.user != request.user:
                     return Response({
                         'error': 'Permission denied'
@@ -2517,11 +2541,29 @@ class PartnerListView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        partners = Partner.objects.filter(is_verified=True)
-        serializer = PartnerSerializer(partners, many=True)
-        return Response({
-            'data': serializer.data
-        })
+        try:
+            # Check if user is admin/staff - admins see all partners, others see only verified
+            is_admin = request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser)
+            
+            if is_admin:
+                # Admin users see all partners for management
+                partners = Partner.objects.select_related('user').all().order_by('-created_at')
+            else:
+                # Regular users only see verified partners
+                partners = Partner.objects.select_related('user').filter(is_verified=True).order_by('-created_at')
+            
+            serializer = PartnerSerializer(partners, many=True, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'count': len(serializer.data),
+                'message': 'Partners retrieved successfully'
+            })
+        except OperationalError as e:
+            # Handle database connection errors gracefully
+            return Response({
+                'error': 'Database connection error. Please try again later.',
+                'message': 'Unable to connect to the database. The service may be temporarily unavailable.'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
 class PartnerMeView(APIView):
@@ -3287,6 +3329,9 @@ class VerifyTokenView(APIView):
             'valid': True,
             'user': user_serializer.data,
             'is_partner': request.user.role == 'partner',
+            'is_staff': request.user.is_staff,
+            'is_superuser': request.user.is_superuser,
+            'is_admin': request.user.role == 'admin' or request.user.is_superuser,
             'role': request.user.role
         })
 
@@ -3683,3 +3728,7 @@ class PasswordResetConfirmView(APIView):
                 'valid': False,
                 'error': 'An error occurred while validating the reset link. Please try again.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Import admin views
+from .admin_views import AdminStatsView, AdminAnalyticsView, AdminRevenueView

@@ -23,7 +23,7 @@ const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'text-blue-600' },
   { id: 'users', label: 'Users', icon: Users, color: 'text-purple-600' },
   { id: 'partners', label: 'Partners', icon: Handshake, color: 'text-green-600' },
-  { id: 'cars', label: 'Cars', icon: Car, color: 'text-orange-600' },
+  { id: 'cars', label: 'Vehicle Information', icon: Car, color: 'text-orange-600' },
   { id: 'bookings', label: 'Bookings', icon: Calendar, color: 'text-indigo-600' },
   { id: 'reviews', label: 'Reviews', icon: Star, color: 'text-yellow-600' },
   { id: 'earnings', label: 'Earnings', icon: DollarSign, color: 'text-yellow-600' },

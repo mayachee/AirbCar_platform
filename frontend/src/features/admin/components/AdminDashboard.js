@@ -188,11 +188,15 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 capitalize">
-                  {currentView === 'dashboard' ? 'Dashboard Overview' : currentView}
+                  {currentView === 'dashboard' ? 'Dashboard Overview' : 
+                   currentView === 'cars' ? 'Vehicle Information' :
+                   currentView}
                 </h1>
                 <p className="text-sm text-gray-600 mt-1">
                   {currentView === 'dashboard' 
                     ? 'Monitor your platform activity and metrics'
+                    : currentView === 'cars'
+                    ? 'Manage vehicle information and listings'
                     : `Manage ${currentView} on your platform`
                   }
                 </p>
@@ -250,6 +254,7 @@ export default function AdminDashboard() {
                 <UsersTable
                   users={usersHook.users}
                   loading={usersHook.loading}
+                  error={usersHook.error}
                   onRefresh={usersHook.refetch}
                 />
               </motion.div>
@@ -264,8 +269,10 @@ export default function AdminDashboard() {
                 <PartnersTable
                   partners={Array.isArray(partnersHook.partners) ? partnersHook.partners : (partnersHook.partners?.results || partnersHook.partners?.data || [])}
                   loading={partnersHook.loading}
+                  error={partnersHook.error}
                   onApprove={partnersHook.approvePartner}
                   onReject={partnersHook.rejectPartner}
+                  onUnverify={partnersHook.unverifyPartner}
                   onRefresh={partnersHook.refetch}
                 />
               </motion.div>
@@ -280,6 +287,7 @@ export default function AdminDashboard() {
                 <CarsTable
                   listings={Array.isArray(listingsHook.listings) ? listingsHook.listings : (listingsHook.listings?.results || listingsHook.listings?.data || [])}
                   loading={listingsHook.loading}
+                  error={listingsHook.error}
                   onRefresh={listingsHook.refetch}
                 />
               </motion.div>

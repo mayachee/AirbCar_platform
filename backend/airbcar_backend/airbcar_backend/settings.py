@@ -77,13 +77,14 @@ DATABASES = {
         'PORT': os.environ.get('DATABASE_PORT', '5432'),
         'OPTIONS': {
             'sslmode': 'require',
-            'connect_timeout': 10,  # 10 second connection timeout
+            'connect_timeout': 30,  # Increased to 30 seconds for remote connections
             'keepalives': 1,
-            'keepalives_idle': 30,
-            'keepalives_interval': 10,
-            'keepalives_count': 5,
+            'keepalives_idle': 60,  # Increased idle time for remote connections
+            'keepalives_interval': 30,  # Check connection every 30 seconds
+            'keepalives_count': 3,  # Reduce count to fail faster and reconnect
         },
-        'CONN_MAX_AGE': 0,  # Close connections after each request to avoid stale connections
+        'CONN_MAX_AGE': 0,  # Disable persistent connections to avoid stale connections with remote DB
+        'ATOMIC_REQUESTS': False,  # Disable to avoid long-running transactions
     }
 }
 

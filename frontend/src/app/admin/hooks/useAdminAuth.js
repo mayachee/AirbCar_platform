@@ -41,15 +41,17 @@ export const useAdminAuth = () => {
 
       if (response.ok) {
         const userData = await response.json();
-        const hasAdminAccess = userData.is_staff === true || userData.is_superuser === true;
+        // Check admin access from response (can be at top level or in user object)
+        const hasAdminAccess = userData.is_staff === true || 
+                             userData.is_superuser === true || 
+                             userData.is_admin === true ||
+                             (userData.user && (userData.user.is_staff === true || userData.user.is_superuser === true));
         setIsAdmin(hasAdminAccess);
         
-        if (hasAdminAccess) {
-          // Always redirect admins to dashboard
-          router.push("/admin/dashboard");
-        } else {
+        if (!hasAdminAccess) {
           router.push("/auth/signin");
         }
+        // Don't redirect if already on admin pages - let the component handle it
       } else {
         router.push("/auth/signin");
       }

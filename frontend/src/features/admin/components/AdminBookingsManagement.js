@@ -178,11 +178,99 @@ export default function AdminBookingsManagement() {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const response = await adminService.getBookings();
-      const data = Array.isArray(response?.data) ? response.data : 
-                  (Array.isArray(response?.results) ? response.results : 
-                   (Array.isArray(response) ? response : []));
-      setBookings(data);
+      
+      // Fetch all bookings, handling pagination if needed
+      let allBookings = [];
+      let page = 1;
+      const pageSize = 100; // Request large page size to minimize requests
+      const maxPages = 100; // Safety limit to prevent infinite loops
+      let hasMorePages = true;
+      
+      // First, try to get all bookings without pagination
+      try {
+        const response = await adminService.getBookings();
+        const responseData = response?.data || response;
+        
+        // Check if it's a paginated response (Django REST Framework style)
+        if (responseData?.results && Array.isArray(responseData.results)) {
+          allBookings = responseData.results;
+          
+          // Check if there are more pages
+          if (responseData.next || (responseData.count && responseData.count > allBookings.length)) {
+            hasMorePages = true;
+            page = 2; // Start from page 2 since we already got page 1
+          } else {
+            hasMorePages = false;
+          }
+        } 
+        // Check if it's a direct array
+        else if (Array.isArray(responseData)) {
+          allBookings = responseData;
+          hasMorePages = false;
+        } 
+        // Check if it's nested in data
+        else if (responseData?.data && Array.isArray(responseData.data)) {
+          allBookings = responseData.data;
+          hasMorePages = false;
+        }
+      } catch (firstPageError) {
+        console.warn('Error fetching first page of bookings:', firstPageError);
+        // Continue to try pagination if first request fails
+      }
+      
+      // Fetch additional pages if needed
+      while (hasMorePages && page <= maxPages) {
+        try {
+          const response = await adminService.getBookings({ page, page_size: pageSize });
+          const responseData = response?.data || response;
+          
+          let pageBookings = [];
+          
+          // Extract bookings from response
+          if (responseData?.results && Array.isArray(responseData.results)) {
+            pageBookings = responseData.results;
+            // Check if there are more pages
+            hasMorePages = responseData.next !== null && responseData.next !== undefined;
+          } else if (Array.isArray(responseData)) {
+            pageBookings = responseData;
+            hasMorePages = false;
+          } else if (responseData?.data && Array.isArray(responseData.data)) {
+            pageBookings = responseData.data;
+            hasMorePages = false;
+          } else {
+            // No more data or unexpected format
+            hasMorePages = false;
+          }
+          
+          // Add bookings to the collection
+          if (pageBookings.length > 0) {
+            allBookings = [...allBookings, ...pageBookings];
+          } else {
+            // No more bookings
+            hasMorePages = false;
+          }
+          
+          page++;
+          
+        } catch (pageError) {
+          // If pagination fails, use what we have so far
+          console.warn(`Error fetching page ${page} of bookings:`, pageError);
+          hasMorePages = false;
+        }
+      }
+      
+      // Remove duplicates based on ID
+      const uniqueBookings = allBookings.filter((booking, index, self) =>
+        index === self.findIndex((b) => b.id === booking.id)
+      );
+      
+      setBookings(uniqueBookings);
+      
+      if (uniqueBookings.length > 0) {
+        console.log(`Successfully loaded ${uniqueBookings.length} bookings`);
+      } else {
+        console.log('No bookings found');
+      }
     } catch (error) {
       console.error('Error loading bookings:', error);
       setBookings([]);
@@ -204,7 +292,7 @@ export default function AdminBookingsManagement() {
     addToast('Bookings refreshed successfully', 'success');
   };
 
-  const handleAction = async (action, bookingId) => {
+  const handleAction = async (action, bookingId, reason = null) => {
     try {
       setActionLoading(true);
       switch (action) {
@@ -213,8 +301,10 @@ export default function AdminBookingsManagement() {
           addToast('Booking accepted successfully', 'success');
           break;
         case 'reject':
+          // If reason is provided, we might need to send it to the backend
+          // For now, just reject - backend may handle reason separately
           await adminService.rejectBooking(bookingId);
-          addToast('Booking rejected successfully', 'success');
+          addToast(reason ? `Booking rejected: ${reason}` : 'Booking rejected successfully', 'success');
           break;
         case 'cancel':
           await adminService.cancelBooking(bookingId);

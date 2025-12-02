@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Mail, Phone, User, Calendar, CheckCircle, XCircle, Edit, Trash2, Shield, Building, Clock, Award, Activity, Ban, Key, ExternalLink, Car, DollarSign, MapPin, Globe, CreditCard, FileText, Image, Flag, Home, Cake } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Mail, Phone, User, Calendar, CheckCircle, XCircle, Edit, Trash2, Shield, Building, Clock, Award, Activity, Ban, Key, ExternalLink, Car, DollarSign, MapPin, Globe, CreditCard, FileText, Image, Flag, Home, Cake, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminService } from '@/features/admin/services/adminService';
 import UserBookingsTab from './UserBookingsTab';
@@ -23,42 +23,111 @@ const formatDate = (dateString) => {
 };
 
 export default function UserDetailsModal({ user, isOpen, onClose, onEdit, onDelete, onToggleActive }) {
+  // ALL STATE HOOKS MUST BE CALLED FIRST
   const [fullUserData, setFullUserData] = useState(null);
   const [userBookings, setUserBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  // Wrap loadFullUserData in useCallback to ensure stable reference
+  const loadFullUserData = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      console.log('🔄 Loading user details from database for ID:', user.id);
+
+      const response = await adminService.getUserById(user.id);
+
+      console.log('📦 User Details API Response:', {
+        responseType: typeof response,
+        hasData: !!response?.data,
+        responseKeys: response ? Object.keys(response) : [],
+        dataType: typeof response?.data,
+        dataKeys: response?.data && typeof response?.data === 'object' ? Object.keys(response.data) : [],
+        userId: user.id
+      });
+
+      // Extract data from API client response structure: { data: {...}, success: true }
+      // Handle different response structures:
+      let userData = null;
+
+      if (response) {
+        // API client wraps response: { data: {...}, success: true }
+        if (response.data) {
+          userData = response.data;
+        } else if (response.result) {
+          userData = response.result;
+        } else if (typeof response === 'object' && !Array.isArray(response)) {
+          // Response might be the data itself
+          userData = response;
+        }
+      }
+
+      // Fallback to passed user if API call failed or returned no data
+      if (!userData) {
+        console.warn('⚠️ No data from API, using passed user data');
+        userData = user;
+      } else {
+        console.log('✅ Successfully loaded user details:', {
+          id: userData.id,
+          email: userData.email,
+          username: userData.username,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          isActive: userData.is_active,
+          role: userData.role
+        });
+      }
+
+      setFullUserData(userData);
+    } catch (error) {
+      console.error('❌ Error loading full user data from database:', {
+        error: error.message,
+        errorType: error.constructor?.name,
+        userId: user?.id,
+        isNetworkError: error?.isNetworkError,
+        isTimeoutError: error?.isTimeoutError
+      });
+
+      // Use passed user as fallback
+      console.warn('⚠️ Using fallback user data due to API error');
+      setFullUserData(user);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Hook 1: Load user data when modal opens
   useEffect(() => {
     if (isOpen && user?.id) {
       loadFullUserData();
-      loadUserBookings();
     } else {
       setFullUserData(null);
       setUserBookings([]);
       setActiveTab('overview');
     }
-  }, [isOpen, user?.id]);
+  }, [isOpen, user?.id, loadFullUserData]);
 
-  const loadFullUserData = async () => {
-    try {
-      setLoading(true);
-      const response = await adminService.getUserById(user.id);
-      const userData = response?.data || response?.result || response || user;
-      setFullUserData(userData);
-    } catch (error) {
-      console.error('Error loading full user data:', error);
-      setFullUserData(user);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Wrap loadUserBookings in useCallback
+  const loadUserBookings = useCallback(async () => {
+    if (!user?.id) return;
 
-  const loadUserBookings = async () => {
     try {
       setBookingsLoading(true);
+      console.log('🔄 Loading user bookings for ID:', user.id);
+      
       // Fetch all bookings and filter by user ID
       const response = await adminService.getBookings();
+      
+      console.log('📦 User Bookings API Response:', {
+        responseType: typeof response,
+        hasData: !!response?.data,
+        userId: user.id
+      });
+      
       const bookingsData = response?.data || response?.results || response || [];
       const bookingsList = Array.isArray(bookingsData) ? bookingsData : [];
       
@@ -66,8 +135,13 @@ export default function UserDetailsModal({ user, isOpen, onClose, onEdit, onDele
       const filteredBookings = bookingsList.filter(booking => 
         booking.user === user.id || 
         booking.user?.id === user.id ||
-        booking.user_id === user.id
+        booking.user_id === user.id ||
+        booking.customer === user.id ||
+        booking.customer?.id === user.id ||
+        booking.customer_id === user.id
       );
+      
+      console.log(`✅ Found ${filteredBookings.length} bookings for user ${user.id}`);
       
       // Sort by most recent first
       filteredBookings.sort((a, b) => {
@@ -78,12 +152,19 @@ export default function UserDetailsModal({ user, isOpen, onClose, onEdit, onDele
       
       setUserBookings(filteredBookings);
     } catch (error) {
-      console.error('Error loading user bookings:', error);
+      console.error('❌ Error loading user bookings:', error);
       setUserBookings([]);
     } finally {
       setBookingsLoading(false);
     }
-  };
+  }, [user]);
+
+  // Hook 2: Load user bookings when modal opens
+  useEffect(() => {
+    if (isOpen && user?.id) {
+      loadUserBookings();
+    }
+  }, [isOpen, user?.id, loadUserBookings]);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -107,9 +188,96 @@ export default function UserDetailsModal({ user, isOpen, onClose, onEdit, onDele
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   };
 
+  // Normalize user data from multiple sources - handle different field name variations
+  const normalizeUserData = (data) => {
+    if (!data) return {};
+    
+    return {
+      id: data.id || data.pk || data.user_id || null,
+      email: data.email || data.email_address || null,
+      username: data.username || data.user_name || data.user || null,
+      first_name: data.first_name || data.firstName || data.firstname || data.given_name || null,
+      last_name: data.last_name || data.lastName || data.lastname || data.family_name || data.surname || null,
+      phone_number: data.phone_number || data.phoneNumber || data.phone || data.mobile || data.telephone || null,
+      address: data.address || data.street_address || data.full_address || null,
+      city: data.city || data.city_name || null,
+      postal_code: data.postal_code || data.postalCode || data.zip_code || data.zip || null,
+      country_of_residence: data.country_of_residence || data.countryOfResidence || data.country || data.residence_country || null,
+      nationality: data.nationality || data.nationality_country || null,
+      default_currency: data.default_currency || data.defaultCurrency || data.currency || null,
+      date_of_birth: data.date_of_birth || data.dateOfBirth || data.birthday || data.birth_date || null,
+      profile_picture: data.profile_picture || data.profilePicture || data.profile_picture_url || data.avatar || data.profile_image || null,
+      license_number: data.license_number || data.licenseNumber || data.driving_license_number || data.dl_number || null,
+      license_origin_country: data.license_origin_country || data.licenseOriginCountry || data.dl_country || null,
+      issue_date: data.issue_date || data.issueDate || data.license_issue_date || null,
+      id_verification_status: data.id_verification_status || data.idVerificationStatus || data.verification_status || data.verificationStatus || data.id_status || null,
+      id_front_document_url: data.id_front_document_url || data.idFrontDocumentUrl || data.id_front || data.front_document || data.id_document_front || null,
+      id_back_document_url: data.id_back_document_url || data.idBackDocumentUrl || data.id_back || data.back_document || data.id_document_back || null,
+      is_active: data.is_active !== undefined ? data.is_active : (data.isActive !== undefined ? data.isActive : (data.active !== undefined ? data.active : true)),
+      is_superuser: data.is_superuser || data.isSuperuser || data.superuser || false,
+      is_staff: data.is_staff || data.isStaff || data.staff || false,
+      is_partner: data.is_partner || data.isPartner || data.partner || false,
+      role: data.role || data.user_role || data.account_type || null,
+      date_joined: data.date_joined || data.dateJoined || data.created_at || data.created || data.registration_date || null,
+      last_login: data.last_login || data.lastLogin || data.last_logged_in || data.last_session || null,
+      email_verified: data.email_verified !== undefined ? data.email_verified : (data.emailVerified !== undefined ? data.emailVerified : (data.verified !== undefined ? data.verified : false)),
+      is_verified: data.is_verified !== undefined ? data.is_verified : (data.isVerified !== undefined ? data.isVerified : false),
+      partner: data.partner || data.partner_info || data.partnerInfo || null,
+      // Keep all original data for reference
+      _raw: data
+    };
+  };
+
+  // Debug logging hook - MUST be before early return
+  useEffect(() => {
+    if (isOpen && user?.id) {
+      const currentRawData = fullUserData || user;
+      const currentNormalizedData = normalizeUserData(currentRawData);
+      console.log('👤 User Details - Data Source:', {
+        dataSource: fullUserData ? '✅ Database (Fresh)' : '⚠️ Cache (Fallback)',
+        userId: currentNormalizedData.id,
+        email: currentNormalizedData.email,
+        username: currentNormalizedData.username,
+        firstName: currentNormalizedData.first_name,
+        lastName: currentNormalizedData.last_name,
+        isActive: currentNormalizedData.is_active,
+        role: currentNormalizedData.role
+      });
+    }
+  }, [isOpen, user?.id, fullUserData?.id]);
+
+  // Early return AFTER all hooks - all hooks above are always called
   if (!isOpen || !user) return null;
 
-  const displayData = fullUserData || user;
+  // Normalize data for display - handle different field names
+  const rawData = fullUserData || user;
+  const displayData = normalizeUserData(rawData);
+  
+  // Debug logging for raw and normalized data
+  if (rawData) {
+    console.log('🔍 Raw User Data:', {
+      rawDataType: typeof rawData,
+      rawDataKeys: Object.keys(rawData || {}),
+      rawDataSample: {
+        id: rawData.id,
+        email: rawData.email,
+        first_name: rawData.first_name,
+        last_name: rawData.last_name
+      }
+    });
+  }
+  
+  if (displayData && Object.keys(displayData).length > 0) {
+    console.log('✅ Normalized User Data:', {
+      id: displayData.id,
+      email: displayData.email,
+      username: displayData.username,
+      firstName: displayData.first_name,
+      lastName: displayData.last_name,
+      isActive: displayData.is_active,
+      role: displayData.role
+    });
+  }
   const userName = displayData?.first_name && displayData?.last_name
     ? `${displayData.first_name} ${displayData.last_name}`
     : displayData?.username || displayData?.email || 'User';
@@ -160,7 +328,21 @@ export default function UserDetailsModal({ user, isOpen, onClose, onEdit, onDele
                 {userName[0]?.toUpperCase() || 'U'}
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900">{userName}</h2>
+                <div className="flex items-center space-x-2 mb-1">
+                  <h2 className="text-xl font-bold text-gray-900">{userName}</h2>
+                  {fullUserData && (
+                    <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs font-semibold flex items-center space-x-1" title="Data loaded from database">
+                      <Activity className="h-3 w-3" />
+                      <span>Live</span>
+                    </span>
+                  )}
+                  {!fullUserData && user && (
+                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold flex items-center space-x-1" title="Using cached data">
+                      <Clock className="h-3 w-3" />
+                      <span>Cached</span>
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-600">{displayData?.email}</p>
                 {displayData?.username && (
                   <p className="text-xs text-gray-500 mt-1">@{displayData.username}</p>
@@ -185,6 +367,14 @@ export default function UserDetailsModal({ user, isOpen, onClose, onEdit, onDele
                   </>
                 )}
               </span>
+              <button
+                onClick={loadFullUserData}
+                disabled={loading}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Refresh from database"
+              >
+                <Activity className={`h-5 w-5 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+              </button>
               <button
                 onClick={onClose}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"

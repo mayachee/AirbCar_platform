@@ -22,7 +22,7 @@ const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 };
 
-export default function PartnerDetailsModal({ partner, isOpen, onClose, onEdit, onDelete, onApprove, onReject }) {
+export default function PartnerDetailsModal({ partner, isOpen, onClose, onEdit, onDelete, onApprove, onReject, onUnverify }) {
   const [fullPartnerData, setFullPartnerData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -525,7 +525,7 @@ export default function PartnerDetailsModal({ partner, isOpen, onClose, onEdit, 
           {/* Footer Actions */}
           <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center space-x-2">
-              {!(displayData?.is_verified || displayData?.verification_status === 'approved') && (
+              {!(displayData?.is_verified || displayData?.verification_status === 'approved') ? (
                 <>
                   <button
                     onClick={() => {
@@ -535,7 +535,7 @@ export default function PartnerDetailsModal({ partner, isOpen, onClose, onEdit, 
                     className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <CheckCircle className="h-4 w-4" />
-                    <span>Approve</span>
+                    <span>Verify</span>
                   </button>
                   <button
                     onClick={() => {
@@ -550,6 +550,19 @@ export default function PartnerDetailsModal({ partner, isOpen, onClose, onEdit, 
                     <span>Reject</span>
                   </button>
                 </>
+              ) : (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to unverify ${userName}?`)) {
+                      onUnverify?.(displayData.id);
+                      onClose();
+                    }
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                  <span>Unverify</span>
+                </button>
               )}
             </div>
             <div className="flex items-center space-x-2">

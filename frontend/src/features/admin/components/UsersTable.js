@@ -8,7 +8,7 @@ import { adminService } from '@/features/admin/services/adminService';
 import { useToast } from '@/contexts/ToastContext';
 import UserDetailsModal from './UserDetailsModal';
 
-export default function UsersTable({ users, loading, onRefresh }) {
+export default function UsersTable({ users, loading, error: propError, onRefresh }) {
   const { addToast } = useToast();
   const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const usersApiUrl = `${apiUrl}/users/`;
@@ -17,12 +17,16 @@ export default function UsersTable({ users, loading, onRefresh }) {
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showAll, setShowAll] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
+  // Ensure users is an array
+  const usersList = Array.isArray(users) ? users : [];
+
   const filteredUsers = useMemo(() => {
-    let filtered = users.filter(user => {
+    let filtered = usersList.filter(user => {
       const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,7 +69,7 @@ export default function UsersTable({ users, loading, onRefresh }) {
     }
 
     return filtered;
-  }, [users, searchTerm, statusFilter, roleFilter, sortConfig]);
+  }, [usersList, searchTerm, statusFilter, roleFilter, sortConfig]);
 
   const handleSort = (key) => {
     setSortConfig(prevConfig => ({
@@ -74,11 +78,11 @@ export default function UsersTable({ users, loading, onRefresh }) {
     }));
   };
 
-  // Pagination
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+  // Pagination - Show all if showAll is true
+  const totalPages = showAll ? 1 : Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = showAll ? 0 : (currentPage - 1) * itemsPerPage;
+  const endIndex = showAll ? filteredUsers.length : startIndex + itemsPerPage;
+  const paginatedUsers = showAll ? filteredUsers : filteredUsers.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -87,19 +91,52 @@ export default function UsersTable({ users, loading, onRefresh }) {
 
   const handleViewUser = async (userId) => {
     try {
+      console.log('🔄 Loading fresh user data from database for ID:', userId);
       const response = await adminService.getUserById(userId);
-      const userData = response?.data || response?.result || response;
-      const existingUser = users.find(u => u.id === userId);
-      if (existingUser) {
-        setSelectedUser(existingUser);
-      } else {
+      
+      console.log('📦 User API Response:', {
+        responseType: typeof response,
+        hasData: !!response?.data,
+        responseKeys: response ? Object.keys(response) : [],
+        userId: userId
+      });
+      
+      // Extract user data from API response - prioritize fresh API data
+      let userData = null;
+      if (response) {
+        if (response.data) {
+          userData = response.data;
+        } else if (response.result) {
+          userData = response.result;
+        } else if (typeof response === 'object' && !Array.isArray(response)) {
+          userData = response;
+        }
+      }
+      
+      if (userData) {
+        console.log('✅ Using fresh user data from database:', {
+          id: userData.id,
+          email: userData.email,
+          username: userData.username
+        });
         setSelectedUser(userData);
+      } else {
+        // Fallback to cached user if API didn't return valid data
+        const existingUser = users.find(u => u.id === userId);
+        if (existingUser) {
+          console.warn('⚠️ No valid data from API, using cached user data');
+          setSelectedUser(existingUser);
+        } else {
+          throw new Error('User not found in API response or cache');
+        }
       }
       setShowDetailsModal(true);
     } catch (error) {
-      // Fallback to user from list
+      console.error('❌ Error loading user from database:', error);
+      // Fallback to user from list cache
       const existingUser = users.find(u => u.id === userId);
       if (existingUser) {
+        console.warn('⚠️ Using cached user data due to API error');
         setSelectedUser(existingUser);
         setShowDetailsModal(true);
         addToast('Loaded user from cache (API unavailable)', 'info');
@@ -246,6 +283,22 @@ export default function UsersTable({ users, loading, onRefresh }) {
     );
   }
 
+  // Debug logging
+  useEffect(() => {
+    console.log('👥 Users Management Debug:', {
+      usersType: typeof users,
+      usersIsArray: Array.isArray(users),
+      usersLength: usersList.length,
+      filteredUsersLength: filteredUsers.length,
+      paginatedUsersLength: paginatedUsers.length,
+      loading,
+      itemsPerPage,
+      currentPage,
+      totalPages,
+      showAll
+    });
+  }, [users, usersList.length, filteredUsers.length, paginatedUsers.length, loading, itemsPerPage, currentPage, totalPages, showAll]);
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -253,12 +306,20 @@ export default function UsersTable({ users, loading, onRefresh }) {
           <div className="flex items-center space-x-3">
             <h3 className="text-lg font-semibold text-gray-900">Users Management</h3>
             <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {usersList.length} Total User{usersList.length !== 1 ? 's' : ''}
+              </span>
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Connected to backend"></div>
               <span className="text-xs text-gray-500">API: {apiUrl}</span>
             </div>
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}
+            {filteredUsers.length !== usersList.length && (
+              <span className="text-gray-400 ml-2">
+                (from {usersList.length} total)
+              </span>
+            )}
           </p>
           <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500">
             <LinkIcon className="h-3 w-3" />
@@ -307,6 +368,34 @@ export default function UsersTable({ users, loading, onRefresh }) {
               <option value="user">User</option>
             </select>
           </div>
+
+          {/* Show All Toggle */}
+          <button
+            onClick={() => {
+              setShowAll(!showAll);
+              setCurrentPage(1);
+            }}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+              showAll
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title={showAll ? 'Show paginated view' : 'Show all users at once'}
+          >
+            <Users className="h-4 w-4" />
+            <span className="text-sm font-medium">{showAll ? 'Show Pages' : 'Show All'}</span>
+          </button>
+
+          {/* Refresh Button */}
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh users from database"
+          >
+            <ChevronRight className={`h-4 w-4 transform transition-transform ${loading ? 'rotate-90 animate-spin' : ''}`} />
+            <span className="text-sm font-medium">Refresh</span>
+          </button>
 
           {/* Export Button */}
           <button
@@ -450,18 +539,58 @@ export default function UsersTable({ users, loading, onRefresh }) {
         </table>
       </div>
 
-      {filteredUsers.length === 0 && (
+      {filteredUsers.length === 0 && !loading && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users className="h-8 w-8 text-gray-400" />
           </div>
-          <p className="text-gray-500 font-medium">No users found</p>
-          <p className="text-gray-400 text-sm mt-1">Try adjusting your filters</p>
+          {propError ? (
+            <>
+              <p className="text-red-600 font-medium mb-2">Error Loading Users</p>
+              <p className="text-gray-500 text-sm mb-4">{propError}</p>
+              {propError.includes('Permission denied') || propError.includes('403') ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-yellow-800 text-sm font-medium mb-2">🔒 Permission Required</p>
+                  <p className="text-yellow-700 text-xs">You need admin permissions to view users. Please contact your system administrator.</p>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-blue-800 text-sm font-medium mb-2">Troubleshooting Tips:</p>
+                  <ul className="text-blue-700 text-xs text-left space-y-1">
+                    <li>• Check if the backend server is running</li>
+                    <li>• Verify your authentication token is valid</li>
+                    <li>• Check browser console for more details</li>
+                    <li>• Try refreshing the page</li>
+                  </ul>
+                </div>
+              )}
+            </>
+          ) : usersList.length === 0 ? (
+            <>
+              <p className="text-gray-500 font-medium">No users in database</p>
+              <p className="text-gray-400 text-sm mt-1">Users will appear here once they register</p>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-500 font-medium">No users match your filters</p>
+              <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filter criteria</p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setRoleFilter('all');
+                }}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                Clear Filters
+              </button>
+            </>
+          )}
         </div>
       )}
 
-      {/* Pagination */}
-      {filteredUsers.length > 0 && totalPages > 1 && (
+      {/* Pagination - Hide when showing all */}
+      {filteredUsers.length > 0 && !showAll && totalPages > 1 && (
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
           <div className="flex items-center space-x-2">
             <label className="text-sm text-gray-600">Items per page:</label>

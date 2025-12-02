@@ -57,5 +57,10 @@ urlpatterns = [
     path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('api/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     path('api/auth/google/', views.GoogleAuthView.as_view(), name='google-auth'),
+    
+    # Admin endpoints
+    path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'),
+    path('admin/analytics/', views.AdminAnalyticsView.as_view(), name='admin-analytics'),
+    path('admin/revenue/', views.AdminRevenueView.as_view(), name='admin-revenue'),
 ]
 
