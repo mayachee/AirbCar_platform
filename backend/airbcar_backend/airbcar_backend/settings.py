@@ -67,6 +67,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'airbcar_backend.wsgi.application'
 
 # Database
+# Optimized configuration for Supabase pooler connections
+# The pooler requires SSL and can close connections unexpectedly, so we optimize for reconnection
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -76,15 +78,19 @@ DATABASES = {
         'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
         'PORT': os.environ.get('DATABASE_PORT', '5432'),
         'OPTIONS': {
-            'sslmode': 'require',
-            'connect_timeout': 30,  # Increased to 30 seconds for remote connections
+            # SSL Configuration for Supabase pooler
+            'sslmode': 'require',  # Supabase requires SSL
+            # Connection timeout - shorter for faster failure and reconnection
+            'connect_timeout': 10,
+            # Keepalive settings - more aggressive to detect dead connections faster
             'keepalives': 1,
-            'keepalives_idle': 60,  # Increased idle time for remote connections
-            'keepalives_interval': 30,  # Check connection every 30 seconds
-            'keepalives_count': 3,  # Reduce count to fail faster and reconnect
+            'keepalives_idle': 30,  # Start sending keepalives after 30 seconds of idle
+            'keepalives_interval': 10,  # Send keepalive probe every 10 seconds
+            'keepalives_count': 3,  # Allow 3 failed probes before considering connection dead
         },
-        'CONN_MAX_AGE': 0,  # Disable persistent connections to avoid stale connections with remote DB
-        'ATOMIC_REQUESTS': False,  # Disable to avoid long-running transactions
+        # Connection pooling - disable persistent connections to avoid stale pooler connections
+        'CONN_MAX_AGE': 0,  # Always create fresh connections to avoid SSL connection closed errors
+        'ATOMIC_REQUESTS': False,  # Disable to avoid long-running transactions with pooler
     }
 }
 

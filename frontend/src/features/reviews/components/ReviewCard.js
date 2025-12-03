@@ -61,11 +61,28 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
     }
   };
 
+  const getRatingColor = (rating) => {
+    if (rating >= 4) return 'text-green-600 dark:text-green-400';
+    if (rating >= 3) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
+  const getRatingLabel = (rating) => {
+    const labels = {
+      5: 'Excellent',
+      4: 'Very Good',
+      3: 'Good',
+      2: 'Fair',
+      1: 'Poor'
+    };
+    return labels[rating] || '';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow"
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-all duration-200"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start space-x-3 flex-1">
@@ -86,16 +103,21 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
                 </span>
               )}
             </div>
-            <div className="flex items-center space-x-3 mb-2">
-              <div className="flex items-center space-x-1">
-                {renderStars(review.rating)}
+            <div className="flex items-center space-x-3 mb-2 flex-wrap gap-2">
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
+                  {renderStars(review.rating)}
+                </div>
+                <span className={`text-xs font-semibold ${getRatingColor(review.rating)}`}>
+                  {getRatingLabel(review.rating)}
+                </span>
               </div>
               <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-1">
                 <Calendar className="h-3 w-3" />
                 <span>{formatDate(review.created_at)}</span>
               </span>
               {review.updated_at !== review.created_at && (
-                <span className="text-xs text-gray-400 dark:text-gray-500 italic">
+                <span className="text-xs text-gray-400 dark:text-gray-500 italic bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
                   (edited)
                 </span>
               )}
@@ -103,16 +125,23 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
           </div>
         </div>
         {!review.is_published && (
-          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-            Pending
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
+            Pending Review
           </span>
         )}
       </div>
       
       {review.comment && (
-        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-3">
-          {review.comment}
-        </p>
+        <div className="mb-3">
+          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+            {review.comment}
+          </p>
+          {review.comment.length > 200 && (
+            <button className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-1">
+              Read more
+            </button>
+          )}
+        </div>
       )}
 
       {/* Owner Response */}

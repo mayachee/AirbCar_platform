@@ -48,9 +48,11 @@ services:
         reservations:
           memory: 1.5G
     ports:
+      # Frontend application port mapping: host:container
       - "3001:3001"
     environment:
       - NODE_ENV=development
+      # Frontend port configuration - must match port mapping above
       - PORT=3001
       - DJANGO_API_URL=http://web:8000
       - NEXT_PUBLIC_DJANGO_API_URL=http://localhost:8000
@@ -63,6 +65,7 @@ services:
     volumes:
       - ./frontend:/app:cached
       - /app/node_modules
+      - /app/.next  # Exclude .next directory from mount to avoid OneDrive file lock issues (EBUSY errors)
     networks:
       - AirbNet
     restart: unless-stopped
