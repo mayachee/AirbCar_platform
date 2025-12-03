@@ -1,4 +1,4 @@
-# Python 3.13.5 required
+# Python 3.8+ required (compatible with Render)
 
 django==4.2.21
 djangorestframework==3.14.0
