@@ -7,7 +7,11 @@ services:
     buildCommand: |
       pip install --upgrade pip setuptools wheel &&
       pip install -r requirements.txt
-    startCommand: cd airbcar_backend && gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30
+    startCommand: |
+      cd airbcar_backend &&
+      python manage.py migrate --noinput &&
+      python manage.py collectstatic --noinput &&
+      gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30
     rootDir: backend
     envVars:
       # Database Configuration
