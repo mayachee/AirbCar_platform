@@ -26,9 +26,11 @@ export default function RootLayout({ children }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Suppress hydration warnings for browser extension attributes
+              // Suppress hydration warnings and non-critical errors
               (function() {
                 const originalError = console.error;
+                const originalWarn = console.warn;
+                
                 console.error = function(message) {
                   // Suppress known non-critical errors
                   if (
@@ -38,7 +40,9 @@ export default function RootLayout({ children }) {
                       message.includes('data-gr-ext-installed') ||
                       message.includes('Hydration failed') ||
                       message.includes('server rendered HTML didn\\'t match') ||
-                      message.includes('Failed to fetch') && message.includes('pollForCommands')
+                      message.includes('Failed to fetch') && message.includes('pollForCommands') ||
+                      message.includes('sentry.io') ||
+                      message.includes('ERR_BLOCKED_BY_CLIENT')
                     )
                   ) {
                     return;
@@ -51,7 +55,28 @@ export default function RootLayout({ children }) {
                   
                   originalError.apply(console, arguments);
                 };
+                
+                // Suppress Sentry-related warnings
+                console.warn = function(message) {
+                  if (
+                    typeof message === 'string' && 
+                    (message.includes('sentry.io') || message.includes('ERR_BLOCKED_BY_CLIENT'))
+                  ) {
+                    return;
+                  }
+                  originalWarn.apply(console, arguments);
+                };
               })();
+              
+              // Suppress network errors for Sentry (blocked by ad blockers)
+              if (typeof window !== 'undefined') {
+                window.addEventListener('error', function(e) {
+                  if (e.message && e.message.includes('sentry.io')) {
+                    e.preventDefault();
+                    return false;
+                  }
+                }, true);
+              }
             `,
           }}
         />
