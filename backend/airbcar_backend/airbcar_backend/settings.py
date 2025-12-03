@@ -69,25 +69,44 @@ WSGI_APPLICATION = 'airbcar_backend.wsgi.application'
 # Database
 # Optimized configuration for Supabase pooler connections
 # The pooler requires SSL and can close connections unexpectedly, so we optimize for reconnection
+DATABASE_HOST = os.environ.get('DATABASE_HOST', 'localhost')
+DATABASE_PORT = os.environ.get('DATABASE_PORT', '5432')
+
+# Determine if we're connecting to a local database (no SSL) or remote (SSL required)
+# Local databases: localhost, 127.0.0.1, or any host without a dot (assuming local network)
+IS_LOCAL_DB = (
+    DATABASE_HOST in ['localhost', '127.0.0.1', '::1'] or
+    '.' not in DATABASE_HOST or
+    DATABASE_HOST.startswith('172.') or  # Docker internal networks
+    DATABASE_HOST.startswith('192.168.')  # Private networks
+)
+
+# Base database options
+db_options = {
+    # Connection timeout - shorter for faster failure and reconnection
+    'connect_timeout': 10,
+    # Keepalive settings - more aggressive to detect dead connections faster
+    'keepalives': 1,
+    'keepalives_idle': 30,  # Start sending keepalives after 30 seconds of idle
+    'keepalives_interval': 10,  # Send keepalive probe every 10 seconds
+    'keepalives_count': 3,  # Allow 3 failed probes before considering connection dead
+}
+
+# Add SSL configuration only for remote databases (Supabase, etc.)
+if not IS_LOCAL_DB:
+    db_options['sslmode'] = 'require'  # Supabase and remote databases require SSL
+else:
+    db_options['sslmode'] = 'disable'  # Local databases typically don't have SSL enabled
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DATABASE_NAME', 'postgres'),
         'USER': os.environ.get('DATABASE_USER', 'postgres'),
         'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),
-        'OPTIONS': {
-            # SSL Configuration for Supabase pooler
-            'sslmode': 'require',  # Supabase requires SSL
-            # Connection timeout - shorter for faster failure and reconnection
-            'connect_timeout': 10,
-            # Keepalive settings - more aggressive to detect dead connections faster
-            'keepalives': 1,
-            'keepalives_idle': 30,  # Start sending keepalives after 30 seconds of idle
-            'keepalives_interval': 10,  # Send keepalive probe every 10 seconds
-            'keepalives_count': 3,  # Allow 3 failed probes before considering connection dead
-        },
+        'HOST': DATABASE_HOST,
+        'PORT': DATABASE_PORT,
+        'OPTIONS': db_options,
         # Connection pooling - disable persistent connections to avoid stale pooler connections
         'CONN_MAX_AGE': 0,  # Always create fresh connections to avoid SSL connection closed errors
         'ATOMIC_REQUESTS': False,  # Disable to avoid long-running transactions with pooler
