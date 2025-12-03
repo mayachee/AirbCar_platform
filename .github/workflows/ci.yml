@@ -54,9 +54,10 @@ jobs:
           cd backend/airbcar_backend
           echo "=== Environment Variables ==="
           echo "GITHUB_ACTIONS: $GITHUB_ACTIONS"
-          echo "DB_HOST: $DB_HOST"
-          echo "DB_NAME: $DB_NAME"
-          echo "DB_USER: $DB_USER"
+          echo "DATABASE_HOST: $DATABASE_HOST"
+          echo "DATABASE_NAME: $DATABASE_NAME"
+          echo "DATABASE_USER: $DATABASE_USER"
+          echo "DATABASE_PASSWORD: [hidden]"
           echo "DJANGO_SETTINGS_MODULE: $DJANGO_SETTINGS_MODULE"
           echo ""
           echo "=== Django Settings Check ==="
@@ -71,14 +72,15 @@ jobs:
           print('Database HOST:', settings.DATABASES['default']['HOST'])
           print('Database NAME:', settings.DATABASES['default']['NAME'])
           print('Database USER:', settings.DATABASES['default']['USER'])
+          print('Database PORT:', settings.DATABASES['default']['PORT'])
           " || echo "Django setup failed"
         env:
           GITHUB_ACTIONS: true
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: airbcar_db
-          DB_USER: airbcar_user
-          DB_PASSWORD: amineamine
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: airbcar_db
+          DATABASE_USER: airbcar_user
+          DATABASE_PASSWORD: amineamine
           DJANGO_SETTINGS_MODULE: airbcar_backend.settings
 
       - name: Test database connection
@@ -93,6 +95,10 @@ jobs:
           from django.db import connection
           from django.conf import settings
           print('Testing connection with HOST:', settings.DATABASES['default']['HOST'])
+          print('Database NAME:', settings.DATABASES['default']['NAME'])
+          print('Database USER:', settings.DATABASES['default']['USER'])
+          print('Database PORT:', settings.DATABASES['default']['PORT'])
+          print('SSL Mode:', settings.DATABASES['default']['OPTIONS'].get('sslmode', 'not set'))
           try:
               cursor = connection.cursor()
               cursor.execute('SELECT 1')
@@ -103,11 +109,11 @@ jobs:
           "
         env:
           GITHUB_ACTIONS: true
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: airbcar_db
-          DB_USER: airbcar_user
-          DB_PASSWORD: amineamine
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: airbcar_db
+          DATABASE_USER: airbcar_user
+          DATABASE_PASSWORD: amineamine
           DJANGO_SETTINGS_MODULE: airbcar_backend.settings
 
       - name: Verify Django settings are correct
@@ -127,6 +133,7 @@ jobs:
           print('  NAME:', settings.DATABASES['default']['NAME'])
           print('  USER:', settings.DATABASES['default']['USER'])
           print('  PORT:', settings.DATABASES['default']['PORT'])
+          print('  SSL Mode:', settings.DATABASES['default']['OPTIONS'].get('sslmode', 'not set'))
           # Only check HOST if not using SQLite
           if settings.DATABASES['default']['ENGINE'] != 'django.db.backends.sqlite3':
               if settings.DATABASES['default']['HOST'] != 'localhost':
@@ -139,11 +146,11 @@ jobs:
           "
         env:
           GITHUB_ACTIONS: true
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: airbcar_db
-          DB_USER: airbcar_user
-          DB_PASSWORD: amineamine
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: airbcar_db
+          DATABASE_USER: airbcar_user
+          DATABASE_PASSWORD: amineamine
           DJANGO_SETTINGS_MODULE: airbcar_backend.settings
 
       - name: Run database migrations
@@ -156,11 +163,11 @@ jobs:
           python manage.py migrate
         env:
           GITHUB_ACTIONS: true
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: airbcar_db
-          DB_USER: airbcar_user
-          DB_PASSWORD: amineamine
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: airbcar_db
+          DATABASE_USER: airbcar_user
+          DATABASE_PASSWORD: amineamine
           DJANGO_SETTINGS_MODULE: airbcar_backend.settings
 
       - name: Run backend tests
@@ -170,11 +177,11 @@ jobs:
           python manage.py test
         env:
           GITHUB_ACTIONS: true
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: airbcar_db
-          DB_USER: airbcar_user
-          DB_PASSWORD: amineamine
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: airbcar_db
+          DATABASE_USER: airbcar_user
+          DATABASE_PASSWORD: amineamine
           DJANGO_SETTINGS_MODULE: airbcar_backend.settings
 
       - name: Set up Node.js
