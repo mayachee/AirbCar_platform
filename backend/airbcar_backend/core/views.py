@@ -2984,6 +2984,31 @@ class PartnerActivityView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class RootView(APIView):
+    """Root API endpoint - provides API information."""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
+    def get(self, request):
+        return Response({
+            'status': 'ok',
+            'message': 'AirbCar Backend API',
+            'version': '1.0.0',
+            'endpoints': {
+                'health': '/api/health/',
+                'auth': {
+                    'login': '/api/login/',
+                    'register': '/api/register/',
+                    'token_refresh': '/api/token/refresh/',
+                },
+                'listings': '/listings/',
+                'partners': '/partners/',
+                'bookings': '/bookings/',
+            },
+            'docs': 'See API documentation for more details'
+        })
+
+
 class HealthCheckView(APIView):
     """Simple health check endpoint to test CORS."""
     permission_classes = [AllowAny]

@@ -7,6 +7,8 @@ from . import views
 app_name = 'core'
 
 urlpatterns = [
+    # Root endpoint
+    path('', views.RootView.as_view(), name='root'),
     # Listings endpoints
     path('listings/', views.ListingListView.as_view(), name='listing-list'),
     path('listings/<int:pk>/', views.ListingDetailView.as_view(), name='listing-detail'),
