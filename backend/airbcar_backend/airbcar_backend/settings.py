@@ -21,10 +21,17 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 # ALLOWED_HOSTS - Allow Render domain and any custom domain
 ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '')
 if ALLOWED_HOSTS_ENV:
-    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',')]
+    # Split by comma and strip whitespace
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
 else:
-    # Default: allow all (for development) or Render domains
-    ALLOWED_HOSTS = ['*']  # Will be restricted by Render's environment variable in production
+    # Default: allow common Render patterns and localhost for development
+    # Note: Django doesn't accept '*' when DEBUG=False, so we need explicit hosts
+    ALLOWED_HOSTS = [
+        'airbcar-backend.onrender.com',
+        '.onrender.com',  # Allow any Render subdomain (wildcard subdomain)
+        'localhost',
+        '127.0.0.1',
+    ]
 
 # Application definition
 INSTALLED_APPS = [
