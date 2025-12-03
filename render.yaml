@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: airbcar-backend
+    env: python
+    region: frankfurt  # Change to your preferred region: oregon, frankfurt, singapore, mumbai, tokyo
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd airbcar_backend && gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30
+    rootDir: backend
+    envVars:
+      # Database Configuration
+      - key: DATABASE_HOST
+        value: aws-1-eu-north-1.pooler.supabase.com
+      - key: DATABASE_PORT
+        value: 5432
+      - key: DATABASE_NAME
+        value: postgres
+      - key: DATABASE_USER
+        value: postgres.wtbmqtmmdobfvvecinif
+      - key: DATABASE_PASSWORD
+        sync: false  # Set this manually in Render dashboard for security
+        # Value: Mayache+123455
+      
+      # Django Configuration
+      - key: SECRET_KEY
+        sync: false  # Set this manually in Render dashboard for security
+        # Value: AHZHdcJj7GgqAbvqbOZSK-RpA4tAws7NmvGK1hdp7GLXySV7CM2YY3XJ677PQZ_QmkE
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        fromService:
+          type: web
+          name: airbcar-backend
+          property: host
+      - key: DJANGO_SETTINGS_MODULE
+        value: airbcar_backend.settings
+      
+      # URLs - Update these with your actual frontend URL
+      - key: FRONTEND_URL
+        value: https://your-frontend-url.vercel.app  # UPDATE THIS with your actual frontend URL
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: airbcar-backend
+          property: host
+      
+      # Email Configuration
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        value: ayacheyassine2000@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        sync: false  # Set this manually in Render dashboard for security
+        # Value: rmqjpvkmekdiugnz
+      - key: DEFAULT_FROM_EMAIL
+        value: ayacheyassine2000@gmail.com
+      
+      # Optional Performance Settings
+      - key: GUNICORN_WORKERS
+        value: "1"
+      - key: PORT
+        value: "8000"
+
