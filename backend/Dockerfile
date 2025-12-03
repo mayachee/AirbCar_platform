@@ -4,6 +4,8 @@ FROM python:3.8-slim
 RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     postgresql-client \
+    libpq-dev \
+    python3-dev \
     gcc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*

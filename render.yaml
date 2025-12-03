@@ -1,12 +1,11 @@
 services:
   - type: web
     name: airbcar-backend
-    env: python
+    env: docker
     region: frankfurt  # Change to your preferred region: oregon, frankfurt, singapore, mumbai, tokyo
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: cd airbcar_backend && gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30
-    rootDir: backend
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     envVars:
       # Database Configuration
       - key: DATABASE_HOST
