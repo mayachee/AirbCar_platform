@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 
-const PARTNERS_API_URL = 'http://localhost:8000/partners/';
-const PARTNER_REGISTER_API_URL = 'http://localhost:8000/api/partners/register/';
+const API_BASE = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const PARTNERS_API_URL = `${API_BASE}/partners/`;
+const PARTNER_REGISTER_API_URL = `${API_BASE}/api/partners/register/`;
 
 // Get partner data (hook)
 export function usePartners() {
@@ -71,7 +72,7 @@ export async function registerPartner(partner) {
     user_email: payload?.email,
     user_username: payload?.username
   };
-  let response = await fetch('http://localhost:8000/partners/', {
+  let response = await fetch(`${PARTNERS_API_URL}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

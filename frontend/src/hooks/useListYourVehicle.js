@@ -35,7 +35,8 @@ export async function createListing(vehicleData) {
     throw new Error(`Missing required fields: ${missing.join(', ')}`);
   }
 
-  const response = await fetch('http://localhost:8000/listings/', {
+  const API_BASE = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const response = await fetch(`${API_BASE}/listings/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -83,7 +84,8 @@ export async function updateListing(listingId, updates) {
     ...(updates.availability !== undefined ? { availability: !!updates.availability } : {}),
   };
 
-  const res = await fetch(`http://localhost:8000/listings/${listingId}/`, {
+  const API_BASE = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const res = await fetch(`${API_BASE}/listings/${listingId}/`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -108,7 +110,8 @@ export async function deleteListing(listingId) {
   }
   if (!token) throw new Error('Please sign in to delete a vehicle.');
 
-  const res = await fetch(`http://localhost:8000/listings/${listingId}/`, {
+  const API_BASE = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const res = await fetch(`${API_BASE}/listings/${listingId}/`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
