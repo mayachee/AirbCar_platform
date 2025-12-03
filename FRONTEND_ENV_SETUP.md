@@ -1,8 +1,10 @@
 # Frontend Environment Variable Setup
 
-## 🔴 Problem: Frontend connecting to localhost instead of Render backend
+## 🔴 URGENT: Set This Environment Variable NOW
 
 Your frontend is trying to connect to `http://localhost:8000` instead of your Render backend at `https://airbcar-backend.onrender.com`.
+
+**This is why your website doesn't work!** You MUST set the environment variable below.
 
 ## ✅ Solution: Set Environment Variable
 
