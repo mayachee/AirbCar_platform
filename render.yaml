@@ -35,9 +35,9 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: airbcar_backend.settings
       
-      # URLs - Update these with your actual frontend URL
+      # URLs - Update FRONTEND_URL after deploying your frontend to Vercel
       - key: FRONTEND_URL
-        value: https://your-frontend-url.vercel.app  # UPDATE THIS with your actual frontend URL
+        value: https://airbcar-platform.vercel.app  # Update this with your actual Vercel frontend URL after deployment
       - key: BACKEND_URL
         fromService:
           type: web

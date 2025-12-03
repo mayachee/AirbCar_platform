@@ -18,7 +18,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-pro
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']  # Configure properly for production
+# ALLOWED_HOSTS - Allow Render domain and any custom domain
+ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',')]
+else:
+    # Default: allow all (for development) or Render domains
+    ALLOWED_HOSTS = ['*']  # Will be restricted by Render's environment variable in production
 
 # Application definition
 INSTALLED_APPS = [
@@ -167,7 +173,7 @@ REST_FRAMEWORK = {
 CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for development
 CORS_ALLOW_CREDENTIALS = True
 
-# Also explicitly allow common development origins
+# Also explicitly allow common development origins and production URLs
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -179,6 +185,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://172.18.240.1:3001",
     "http://172.18.240.1:3000",
 ]
+
+# Add production frontend URL from environment if provided
+FRONTEND_URL_ENV = os.environ.get('FRONTEND_URL', '')
+if FRONTEND_URL_ENV and FRONTEND_URL_ENV not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL_ENV)
 
 # Allow all HTTP methods including DELETE
 CORS_ALLOW_METHODS = [
