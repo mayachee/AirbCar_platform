@@ -34,10 +34,12 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        fromService:
-          type: web
-          name: airbcar-backend
-          property: host
+        value: airbcar-backend.onrender.com,.onrender.com
+        # Also try to get from service (fallback)
+        # fromService:
+        #   type: web
+        #   name: airbcar-backend
+        #   property: host
       - key: DJANGO_SETTINGS_MODULE
         value: airbcar_backend.settings
       
