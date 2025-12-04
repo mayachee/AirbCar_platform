@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Environment Variable Debug</title>
+</head>
+<body>
+    <h1>Environment Variables Debug</h1>
+    <div id="output"></div>
+    <script>
+        const output = document.getElementById('output');
+        const env = {
+            'NEXT_PUBLIC_DJANGO_API_URL': process.env.NEXT_PUBLIC_DJANGO_API_URL || 'NOT SET',
+            'NEXT_PUBLIC_API_URL': process.env.NEXT_PUBLIC_API_URL || 'NOT SET',
+        };
+        
+        // Note: process.env is not available in browser, this is just for reference
+        // The actual values are baked into the JavaScript bundle at build time
+        output.innerHTML = `
+            <h2>Expected Environment Variables:</h2>
+            <pre>${JSON.stringify(env, null, 2)}</pre>
+            <p><strong>Note:</strong> In Next.js, environment variables starting with NEXT_PUBLIC_ are baked into the JavaScript bundle at BUILD TIME.</p>
+            <p><strong>You MUST redeploy after setting environment variables!</strong></p>
+            <h2>Check in Browser Console:</h2>
+            <p>Open browser console (F12) and check the Network tab to see what URL is being used for API calls.</p>
+        `;
+    </script>
+</body>
+</html>
+
