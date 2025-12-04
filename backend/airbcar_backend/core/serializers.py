@@ -227,42 +227,46 @@ class ListingSerializer(serializers.ModelSerializer):
         if 'images' in data and data['images']:
             request = self.context.get('request')
             processed_images = []
+            from django.conf import settings
+            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+            
+            def fix_image_url(url):
+                """Fix image URL to use correct backend URL."""
+                if not url:
+                    return url
+                
+                # If it's a relative path starting with /media/, make it absolute
+                if url.startswith('/media/'):
+                    return f"{backend_url}{url}"
+                
+                # If it's already an absolute URL
+                if url.startswith('http://') or url.startswith('https://'):
+                    # Check if it contains /media/ - extract the media path and reconstruct
+                    if '/media/' in url:
+                        # Extract everything after /media/ including /media/ itself
+                        media_index = url.find('/media/')
+                        media_path = url[media_index:]  # Get /media/... onwards
+                        # Remove any query parameters or fragments
+                        if '?' in media_path:
+                            media_path = media_path.split('?')[0]
+                        if '#' in media_path:
+                            media_path = media_path.split('#')[0]
+                        return f"{backend_url}{media_path}"
+                    # If it's an absolute URL but doesn't contain /media/, check if it's pointing to wrong host
+                    # and might be a backend URL that needs fixing
+                    elif backend_url not in url and ('airbcar-backend' in url or 'onrender.com' in url):
+                        # This might be a malformed URL, but if it doesn't have /media/, leave it as is
+                        pass
+                
+                return url
+            
             for img in data['images']:
                 if isinstance(img, str):
-                    # If it's a relative path starting with /media/, make it absolute
-                    if img.startswith('/media/'):
-                        # Always use BACKEND_URL for media files to avoid frontend host issues
-                        from django.conf import settings
-                        backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                        img = f"{backend_url}{img}"
-                    # If it's already an absolute URL but points to wrong host, fix it
-                    elif img.startswith('http://') or img.startswith('https://'):
-                        # Check if it's pointing to frontend instead of backend
-                        if '/media/' in img:
-                            from django.conf import settings
-                            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                            # Extract the media path
-                            media_path = '/media/' + img.split('/media/')[1]
-                            img = f"{backend_url}{media_path}"
-                    processed_images.append(img)
+                    processed_images.append(fix_image_url(img))
                 elif isinstance(img, dict):
                     # If it's an object, process the url field
                     if 'url' in img:
-                        url = img['url']
-                        if url.startswith('/media/'):
-                            # Always use BACKEND_URL for media files to avoid frontend host issues
-                            from django.conf import settings
-                            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                            url = f"{backend_url}{url}"
-                            img['url'] = url
-                        # If it's already an absolute URL but points to wrong host, fix it
-                        elif (url.startswith('http://') or url.startswith('https://')) and '/media/' in url:
-                            from django.conf import settings
-                            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                            # Extract the media path
-                            media_path = '/media/' + url.split('/media/')[1]
-                            url = f"{backend_url}{media_path}"
-                            img['url'] = url
+                        img['url'] = fix_image_url(img['url'])
                     processed_images.append(img)
                 else:
                     processed_images.append(img)

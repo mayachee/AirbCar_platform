@@ -2251,11 +2251,6 @@ class BookingPendingRequestsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        if request.user.role != 'partner':
-            return Response({
-                'error': 'Only partners can view pending requests'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
         try:
             partner = Partner.objects.get(user=request.user)
             # Get bookings with status 'pending' for this partner
@@ -2266,9 +2261,9 @@ class BookingPendingRequestsView(APIView):
             })
         except Partner.DoesNotExist:
             return Response({
-                'error': 'Partner profile not found',
+                'error': 'Only partners can view pending requests',
                 'data': []
-            }, status=status.HTTP_404_NOT_FOUND)
+            }, status=status.HTTP_403_FORBIDDEN)
 
 
 class BookingUpcomingView(APIView):
@@ -2475,12 +2470,6 @@ class PartnerCustomerInfoView(APIView):
     
     def get(self, request, booking_id):
         try:
-            # Check if user is a partner
-            if request.user.role != 'partner':
-                return Response({
-                    'error': 'Only partners can access customer information'
-                }, status=status.HTTP_403_FORBIDDEN)
-            
             # Get the booking
             try:
                 booking = Booking.objects.select_related('customer', 'partner', 'partner__user').get(pk=booking_id)
@@ -2489,7 +2478,7 @@ class PartnerCustomerInfoView(APIView):
                     'error': 'Booking not found'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Verify the partner owns this booking
+            # Verify the partner owns this booking and user has a partner profile
             try:
                 partner = Partner.objects.get(user=request.user)
                 if booking.partner != partner:
@@ -2498,8 +2487,8 @@ class PartnerCustomerInfoView(APIView):
                     }, status=status.HTTP_403_FORBIDDEN)
             except Partner.DoesNotExist:
                 return Response({
-                    'error': 'Partner profile not found'
-                }, status=status.HTTP_404_NOT_FOUND)
+                    'error': 'Only partners can access customer information'
+                }, status=status.HTTP_403_FORBIDDEN)
             
             # Get customer with all documents
             customer = booking.customer

@@ -18,6 +18,7 @@ export default function VehiclesList({
   const [viewMode, setViewMode] = useState("grid"); // grid or list
   const [selectedVehicles, setSelectedVehicles] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [deletingVehicleId, setDeletingVehicleId] = useState(null);
 
   // Handle undefined or null vehicles array
   const vehiclesList = vehicles || [];
@@ -623,35 +624,45 @@ export default function VehiclesList({
                   {viewMode === "grid" && <span>Edit</span>}
                 </button>
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
                     const vehicleName = `${vehicle.make || vehicle.brand || 'Vehicle'} ${vehicle.model || ''}`.trim();
                     const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
                     const fullVehicleName = `${vehicleName}${vehicleYear}`;
                     
-                    const confirmMessage = `⚠️ Delete Vehicle Confirmation\n\n` +
-                      `Are you sure you want to delete "${fullVehicleName}"?\n\n` +
-                      `This action will:\n` +
-                      `• Permanently remove the vehicle from your listings\n` +
-                      `• Cancel any pending bookings for this vehicle\n` +
-                      `• Remove the vehicle from customer favorites\n` +
-                      `• This action cannot be undone\n\n` +
-                      `Type "DELETE" to confirm:`;
-                    
-                    const userInput = window.prompt(confirmMessage);
-                    
-                    if (userInput === 'DELETE') {
-                      onDeleteVehicle(vehicle);
-                    } else if (userInput !== null) {
-                      // User typed something but not "DELETE"
-                      alert('Deletion cancelled. You must type "DELETE" to confirm.');
+                    // Simple confirmation - much easier!
+                    if (window.confirm(
+                      `Delete "${fullVehicleName}"?\n\n` +
+                      `This will permanently remove the vehicle from your listings.\n` +
+                      `This action cannot be undone.`
+                    )) {
+                      setDeletingVehicleId(vehicle.id);
+                      try {
+                        // Pass skipConfirmation=true since we already confirmed
+                        await onDeleteVehicle(vehicle, true);
+                      } catch (error) {
+                        // Error is already handled by the handler, just reset loading state
+                        console.error('Delete error:', error);
+                      } finally {
+                        setDeletingVehicleId(null);
+                      }
                     }
                   }}
-                  className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors font-medium"
+                  disabled={deletingVehicleId === vehicle.id || loading}
+                  className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Delete Vehicle"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  {viewMode === "grid" && <span>Delete</span>}
+                  {deletingVehicleId === vehicle.id ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      {viewMode === "grid" && <span>Deleting...</span>}
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      {viewMode === "grid" && <span>Delete</span>}
+                    </>
+                  )}
                 </button>
                 {viewMode === "list" && (
                   <button

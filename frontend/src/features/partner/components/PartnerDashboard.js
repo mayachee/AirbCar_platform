@@ -146,30 +146,21 @@ export default function PartnerDashboard() {
     const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
     const fullVehicleName = `${vehicleName}${vehicleYear}`;
     
-    const confirmMessage = `⚠️ Delete Vehicle Confirmation\n\n` +
-      `Are you sure you want to delete "${fullVehicleName}"?\n\n` +
-      `This action will:\n` +
-      `• Permanently remove the vehicle from your listings\n` +
-      `• Cancel any pending bookings for this vehicle\n` +
-      `• Remove the vehicle from customer favorites\n` +
-      `• This action cannot be undone\n\n` +
-      `Type "DELETE" to confirm:`;
-    
-    const userInput = window.prompt(confirmMessage);
-    
-    if (userInput === 'DELETE') {
+    // Simple confirmation - much easier!
+    if (window.confirm(
+      `Delete "${fullVehicleName}"?\n\n` +
+      `This will permanently remove the vehicle from your listings.\n` +
+      `This action cannot be undone.`
+    )) {
       try {
         await deleteVehicle(vehicle.id);
-        alert(`✅ Vehicle "${fullVehicleName}" has been deleted successfully.`);
+        alert(`✅ Vehicle "${fullVehicleName}" deleted successfully.`);
         refetch();
       } catch (error) {
         console.error('Error deleting vehicle:', error);
         const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle. Please try again.';
         alert(`❌ Error: ${errorMessage}`);
       }
-    } else if (userInput !== null) {
-      // User typed something but not "DELETE"
-      alert('⚠️ Deletion cancelled. You must type "DELETE" to confirm.');
     }
   };
 

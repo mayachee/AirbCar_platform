@@ -201,36 +201,34 @@ export function useOptimizedDashboard() {
     setShowEditVehicleModal(true);
   }, []);
 
-  const handleDeleteVehicle = useCallback(async (vehicle) => {
+  const handleDeleteVehicle = useCallback(async (vehicle, skipConfirmation = false) => {
     const vehicleName = `${vehicle.brand || vehicle.make || 'Vehicle'} ${vehicle.model || ''}`.trim();
     const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
     const fullVehicleName = `${vehicleName}${vehicleYear}`;
     
-    const confirmMessage = `⚠️ Delete Vehicle Confirmation\n\n` +
-      `Are you sure you want to delete "${fullVehicleName}"?\n\n` +
-      `This action will:\n` +
-      `• Permanently remove the vehicle from your listings\n` +
-      `• Cancel any pending bookings for this vehicle\n` +
-      `• Remove the vehicle from customer favorites\n` +
-      `• This action cannot be undone\n\n` +
-      `Type "DELETE" to confirm:`;
+    // Show confirmation only if not skipped (for cases where confirmation is handled by the caller)
+    let confirmed = true;
+    if (!skipConfirmation) {
+      confirmed = window.confirm(
+        `Are you sure you want to delete "${fullVehicleName}"?\n\n` +
+        `This will permanently remove the vehicle from your listings.\n` +
+        `This action cannot be undone.`
+      );
+    }
     
-    // Use a more detailed confirmation
-    const userInput = window.prompt(confirmMessage);
-    
-    if (userInput === 'DELETE') {
+    if (confirmed) {
       try {
+        // Show loading state
+        showToast(`Deleting "${fullVehicleName}"...`, 'info');
         await deleteVehicle(vehicle.id);
-        showToast(`✅ Vehicle "${fullVehicleName}" has been deleted successfully.`, 'success');
+        showToast(`✅ Vehicle "${fullVehicleName}" deleted successfully.`, 'success');
         refetch();
       } catch (error) {
         console.error('Error deleting vehicle:', error);
         const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle. Please try again.';
         showToast(`❌ Error: ${errorMessage}`, 'error');
+        throw error; // Re-throw so caller can handle it
       }
-    } else if (userInput !== null) {
-      // User typed something but not "DELETE"
-      showToast('⚠️ Deletion cancelled. You must type "DELETE" to confirm.', 'warning');
     }
   }, [deleteVehicle, refetch, showToast]);
 
