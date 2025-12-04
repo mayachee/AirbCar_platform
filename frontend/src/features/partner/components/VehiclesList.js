@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { CarFront, Edit, Trash2, Eye, Plus, Search, Filter, ArrowUpDown, MapPin, DollarSign, Users, Fuel, Calendar, Star, RefreshCw, Grid3x3, List, Copy, MoreVertical, CheckCircle2, XCircle, Wrench, TrendingUp, Eye as EyeIcon, Download } from 'lucide-react';
+import { getVehicleImageUrl } from '@/utils/imageUtils';
 
 export default function VehiclesList({ 
   vehicles, 
@@ -25,50 +26,7 @@ export default function VehiclesList({
 
   // Get vehicle image URL (handle different formats)
   const getVehicleImage = (vehicle) => {
-    // Try images field first (JSONField from database)
-    if (vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0) {
-      const img = vehicle.images[0];
-      
-      // If it's an object with url property
-      if (typeof img === 'object' && img !== null) {
-        if (img.url) {
-          const url = img.url;
-          // If it's already absolute, return as is
-          if (url.startsWith('http://') || url.startsWith('https://')) {
-            return url;
-          }
-          // If it's a relative path starting with /media/, prepend backend URL
-          if (url.startsWith('/media/')) {
-            const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
-            return `${apiUrl}${url}`;
-          }
-          return url;
-        }
-        // If object has other properties, try common ones
-        if (img.image) return img.image;
-        if (img.path) return img.path;
-      }
-      
-      // If it's a string
-      if (typeof img === 'string') {
-        // If it's already absolute, return as is
-        if (img.startsWith('http://') || img.startsWith('https://')) {
-          return img;
-        }
-        // If it's a relative path starting with /media/, prepend backend URL
-        if (img.startsWith('/media/')) {
-          const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
-          return `${apiUrl}${img}`;
-        }
-        // If it starts with /, return as is (might be a frontend path)
-        if (img.startsWith('/')) {
-          return img;
-        }
-        // Otherwise, try to construct URL
-        const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
-        return `${apiUrl}/media/${img}`;
-      }
-    }
+    return getVehicleImageUrl(vehicle);
     
     // Try pictures field (alternative name)
     if (vehicle.pictures && Array.isArray(vehicle.pictures) && vehicle.pictures.length > 0) {

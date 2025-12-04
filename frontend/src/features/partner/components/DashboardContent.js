@@ -3,7 +3,7 @@
 import { Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, Clock, Calendar, TrendingUp, ArrowUpRight, Car, DollarSign } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Calendar, TrendingUp, ArrowUpRight, Car, DollarSign, Lightbulb, Target, Zap } from 'lucide-react';
 
 // Lazy load components
 const PartnerStats = lazy(() => import('@/features/partner/components/PartnerStats'));
@@ -27,7 +27,7 @@ const ComponentLoader = ({ children, fallback = null }) => (
   </Suspense>
 );
 
-const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType = 'neutral' }) => {
+const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType = 'neutral', onClick }) => {
   const colorClasses = {
     blue: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800',
     green: 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800',
@@ -51,11 +51,15 @@ const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02, y: -2 }}
-      className={`rounded-xl border-2 p-5 ${colorClasses[color]} transition-all duration-200 shadow-sm hover:shadow-md`}
+      whileHover={{ scale: 1.03, y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className={`rounded-xl border-2 p-5 ${colorClasses[color]} transition-all duration-200 shadow-sm hover:shadow-lg ${
+        onClick ? 'cursor-pointer' : ''
+      }`}
     >
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-3 rounded-lg bg-white/50 dark:bg-gray-800/50 ${iconColorClasses[color]}`}>
+        <div className={`p-3 rounded-lg bg-white/50 dark:bg-gray-800/50 ${iconColorClasses[color]} transition-transform duration-200 ${onClick ? 'group-hover:scale-110' : ''}`}>
           {icon ? (
             typeof icon === 'string' ? (
               <span className="text-2xl">{icon}</span>
@@ -78,6 +82,12 @@ const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType
       </div>
       <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
       <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+      {onClick && (
+        <div className="mt-3 flex items-center text-xs text-gray-500 dark:text-gray-400">
+          <span>Click to view</span>
+          <ArrowUpRight className="h-3 w-3 ml-1" />
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -105,7 +115,8 @@ export default function DashboardContent({
   acceptBooking,
   rejectBooking,
   cancelBooking,
-  refetch
+  refetch,
+  setCurrentView
 }) {
   const router = useRouter();
   
@@ -117,10 +128,63 @@ export default function DashboardContent({
     <div className="flex-1 p-4 sm:p-6 overflow-auto">
       {currentView === 'dashboard' && (
         <div className="space-y-6">
-          {/* Quick Stats */}
+          {/* Welcome Banner with Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 rounded-xl shadow-lg p-6 text-white"
+          >
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">
+                  Welcome back! 👋
+                </h2>
+                <p className="text-blue-100 dark:text-blue-200">
+                  {pendingRequests.length > 0 
+                    ? `You have ${pendingRequests.length} pending ${pendingRequests.length === 1 ? 'request' : 'requests'} to review`
+                    : upcomingBookings.length > 0
+                    ? `You have ${upcomingBookings.length} upcoming ${upcomingBookings.length === 1 ? 'booking' : 'bookings'}`
+                    : 'Everything looks good! Your dashboard is up to date.'}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleAddVehicle}
+                  className="px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center space-x-2"
+                >
+                  <span>+</span>
+                  <span>Add Vehicle</span>
+                </motion.button>
+                {pendingRequests.length > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setCurrentView('bookings')}
+                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
+                  >
+                    Review Requests ({pendingRequests.length})
+                  </motion.button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Quick Stats - Make them clickable */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickStats.map((stat, index) => (
-              <QuickStatsCard key={index} {...stat} />
+              <QuickStatsCard
+                key={index}
+                {...stat}
+                onClick={() => {
+                  // Navigate to relevant section based on stat
+                  if (stat.title.includes('Vehicle')) setCurrentView('vehicles');
+                  if (stat.title.includes('Booking')) setCurrentView('bookings');
+                  if (stat.title.includes('Request')) setCurrentView('bookings');
+                  if (stat.title.includes('Earning')) setCurrentView('analytics');
+                }}
+              />
             ))}
           </div>
 
@@ -137,13 +201,29 @@ export default function DashboardContent({
                   <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pending Requests</h3>
                 </div>
-                <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-semibold px-2.5 py-1 rounded-full">
-                  {pendingRequests.length}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-semibold px-2.5 py-1 rounded-full">
+                    {pendingRequests.length}
+                  </span>
+                  {pendingRequests.length > 3 && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setCurrentView('bookings')}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    >
+                      View All →
+                    </motion.button>
+                  )}
+                </div>
               </div>
               <div className="space-y-3">
                 {pendingRequests.length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No pending requests</p>
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">No pending requests</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">New booking requests will appear here</p>
+                  </div>
                 ) : (
                   pendingRequests.slice(0, 3).map((request, index) => (
                     <motion.div
@@ -216,9 +296,21 @@ export default function DashboardContent({
                   <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Bookings</h3>
                 </div>
-                <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-1 rounded-full">
-                  {upcomingBookings.length}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-1 rounded-full">
+                    {upcomingBookings.length}
+                  </span>
+                  {upcomingBookings.length > 3 && (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setCurrentView('bookings')}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    >
+                      View All →
+                    </motion.button>
+                  )}
+                </div>
               </div>
               <div className="space-y-3">
                 {upcomingBookings.length === 0 ? (
@@ -288,6 +380,78 @@ export default function DashboardContent({
               </ComponentLoader>
             </motion.div>
           </div>
+
+          {/* Performance Insights & Recommendations */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl border border-purple-200 dark:border-purple-800 p-6"
+          >
+            <div className="flex items-center space-x-2 mb-4">
+              <Lightbulb className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Performance Insights</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {vehicles?.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700"
+                >
+                  <Target className="h-5 w-5 text-purple-600 dark:text-purple-400 mb-2" />
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Get Started</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Add your first vehicle to start earning</p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleAddVehicle}
+                    className="mt-3 w-full px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Add Vehicle
+                  </motion.button>
+                </motion.div>
+              )}
+              {pendingRequests.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-yellow-200 dark:border-yellow-700"
+                >
+                  <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mb-2" />
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Action Required</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">You have {pendingRequests.length} pending {pendingRequests.length === 1 ? 'request' : 'requests'}</p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setCurrentView('bookings')}
+                    className="mt-3 w-full px-3 py-1.5 bg-yellow-600 text-white text-xs font-medium rounded-lg hover:bg-yellow-700 transition-colors"
+                  >
+                    Review Now
+                  </motion.button>
+                </motion.div>
+              )}
+              {stats?.totalVehicles > 0 && stats?.activeBookings === 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-700"
+                >
+                  <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400 mb-2" />
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Boost Visibility</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Optimize your listings to attract more bookings</p>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setCurrentView('vehicles')}
+                    className="mt-3 w-full px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Manage Vehicles
+                  </motion.button>
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
 
           {/* Additional Dashboard Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

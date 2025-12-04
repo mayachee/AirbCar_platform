@@ -1,16 +1,18 @@
+import { getAllVehicleImages, fixImageUrl } from '@/utils/imageUtils';
+
 export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, onPrevImage, onSelectImage, onShowFullGallery }) {
-  // Safely get images array with fallback
-  const images = vehicle?.images || []
-  const hasImages = images.length > 0
-  const currentImage = images[currentImageIndex] || images[0] || '/carsymbol.jpg'
-  const safeIndex = Math.min(currentImageIndex, images.length - 1)
+  // Get all images using the utility function to fix URLs
+  const allImages = getAllVehicleImages(vehicle);
+  const hasImages = allImages.length > 0 && allImages[0] !== '/carsymbol.jpg';
+  const safeIndex = Math.min(currentImageIndex, allImages.length - 1);
+  const currentImage = allImages[safeIndex] || allImages[0] || '/carsymbol.jpg';
 
   return (
     <div className="mb-8">
       <div className="relative">
         <div className="aspect-w-16 aspect-h-10 rounded-xl overflow-hidden">
           <img
-            src={currentImage}
+            src={fixImageUrl(currentImage)}
             alt={`${vehicle?.name || 'Vehicle'} - Image ${safeIndex + 1}`}
             className="w-full h-96 object-cover"
             loading="lazy"
@@ -44,14 +46,14 @@ export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, 
         )}
 
         {/* Image Counter - Only show if there are multiple images */}
-        {hasImages && images.length > 1 && (
+        {hasImages && allImages.length > 1 && (
           <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-            {safeIndex + 1} / {images.length}
+            {safeIndex + 1} / {allImages.length}
           </div>
         )}
 
         {/* View All Photos Button - Only show if there are multiple images */}
-        {hasImages && images.length > 1 && (
+        {hasImages && allImages.length > 1 && (
           <button
             onClick={onShowFullGallery}
             className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors"
@@ -64,7 +66,7 @@ export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, 
       {/* Thumbnail Strip - Only show if there are images */}
       {hasImages && (
         <div className="mt-4 grid grid-cols-6 gap-2">
-          {images.slice(0, 6).map((image, index) => (
+          {allImages.slice(0, 6).map((image, index) => (
             <button
               key={index}
               onClick={() => onSelectImage(index)}
@@ -73,7 +75,7 @@ export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, 
               }`}
             >
               <img
-                src={image || '/carsymbol.jpg'}
+                src={fixImageUrl(image) || '/carsymbol.jpg'}
                 alt={`${vehicle?.name || 'Vehicle'} thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
                 loading="lazy"

@@ -1,9 +1,11 @@
+import { getAllVehicleImages, fixImageUrl } from '@/utils/imageUtils';
+
 export default function FullGalleryModal({ vehicle, currentImageIndex, onClose, onSelectImage }) {
-  // Safely get images array with fallback
-  const images = vehicle?.images || []
-  const hasImages = images.length > 0
-  const safeIndex = Math.min(currentImageIndex, images.length - 1)
-  const currentImage = images[safeIndex] || images[0] || '/carsymbol.jpg'
+  // Get all images using the utility function to fix URLs
+  const allImages = getAllVehicleImages(vehicle);
+  const hasImages = allImages.length > 0 && allImages[0] !== '/carsymbol.jpg';
+  const safeIndex = Math.min(currentImageIndex, allImages.length - 1);
+  const currentImage = fixImageUrl(allImages[safeIndex] || allImages[0] || '/carsymbol.jpg');
 
   if (!hasImages) {
     return null
@@ -30,9 +32,9 @@ export default function FullGalleryModal({ vehicle, currentImageIndex, onClose, 
           }}
         />
       </div>
-      {images.length > 1 && (
+      {allImages.length > 1 && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-          {images.map((_, index) => (
+          {allImages.map((_, index) => (
             <button
               key={index}
               onClick={() => onSelectImage(index)}

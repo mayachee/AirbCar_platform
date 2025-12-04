@@ -314,34 +314,60 @@ class ListingListView(APIView):
         # Handle images - could be files or URLs
         images = []
         if 'pictures' in request.FILES:
-            # Handle file uploads - actually save files to listings directory
+            # Handle file uploads - try Supabase Storage first, fallback to local
             uploaded_files = request.FILES.getlist('pictures')
-            listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
-            # Ensure listings directory exists
-            os.makedirs(listings_dir, exist_ok=True)
+            from .supabase_storage import upload_file_to_supabase, generate_file_path
             
             for file in uploaded_files:
-                # Generate unique filename to avoid conflicts
-                from django.utils.text import get_valid_filename
-                from django.utils import timezone
                 import uuid
+                from django.utils.text import get_valid_filename
                 
                 # Get file extension
                 file_ext = os.path.splitext(file.name)[1] or '.jpg'
                 # Create unique filename
                 unique_filename = f"{uuid.uuid4()}{file_ext}"
-                file_path = os.path.join('listings', unique_filename)
                 
-                # Save file
-                saved_path = default_storage.save(file_path, ContentFile(file.read()))
-                # Generate absolute URL pointing to backend (always use BACKEND_URL to avoid frontend host issues)
-                backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
+                # Try to upload to Supabase Storage first
+                supabase_url = None
+                try:
+                    # Generate file path for Supabase
+                    file_path = f"listings/{unique_filename}"
+                    # Reset file pointer
+                    file.seek(0)
+                    # Upload to Supabase Storage
+                    supabase_url = upload_file_to_supabase(
+                        file,
+                        'listings',  # bucket name
+                        file_path,
+                        content_type=file.content_type
+                    )
+                except Exception as e:
+                    if settings.DEBUG:
+                        print(f"⚠️ Supabase upload failed, using local storage: {str(e)}")
                 
-                images.append({
-                    'name': file.name,
-                    'url': file_url
-                })
+                if supabase_url:
+                    # Use Supabase URL
+                    images.append({
+                        'name': file.name,
+                        'url': supabase_url
+                    })
+                else:
+                    # Fallback to local storage
+                    listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
+                    os.makedirs(listings_dir, exist_ok=True)
+                    file_path = os.path.join('listings', unique_filename)
+                    
+                    # Reset file pointer
+                    file.seek(0)
+                    saved_path = default_storage.save(file_path, ContentFile(file.read()))
+                    # Generate absolute URL pointing to backend
+                    backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                    file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
+                    
+                    images.append({
+                        'name': file.name,
+                        'url': file_url
+                    })
         elif 'images' in request.data:
             # Handle JSON array of image URLs
             images_data = request.data.get('images')
@@ -990,31 +1016,55 @@ class ListingDetailView(APIView):
                 if 'images' not in request.data and 'pictures' not in request.data:
                     images = list(listing.images) if listing.images else []
                 
-                listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
-                # Ensure listings directory exists
-                os.makedirs(listings_dir, exist_ok=True)
+                from .supabase_storage import upload_file_to_supabase
+                import uuid
                 
                 for file in uploaded_files:
-                    # Generate unique filename to avoid conflicts
-                    from django.utils.text import get_valid_filename
-                    import uuid
-                    
                     # Get file extension
                     file_ext = os.path.splitext(file.name)[1] or '.jpg'
                     # Create unique filename
                     unique_filename = f"{uuid.uuid4()}{file_ext}"
-                    file_path = os.path.join('listings', unique_filename)
+                    file_path = f"listings/{unique_filename}"
                     
-                    # Save file
-                    saved_path = default_storage.save(file_path, ContentFile(file.read()))
-                    # Generate absolute URL pointing to backend (always use BACKEND_URL to avoid frontend host issues)
-                    backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                    file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
+                    # Try to upload to Supabase Storage first
+                    supabase_url = None
+                    try:
+                        # Reset file pointer
+                        file.seek(0)
+                        # Upload to Supabase Storage
+                        supabase_url = upload_file_to_supabase(
+                            file,
+                            'listings',  # bucket name
+                            file_path,
+                            content_type=file.content_type
+                        )
+                    except Exception as e:
+                        if settings.DEBUG:
+                            print(f"⚠️ Supabase upload failed, using local storage: {str(e)}")
                     
-                    images.append({
-                        'name': file.name,
-                        'url': file_url
-                    })
+                    if supabase_url:
+                        # Use Supabase URL
+                        images.append({
+                            'name': file.name,
+                            'url': supabase_url
+                        })
+                    else:
+                        # Fallback to local storage
+                        listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
+                        os.makedirs(listings_dir, exist_ok=True)
+                        local_file_path = os.path.join('listings', unique_filename)
+                        
+                        # Reset file pointer
+                        file.seek(0)
+                        saved_path = default_storage.save(local_file_path, ContentFile(file.read()))
+                        # Generate absolute URL pointing to backend
+                        backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                        file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
+                        
+                        images.append({
+                            'name': file.name,
+                            'url': file_url
+                        })
                 listing_data['images'] = images
             
             # For partial updates, ensure we don't accidentally clear required fields
@@ -3746,3 +3796,47 @@ class PasswordResetConfirmView(APIView):
 
 # Import admin views
 from .admin_views import AdminStatsView, AdminAnalyticsView, AdminRevenueView
+
+
+def serve_media(request, path):
+    """
+    Serve media files in production.
+    This view handles requests to /media/... paths.
+    """
+    from django.http import FileResponse, Http404
+    import mimetypes
+    
+    # Security: Prevent directory traversal
+    if '..' in path or path.startswith('/'):
+        raise Http404("Invalid path")
+    
+    # Construct full file path
+    file_path = os.path.join(settings.MEDIA_ROOT, path)
+    
+    # Ensure the file is within MEDIA_ROOT (security check)
+    file_path = os.path.normpath(file_path)
+    if not file_path.startswith(os.path.normpath(settings.MEDIA_ROOT)):
+        raise Http404("Invalid path")
+    
+    # Check if file exists
+    if not os.path.exists(file_path) or not os.path.isfile(file_path):
+        raise Http404("File not found")
+    
+    # Determine content type
+    content_type, _ = mimetypes.guess_type(file_path)
+    if not content_type:
+        content_type = 'application/octet-stream'
+    
+    # Serve the file
+    try:
+        response = FileResponse(
+            open(file_path, 'rb'),
+            content_type=content_type
+        )
+        # Add headers for better caching and security
+        response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
+        # Cache for 1 hour
+        response['Cache-Control'] = 'public, max-age=3600'
+        return response
+    except (IOError, OSError):
+        raise Http404("File not found")

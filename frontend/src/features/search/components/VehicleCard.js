@@ -1,39 +1,11 @@
 'use client';
 
 import { formatPrice, showPricePerDay } from '@/features/search';
+import { getVehicleImageUrl } from '@/utils/imageUtils';
 
 export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFavorite, favoritesLoading }) {
-  // Handle different image field formats from API
-  const getImageUrl = () => {
-    // Try different possible field names for images
-    if (car.images && car.images.length > 0) {
-      const img = car.images[0];
-      // If it's an object with url or image field
-      if (typeof img === 'object') {
-        return img.url || img.image || img.url_path || '/carsymbol.jpg';
-      }
-      // If it's a string (direct URL)
-      if (typeof img === 'string') {
-        // Check if it's a relative path or absolute URL
-        if (img.startsWith('http://') || img.startsWith('https://')) {
-          return img;
-        }
-        // If relative path, add base URL if needed
-        if (img.startsWith('/')) {
-          return img;
-        }
-        return `/${img}`;
-      }
-    }
-    // Try alternative field names
-    if (car.image) return car.image;
-    if (car.photo) return car.photo;
-    if (car.thumbnail) return car.thumbnail;
-    
-    return '/carsymbol.jpg';
-  };
-  
-  const imageUrl = getImageUrl();
+  // Use the image utility to fix URLs
+  const imageUrl = getVehicleImageUrl(car);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow overflow-hidden">

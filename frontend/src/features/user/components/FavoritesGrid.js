@@ -2,6 +2,7 @@
 
 import { formatCurrency } from '../utils/formatting';
 import { Heart, MapPin, Users, DollarSign, Calendar, Car, Loader2 } from 'lucide-react';
+import { getVehicleImageUrl } from '@/utils/imageUtils';
 
 export default function FavoritesGrid({ favorites, loading, onRemoveFavorite, onBookNow, onViewDetails, viewMode = 'grid', removingFavorite = null }) {
   if (loading) {
@@ -35,15 +36,7 @@ export default function FavoritesGrid({ favorites, loading, onRemoveFavorite, on
   }
 
   const getCarImage = (car) => {
-    if (car.pictures && Array.isArray(car.pictures) && car.pictures.length > 0) {
-      return car.pictures[0];
-    }
-    if (car.images && Array.isArray(car.images) && car.images.length > 0) {
-      return car.images[0];
-    }
-    if (car.image) return car.image;
-    if (car.image_url) return car.image_url;
-    return '/carsymbol.jpg';
+    return getVehicleImageUrl(car);
   };
 
   if (viewMode === 'list') {

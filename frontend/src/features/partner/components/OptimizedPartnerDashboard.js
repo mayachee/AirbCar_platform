@@ -244,6 +244,7 @@ export default function OptimizedPartnerDashboard() {
               rejectBooking={rejectBooking}
               cancelBooking={cancelBooking}
               refetch={refetch}
+              setCurrentView={setCurrentView}
             />
           </div>
         </div>

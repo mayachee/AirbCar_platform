@@ -49,6 +49,9 @@ urlpatterns = [
     # Health check endpoint
     path('api/health/', views.HealthCheckView.as_view(), name='health'),
     
+    # Media file serving (for production)
+    path('media/<path:path>', views.serve_media, name='serve-media'),
+    
     # Auth endpoints
     path('api/login/', views.LoginView.as_view(), name='login'),
     path('api/register/', views.RegisterView.as_view(), name='register'),

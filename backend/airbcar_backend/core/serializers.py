@@ -235,28 +235,54 @@ class ListingSerializer(serializers.ModelSerializer):
                 if not url:
                     return url
                 
+                # If it's a Supabase Storage URL, return as is (don't modify)
+                if 'supabase.co' in url and '/storage/v1/object/public/' in url:
+                    return url
+                
                 # If it's a relative path starting with /media/, make it absolute
                 if url.startswith('/media/'):
                     return f"{backend_url}{url}"
                 
                 # If it's already an absolute URL
                 if url.startswith('http://') or url.startswith('https://'):
+                    # Check for malformed URLs with /partner/airbcar-backend/ or similar patterns
+                    if '/partner/' in url or '/airbcar-backend/' in url:
+                        # Extract the media path if it exists
+                        if '/media/' in url:
+                            media_index = url.find('/media/')
+                            media_path = url[media_index:]
+                            # Remove query parameters and fragments
+                            if '?' in media_path:
+                                media_path = media_path.split('?')[0]
+                            if '#' in media_path:
+                                media_path = media_path.split('#')[0]
+                            return f"{backend_url}{media_path}"
+                    
                     # Check if it contains /media/ - extract the media path and reconstruct
                     if '/media/' in url:
-                        # Extract everything after /media/ including /media/ itself
-                        media_index = url.find('/media/')
-                        media_path = url[media_index:]  # Get /media/... onwards
-                        # Remove any query parameters or fragments
-                        if '?' in media_path:
-                            media_path = media_path.split('?')[0]
-                        if '#' in media_path:
-                            media_path = media_path.split('#')[0]
-                        return f"{backend_url}{media_path}"
-                    # If it's an absolute URL but doesn't contain /media/, check if it's pointing to wrong host
-                    # and might be a backend URL that needs fixing
-                    elif backend_url not in url and ('airbcar-backend' in url or 'onrender.com' in url):
-                        # This might be a malformed URL, but if it doesn't have /media/, leave it as is
-                        pass
+                        # Check if it's pointing to wrong domain (frontend domain instead of backend)
+                        if 'www.airbcar.com' in url or 'airbcar.com' in url:
+                            # Extract everything after /media/ including /media/ itself
+                            media_index = url.find('/media/')
+                            media_path = url[media_index:]  # Get /media/... onwards
+                            # Remove any query parameters or fragments
+                            if '?' in media_path:
+                                media_path = media_path.split('?')[0]
+                            if '#' in media_path:
+                                media_path = media_path.split('#')[0]
+                            return f"{backend_url}{media_path}"
+                        # If it already points to correct backend, return as is
+                        elif backend_url in url:
+                            return url
+                        # Otherwise extract media path and use backend URL
+                        else:
+                            media_index = url.find('/media/')
+                            media_path = url[media_index:]
+                            if '?' in media_path:
+                                media_path = media_path.split('?')[0]
+                            if '#' in media_path:
+                                media_path = media_path.split('#')[0]
+                            return f"{backend_url}{media_path}"
                 
                 return url
             
