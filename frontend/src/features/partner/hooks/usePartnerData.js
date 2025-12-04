@@ -84,11 +84,22 @@ export function usePartnerData() {
       
       // Merge with existing vehicles to avoid losing locally added ones
       setVehicles(prev => {
+        // Filter out any response objects that might have been added incorrectly
+        const cleanPrev = prev.filter(v => {
+          // Remove objects that are API response objects (have message/success but no proper vehicle structure)
+          if (v.message && v.success && !v.make && !v.model && !v.id) {
+            return false;
+          }
+          // Keep only valid vehicle objects with an id
+          return v && v.id;
+        });
+        
         // If we have existing vehicles and new vehicles, merge them (avoid duplicates)
-        if (prev.length > 0 && vehiclesList.length > 0) {
-          const merged = [...prev];
+        if (cleanPrev.length > 0 && vehiclesList.length > 0) {
+          const merged = [...cleanPrev];
           vehiclesList.forEach(newVehicle => {
-            if (newVehicle.id && !merged.some(v => v.id === newVehicle.id)) {
+            // Only add valid vehicle objects
+            if (newVehicle && newVehicle.id && !merged.some(v => v.id === newVehicle.id)) {
               merged.push(newVehicle);
             }
           });
@@ -96,12 +107,13 @@ export function usePartnerData() {
           return merged;
         }
         // If we have existing vehicles but no new ones, keep existing (might be a fetch issue)
-        if (prev.length > 0 && vehiclesList.length === 0) {
-          console.log('usePartnerData - Keeping existing vehicles (no new data from API):', prev.length);
-          return prev;
+        if (cleanPrev.length > 0 && vehiclesList.length === 0) {
+          console.log('usePartnerData - Keeping existing vehicles (no new data from API):', cleanPrev.length);
+          return cleanPrev;
         }
-        // Otherwise use the new list
-        return vehiclesList;
+        // Otherwise use the new list (also filter it to ensure it's clean)
+        const cleanVehiclesList = vehiclesList.filter(v => v && v.id && !(v.message && v.success && !v.make));
+        return cleanVehiclesList;
       });
       
       setBookings(dashboardData.bookings || []);
@@ -168,11 +180,16 @@ export function usePartnerData() {
         console.log('Bulk create response:', response);
         console.log('New vehicles:', newVehicles);
         if (Array.isArray(newVehicles) && newVehicles.length > 0) {
+          // Filter out any response objects and ensure we only have valid vehicles
+          const validVehicles = newVehicles.filter(v => v && v.id && !(v.message && v.success && !v.make));
           setVehicles(prev => {
-            const updated = [...prev, ...newVehicles];
+            // Also clean existing vehicles
+            const cleanPrev = prev.filter(v => v && v.id && !(v.message && v.success && !v.make));
+            const updated = [...cleanPrev, ...validVehicles];
             console.log('Updated vehicles list (bulk):', updated.length, updated);
             return updated;
           });
+          return validVehicles;
         }
         return newVehicles;
       } else {
@@ -215,9 +232,31 @@ export function usePartnerData() {
   const updateVehicle = async (vehicleId, vehicleData) => {
     try {
       const response = await partnerService.updateVehicle(vehicleId, vehicleData);
-      const updatedVehicle = response.data;
-      setVehicles(prev => prev.map(v => v.id === vehicleId ? updatedVehicle : v));
-      return updatedVehicle;
+      // API client wraps: { data: backendResponse, success: true }
+      // Backend returns: { data: {...listing...}, message: '...', success: true, ... }
+      // So we need: response.data.data (the actual listing)
+      const updatedVehicle = response.data?.data || response.data;
+      
+      // Ensure we have a valid vehicle object with an id
+      if (updatedVehicle && updatedVehicle.id) {
+        setVehicles(prev => {
+          // Filter out any invalid objects (response objects) and update the correct vehicle
+          const cleaned = prev.filter(v => {
+            // Remove objects that are response objects (have message/success but no proper vehicle structure)
+            if (v.message && v.success && !v.make && !v.model) {
+              return false;
+            }
+            return true;
+          });
+          return cleaned.map(v => v.id === vehicleId ? updatedVehicle : v);
+        });
+        return updatedVehicle;
+      } else {
+        console.warn('Updated vehicle missing or invalid:', updatedVehicle);
+        // Refetch vehicles to get the updated data
+        await refetch();
+        return updatedVehicle;
+      }
     } catch (error) {
       console.error('Error updating vehicle:', error);
       throw error;
