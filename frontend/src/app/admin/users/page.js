@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 
 // Force dynamic rendering to prevent static generation
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import { useUsers, useAdminAuth } from "../hooks";
 import { 
   UsersSidebar, 
