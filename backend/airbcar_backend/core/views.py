@@ -3533,66 +3533,76 @@ class RegisterView(APIView):
                     'error': 'Password is too short',
                     'detail': 'Password must be at least 8 characters long'
                 }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Validate partner fields if role is partner
-        if role == 'partner':
-            if not business_name or not business_name.strip():
-                return Response({
-                    'error': 'Business name is required for partner registration'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            if not tax_id or not tax_id.strip():
-                return Response({
-                    'error': 'Tax ID is required for partner registration'
-                }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if User.objects.filter(email=email).exists():
-            return Response({
-                'error': 'User with this email already exists'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            # Create user (initially inactive until email is verified)
-            user = User.objects.create_user(
-                username=email,
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name,
-                phone_number=phone_number if phone_number else None,
-                role=role,
-                is_active=False,  # User must verify email before activation
-                is_verified=False
-            )
             
-            # Create partner profile if role is partner
+            # Validate partner fields if role is partner
             if role == 'partner':
-                Partner.objects.create(
-                    user=user,
-                    business_name=business_name.strip(),
-                    tax_id=tax_id.strip(),
-                    business_type=business_type,
-                    is_verified=False  # Partners need verification
+                if not business_name or not business_name.strip():
+                    return Response({
+                        'error': 'Business name is required for partner registration'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                if not tax_id or not tax_id.strip():
+                    return Response({
+                        'error': 'Tax ID is required for partner registration'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if User.objects.filter(email=email).exists():
+                return Response({
+                    'error': 'User with this email already exists'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                # Create user (initially inactive until email is verified)
+                user = User.objects.create_user(
+                    username=email,
+                    email=email,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    phone_number=phone_number if phone_number else None,
+                    role=role,
+                    is_active=False,  # User must verify email before activation
+                    is_verified=False
                 )
-            
-            # Send verification email
-            verification = send_verification_email(user)
-            
-            if verification:
-                user_serializer = UserSerializer(user)
+                
+                # Create partner profile if role is partner
+                if role == 'partner':
+                    Partner.objects.create(
+                        user=user,
+                        business_name=business_name.strip(),
+                        tax_id=tax_id.strip(),
+                        business_type=business_type,
+                        is_verified=False  # Partners need verification
+                    )
+                
+                # Send verification email
+                verification = send_verification_email(user)
+                
+                if verification:
+                    user_serializer = UserSerializer(user)
+                    return Response({
+                        'data': user_serializer.data,
+                        'message': 'Account created successfully! Please check your email to verify your account.',
+                        'email_sent': True
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    # If email sending fails, still create the user but warn them
+                    user_serializer = UserSerializer(user)
+                    return Response({
+                        'data': user_serializer.data,
+                        'message': 'Account created, but verification email could not be sent. Please contact support.',
+                        'email_sent': False
+                    }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                import traceback
+                error_msg = str(e)
+                if settings.DEBUG:
+                    print(f"Error during registration: {error_msg}")
+                    print(traceback.format_exc())
                 return Response({
-                    'data': user_serializer.data,
-                    'message': 'Account created successfully! Please check your email to verify your account.',
-                    'email_sent': True
-                }, status=status.HTTP_201_CREATED)
-            else:
-                # If email sending fails, still create the user but warn them
-                user_serializer = UserSerializer(user)
-                return Response({
-                    'data': user_serializer.data,
-                    'message': 'Account created, but verification email could not be sent. Please contact support.',
-                    'email_sent': False
-                }, status=status.HTTP_201_CREATED)
+                    'error': 'An error occurred during registration'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
+            import traceback
             error_msg = str(e)
             if settings.DEBUG:
                 print(f"Error during registration: {error_msg}")
