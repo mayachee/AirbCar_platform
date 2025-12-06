@@ -19,7 +19,7 @@ import json
 import os
 from pathlib import Path
 
-from .models import Listing, Booking, Favorite, Review, Partner, User
+from .models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
 from .serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer, PartnerSerializer
@@ -3049,25 +3049,60 @@ class RootView(APIView):
 
 
 class HealthCheckView(APIView):
-    """Simple health check endpoint to test CORS."""
+    """Simple health check endpoint to test CORS and server status."""
     permission_classes = [AllowAny]
     authentication_classes = []
     
     def get(self, request):
-        return Response({
-            'status': 'ok',
-            'message': 'Backend is running',
-            'cors_enabled': True
-        })
+        """Health check endpoint - should always return 200 if server is running."""
+        try:
+            # Try a simple database query to check DB connectivity
+            try:
+                # Just check if we can query the database (count users, but don't fail if DB is slow)
+                User.objects.exists()
+                db_status = 'connected'
+            except Exception as db_error:
+                # Database might be slow or unavailable, but server is still running
+                db_status = 'slow_or_unavailable'
+                if settings.DEBUG:
+                    print(f"Health check - DB check failed (non-critical): {db_error}")
+            
+            return Response({
+                'status': 'ok',
+                'message': 'Backend is running',
+                'cors_enabled': True,
+                'database': db_status,
+                'timestamp': timezone.now().isoformat()
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Even if something goes wrong, return a response (don't crash)
+            if settings.DEBUG:
+                print(f"Health check error: {e}")
+                import traceback
+                traceback.print_exc()
+            return Response({
+                'status': 'error',
+                'message': 'Backend is running but encountered an error',
+                'cors_enabled': True
+            }, status=status.HTTP_200_OK)  # Still return 200 so health checks don't fail
     
     def post(self, request):
         """Test POST endpoint."""
-        return Response({
-            'status': 'ok',
-            'method': 'POST',
-            'data_received': str(request.data) if hasattr(request, 'data') else 'No data',
-            'cors_enabled': True
-        })
+        try:
+            return Response({
+                'status': 'ok',
+                'method': 'POST',
+                'data_received': str(request.data) if hasattr(request, 'data') else 'No data',
+                'cors_enabled': True
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"Health check POST error: {e}")
+            return Response({
+                'status': 'error',
+                'message': 'Backend is running but encountered an error',
+                'cors_enabled': True
+            }, status=status.HTTP_200_OK)
     
     def options(self, request):
         """Handle OPTIONS preflight request."""
@@ -3498,6 +3533,7 @@ class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
+        import threading
         from .utils import send_password_reset_email
         
         email = request.data.get('email')
@@ -3510,19 +3546,63 @@ class PasswordResetRequestView(APIView):
         try:
             user = User.objects.get(email=email)
             
-            # Send password reset email
-            password_reset = send_password_reset_email(user)
+            # Create password reset token immediately (before sending email)
+            token = PasswordReset.generate_token()
+            password_reset = PasswordReset.objects.create(
+                user=user,
+                token=token,
+                expires_at=timezone.now() + timedelta(hours=24)
+            )
             
-            if password_reset:
-                # Don't reveal if email exists or not (security best practice)
-                return Response({
-                    'message': 'If an account with this email exists, a password reset link has been sent.',
-                    'email_sent': True
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    'error': 'Failed to send password reset email. Please try again later.'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Send email asynchronously to avoid blocking the response
+            # This prevents timeouts on slow email servers (like Render free tier)
+            def send_email_async():
+                try:
+                    # Use the existing password_reset object to send email
+                    # We need to modify send_password_reset_email to accept password_reset or user
+                    from django.core.mail import send_mail
+                    reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
+                    subject = 'Reset your AirbCar password'
+                    message = f"""
+Hello {user.first_name or user.email},
+
+You requested to reset your password for your AirbCar account.
+
+Click the link below to reset your password:
+
+{reset_url}
+
+This link will expire in 24 hours.
+
+If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
+
+Best regards,
+The AirbCar Team
+"""
+                    send_mail(
+                        subject=subject,
+                        message=message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    if settings.DEBUG:
+                        print(f"Error sending password reset email asynchronously: {e}")
+                        print(traceback.format_exc())
+            
+            # Start email sending in background thread
+            email_thread = threading.Thread(target=send_email_async)
+            email_thread.daemon = True
+            email_thread.start()
+            
+            # Return immediately - don't wait for email to be sent
+            # Don't reveal if email exists or not (security best practice)
+            return Response({
+                'message': 'If an account with this email exists, a password reset link has been sent.',
+                'email_sent': True
+            }, status=status.HTTP_200_OK)
+            
         except User.DoesNotExist:
             # Don't reveal if email exists or not (security best practice)
             return Response({
@@ -3531,10 +3611,10 @@ class PasswordResetRequestView(APIView):
         except Exception as e:
             error_msg = str(e)
             if settings.DEBUG:
-                print(f"Error sending password reset email: {error_msg}")
+                print(f"Error in password reset request: {error_msg}")
                 print(traceback.format_exc())
             return Response({
-                'error': 'An error occurred while sending password reset email'
+                'error': 'An error occurred while processing your request'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

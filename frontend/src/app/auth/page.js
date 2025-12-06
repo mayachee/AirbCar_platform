@@ -77,16 +77,39 @@ function AuthForm() {
   // 3. Add authorized JavaScript origins:
   //    - http://localhost:3001
   //    - http://127.0.0.1:3001
-  //    - Your production domain (if applicable)
+  //    - https://www.airbcar.com (production)
+  //    - https://airbcar.com (production)
   // 4. Add authorized redirect URIs:
   //    - http://localhost:3001
   //    - http://127.0.0.1:3001
+  //    - https://www.airbcar.com (production)
+  //    - https://airbcar.com (production)
   useEffect(() => {
     const initGoogleSignIn = async () => {
       const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
       if (!googleClientId || typeof window === 'undefined') {
         return
       }
+
+      // Listen for Google Sign-In errors
+      const handleGoogleError = (event) => {
+        if (event.detail && typeof event.detail === 'object') {
+          const errorMessage = event.detail.message || String(event.detail)
+          if (errorMessage.includes('origin is not allowed') || errorMessage.includes('The given origin is not allowed')) {
+            const currentOrigin = window.location.origin
+            setError(
+              `Google Sign-In configuration error: The origin "${currentOrigin}" is not authorized. ` +
+              `Please add it to your Google Cloud Console OAuth client settings. ` +
+              `Go to: https://console.cloud.google.com/apis/credentials`
+            )
+            setGoogleReady(false)
+            return
+          }
+        }
+      }
+
+      // Add event listener for Google Sign-In errors
+      window.addEventListener('gsi_error', handleGoogleError)
 
       try {
         // Load Google Identity Services script if not already loaded
@@ -179,8 +202,16 @@ function AuthForm() {
                 setIsLoading(false)
               }
             } catch (error) {
-              console.error('Google sign-in error:', error)
-              setError('Failed to sign in with Google. Please try again.')
+              // Suppress COOP and other non-critical Google Sign-In errors
+              const errorMessage = error?.message || String(error)
+              if (
+                !errorMessage.includes('Cross-Origin-Opener-Policy') &&
+                !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
+                !errorMessage.includes('play.google.com/log')
+              ) {
+                console.error('Google sign-in error:', error)
+                setError('Failed to sign in with Google. Please try again.')
+              }
               setIsLoading(false)
             }
           },
@@ -188,8 +219,41 @@ function AuthForm() {
 
         setGoogleReady(true)
       } catch (error) {
-        console.error('Failed to initialize Google Sign-In:', error)
-        setGoogleReady(false)
+        // Suppress COOP and other non-critical Google Sign-In errors
+        const errorMessage = error?.message || String(error)
+        
+        // Check for origin not allowed error
+        if (errorMessage.includes('origin is not allowed') || errorMessage.includes('The given origin is not allowed')) {
+          const currentOrigin = window.location.origin
+          setError(
+            `Google Sign-In configuration error: The origin "${currentOrigin}" is not authorized in Google Cloud Console. ` +
+            `Please add it to your OAuth 2.0 Client ID settings at: ` +
+            `https://console.cloud.google.com/apis/credentials`
+          )
+          setGoogleReady(false)
+          return
+        }
+        
+        if (
+          !errorMessage.includes('Cross-Origin-Opener-Policy') &&
+          !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
+          !errorMessage.includes('play.google.com/log')
+        ) {
+          console.error('Failed to initialize Google Sign-In:', error)
+        }
+        // Still set ready to false if it's a critical error
+        if (errorMessage.includes('Google Identity Services failed to load') || 
+            errorMessage.includes('Failed to load Google Identity Services')) {
+          setGoogleReady(false)
+        } else {
+          // For non-critical errors, still try to proceed
+          setGoogleReady(true)
+        }
+      }
+
+      // Cleanup event listener on unmount
+      return () => {
+        window.removeEventListener('gsi_error', handleGoogleError)
       }
     }
 
@@ -332,6 +396,31 @@ function AuthForm() {
   // Render Google button in container
   useEffect(() => {
     if (googleReady && typeof window !== 'undefined' && window.google && window.google.accounts) {
+      // Monitor for origin errors via a one-time check after button render attempt
+      const checkForOriginError = () => {
+        // Check if button failed to render due to origin error
+        const signInContainer = document.getElementById('google-signin-button-container')
+        const signUpContainer = document.getElementById('google-signin-button-container-signup')
+        
+        // If containers are empty after a delay, it might be an origin error
+        setTimeout(() => {
+          if (signInContainer && signInContainer.children.length === 0 && googleReady) {
+            const currentOrigin = window.location.origin
+            // Only show error if we're sure it's an origin issue (check console for GSI_LOGGER messages)
+            const hasOriginError = window.gsiOriginError || false
+            if (hasOriginError) {
+              setError(
+                `Google Sign-In Error: The origin "${currentOrigin}" is not authorized. ` +
+                `Please add "${currentOrigin}" to your Google Cloud Console OAuth client settings. ` +
+                `Visit: https://console.cloud.google.com/apis/credentials and edit your OAuth 2.0 Client ID (${process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.substring(0, 20)}...). ` +
+                `Add "${currentOrigin}" to "Authorized JavaScript origins" and "Authorized redirect URIs".`
+              )
+              setGoogleReady(false)
+            }
+          }
+        }, 2000)
+      }
+
       // Render button for sign-in form
       const signInContainer = document.getElementById('google-signin-button-container')
       if (signInContainer && signInContainer.children.length === 0) {
@@ -344,7 +433,15 @@ function AuthForm() {
             type: 'standard',
           })
         } catch (error) {
-          console.error('Error rendering Google button (sign-in):', error)
+          // Suppress COOP and other non-critical Google Sign-In errors
+          const errorMessage = error?.message || String(error)
+          if (
+            !errorMessage.includes('Cross-Origin-Opener-Policy') &&
+            !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
+            !errorMessage.includes('play.google.com/log')
+          ) {
+            console.error('Error rendering Google button (sign-in):', error)
+          }
         }
       }
 
@@ -360,9 +457,19 @@ function AuthForm() {
             type: 'standard',
           })
         } catch (error) {
-          console.error('Error rendering Google button (sign-up):', error)
+          // Suppress COOP and other non-critical Google Sign-In errors
+          const errorMessage = error?.message || String(error)
+          if (
+            !errorMessage.includes('Cross-Origin-Opener-Policy') &&
+            !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
+            !errorMessage.includes('play.google.com/log')
+          ) {
+            console.error('Error rendering Google button (sign-up):', error)
+          }
         }
       }
+
+      checkForOriginError()
     }
   }, [googleReady, activeTab])
 
