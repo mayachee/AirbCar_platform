@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
+// Force dynamic rendering to prevent static generation
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { useUsers, useAdminAuth } from "../hooks";
 import { 
   UsersSidebar, 
@@ -39,7 +43,6 @@ export default function AdminUsersPage() {
     handleCreate,
     refetch: refetchUsers
   } = useUsers();
-
 
   const handleViewUser = async (user) => {
     try {
@@ -125,25 +128,16 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {/* Always show debug info */}
-        <div className="bg-gray-50 border border-gray-200 px-4 py-2 rounded mb-4 text-xs">
-          <strong>Debug Status:</strong>
-          <span className="ml-2">Loading: {usersLoading ? 'Yes' : 'No'}</span>
-          <span className="ml-2">Error: {usersError || 'None'}</span>
-          <span className="ml-2">Total Users: {totalUsers}</span>
-          <span className="ml-2">Users Array Length: {Array.isArray(users) ? users.length : 'N/A'}</span>
-          <button
-            onClick={() => {
-              console.log('🔍 MANUAL DEBUG - Full users array:', users);
-              console.log('🔍 MANUAL DEBUG - Users type:', typeof users);
-              console.log('🔍 MANUAL DEBUG - Is array:', Array.isArray(users));
-              alert(`Users in state: ${Array.isArray(users) ? users.length : 'Not an array'}\n\nCheck console for full details.`);
-            }}
-            className="ml-4 px-2 py-1 bg-gray-600 text-white rounded text-xs"
-          >
-            Log Users to Console
-          </button>
-        </div>
+        {/* Debug info - only show in development */}
+        {process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && (
+          <div className="bg-gray-50 border border-gray-200 px-4 py-2 rounded mb-4 text-xs">
+            <strong>Debug Status:</strong>
+            <span className="ml-2">Loading: {usersLoading ? 'Yes' : 'No'}</span>
+            <span className="ml-2">Error: {usersError || 'None'}</span>
+            <span className="ml-2">Total Users: {totalUsers}</span>
+            <span className="ml-2">Users Array Length: {Array.isArray(users) ? users.length : 'N/A'}</span>
+          </div>
+        )}
 
         {/* Debug Info - Show when no users and no error */}
         {!usersLoading && !usersError && totalUsers === 0 && (
@@ -174,11 +168,14 @@ export default function AdminUsersPage() {
                     const data = await response.json();
                     
                     alert(`API Response:\n\nStatus: ${response.status}\n\nResponse Structure:\n${JSON.stringify(data, null, 2).substring(0, 2000)}${JSON.stringify(data, null, 2).length > 2000 ? '\n...(truncated)' : ''}\n\nCheck console for full response.`);
-                    console.log('🔍 RAW API RESPONSE:', data);
-                    console.log('🔍 Response type:', typeof data);
-                    console.log('🔍 Is array:', Array.isArray(data));
-                    if (data && typeof data === 'object') {
-                      console.log('🔍 Response keys:', Object.keys(data));
+                    // Only log in development mode
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('🔍 RAW API RESPONSE:', data);
+                      console.log('🔍 Response type:', typeof data);
+                      console.log('🔍 Is array:', Array.isArray(data));
+                      if (data && typeof data === 'object') {
+                        console.log('🔍 Response keys:', Object.keys(data));
+                      }
                     }
                   } catch (err) {
                     alert(`Error: ${err.message}\n\nCheck console for details.`);
