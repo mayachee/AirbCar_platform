@@ -20,7 +20,8 @@ export function useVehicleData(vehicleId) {
         setLoading(true)
         setError(null)
         
-        const response = await apiClient.get(`/listings/${vehicleId}/`)
+        // Increase timeout to 90 seconds for vehicle details (backend may be slow)
+        const response = await apiClient.get(`/listings/${vehicleId}/`, undefined, { timeout: 90000 })
         
         // Handle different response structures
         const vehicleData = response?.data?.data || response?.data || response
@@ -32,7 +33,15 @@ export function useVehicleData(vehicleId) {
         }
       } catch (err) {
         console.error('Error fetching vehicle:', err)
-        setError(err.message || 'Failed to load vehicle details')
+        
+        // Handle timeout errors specifically
+        if (err?.isTimeoutError || err?.message?.includes('timeout')) {
+          setError('The server is taking too long to respond. Please try again in a moment.')
+        } else if (err?.status === 404) {
+          setError('Vehicle not found')
+        } else {
+          setError(err.message || 'Failed to load vehicle details')
+        }
       } finally {
         setLoading(false)
       }

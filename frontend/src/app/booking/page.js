@@ -106,13 +106,25 @@ function BookingPageContent() {
       
       try {
         setVehicleLoading(true)
-        const response = await apiClient.get(`/listings/${validCarId}/`)
+        setError(null)
+        // Increase timeout to 90 seconds for vehicle details (backend may be slow)
+        const response = await apiClient.get(`/listings/${validCarId}/`, undefined, { timeout: 90000 })
         // Handle different response structures
         const vehicleData = response?.data?.data || response?.data || response
         setVehicle(vehicleData)
       } catch (err) {
         console.error('Error fetching vehicle:', err)
-        setError(`Failed to load vehicle details: ${err.message || 'Unknown error'}`)
+        
+        // Handle timeout errors specifically
+        if (err?.isTimeoutError || err?.message?.includes('timeout')) {
+          setError('The server is taking too long to respond. Please try again in a moment. If the problem persists, the server may be temporarily unavailable.')
+        } else if (err?.status === 404) {
+          setError('Vehicle not found. Please check the vehicle ID and try again.')
+        } else if (err?.status === 403) {
+          setError('You do not have permission to view this vehicle.')
+        } else {
+          setError(`Failed to load vehicle details: ${err.message || 'Unknown error'}. Please try refreshing the page.`)
+        }
       } finally {
         setVehicleLoading(false)
       }

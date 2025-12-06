@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { partnerService } from '@/features/partner/services/partnerService';
+import { fixImageUrl } from '@/utils/imageUtils';
 
 export function usePartnerData() {
   const [vehicles, setVehicles] = useState([]);
@@ -22,6 +23,40 @@ export function usePartnerData() {
   const [reviews, setReviews] = useState(null);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Helper function to normalize vehicle images
+  const normalizeVehicleImages = useCallback((vehicle) => {
+    if (!vehicle) return vehicle;
+    
+    // Create a copy to avoid mutating the original
+    const normalized = { ...vehicle };
+    
+    // Ensure images is an array
+    if (!normalized.images || !Array.isArray(normalized.images)) {
+      normalized.images = [];
+    }
+    
+    // Process each image to ensure proper URL format
+    normalized.images = normalized.images.map(img => {
+      if (typeof img === 'string') {
+        // If it's a string, fix the URL
+        return fixImageUrl(img);
+      } else if (typeof img === 'object' && img !== null) {
+        // If it's an object, fix the url/image/path field
+        if (img.url) {
+          return { ...img, url: fixImageUrl(img.url) };
+        } else if (img.image) {
+          return { ...img, image: fixImageUrl(img.image), url: fixImageUrl(img.image) };
+        } else if (img.path) {
+          return { ...img, path: fixImageUrl(img.path), url: fixImageUrl(img.path) };
+        }
+        return img;
+      }
+      return img;
+    });
+    
+    return normalized;
+  }, []);
 
   const fetchPartnerData = async () => {
     try {
@@ -92,7 +127,7 @@ export function usePartnerData() {
           }
           // Keep only valid vehicle objects with an id
           return v && v.id;
-        });
+        }).map(normalizeVehicleImages);
         
         // If we have existing vehicles and new vehicles, merge them (avoid duplicates)
         if (cleanPrev.length > 0 && vehiclesList.length > 0) {
@@ -100,7 +135,7 @@ export function usePartnerData() {
           vehiclesList.forEach(newVehicle => {
             // Only add valid vehicle objects
             if (newVehicle && newVehicle.id && !merged.some(v => v.id === newVehicle.id)) {
-              merged.push(newVehicle);
+              merged.push(normalizeVehicleImages(newVehicle));
             }
           });
           console.log('usePartnerData - Merged vehicles:', merged.length, merged);
@@ -112,7 +147,9 @@ export function usePartnerData() {
           return cleanPrev;
         }
         // Otherwise use the new list (also filter it to ensure it's clean)
-        const cleanVehiclesList = vehiclesList.filter(v => v && v.id && !(v.message && v.success && !v.make));
+        const cleanVehiclesList = vehiclesList
+          .filter(v => v && v.id && !(v.message && v.success && !v.make))
+          .map(normalizeVehicleImages);
         return cleanVehiclesList;
       });
       
@@ -181,10 +218,14 @@ export function usePartnerData() {
         console.log('New vehicles:', newVehicles);
         if (Array.isArray(newVehicles) && newVehicles.length > 0) {
           // Filter out any response objects and ensure we only have valid vehicles
-          const validVehicles = newVehicles.filter(v => v && v.id && !(v.message && v.success && !v.make));
+          const validVehicles = newVehicles
+            .filter(v => v && v.id && !(v.message && v.success && !v.make))
+            .map(normalizeVehicleImages);
           setVehicles(prev => {
             // Also clean existing vehicles
-            const cleanPrev = prev.filter(v => v && v.id && !(v.message && v.success && !v.make));
+            const cleanPrev = prev
+              .filter(v => v && v.id && !(v.message && v.success && !v.make))
+              .map(normalizeVehicleImages);
             const updated = [...cleanPrev, ...validVehicles];
             console.log('Updated vehicles list (bulk):', updated.length, updated);
             return updated;
@@ -201,18 +242,21 @@ export function usePartnerData() {
         const newVehicle = response.data?.data || response.data;
         console.log('New vehicle extracted:', newVehicle);
         if (newVehicle && newVehicle.id) {
+          // Normalize images before adding
+          const normalizedVehicle = normalizeVehicleImages({ ...newVehicle });
           setVehicles(prev => {
             // Check if vehicle already exists (avoid duplicates)
-            const exists = prev.some(v => v.id === newVehicle.id);
+            const exists = prev.some(v => v.id === normalizedVehicle.id);
             if (exists) {
-              console.log('Vehicle already in list, updating:', newVehicle.id);
-              return prev.map(v => v.id === newVehicle.id ? newVehicle : v);
+              console.log('Vehicle already in list, updating:', normalizedVehicle.id);
+              return prev.map(v => v.id === normalizedVehicle.id ? normalizedVehicle : normalizeVehicleImages(v));
             } else {
-              const updated = [...prev, newVehicle];
+              const updated = [...prev.map(normalizeVehicleImages), normalizedVehicle];
               console.log('Updated vehicles list (single):', updated.length, updated);
               return updated;
             }
           });
+          return normalizedVehicle;
         } else {
           console.warn('New vehicle missing or invalid:', newVehicle);
         }
@@ -239,18 +283,22 @@ export function usePartnerData() {
       
       // Ensure we have a valid vehicle object with an id
       if (updatedVehicle && updatedVehicle.id) {
+        // Normalize images before updating
+        const normalizedVehicle = normalizeVehicleImages({ ...updatedVehicle });
         setVehicles(prev => {
           // Filter out any invalid objects (response objects) and update the correct vehicle
-          const cleaned = prev.filter(v => {
-            // Remove objects that are response objects (have message/success but no proper vehicle structure)
-            if (v.message && v.success && !v.make && !v.model) {
-              return false;
-            }
-            return true;
-          });
-          return cleaned.map(v => v.id === vehicleId ? updatedVehicle : v);
+          const cleaned = prev
+            .filter(v => {
+              // Remove objects that are response objects (have message/success but no proper vehicle structure)
+              if (v.message && v.success && !v.make && !v.model) {
+                return false;
+              }
+              return true;
+            })
+            .map(normalizeVehicleImages);
+          return cleaned.map(v => v.id === vehicleId ? normalizedVehicle : v);
         });
-        return updatedVehicle;
+        return normalizedVehicle;
       } else {
         console.warn('Updated vehicle missing or invalid:', updatedVehicle);
         // Refetch vehicles to get the updated data

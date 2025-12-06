@@ -12,40 +12,43 @@ export default function Footer() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
+  // Pages that exist and can be prefetched
+  const existingPages = ['/mission', '/search', '/partner', '/booking']
+  
   const footerSections = [
     {
       title: 'Company',
       links: [
-        { label: 'About Us', href: '/about' },
-        { label: 'Mission', href: '/mission' },
-        { label: 'Careers', href: '/careers' },
-        { label: 'Press', href: '/press' },
+        { label: 'About Us', href: '/about', prefetch: false },
+        { label: 'Mission', href: '/mission', prefetch: true },
+        { label: 'Careers', href: '/careers', prefetch: false },
+        { label: 'Press', href: '/press', prefetch: false },
       ]
     },
     {
       title: 'Services',
       links: [
-        { label: 'Car Rental', href: '/search' },
-        { label: 'Partner Program', href: '/partner' },
-        { label: 'Gift Cards', href: '/gift-cards' },
+        { label: 'Car Rental', href: '/search', prefetch: true },
+        { label: 'Partner Program', href: '/partner', prefetch: true },
+        { label: 'Gift Cards', href: '/gift-cards', prefetch: false },
       ]
     },
     {
       title: 'Support',
       links: [
-        { label: 'Help Center', href: '/help' },
-        { label: 'Contact Us', href: '/contact' },
-        { label: 'Safety', href: '/safety' },
-        { label: 'Insurance', href: '/insurance' },
+        { label: 'Help Center', href: '/help', prefetch: false },
+        { label: 'Contact Us', href: '/contact', prefetch: false },
+        { label: 'Safety', href: '/safety', prefetch: false },
+        { label: 'Insurance', href: '/insurance', prefetch: false },
       ]
     },
     {
       title: 'Legal',
       links: [
-        { label: 'Terms of Service', href: '/terms' },
-        { label: 'Privacy Policy', href: '/privacy' },
-        { label: 'Rental Policies', href: '/rental-policies' },
-        { label: 'Cookie Policy', href: '/cookies' },
+        { label: 'Terms of Service', href: '/terms', prefetch: false },
+        { label: 'Privacy Policy', href: '/privacy', prefetch: false },
+        { label: 'Rental Policies', href: '/rental-policies', prefetch: false },
+        { label: 'Cookie Policy', href: '/cookies', prefetch: false },
       ]
     }
   ]
@@ -178,6 +181,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
+                      prefetch={link.prefetch !== undefined ? link.prefetch : existingPages.includes(link.href)}
                       className="text-gray-400 hover:text-white text-sm transition-colors"
                     >
                       {link.label}

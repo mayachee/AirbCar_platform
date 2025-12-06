@@ -52,7 +52,8 @@ class SearchService {
   // Get vehicle by ID
   async getVehicleById(id) {
     try {
-      return await apiClient.get(`/listings/${id}/`, undefined, { timeout: 20000 });
+      // Increase timeout to 90 seconds for vehicle details (backend may be slow)
+      return await apiClient.get(`/listings/${id}/`, undefined, { timeout: 90000 });
     } catch (error) {
       console.error('Error fetching vehicle:', error);
       throw error;
