@@ -125,21 +125,6 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
         </div>
       </div>
 
-      {/* Profile Completion Indicator */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-5 sm:p-6 text-white">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
-          <span className="text-sm font-medium opacity-90">Profile Completion</span>
-          <span className="text-2xl font-bold">{profileCompletion}%</span>
-        </div>
-        <div className="w-full bg-white/20 rounded-full h-2">
-          <div 
-            className="bg-white h-2 rounded-full transition-all duration-300" 
-            style={{ width: `${profileCompletion}%` }}
-          />
-        </div>
-        <p className="text-sm mt-2 opacity-90">{formatProfileCompletion(profileCompletion)}</p>
-      </div>
-
       {/* Basic Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -219,14 +204,9 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           />
           {renderFieldError('dateOfBirth')}
         </div>
-      </div>bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300
-
       {/* Driver's License Documents */}
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver's License Documents</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Upload both sides of your driver's license for verification purposes.
-        </p>
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
             {(accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl) && (

@@ -1763,7 +1763,7 @@ class UserMeView(APIView):
         # Process id_front_document if provided
         if 'id_front_document' in request.FILES:
             file = request.FILES['id_front_document']
-            # Delete old file from Supabase if exists
+            # Delete old file from Supabase if exists (non-blocking - don't wait if it fails)
             if user.id_front_document_url:
                 old_url = user.id_front_document_url
                 if 'storage/v1/object/public' in old_url:
@@ -1773,7 +1773,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'identity_documents')
@@ -1839,7 +1843,7 @@ class UserMeView(APIView):
             file_path = generate_file_path(user.id, file.name, 'license_documents')
             supabase_url = upload_file_to_supabase(
                 file,
-                'identity-documents',
+                'license-documents',  # Fixed: use correct bucket name for license documents
                 file_path,
                 file.content_type
             )
@@ -1868,7 +1872,7 @@ class UserMeView(APIView):
             file_path = generate_file_path(user.id, file.name, 'license_documents')
             supabase_url = upload_file_to_supabase(
                 file,
-                'identity-documents',
+                'license-documents',  # Fixed: use correct bucket name for license documents
                 file_path,
                 file.content_type
             )

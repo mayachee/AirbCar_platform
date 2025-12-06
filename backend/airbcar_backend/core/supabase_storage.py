@@ -6,6 +6,8 @@ from supabase import create_client, Client
 from django.conf import settings
 from typing import Optional, BinaryIO
 import uuid
+import signal
+from contextlib import contextmanager
 
 
 def get_supabase_client() -> Optional[Client]:
@@ -26,20 +28,42 @@ def get_supabase_client() -> Optional[Client]:
         return None
 
 
+@contextmanager
+def timeout_context(seconds):
+    """Context manager for timeout handling."""
+    def timeout_handler(signum, frame):
+        raise TimeoutError(f"Operation timed out after {seconds} seconds")
+    
+    # Set up signal handler for timeout (Unix only)
+    if hasattr(signal, 'SIGALRM'):
+        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(seconds)
+        try:
+            yield
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+    else:
+        # Windows doesn't support SIGALRM, just proceed without timeout
+        yield
+
+
 def upload_file_to_supabase(
     file: BinaryIO,
     bucket_name: str,
     file_path: str,
-    content_type: Optional[str] = None
+    content_type: Optional[str] = None,
+    timeout: int = 30
 ) -> Optional[str]:
     """
-    Upload a file to Supabase Storage.
+    Upload a file to Supabase Storage with timeout handling.
     
     Args:
         file: File object to upload
         bucket_name: Name of the Supabase storage bucket
         file_path: Path where the file should be stored in the bucket
         content_type: MIME type of the file (optional)
+        timeout: Timeout in seconds (default: 30)
     
     Returns:
         Public URL of the uploaded file, or None if upload failed
@@ -50,6 +74,7 @@ def upload_file_to_supabase(
     
     try:
         # Read file content
+        file.seek(0)  # Reset file pointer
         file_content = file.read()
         
         # Determine content type if not provided
@@ -64,22 +89,45 @@ def upload_file_to_supabase(
             else:
                 content_type = 'application/octet-stream'
         
-        # Upload to Supabase Storage
+        # Upload to Supabase Storage with timeout handling
         try:
-            response = supabase.storage.from_(bucket_name).upload(
-                path=file_path,
-                file=file_content,
-                file_options={
-                    "content-type": content_type,
-                    "upsert": "true"  # Overwrite if exists
-                }
-            )
-            
-            # Get public URL
-            public_url_response = supabase.storage.from_(bucket_name).get_public_url(file_path)
-            
-            if public_url_response:
-                return public_url_response
+            # Use timeout context if available (Unix), otherwise proceed normally
+            if hasattr(signal, 'SIGALRM'):
+                with timeout_context(timeout):
+                    response = supabase.storage.from_(bucket_name).upload(
+                        path=file_path,
+                        file=file_content,
+                        file_options={
+                            "content-type": content_type,
+                            "upsert": "true"  # Overwrite if exists
+                        }
+                    )
+                    
+                    # Get public URL
+                    public_url_response = supabase.storage.from_(bucket_name).get_public_url(file_path)
+                    
+                    if public_url_response:
+                        return public_url_response
+            else:
+                # Windows - no timeout support, proceed normally
+                response = supabase.storage.from_(bucket_name).upload(
+                    path=file_path,
+                    file=file_content,
+                    file_options={
+                        "content-type": content_type,
+                        "upsert": "true"  # Overwrite if exists
+                    }
+                )
+                
+                # Get public URL
+                public_url_response = supabase.storage.from_(bucket_name).get_public_url(file_path)
+                
+                if public_url_response:
+                    return public_url_response
+        except TimeoutError:
+            if settings.DEBUG:
+                print(f"⏱️ Upload timed out after {timeout} seconds for {file_path}")
+            return None
         except Exception as upload_error:
             if settings.DEBUG:
                 print(f"❌ Upload error: {str(upload_error)}")
