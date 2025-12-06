@@ -200,38 +200,6 @@ export function AuthProvider({ children }) {
       return { success: false, error: error.message || 'Network error. Please check your connection and try again.' }
     }
   }
-        let errorData
-        try {
-          errorData = await response.json()
-        } catch (e) {
-          // If response is not JSON, try to get text
-          const text = await response.text()
-          return { 
-            success: false, 
-            error: text || `Server error (${response.status})` 
-          }
-        }
-        
-        // Extract error message - check multiple possible fields
-        const errorMessage = errorData.error || 
-                            errorData.detail || 
-                            errorData.message || 
-                            (errorData.non_field_errors && (Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors)) ||
-                            'Invalid email or password'
-        
-        return { 
-          success: false, 
-          error: errorMessage,
-          emailNotVerified: errorData.email_not_verified || false
-        }
-      }
-    } catch {
-      return { 
-        success: false, 
-        error: 'Something went wrong' 
-      }
-    }
-  }
 
   const register = async (registrationData) => {
     try {
