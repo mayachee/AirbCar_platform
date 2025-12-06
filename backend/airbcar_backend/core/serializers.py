@@ -52,15 +52,42 @@ class UserSerializer(serializers.ModelSerializer):
         
         # Then check if there's a profile_picture_url (e.g., from Google Sign-In or Supabase)
         if hasattr(obj, 'profile_picture_url') and obj.profile_picture_url:
-            url = obj.profile_picture_url
-            # Filter out local file URLs
-            if url and not (
-                '/media/' in url or
-                '/profiles/' in url or
-                'airbcar-backend.onrender.com/media/' in url or
-                'localhost/media/' in url
-            ):
-                return url
+            url = str(obj.profile_picture_url).strip()
+            
+            # Filter out local file URLs - be very strict about this
+            if url:
+                # Check for local media patterns (case-insensitive)
+                url_lower = url.lower()
+                if (
+                    '/media/' in url_lower or
+                    '/profiles/' in url_lower or
+                    'airbcar-backend.onrender.com/media/' in url_lower or
+                    'airbcar-backend.onrender.com/profiles/' in url_lower or
+                    'localhost/media/' in url_lower or
+                    'localhost/profiles/' in url_lower or
+                    '127.0.0.1/media/' in url_lower or
+                    '127.0.0.1/profiles/' in url_lower or
+                    url_lower.startswith('/media/') or
+                    url_lower.startswith('/profiles/')
+                ):
+                    # This is a local file URL, don't return it
+                    return None
+                
+                # Only return Supabase URLs or other external URLs (Google, CDNs, etc.)
+                # Allow base64 data URLs
+                if url.startswith('data:image/'):
+                    return url
+                # Allow Supabase URLs
+                if 'supabase.co' in url and '/storage/v1/object/public/' in url:
+                    return url
+                # Allow other external URLs (Google, CDNs, etc.) but not local ones
+                if url.startswith('http://') or url.startswith('https://'):
+                    # Double-check it's not a local URL
+                    if not any(local_pattern in url_lower for local_pattern in [
+                        'localhost', '127.0.0.1', 'airbcar-backend.onrender.com/media',
+                        'airbcar-backend.onrender.com/profiles'
+                    ]):
+                        return url
         
         # Don't return local file URLs - they're not accessible on Render
         # If user has local file but no Supabase URL, they need to re-upload

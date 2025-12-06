@@ -315,37 +315,52 @@ export const mapBackendToFrontend = (userData) => {
     // Base64 data URLs are stored directly in database and are always valid
     // Note: Backend returns base64 through profile_picture_url field (starts with data:image/)
     profileImage: (() => {
-      // Check profile_picture_url first - it may contain base64 data URL (starts with data:image/)
-      let url = getValue(userData.profile_picture_url);
+      // First check profile_picture_base64 field directly (if backend returns it separately)
+      let url = getValue(userData.profile_picture_base64);
+      
+      // If profile_picture_base64 is a base64 data URL, use it directly
+      if (url && url.startsWith('data:image/')) {
+        return url;
+      }
+      
+      // Then check profile_picture_url - it may contain base64 data URL or external URL
+      url = getValue(userData.profile_picture_url);
       
       // If profile_picture_url is a base64 data URL, use it directly
       if (url && url.startsWith('data:image/')) {
         return url;
       }
       
-      // Also check profile_picture_base64 field directly (if backend returns it separately)
-      if (!url) {
-        url = getValue(userData.profile_picture_base64);
-        if (url && url.startsWith('data:image/')) {
-          return url;
-        }
-      }
-      
       // If not base64, validate that the URL is not a local file path
-      if (url && (
-        url.startsWith('/media/') ||
-        url.startsWith('/profiles/') ||
-        url.includes('/media/') ||
-        url.includes('/profiles/') ||
-        (url.startsWith('http') && (
-          url.includes('/media/') ||
-          url.includes('/profiles/') ||
-          url.includes('airbcar-backend.onrender.com/media/') ||
-          url.includes('localhost/media/')
-        ))
-      )) {
-        // This is a local file path, don't use it
-        url = null;
+      // Be very strict about filtering out local URLs
+      if (url) {
+        const urlLower = url.toLowerCase();
+        const isLocalUrl = (
+          url.startsWith('/media/') ||
+          url.startsWith('/profiles/') ||
+          urlLower.includes('/media/') ||
+          urlLower.includes('/profiles/') ||
+          urlLower.includes('airbcar-backend.onrender.com/media/') ||
+          urlLower.includes('airbcar-backend.onrender.com/profiles/') ||
+          urlLower.includes('localhost/media/') ||
+          urlLower.includes('localhost/profiles/') ||
+          urlLower.includes('127.0.0.1/media/') ||
+          urlLower.includes('127.0.0.1/profiles/')
+        );
+        
+        if (isLocalUrl) {
+          // This is a local file path, don't use it
+          console.warn('⚠️ Filtered out local profile picture URL:', url);
+          url = null;
+        } else if (url.startsWith('http://') || url.startsWith('https://')) {
+          // Only allow Supabase URLs or other external URLs (Google, CDNs, etc.)
+          // Double-check it's not a local URL
+          if (urlLower.includes('airbcar-backend.onrender.com') && 
+              (urlLower.includes('/media/') || urlLower.includes('/profiles/'))) {
+            console.warn('⚠️ Filtered out Render media URL:', url);
+            url = null;
+          }
+        }
       }
       
       return url || '/default-avatar.svg';
