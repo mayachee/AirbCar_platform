@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const buildDirs = ['.next-local', '.next', 'out'];
+const buildDirs = ['.next-local', '.next', 'out', 'node_modules/.cache'];
 
 function deleteDirectory(dirPath) {
   if (!fs.existsSync(dirPath)) {

@@ -11,6 +11,7 @@
     "clean": "node clear-build.js",
     "build": "next build",
     "build:clean": "node clear-build.js && next build",
+    "build:no-cache": "DISABLE_WEBPACK_CACHE=true next build",
     "start": "next start -p 3001",
     "lint": "next lint"
   },

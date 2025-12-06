@@ -62,6 +62,18 @@ const nextConfig = {
     // Always disable symlink resolution to avoid OneDrive issues on Windows
     config.resolve.symlinks = false;
 
+    // Disable webpack cache if disk space is low (ENOSPC errors)
+    // This helps when building on systems with limited disk space
+    if (process.env.DISABLE_WEBPACK_CACHE === 'true') {
+      config.cache = false;
+    } else if (!dev && process.env.NODE_ENV === 'production') {
+      // In production builds, use memory cache instead of filesystem to save disk space
+      config.cache = {
+        type: 'memory',
+        maxGenerations: 1,
+      };
+    }
+
     // Optimize for development
     if (dev && !isServer) {
       // Enhanced watch options for Windows/OneDrive compatibility
