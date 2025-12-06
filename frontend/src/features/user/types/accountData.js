@@ -74,8 +74,8 @@ export const REQUIRED_FIELDS = [
   'firstName',
   'lastName',
   'phoneNumber',
-  'city',
-  'country'
+  'licenseFrontDocumentUrl',
+  'licenseBackDocumentUrl'
 ];
 
 /**
@@ -87,9 +87,7 @@ export const RECOMMENDED_FIELDS = [
   'licenseCountry',
   'licenseIssueDate',
   'idFrontDocumentUrl',
-  'idBackDocumentUrl',
-  'licenseFrontDocumentUrl',
-  'licenseBackDocumentUrl'
+  'idBackDocumentUrl'
 ];
 
 /**
@@ -148,17 +146,12 @@ export const validateField = (fieldName, value) => {
       if (trimmedValue && trimmedValue.length < 3) {
         return { isValid: false, error: 'Address must be at least 3 characters if provided' };
       }
-      if (trimmedValue.length < 5) {
-        return { isValid: false, error: 'Address must be at least 5 characters' };
-      }
       return { isValid: true, error: null };
 
     case 'city':
-      if (!trimmedValue) {
-        return { isValid: false, error: 'City is required' };
-      }
-      if (trimmedValue.length < 2) {
-        return { isValid: false, error: 'City must be at least 2 characters' };
+      // City is optional - only validate format if provided
+      if (trimmedValue && trimmedValue.length < 2) {
+        return { isValid: false, error: 'City must be at least 2 characters if provided' };
       }
       return { isValid: true, error: null };
 
@@ -168,6 +161,18 @@ export const validateField = (fieldName, value) => {
       }
       if (trimmedValue.length < 2) {
         return { isValid: false, error: 'Country must be at least 2 characters' };
+      }
+      return { isValid: true, error: null };
+
+    case 'licenseFrontDocumentUrl':
+      if (!trimmedValue) {
+        return { isValid: false, error: 'Driver\'s license front document is required' };
+      }
+      return { isValid: true, error: null };
+
+    case 'licenseBackDocumentUrl':
+      if (!trimmedValue) {
+        return { isValid: false, error: 'Driver\'s license back document is required' };
       }
       return { isValid: true, error: null };
 
@@ -186,9 +191,24 @@ export const validateAccountData = (accountData) => {
 
   // Validate required fields
   REQUIRED_FIELDS.forEach(field => {
-    const validation = validateField(field, accountData[field]);
-    if (!validation.isValid) {
-      errors[field] = validation.error;
+    // Special handling for license documents - check for URL or file
+    if (field === 'licenseFrontDocumentUrl') {
+      const hasUrl = accountData.licenseFrontDocumentUrl?.trim();
+      const hasFile = accountData.licenseFrontDocumentFile;
+      if (!hasUrl && !hasFile) {
+        errors[field] = 'Driver\'s license front document is required';
+      }
+    } else if (field === 'licenseBackDocumentUrl') {
+      const hasUrl = accountData.licenseBackDocumentUrl?.trim();
+      const hasFile = accountData.licenseBackDocumentFile;
+      if (!hasUrl && !hasFile) {
+        errors[field] = 'Driver\'s license back document is required';
+      }
+    } else {
+      const validation = validateField(field, accountData[field]);
+      if (!validation.isValid) {
+        errors[field] = validation.error;
+      }
     }
   });
 

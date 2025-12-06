@@ -82,10 +82,6 @@ class AccountService {
       errors.phoneNumber = 'Phone number is required';
     }
     
-    if (!profileData.city?.trim()) {
-      errors.city = 'City is required';
-    }
-    
     if (!profileData.country?.trim()) {
       errors.country = 'Country is required';
     }
@@ -96,6 +92,18 @@ class AccountService {
     
     if (!profileData.licenseCountry?.trim()) {
       errors.licenseCountry = 'License country is required';
+    }
+    
+    // Driver's License Documents are required (check for URL or file)
+    const hasFrontLicense = profileData.licenseFrontDocumentUrl?.trim() || profileData.licenseFrontDocumentFile;
+    const hasBackLicense = profileData.licenseBackDocumentUrl?.trim() || profileData.licenseBackDocumentFile;
+    
+    if (!hasFrontLicense) {
+      errors.licenseFrontDocumentUrl = 'Driver\'s license front document is required';
+    }
+    
+    if (!hasBackLicense) {
+      errors.licenseBackDocumentUrl = 'Driver\'s license back document is required';
     }
 
     // Email validation
