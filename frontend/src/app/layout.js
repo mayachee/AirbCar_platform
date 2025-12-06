@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
@@ -137,6 +138,7 @@ export default function RootLayout({ children }) {
             {children}
           </ToastProvider>
         </AuthProvider>
+        <SpeedInsights />
       </body>
     </html>
   );

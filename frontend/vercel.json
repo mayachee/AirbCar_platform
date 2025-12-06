@@ -4,6 +4,8 @@
       "source": "/api/:path*",
       "destination": "https://airbcar-backend.onrender.com/api/:path*"
     }
-  ]
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
 }
 
