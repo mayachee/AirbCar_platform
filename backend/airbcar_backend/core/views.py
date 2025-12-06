@@ -1730,7 +1730,7 @@ class UserMeView(APIView):
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'license_documents')
-            supabase_url = upload_file_to_supabase(file, 'identity-documents', file_path)
+            supabase_url = upload_file_to_supabase(file, 'license-documents', file_path, file.content_type)
             
             if supabase_url:
                 request.data._mutable = True
@@ -1754,7 +1754,7 @@ class UserMeView(APIView):
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'license_documents')
-            supabase_url = upload_file_to_supabase(file, 'identity-documents', file_path)
+            supabase_url = upload_file_to_supabase(file, 'license-documents', file_path, file.content_type)
             
             if supabase_url:
                 request.data._mutable = True

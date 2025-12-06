@@ -83,28 +83,24 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_license_front_document_url(self, obj):
         """Return full URL for front license document."""
-        # Priority: Supabase URL > Local file URL
+        # Only return Supabase URL - local files are not accessible on production (Render)
+        # If only local file exists, return None (file needs to be re-uploaded to Supabase)
         if obj.license_front_document_url:
             return obj.license_front_document_url
         
-        if obj.license_front_document:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.license_front_document.url)
-            return obj.license_front_document.url
+        # Don't return local file URLs - they're not accessible on Render
+        # If user has local file but no Supabase URL, they need to re-upload
         return None
     
     def get_license_back_document_url(self, obj):
         """Return full URL for back license document."""
-        # Priority: Supabase URL > Local file URL
+        # Only return Supabase URL - local files are not accessible on production (Render)
+        # If only local file exists, return None (file needs to be re-uploaded to Supabase)
         if obj.license_back_document_url:
             return obj.license_back_document_url
         
-        if obj.license_back_document:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.license_back_document.url)
-            return obj.license_back_document.url
+        # Don't return local file URLs - they're not accessible on Render
+        # If user has local file but no Supabase URL, they need to re-upload
         return None
 
 
