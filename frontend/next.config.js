@@ -20,8 +20,6 @@ const nextConfig = {
     workerThreads: false,
     cpus: 1,
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
-    // Optimize for Vercel builds
-    optimizeCss: true,
   },
   // Reduce build memory usage - SWC minification is enabled by default in Next.js 15
   // Don't use 'standalone' output for Vercel - it uses serverless functions

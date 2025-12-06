@@ -46,6 +46,7 @@
     "@types/node": "^20.19.23",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "critters": "^0.0.20",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
     "identity-obj-proxy": "^3.0.0",
