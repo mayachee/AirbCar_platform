@@ -1609,7 +1609,11 @@ class UserMeView(APIView):
             
             if settings.DEBUG:
                 print(f"📤 Serialized data keys: {list(serialized_data.keys())}")
-                print(f"📤 Profile picture: {serialized_data.get('profile_picture_url')}")
+                print(f"📤 Profile picture URL: {serialized_data.get('profile_picture_url')}")
+                print(f"📤 Profile picture base64: {serialized_data.get('profile_picture_base64')}")
+                print(f"📤 Profile picture base64 exists: {hasattr(user, 'profile_picture_base64')}")
+                if hasattr(user, 'profile_picture_base64'):
+                    print(f"📤 Profile picture base64 value: {user.profile_picture_base64[:100] if user.profile_picture_base64 else None}...")
             
             return Response({
                 'data': serialized_data

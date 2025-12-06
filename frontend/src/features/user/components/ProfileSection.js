@@ -89,9 +89,9 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Profile Picture Upload */}
-      <div className="border-b border-gray-200 pb-6">
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-4 sm:space-y-0">
           <div className="flex-shrink-0 mx-auto sm:mx-0">
             <img
@@ -126,11 +126,13 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
       </div>
 
       {/* Basic Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            First Name *
-          </label>
+      <div className="border-t border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              First Name *
+            </label>
           <input
             type="text"
             name="firstName"
@@ -205,10 +207,14 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           {renderFieldError('dateOfBirth')}
         </div>
       </div>
+      </div>
 
       {/* Driver's License Documents */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver's License Documents</h3>
+      <div className="border-t border-gray-200 pt-6 mt-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Driver's License Documents</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Upload both sides of your driver's license for verification purposes. These documents are required to complete your profile.
+        </p>
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
             {(accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl) && (
@@ -270,11 +276,11 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             </div>
           )}
           
-          <p className="text-sm text-gray-600 mb-4">
-            {accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl 
-              ? 'You can replace your documents below if needed.'
-              : 'Upload clear photos of the front and back of your driver\'s license. These are used to verify your license and will be reviewed by our team.'}
-          </p>
+          {accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl && (
+            <p className="text-sm text-gray-600 mb-4">
+              You can replace your documents below if needed.
+            </p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {(() => {
               // Use hosted URLs from backend (full URLs) or preview if uploading

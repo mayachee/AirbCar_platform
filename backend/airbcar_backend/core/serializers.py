@@ -45,12 +45,22 @@ class UserSerializer(serializers.ModelSerializer):
         """Return full URL for profile picture. Priority: base64 > Supabase/external URLs > None."""
         # First check if there's a base64 data URL (stored directly in database)
         if hasattr(obj, 'profile_picture_base64') and obj.profile_picture_base64:
-            # Return base64 data URL if it exists
-            return obj.profile_picture_base64
+            # Return base64 data URL if it exists (format: data:image/jpeg;base64,...)
+            base64_data = obj.profile_picture_base64
+            if base64_data and base64_data.startswith('data:image/'):
+                return base64_data
         
         # Then check if there's a profile_picture_url (e.g., from Google Sign-In or Supabase)
         if hasattr(obj, 'profile_picture_url') and obj.profile_picture_url:
-            return obj.profile_picture_url
+            url = obj.profile_picture_url
+            # Filter out local file URLs
+            if url and not (
+                '/media/' in url or
+                '/profiles/' in url or
+                'airbcar-backend.onrender.com/media/' in url or
+                'localhost/media/' in url
+            ):
+                return url
         
         # Don't return local file URLs - they're not accessible on Render
         # If user has local file but no Supabase URL, they need to re-upload
