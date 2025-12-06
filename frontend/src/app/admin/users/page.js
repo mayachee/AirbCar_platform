@@ -40,59 +40,6 @@ export default function AdminUsersPage() {
     refetch: refetchUsers
   } = useUsers();
 
-  // Debug logging in page component
-  console.log('📄 AdminUsersPage - users from hook:', users);
-  console.log('📄 AdminUsersPage - users length:', Array.isArray(users) ? users.length : 'N/A');
-  console.log('📄 AdminUsersPage - totalUsers:', totalUsers);
-  console.log('📄 AdminUsersPage - loading:', usersLoading);
-  console.log('📄 AdminUsersPage - error:', usersError);
-
-  // DIRECT TEST: Fetch users directly to verify API works
-  useEffect(() => {
-    const testDirectFetch = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const token = localStorage.getItem('access_token') || localStorage.getItem('token');
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        
-        console.log('🧪 DIRECT TEST: Fetching from', `${apiUrl}/users/`);
-        const response = await fetch(`${apiUrl}/users/`, { headers });
-        const data = await response.json();
-        
-        console.log('🧪 DIRECT TEST RESULT:', {
-          status: response.status,
-          ok: response.ok,
-          dataType: typeof data,
-          isArray: Array.isArray(data),
-          keys: data && typeof data === 'object' ? Object.keys(data) : 'N/A',
-          dataLength: Array.isArray(data) ? data.length : (data?.results?.length || data?.data?.length || 'N/A'),
-          firstItem: Array.isArray(data) ? data[0] : (data?.results?.[0] || data?.data?.[0] || 'N/A')
-        });
-        
-        // Try to extract users
-        let extractedUsers = [];
-        if (Array.isArray(data)) {
-          extractedUsers = data;
-        } else if (data?.results && Array.isArray(data.results)) {
-          extractedUsers = data.results;
-        } else if (data?.data && Array.isArray(data.data)) {
-          extractedUsers = data.data;
-        }
-        
-        console.log('🧪 DIRECT TEST: Extracted', extractedUsers.length, 'users');
-        if (extractedUsers.length > 0) {
-          console.log('🧪 DIRECT TEST: First user:', extractedUsers[0]);
-        }
-      } catch (err) {
-        console.error('🧪 DIRECT TEST ERROR:', err);
-      }
-    };
-    
-    // Run test after a short delay
-    const timer = setTimeout(testDirectFetch, 1000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleViewUser = async (user) => {
     try {

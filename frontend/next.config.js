@@ -20,7 +20,11 @@ const nextConfig = {
     workerThreads: false,
     cpus: 1,
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+    // Optimize for Vercel builds
+    optimizeCss: true,
   },
+  // Reduce build memory usage - SWC minification is enabled by default in Next.js 15
+  // Don't use 'standalone' output for Vercel - it uses serverless functions
   // Allow cross-origin requests from Docker network IP
   allowedDevOrigins: [
     'http://172.18.240.1:3001',
@@ -36,7 +40,17 @@ const nextConfig = {
         hostname: 'wtbmqtmmdobfvvecinif.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'airbcar-backend.onrender.com',
+        pathname: '/media/**',
+      },
     ],
+    // Optimize images for Vercel
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // Custom webpack config - minimal changes to avoid breaking React 19 module resolution
   webpack: (config, { dev, isServer }) => {

@@ -24,7 +24,7 @@ export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, 
         </div>
         
         {/* Navigation Buttons - Only show if there are multiple images */}
-        {hasImages && images.length > 1 && (
+        {hasImages && allImages.length > 1 && (
           <>
             <button
               onClick={onPrevImage}
