@@ -250,7 +250,8 @@ function BookingPageContent() {
       }
       
       // Don't set Content-Type - let the browser set it with the boundary
-      const response = await apiClient.post('/bookings/', formData)
+      // Increase timeout to 90 seconds for booking creation (backend may be slow on Render free tier)
+      const response = await apiClient.post('/bookings/', formData, { timeout: 90000 })
       
       setBookingData(response.data)
       setBookingCreated(true)

@@ -16,7 +16,8 @@ export class BookingService {
   }
 
   async createBooking(bookingData) {
-    const response = await apiClient.post('/bookings/', bookingData)
+    // Increase timeout to 90 seconds for booking creation (backend may be slow, especially with file uploads)
+    const response = await apiClient.post('/bookings/', bookingData, { timeout: 90000 })
     return response.data
   }
 

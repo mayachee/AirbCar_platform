@@ -82,10 +82,6 @@ class AccountService {
       errors.phoneNumber = 'Phone number is required';
     }
     
-    if (!profileData.address?.trim()) {
-      errors.address = 'Address is required';
-    }
-    
     if (!profileData.city?.trim()) {
       errors.city = 'City is required';
     }

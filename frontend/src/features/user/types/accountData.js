@@ -74,7 +74,6 @@ export const REQUIRED_FIELDS = [
   'firstName',
   'lastName',
   'phoneNumber',
-  'address',
   'city',
   'country'
 ];
@@ -145,8 +144,9 @@ export const validateField = (fieldName, value) => {
       return { isValid: true, error: null };
 
     case 'address':
-      if (!trimmedValue) {
-        return { isValid: false, error: 'Address is required' };
+      // Address is optional - only validate format if provided
+      if (trimmedValue && trimmedValue.length < 3) {
+        return { isValid: false, error: 'Address must be at least 3 characters if provided' };
       }
       if (trimmedValue.length < 5) {
         return { isValid: false, error: 'Address must be at least 5 characters' };
