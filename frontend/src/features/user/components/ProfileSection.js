@@ -221,73 +221,14 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
         </div>
       </div>bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300
 
-      {/* License Information */}
+      {/* Driver's License Documents */}
       <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver's License Information</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver's License Documents</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Provide your driver's license details for verification purposes.
+          Upload both sides of your driver's license for verification purposes.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              License Number
-            </label>
-            <input
-              type="text"
-              name="licenseNumber"
-              value={accountData.licenseNumber || ''}
-              onChange={(e) => handleFieldChange('licenseNumber', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Enter license number"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              License Country
-            </label>
-            <input
-              type="text"
-              name="licenseCountry"
-              value={accountData.licenseCountry || ''}
-              onChange={(e) => handleFieldChange('licenseCountry', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="Country that issued the license"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Issue Date
-            </label>
-            <input
-              type="date"
-              name="licenseIssueDate"
-              value={accountData.licenseIssueDate || ''}
-              onChange={(e) => handleFieldChangeWithValidation('licenseIssueDate', e.target.value)}
-              onBlur={() => setTouchedFields(prev => new Set([...prev, 'licenseIssueDate']))}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${getFieldErrorClass('licenseIssueDate')}`}
-            />
-            {renderFieldError('licenseIssueDate')}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Expiry Date
-            </label>
-            <input
-              type="date"
-              name="licenseExpiryDate"
-              value={accountData.licenseExpiryDate || ''}
-              onChange={(e) => handleFieldChangeWithValidation('licenseExpiryDate', e.target.value)}
-              onBlur={() => setTouchedFields(prev => new Set([...prev, 'licenseExpiryDate']))}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${getFieldErrorClass('licenseExpiryDate')}`}
-            />
-            {renderFieldError('licenseExpiryDate')}
-          </div>
-        </div>
-        
-        {/* Driver's License Documents */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-md font-semibold text-gray-900">Driver's License Documents</h4>
             {(accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl) && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

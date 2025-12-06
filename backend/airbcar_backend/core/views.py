@@ -343,31 +343,21 @@ class ListingListView(APIView):
                     )
                 except Exception as e:
                     if settings.DEBUG:
-                        print(f"⚠️ Supabase upload failed, using local storage: {str(e)}")
+                        print(f"⚠️ Supabase upload failed for {file.name}: {str(e)}")
                 
-                if supabase_url:
-                    # Use Supabase URL
-                    images.append({
-                        'name': file.name,
-                        'url': supabase_url
-                    })
-                else:
-                    # Fallback to local storage
-                    listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
-                    os.makedirs(listings_dir, exist_ok=True)
-                    file_path = os.path.join('listings', unique_filename)
-                    
-                    # Reset file pointer
-                    file.seek(0)
-                    saved_path = default_storage.save(file_path, ContentFile(file.read()))
-                    # Generate absolute URL pointing to backend
-                    backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                    file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
-                    
-                    images.append({
-                        'name': file.name,
-                        'url': file_url
-                    })
+                    if supabase_url:
+                        # Use Supabase URL
+                        images.append({
+                            'name': file.name,
+                            'url': supabase_url
+                        })
+                    else:
+                        # Supabase upload failed - don't use local storage fallback
+                        # Images must be hosted in Supabase
+                        if settings.DEBUG:
+                            print(f"❌ Failed to upload image to Supabase: {file.name}")
+                        # Skip this file - don't add to images array
+                        continue
         elif 'images' in request.data:
             # Handle JSON array of image URLs (can be strings or objects with url property)
             images_data = request.data.get('images')
@@ -1059,7 +1049,7 @@ class ListingDetailView(APIView):
                         )
                     except Exception as e:
                         if settings.DEBUG:
-                            print(f"⚠️ Supabase upload failed, using local storage: {str(e)}")
+                            print(f"⚠️ Supabase upload failed for {file.name}: {str(e)}")
                     
                     if supabase_url:
                         # Use Supabase URL
@@ -1068,22 +1058,12 @@ class ListingDetailView(APIView):
                             'url': supabase_url
                         })
                     else:
-                        # Fallback to local storage
-                        listings_dir = os.path.join(settings.MEDIA_ROOT, 'listings')
-                        os.makedirs(listings_dir, exist_ok=True)
-                        local_file_path = os.path.join('listings', unique_filename)
-                        
-                        # Reset file pointer
-                        file.seek(0)
-                        saved_path = default_storage.save(local_file_path, ContentFile(file.read()))
-                        # Generate absolute URL pointing to backend
-                        backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                        file_url = f"{backend_url}{settings.MEDIA_URL}{saved_path}"
-                        
-                        images.append({
-                            'name': file.name,
-                            'url': file_url
-                        })
+                        # Supabase upload failed - don't use local storage fallback
+                        # Images must be hosted in Supabase
+                        if settings.DEBUG:
+                            print(f"❌ Failed to upload image to Supabase: {file.name}")
+                        # Skip this file - don't add to images array
+                        continue
                 listing_data['images'] = images
             
             # For partial updates, ensure we don't accidentally clear required fields

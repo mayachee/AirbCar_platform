@@ -86,14 +86,6 @@ class AccountService {
       errors.country = 'Country is required';
     }
     
-    if (!profileData.licenseNumber?.trim()) {
-      errors.licenseNumber = 'License number is required';
-    }
-    
-    if (!profileData.licenseCountry?.trim()) {
-      errors.licenseCountry = 'License country is required';
-    }
-    
     // Driver's License Documents are required (check for URL or file)
     const hasFrontLicense = profileData.licenseFrontDocumentUrl?.trim() || profileData.licenseFrontDocumentFile;
     const hasBackLicense = profileData.licenseBackDocumentUrl?.trim() || profileData.licenseBackDocumentFile;

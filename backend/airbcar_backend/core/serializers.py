@@ -42,43 +42,31 @@ class UserSerializer(serializers.ModelSerializer):
         }
     
     def get_profile_picture_url(self, obj):
-        """Return full URL for profile picture. Prioritizes URL field (e.g., Google profile) over uploaded file."""
-        # First check if there's a profile_picture_url (e.g., from Google Sign-In)
+        """Return full URL for profile picture. Only returns Supabase/external URLs, not local files."""
+        # First check if there's a profile_picture_url (e.g., from Google Sign-In or Supabase)
         if hasattr(obj, 'profile_picture_url') and obj.profile_picture_url:
             return obj.profile_picture_url
         
-        # Fallback to uploaded profile_picture file
-        if obj.profile_picture:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_picture.url)
-            return obj.profile_picture.url
+        # Don't return local file URLs - they're not accessible on Render
+        # If user has local file but no Supabase URL, they need to re-upload
         return None
     
     def get_id_front_document_url(self, obj):
-        """Return full URL for front identity document."""
-        # Priority: Supabase URL > Local file URL
+        """Return full URL for front identity document. Only returns Supabase URLs."""
+        # Only return Supabase URL - local files are not accessible on production (Render)
         if obj.id_front_document_url:
             return obj.id_front_document_url
         
-        if obj.id_front_document:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.id_front_document.url)
-            return obj.id_front_document.url
+        # Don't return local file URLs - they're not accessible on Render
         return None
     
     def get_id_back_document_url(self, obj):
-        """Return full URL for back identity document."""
-        # Priority: Supabase URL > Local file URL
+        """Return full URL for back identity document. Only returns Supabase URLs."""
+        # Only return Supabase URL - local files are not accessible on production (Render)
         if obj.id_back_document_url:
             return obj.id_back_document_url
         
-        if obj.id_back_document:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.id_back_document.url)
-            return obj.id_back_document.url
+        # Don't return local file URLs - they're not accessible on Render
         return None
     
     def get_license_front_document_url(self, obj):
@@ -119,25 +107,13 @@ class PartnerSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'logo_url']
     
     def get_logo_url(self, obj):
-        """Return full URL for partner logo."""
-        # Priority: Supabase URL > Local file URL > User profile picture
+        """Return full URL for partner logo. Only returns Supabase/external URLs."""
+        # Priority: Supabase URL > User profile picture URL
         if obj.logo_url:
             return obj.logo_url
         
-        if obj.logo:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.logo.url)
-            return obj.logo.url
-        
-        # Fallback to user's profile picture
-        if obj.user and obj.user.profile_picture:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.user.profile_picture.url)
-            return obj.user.profile_picture.url
-        
-        # Fallback to user's profile_picture_url if available
+        # Don't return local file URLs - they're not accessible on Render
+        # Fallback to user's profile_picture_url if available (Supabase/external URL)
         if obj.user and hasattr(obj.user, 'profile_picture_url') and obj.user.profile_picture_url:
             return obj.user.profile_picture_url
         
@@ -232,77 +208,50 @@ class ListingSerializer(serializers.ModelSerializer):
             backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
             
             def fix_image_url(url):
-                """Fix image URL to use correct backend URL."""
+                """Fix image URL - only return Supabase or external URLs, not local media files."""
                 if not url:
-                    return url
+                    return None
                 
-                # If it's already a full URL (http/https), return as is
-                if url.startswith('http://') or url.startswith('https://'):
-                    # Check if it's an external URL (Google, Supabase, etc.)
-                    if 'supabase.co' in url or 'googleusercontent.com' in url or 'lh3.googleusercontent.com' in url:
-                        return url
-                    # For other external URLs, return as is
-                    return url
-                
-                # If it's a Supabase Storage URL, return as is (don't modify)
+                # If it's a Supabase Storage URL, return as is
                 if 'supabase.co' in url and '/storage/v1/object/public/' in url:
                     return url
                 
-                # If it's a relative path starting with /media/, make it absolute
-                if url.startswith('/media/'):
-                    return f"{backend_url}{url}"
+                # If it's a local media path (/media/) or backend URL pointing to media, return None
+                # Local files are not accessible on Render - must be hosted in Supabase
+                if url.startswith('/media/') or '/media/' in url:
+                    return None
                 
-                # If it's already an absolute URL
+                # If it's pointing to backend media server, return None
+                if 'airbcar-backend.onrender.com' in url and '/media/' in url:
+                    return None
+                if 'localhost' in url and '/media/' in url:
+                    return None
+                if '127.0.0.1' in url and '/media/' in url:
+                    return None
+                
+                # If it's an external URL (http/https), allow it (Supabase, Google, CDNs, etc.)
                 if url.startswith('http://') or url.startswith('https://'):
-                    # Check for malformed URLs with /partner/airbcar-backend/ or similar patterns
-                    if '/partner/' in url or '/airbcar-backend/' in url:
-                        # Extract the media path if it exists
-                        if '/media/' in url:
-                            media_index = url.find('/media/')
-                            media_path = url[media_index:]
-                            # Remove query parameters and fragments
-                            if '?' in media_path:
-                                media_path = media_path.split('?')[0]
-                            if '#' in media_path:
-                                media_path = media_path.split('#')[0]
-                            return f"{backend_url}{media_path}"
-                    
-                    # Check if it contains /media/ - extract the media path and reconstruct
-                    if '/media/' in url:
-                        # Check if it's pointing to wrong domain (frontend domain instead of backend)
-                        if 'www.airbcar.com' in url or 'airbcar.com' in url:
-                            # Extract everything after /media/ including /media/ itself
-                            media_index = url.find('/media/')
-                            media_path = url[media_index:]  # Get /media/... onwards
-                            # Remove any query parameters or fragments
-                            if '?' in media_path:
-                                media_path = media_path.split('?')[0]
-                            if '#' in media_path:
-                                media_path = media_path.split('#')[0]
-                            return f"{backend_url}{media_path}"
-                        # If it already points to correct backend, return as is
-                        elif backend_url in url:
-                            return url
-                        # Otherwise extract media path and use backend URL
-                        else:
-                            media_index = url.find('/media/')
-                            media_path = url[media_index:]
-                            if '?' in media_path:
-                                media_path = media_path.split('?')[0]
-                            if '#' in media_path:
-                                media_path = media_path.split('#')[0]
-                            return f"{backend_url}{media_path}"
+                    return url
                 
-                return url
+                # If it's a relative path or local file reference, return None
+                return None
             
             for img in data['images']:
                 if isinstance(img, str):
-                    processed_images.append(fix_image_url(img))
+                    fixed_url = fix_image_url(img)
+                    # Only include if URL is valid (not None - which means local file)
+                    if fixed_url:
+                        processed_images.append(fixed_url)
                 elif isinstance(img, dict):
                     # If it's an object, process the url field
                     if 'url' in img:
-                        img['url'] = fix_image_url(img['url'])
-                    processed_images.append(img)
+                        fixed_url = fix_image_url(img['url'])
+                        # Only include if URL is valid (not None - which means local file)
+                        if fixed_url:
+                            img['url'] = fixed_url
+                            processed_images.append(img)
+                    else:
+                        processed_images.append(img)
                 else:
                     processed_images.append(img)
             data['images'] = processed_images
@@ -335,29 +284,21 @@ class BookingSerializer(serializers.ModelSerializer):
         }
     
     def get_id_front_document_url(self, obj):
-        """Return full URL for front identity document."""
-        # Priority: Supabase URL > Local file URL
+        """Return full URL for front identity document. Only returns Supabase URLs."""
+        # Only return Supabase URL - local files are not accessible on production (Render)
         if obj.id_front_document_url:
             return obj.id_front_document_url
         
-        if obj.id_front_document:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.id_front_document.url)
-            return obj.id_front_document.url
+        # Don't return local file URLs - they're not accessible on Render
         return None
     
     def get_id_back_document_url(self, obj):
-        """Return full URL for back identity document."""
-        # Priority: Supabase URL > Local file URL
+        """Return full URL for back identity document. Only returns Supabase URLs."""
+        # Only return Supabase URL - local files are not accessible on production (Render)
         if obj.id_back_document_url:
             return obj.id_back_document_url
         
-        if obj.id_back_document:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.id_back_document.url)
-            return obj.id_back_document.url
+        # Don't return local file URLs - they're not accessible on Render
         return None
 
 

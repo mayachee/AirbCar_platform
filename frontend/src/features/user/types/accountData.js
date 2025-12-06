@@ -83,9 +83,6 @@ export const REQUIRED_FIELDS = [
  */
 export const RECOMMENDED_FIELDS = [
   'dateOfBirth',
-  'licenseNumber',
-  'licenseCountry',
-  'licenseIssueDate',
   'idFrontDocumentUrl',
   'idBackDocumentUrl'
 ];
