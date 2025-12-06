@@ -132,7 +132,8 @@ export class UserService {
     if (idFrontDocument) formData.append('id_front_document_url', idFrontDocument)
     if (idBackDocument) formData.append('id_back_document_url', idBackDocument)
 
-    const response = await apiClient.patch('/users/me/', formData)
+    // Increase timeout to 90 seconds for profile updates (may include file uploads to Supabase)
+    const response = await apiClient.patch('/users/me/', formData, { timeout: 90000 })
     return response.data
   }
 
@@ -367,8 +368,8 @@ export class UserService {
         }
 
         try {
-          // Get bookings using apiClient directly
-          const bookingsResponse = await apiClient.get('/bookings/')
+          // Get bookings using apiClient directly - increase timeout to 90 seconds (Render free tier can be slow)
+          const bookingsResponse = await apiClient.get('/bookings/', undefined, { timeout: 90000 })
           const bookings = Array.isArray(bookingsResponse.data) 
             ? bookingsResponse.data 
             : (Array.isArray(bookingsResponse) ? bookingsResponse : [])

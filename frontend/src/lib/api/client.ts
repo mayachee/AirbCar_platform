@@ -28,7 +28,7 @@ export class ApiClient {
       headers = {},
       body,
       params,
-      timeout = method === 'GET' ? 60000 : 30000, // 60s for GET, 30s for others
+      timeout = method === 'GET' ? 90000 : 90000, // 90s for all requests (Render free tier can be slow, especially with file uploads)
       skipAuth = false,
       cache = 'default'
     } = config;

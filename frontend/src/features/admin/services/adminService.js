@@ -137,8 +137,8 @@ class AdminService {
    * @returns {Promise} Bookings list
    */
   async getBookings(params = undefined) {
-    // Increase timeout for large datasets (60 seconds)
-    return apiClient.get('/bookings/', params, { timeout: 60000 });
+    // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+    return apiClient.get('/bookings/', params, { timeout: 90000 });
   }
 
   /**

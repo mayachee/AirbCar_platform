@@ -311,7 +311,28 @@ export const mapBackendToFrontend = (userData) => {
     phoneNumber: getValue(userData.phone_number),
     dateOfBirth: formatDate(userData.date_of_birth),
     placeOfBirth: getValue(userData.nationality) || getValue(userData.place_of_birth),
-    profileImage: getValue(userData.profile_picture_url) || getValue(userData.profile_picture) || '/default-avatar.svg',
+    // Only use profile_picture_url (Supabase/external URLs), never use profile_picture (local files)
+    // Filter out any URLs that look like local file paths
+    profileImage: (() => {
+      let url = getValue(userData.profile_picture_url);
+      // Validate that the URL is not a local file path
+      if (url && (
+        url.startsWith('/media/') ||
+        url.startsWith('/profiles/') ||
+        url.includes('/media/') ||
+        url.includes('/profiles/') ||
+        (url.startsWith('http') && (
+          url.includes('/media/') ||
+          url.includes('/profiles/') ||
+          url.includes('airbcar-backend.onrender.com/media/') ||
+          url.includes('localhost/media/')
+        ))
+      )) {
+        // This is a local file path, don't use it
+        url = null;
+      }
+      return url || '/default-avatar.svg';
+    })(),
     address: getValue(userData.address),
     city: getValue(userData.city),
     country: getValue(userData.country_of_residence) || getValue(userData.country),

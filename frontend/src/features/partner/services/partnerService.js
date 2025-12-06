@@ -90,15 +90,18 @@ export const partnerService = {
 
   // Booking Management
   async getBookings() {
-    return apiClient.get('/bookings/')
+    // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+    return apiClient.get('/bookings/', undefined, { timeout: 90000 })
   },
 
   async getPendingRequests() {
-    return apiClient.get('/bookings/pending-requests/')
+    // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+    return apiClient.get('/bookings/pending-requests/', undefined, { timeout: 90000 })
   },
 
   async getUpcomingBookings() {
-    return apiClient.get('/bookings/upcoming/')
+    // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+    return apiClient.get('/bookings/upcoming/', undefined, { timeout: 90000 })
   },
 
   async acceptBooking(bookingId) {

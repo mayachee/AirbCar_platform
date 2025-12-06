@@ -30,7 +30,8 @@ export default function ProfileTab({
       // Fetch bookings
       let allBookings = [];
       try {
-        const bookingsResponse = await apiClient.get('/bookings/');
+        // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+        const bookingsResponse = await apiClient.get('/bookings/', undefined, { timeout: 90000 });
         // Ensure allBookings is always an array
         const responseData = bookingsResponse.data;
         if (Array.isArray(responseData)) {

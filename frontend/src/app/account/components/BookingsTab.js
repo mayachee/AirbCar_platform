@@ -20,7 +20,8 @@ export default function BookingsTab({ upcomingBookings, pastBookings, loading: p
       
       let allBookings = [];
       try {
-        const response = await apiClient.get('/bookings/');
+        // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+        const response = await apiClient.get('/bookings/', undefined, { timeout: 90000 });
         allBookings = Array.isArray(response.data) ? response.data : (response.data?.results || []);
       } catch (err) {
         console.log('General bookings endpoint not available');
@@ -28,7 +29,8 @@ export default function BookingsTab({ upcomingBookings, pastBookings, loading: p
 
       // Try upcoming bookings endpoint
       try {
-        const upcomingResponse = await apiClient.get('/bookings/upcoming/');
+        // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+        const upcomingResponse = await apiClient.get('/bookings/upcoming/', undefined, { timeout: 90000 });
         let upcomingBookings = [];
         
         // Handle different response structures

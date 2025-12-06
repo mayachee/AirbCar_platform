@@ -67,26 +67,26 @@ export class AuthService {
   }, method: 'PATCH' | 'POST' | 'PUT' = 'PATCH') {
     if (typeof FormData !== 'undefined' && profileData instanceof FormData) {
       if (method === 'POST') {
-        return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData)
+        return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
       } else if (method === 'PUT') {
-        return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData)
+        return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
       }
-      return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData)
+      return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
     }
     
     if (method === 'POST') {
-      return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData)
+      return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
     } else if (method === 'PUT') {
-      return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData)
+      return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
     }
-    return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData)
+    return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
   }
 
   async uploadProfilePicture(file: File) {
     const formData = new FormData()
     formData.append('profile_picture', file)
     
-    return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, formData)
+    return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, formData, { timeout: 90000 })
   }
 
   async changePassword(passwordData: {

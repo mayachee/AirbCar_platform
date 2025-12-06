@@ -40,7 +40,29 @@ export const normalizeUserData = (data) => {
     nationality: data.nationality || data.nationality_country || null,
     default_currency: data.default_currency || data.defaultCurrency || data.currency || null,
     date_of_birth: data.date_of_birth || data.dateOfBirth || data.birthday || data.birth_date || null,
-    profile_picture: data.profile_picture || data.profilePicture || data.profile_picture_url || data.avatar || data.profile_image || null,
+    // Only use profile_picture_url (Supabase/external URLs), never use profile_picture (local files)
+    // Filter out any URLs that look like local file paths
+    profile_picture: (() => {
+      let url = data.profile_picture_url || data.profilePicture || data.avatar || data.profile_image;
+      // Don't use profile_picture (local file) - it's not accessible on Render
+      // Validate that the URL is not a local file path
+      if (url && (
+        url.startsWith('/media/') ||
+        url.startsWith('/profiles/') ||
+        url.includes('/media/') ||
+        url.includes('/profiles/') ||
+        (url.startsWith('http') && (
+          url.includes('/media/') ||
+          url.includes('/profiles/') ||
+          url.includes('airbcar-backend.onrender.com/media/') ||
+          url.includes('localhost/media/')
+        ))
+      )) {
+        // This is a local file path, don't use it
+        url = null;
+      }
+      return url || null;
+    })(),
     license_number: data.license_number || data.licenseNumber || data.driving_license_number || data.dl_number || null,
     license_origin_country: data.license_origin_country || data.licenseOriginCountry || data.dl_country || null,
     issue_date: data.issue_date || data.issueDate || data.license_issue_date || null,

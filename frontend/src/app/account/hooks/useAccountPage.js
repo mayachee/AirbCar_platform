@@ -210,10 +210,32 @@ export const useAccountPage = () => {
       const mappedData = mapBackendToFrontend(updatedData);
       
       // Use profile picture from upload response if available, otherwise from full user data
-      const profileImage = updatedUserData.profile_picture_url || 
-                          updatedUserData.profile_picture || 
-                          mappedData.profileImage || 
-                          '/default-avatar.svg';
+      // Only use profile_picture_url (Supabase/external URLs), never use profile_picture (local files)
+      // Filter out any URLs that look like local file paths
+      let profileImage = updatedUserData.profile_picture_url || mappedData.profileImage;
+      
+      // Validate that the URL is not a local file path
+      if (profileImage) {
+        // Filter out local file paths (they're not accessible on Render)
+        if (
+          profileImage.startsWith('/media/') ||
+          profileImage.startsWith('/profiles/') ||
+          profileImage.includes('/media/') ||
+          profileImage.includes('/profiles/') ||
+          (profileImage.startsWith('http') && (
+            profileImage.includes('/media/') ||
+            profileImage.includes('/profiles/') ||
+            profileImage.includes('airbcar-backend.onrender.com/media/') ||
+            profileImage.includes('localhost/media/')
+          ))
+        ) {
+          // This is a local file path, don't use it
+          profileImage = null;
+        }
+      }
+      
+      // Fallback to default avatar if no valid URL
+      profileImage = profileImage || '/default-avatar.svg';
       
       updateAccountData({
         ...mappedData,

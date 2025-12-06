@@ -5,7 +5,8 @@ import { apiClient } from '@/lib/api/client'
  */
 export class BookingService {
   async getBookings() {
-    const response = await apiClient.get('/bookings/')
+    // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+    const response = await apiClient.get('/bookings/', undefined, { timeout: 90000 })
     // apiClient returns { data, success, message }
     return response.data
   }
@@ -45,7 +46,8 @@ export class BookingService {
 
   async getUpcomingBookings() {
     try {
-      const response = await apiClient.get('/bookings/upcoming/')
+      // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
+      const response = await apiClient.get('/bookings/upcoming/', undefined, { timeout: 90000 })
       // Handle different response structures
       if (Array.isArray(response)) {
         return response
