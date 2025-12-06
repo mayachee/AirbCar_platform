@@ -20,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'role', 
-            'phone_number', 'profile_picture', 'profile_picture_url',
+            'phone_number', 'profile_picture', 'profile_picture_url', 'profile_picture_base64',
             'id_front_document', 'id_front_document_url',
             'id_back_document', 'id_back_document_url',
             'license_front_document', 'license_front_document_url',
@@ -33,7 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
             # License Information
             'license_number', 'license_origin_country', 'issue_date', 'expiry_date'
         ]
-        read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
+        read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username', 'profile_picture_base64']
         extra_kwargs = {
             'id_front_document': {'write_only': True},  # Don't return in API, use URL instead
             'id_back_document': {'write_only': True},    # Don't return in API, use URL instead
@@ -42,8 +42,13 @@ class UserSerializer(serializers.ModelSerializer):
         }
     
     def get_profile_picture_url(self, obj):
-        """Return full URL for profile picture. Only returns Supabase/external URLs, not local files."""
-        # First check if there's a profile_picture_url (e.g., from Google Sign-In or Supabase)
+        """Return full URL for profile picture. Priority: base64 > Supabase/external URLs > None."""
+        # First check if there's a base64 data URL (stored directly in database)
+        if hasattr(obj, 'profile_picture_base64') and obj.profile_picture_base64:
+            # Return base64 data URL if it exists
+            return obj.profile_picture_base64
+        
+        # Then check if there's a profile_picture_url (e.g., from Google Sign-In or Supabase)
         if hasattr(obj, 'profile_picture_url') and obj.profile_picture_url:
             return obj.profile_picture_url
         

@@ -209,14 +209,18 @@ export const useAccountPage = () => {
       // Map backend response to frontend format
       const mappedData = mapBackendToFrontend(updatedData);
       
-      // Use profile picture from upload response if available, otherwise from full user data
-      // Only use profile_picture_url (Supabase/external URLs), never use profile_picture (local files)
-      // Filter out any URLs that look like local file paths
-      let profileImage = updatedUserData.profile_picture_url || mappedData.profileImage;
+      // Priority: base64 data URL > profile_picture_url (Supabase/external URLs) > default
+      // Base64 data URLs are stored directly in database and are always valid
+      // Note: Backend returns base64 through profile_picture_url field (starts with data:image/)
+      let profileImage = updatedUserData.profile_picture_url || 
+                        updatedUserData.profile_picture_base64 || 
+                        mappedData.profileImage;
       
-      // Validate that the URL is not a local file path
-      if (profileImage) {
-        // Filter out local file paths (they're not accessible on Render)
+      // If profile_picture_url is a base64 data URL, use it directly
+      if (profileImage && profileImage.startsWith('data:image/')) {
+        // Base64 data URL - always valid, use as is
+      } else if (profileImage) {
+        // Not base64 - validate that the URL is not a local file path
         if (
           profileImage.startsWith('/media/') ||
           profileImage.startsWith('/profiles/') ||

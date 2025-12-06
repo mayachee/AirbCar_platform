@@ -311,11 +311,27 @@ export const mapBackendToFrontend = (userData) => {
     phoneNumber: getValue(userData.phone_number),
     dateOfBirth: formatDate(userData.date_of_birth),
     placeOfBirth: getValue(userData.nationality) || getValue(userData.place_of_birth),
-    // Only use profile_picture_url (Supabase/external URLs), never use profile_picture (local files)
-    // Filter out any URLs that look like local file paths
+    // Priority: base64 data URL > profile_picture_url (Supabase/external URLs) > default
+    // Base64 data URLs are stored directly in database and are always valid
+    // Note: Backend returns base64 through profile_picture_url field (starts with data:image/)
     profileImage: (() => {
+      // Check profile_picture_url first - it may contain base64 data URL (starts with data:image/)
       let url = getValue(userData.profile_picture_url);
-      // Validate that the URL is not a local file path
+      
+      // If profile_picture_url is a base64 data URL, use it directly
+      if (url && url.startsWith('data:image/')) {
+        return url;
+      }
+      
+      // Also check profile_picture_base64 field directly (if backend returns it separately)
+      if (!url) {
+        url = getValue(userData.profile_picture_base64);
+        if (url && url.startsWith('data:image/')) {
+          return url;
+        }
+      }
+      
+      // If not base64, validate that the URL is not a local file path
       if (url && (
         url.startsWith('/media/') ||
         url.startsWith('/profiles/') ||
@@ -331,6 +347,7 @@ export const mapBackendToFrontend = (userData) => {
         // This is a local file path, don't use it
         url = null;
       }
+      
       return url || '/default-avatar.svg';
     })(),
     address: getValue(userData.address),

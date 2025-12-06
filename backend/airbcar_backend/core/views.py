@@ -1742,6 +1742,16 @@ class UserMeView(APIView):
                 request.data['license_back_document'] = None  # Clear local file
                 request.data._mutable = False
         
+        # Handle base64 profile picture if provided (stored directly in database)
+        if 'profile_picture_base64' in request.data:
+            # Validate that it's a data URL
+            base64_data = request.data.get('profile_picture_base64', '').strip()
+            if base64_data and base64_data.startswith('data:image/'):
+                # Store base64 data URL directly in database
+                request.data._mutable = True
+                request.data['profile_picture_base64'] = base64_data
+                request.data._mutable = False
+        
         serializer = UserSerializer(user, data=request.data, context={'request': request})
         
         if serializer.is_valid():
@@ -1881,6 +1891,16 @@ class UserMeView(APIView):
                 request.data._mutable = True
                 request.data['license_back_document_url'] = supabase_url
                 request.data['license_back_document'] = None
+                request.data._mutable = False
+        
+        # Handle base64 profile picture if provided (stored directly in database)
+        if 'profile_picture_base64' in request.data:
+            # Validate that it's a data URL
+            base64_data = request.data.get('profile_picture_base64', '').strip()
+            if base64_data and base64_data.startswith('data:image/'):
+                # Store base64 data URL directly in database
+                request.data._mutable = True
+                request.data['profile_picture_base64'] = base64_data
                 request.data._mutable = False
         
         serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})

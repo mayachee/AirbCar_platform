@@ -83,10 +83,34 @@ export class AuthService {
   }
 
   async uploadProfilePicture(file: File) {
-    const formData = new FormData()
-    formData.append('profile_picture', file)
-    
-    return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, formData, { timeout: 90000 })
+    // Convert file to base64 data URL for storage in database
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      
+      reader.onload = async () => {
+        try {
+          const base64DataUrl = reader.result as string
+          
+          // Send base64 data URL to backend
+          const response = await apiClient.patch(
+            API_ENDPOINTS.AUTH.PROFILE,
+            { profile_picture_base64: base64DataUrl },
+            { timeout: 90000 }
+          )
+          
+          resolve(response)
+        } catch (error) {
+          reject(error)
+        }
+      }
+      
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'))
+      }
+      
+      // Read file as data URL (base64)
+      reader.readAsDataURL(file)
+    })
   }
 
   async changePassword(passwordData: {

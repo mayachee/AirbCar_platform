@@ -63,6 +63,15 @@ export const useAccount = () => {
       console.log('📦 Extracted userData:', userData);
       console.log('📦 userData type:', typeof userData);
       console.log('📦 userData keys:', userData ? Object.keys(userData) : 'null');
+      // Debug: Check profile picture fields
+      if (userData) {
+        console.log('🖼️ profile_picture_url:', userData.profile_picture_url);
+        console.log('🖼️ profile_picture_base64:', userData.profile_picture_base64);
+        console.log('🖼️ profile_picture_url type:', typeof userData.profile_picture_url);
+        if (userData.profile_picture_url) {
+          console.log('🖼️ profile_picture_url starts with data:image/:', userData.profile_picture_url.startsWith('data:image/'));
+        }
+      }
       
       if (!userData || (typeof userData === 'object' && Object.keys(userData).length === 0)) {
         console.error('❌ No user data received from backend or data is empty');
