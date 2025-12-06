@@ -54,8 +54,25 @@ class UserSerializer(serializers.ModelSerializer):
     def get_id_front_document_url(self, obj):
         """Return full URL for front identity document. Only returns Supabase URLs."""
         # Only return Supabase URL - local files are not accessible on production (Render)
+        # Filter out any URLs that point to local media (even if stored in _url field)
         if obj.id_front_document_url:
-            return obj.id_front_document_url
+            url = obj.id_front_document_url
+            # Filter out local media URLs
+            if (
+                '/media/' in url or
+                '/profiles/' in url or
+                'airbcar-backend.onrender.com/media/' in url or
+                'localhost/media/' in url or
+                '127.0.0.1/media/' in url
+            ):
+                # This is a local file URL, don't return it
+                return None
+            # Only return Supabase or external URLs
+            if 'supabase.co' in url and '/storage/v1/object/public/' in url:
+                return url
+            # Allow other external URLs (Google, CDNs, etc.)
+            if url.startswith('http://') or url.startswith('https://'):
+                return url
         
         # Don't return local file URLs - they're not accessible on Render
         return None
@@ -63,8 +80,25 @@ class UserSerializer(serializers.ModelSerializer):
     def get_id_back_document_url(self, obj):
         """Return full URL for back identity document. Only returns Supabase URLs."""
         # Only return Supabase URL - local files are not accessible on production (Render)
+        # Filter out any URLs that point to local media (even if stored in _url field)
         if obj.id_back_document_url:
-            return obj.id_back_document_url
+            url = obj.id_back_document_url
+            # Filter out local media URLs
+            if (
+                '/media/' in url or
+                '/profiles/' in url or
+                'airbcar-backend.onrender.com/media/' in url or
+                'localhost/media/' in url or
+                '127.0.0.1/media/' in url
+            ):
+                # This is a local file URL, don't return it
+                return None
+            # Only return Supabase or external URLs
+            if 'supabase.co' in url and '/storage/v1/object/public/' in url:
+                return url
+            # Allow other external URLs (Google, CDNs, etc.)
+            if url.startswith('http://') or url.startswith('https://'):
+                return url
         
         # Don't return local file URLs - they're not accessible on Render
         return None
@@ -72,9 +106,25 @@ class UserSerializer(serializers.ModelSerializer):
     def get_license_front_document_url(self, obj):
         """Return full URL for front license document."""
         # Only return Supabase URL - local files are not accessible on production (Render)
-        # If only local file exists, return None (file needs to be re-uploaded to Supabase)
+        # Filter out any URLs that point to local media (even if stored in _url field)
         if obj.license_front_document_url:
-            return obj.license_front_document_url
+            url = obj.license_front_document_url
+            # Filter out local media URLs
+            if (
+                '/media/' in url or
+                '/profiles/' in url or
+                'airbcar-backend.onrender.com/media/' in url or
+                'localhost/media/' in url or
+                '127.0.0.1/media/' in url
+            ):
+                # This is a local file URL, don't return it
+                return None
+            # Only return Supabase or external URLs
+            if 'supabase.co' in url and '/storage/v1/object/public/' in url:
+                return url
+            # Allow other external URLs (Google, CDNs, etc.)
+            if url.startswith('http://') or url.startswith('https://'):
+                return url
         
         # Don't return local file URLs - they're not accessible on Render
         # If user has local file but no Supabase URL, they need to re-upload
@@ -83,9 +133,25 @@ class UserSerializer(serializers.ModelSerializer):
     def get_license_back_document_url(self, obj):
         """Return full URL for back license document."""
         # Only return Supabase URL - local files are not accessible on production (Render)
-        # If only local file exists, return None (file needs to be re-uploaded to Supabase)
+        # Filter out any URLs that point to local media (even if stored in _url field)
         if obj.license_back_document_url:
-            return obj.license_back_document_url
+            url = obj.license_back_document_url
+            # Filter out local media URLs
+            if (
+                '/media/' in url or
+                '/profiles/' in url or
+                'airbcar-backend.onrender.com/media/' in url or
+                'localhost/media/' in url or
+                '127.0.0.1/media/' in url
+            ):
+                # This is a local file URL, don't return it
+                return None
+            # Only return Supabase or external URLs
+            if 'supabase.co' in url and '/storage/v1/object/public/' in url:
+                return url
+            # Allow other external URLs (Google, CDNs, etc.)
+            if url.startswith('http://') or url.startswith('https://'):
+                return url
         
         # Don't return local file URLs - they're not accessible on Render
         # If user has local file but no Supabase URL, they need to re-upload

@@ -341,14 +341,61 @@ export const mapBackendToFrontend = (userData) => {
     licenseCountry: getValue(userData.license_origin_country) || getValue(userData.license_country),
     licenseIssueDate: formatDate(userData.issue_date) || formatDate(userData.license_issue_date),
     licenseExpiryDate: formatDate(userData.expiry_date) || formatDate(userData.license_expiry_date),
-    idFrontDocumentUrl: getValue(userData.id_front_document_url),
-    idBackDocumentUrl: getValue(userData.id_back_document_url),
+    // Filter out local media URLs for identity documents
+    idFrontDocumentUrl: (() => {
+      let url = getValue(userData.id_front_document_url);
+      if (url && (
+        url.includes('/media/') ||
+        url.includes('/profiles/') ||
+        url.includes('airbcar-backend.onrender.com/media/') ||
+        url.includes('localhost/media/')
+      )) {
+        url = null; // Filter out local file URLs
+      }
+      return url || '';
+    })(),
+    idBackDocumentUrl: (() => {
+      let url = getValue(userData.id_back_document_url);
+      if (url && (
+        url.includes('/media/') ||
+        url.includes('/profiles/') ||
+        url.includes('airbcar-backend.onrender.com/media/') ||
+        url.includes('localhost/media/')
+      )) {
+        url = null; // Filter out local file URLs
+      }
+      return url || '';
+    })(),
     idFrontDocumentFile: null,
     idBackDocumentFile: null,
     idFrontDocumentPreview: '',
     idBackDocumentPreview: '',
-    licenseFrontDocumentUrl: getValue(userData.license_front_document_url),
-    licenseBackDocumentUrl: getValue(userData.license_back_document_url),
+    
+    // Filter out local media URLs for license documents
+    licenseFrontDocumentUrl: (() => {
+      let url = getValue(userData.license_front_document_url);
+      if (url && (
+        url.includes('/media/') ||
+        url.includes('/profiles/') ||
+        url.includes('airbcar-backend.onrender.com/media/') ||
+        url.includes('localhost/media/')
+      )) {
+        url = null; // Filter out local file URLs
+      }
+      return url || '';
+    })(),
+    licenseBackDocumentUrl: (() => {
+      let url = getValue(userData.license_back_document_url);
+      if (url && (
+        url.includes('/media/') ||
+        url.includes('/profiles/') ||
+        url.includes('airbcar-backend.onrender.com/media/') ||
+        url.includes('localhost/media/')
+      )) {
+        url = null; // Filter out local file URLs
+      }
+      return url || '';
+    })(),
     licenseFrontDocumentFile: null,
     licenseBackDocumentFile: null,
     licenseFrontDocumentPreview: '',
