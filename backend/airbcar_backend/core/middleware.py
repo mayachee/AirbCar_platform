@@ -37,13 +37,20 @@ class EnsureCorsHeadersMiddleware(MiddlewareMixin):
                     response['Access-Control-Allow-Methods'] = ', '.join(allowed_methods)
                 
                 # Add allowed headers
-                allowed_headers = getattr(settings, 'CORS_ALLOW_HEADERS', ['content-type', 'authorization'])
+                allowed_headers = getattr(settings, 'CORS_ALLOW_HEADERS', ['content-type', 'authorization', 'x-requested-with'])
                 if isinstance(allowed_headers, list):
                     response['Access-Control-Allow-Headers'] = ', '.join(allowed_headers)
             
             # If CORS headers are not already present, try to add them based on allowed origins
             elif 'Access-Control-Allow-Origin' not in response:
-                if hasattr(settings, 'CORS_ALLOWED_ORIGINS') and origin in settings.CORS_ALLOWED_ORIGINS:
+                # Check if origin is in allowed origins list
+                allowed_origins = getattr(settings, 'CORS_ALLOWED_ORIGINS', [])
+                if origin and (origin in allowed_origins or any(origin.startswith(allowed) for allowed in allowed_origins if '*' in allowed)):
+                    response['Access-Control-Allow-Origin'] = origin
+                    if getattr(settings, 'CORS_ALLOW_CREDENTIALS', False):
+                        response['Access-Control-Allow-Credentials'] = 'true'
+                # Also check for production domains
+                elif origin and ('airbcar.com' in origin or 'www.airbcar.com' in origin):
                     response['Access-Control-Allow-Origin'] = origin
                     if getattr(settings, 'CORS_ALLOW_CREDENTIALS', False):
                         response['Access-Control-Allow-Credentials'] = 'true'

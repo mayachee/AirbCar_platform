@@ -208,6 +208,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",
     "http://127.0.0.1:8000",
     "http://localhost:8000",
+    # Production domains
+    "https://www.airbcar.com",
+    "https://airbcar.com",
+    "http://www.airbcar.com",
+    "http://airbcar.com",
     # Docker network IPs (common Docker bridge network IPs)
     "http://172.18.240.1:3001",
     "http://172.18.240.1:3000",
@@ -215,8 +220,20 @@ CORS_ALLOWED_ORIGINS = [
 
 # Add production frontend URL from environment if provided
 FRONTEND_URL_ENV = os.environ.get('FRONTEND_URL', '')
-if FRONTEND_URL_ENV and FRONTEND_URL_ENV not in CORS_ALLOWED_ORIGINS:
-    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL_ENV)
+if FRONTEND_URL_ENV:
+    # Remove trailing slash and add both http and https versions
+    frontend_url = FRONTEND_URL_ENV.rstrip('/')
+    if frontend_url not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(frontend_url)
+    # Also add without www and with www
+    if frontend_url.startswith('https://'):
+        domain = frontend_url.replace('https://', '')
+        if f"https://www.{domain}" not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(f"https://www.{domain}")
+        if f"http://www.{domain}" not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(f"http://www.{domain}")
+        if f"http://{domain}" not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(f"http://{domain}")
 
 # Allow all HTTP methods including DELETE
 CORS_ALLOW_METHODS = [

@@ -2508,6 +2508,174 @@ class BookingCancelView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class BookingAcceptView(APIView):
+    """Accept a booking (change status from pending to confirmed)."""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        """Accept a booking by ID."""
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # Get the booking
+            try:
+                booking = Booking.objects.select_related('customer', 'partner', 'listing').get(pk=pk)
+            except Booking.DoesNotExist:
+                return Response({
+                    'error': 'Booking not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check permissions: only partner who owns the listing can accept
+            user = request.user
+            can_accept = False
+            
+            if user.role == 'admin' or user.is_superuser:
+                can_accept = True
+            elif user.role == 'partner':
+                # Partner can accept bookings for their listings
+                try:
+                    partner = user.partner_profile
+                    can_accept = (booking.partner == partner)
+                except Partner.DoesNotExist:
+                    can_accept = False
+            else:
+                can_accept = False
+            
+            if not can_accept:
+                return Response({
+                    'error': 'You do not have permission to accept this booking'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Check if booking can be accepted
+            if booking.status != 'pending':
+                return Response({
+                    'error': f'Cannot accept booking with status: {booking.status}',
+                    'detail': 'Only pending bookings can be accepted'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Accept the booking (change status to confirmed)
+            booking.status = 'confirmed'
+            booking.save()
+            
+            if settings.DEBUG:
+                print(f"✅ Booking {booking.id} accepted by {user.username}")
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'message': 'Booking accepted successfully'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ BookingAcceptView Error: {str(e)}")
+                traceback.print_exc()
+            
+            return Response({
+                'error': 'Failed to accept booking. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BookingRejectView(APIView):
+    """Reject a booking (change status from pending to cancelled)."""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        """Reject a booking by ID."""
+        try:
+            # Ensure database connection is active
+            from django.db import connection
+            from django.db.utils import OperationalError
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return Response({
+                    'error': 'Database connection error. Please try again later.'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+            # Get the booking
+            try:
+                booking = Booking.objects.select_related('customer', 'partner', 'listing').get(pk=pk)
+            except Booking.DoesNotExist:
+                return Response({
+                    'error': 'Booking not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check permissions: only partner who owns the listing can reject
+            user = request.user
+            can_reject = False
+            
+            if user.role == 'admin' or user.is_superuser:
+                can_reject = True
+            elif user.role == 'partner':
+                # Partner can reject bookings for their listings
+                try:
+                    partner = user.partner_profile
+                    can_reject = (booking.partner == partner)
+                except Partner.DoesNotExist:
+                    can_reject = False
+            else:
+                can_reject = False
+            
+            if not can_reject:
+                return Response({
+                    'error': 'You do not have permission to reject this booking'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Check if booking can be rejected
+            if booking.status != 'pending':
+                return Response({
+                    'error': f'Cannot reject booking with status: {booking.status}',
+                    'detail': 'Only pending bookings can be rejected'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get rejection reason if provided (check both 'reason' and 'rejection_reason')
+            rejection_reason = request.data.get('reason', '').strip() or request.data.get('rejection_reason', '').strip()
+            
+            # Reject the booking (change status to cancelled)
+            booking.status = 'cancelled'
+            booking.save()
+            
+            if settings.DEBUG:
+                print(f"❌ Booking {booking.id} rejected by {user.username}")
+                if rejection_reason:
+                    print(f"   Reason: {rejection_reason}")
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'message': 'Booking rejected successfully',
+                'rejection_reason': rejection_reason if rejection_reason else None
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Close database connection on error to force reconnection
+            from django.db import connection
+            connection.close()
+            
+            if settings.DEBUG:
+                import traceback
+                print(f"❌ BookingRejectView Error: {str(e)}")
+                traceback.print_exc()
+            
+            return Response({
+                'error': 'Failed to reject booking. Please try again later.',
+                'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class BookingDetailView(APIView):
     """Get booking by ID."""
     permission_classes = [IsAuthenticated]
@@ -3334,22 +3502,37 @@ class RegisterView(APIView):
     def post(self, request):
         from .utils import send_verification_email
         
-        email = request.data.get('email')
-        password = request.data.get('password')
-        first_name = request.data.get('first_name', '')
-        last_name = request.data.get('last_name', '')
-        phone_number = request.data.get('phone_number', '')
-        role = request.data.get('role', 'customer')
-        
-        # Partner-specific fields
-        business_name = request.data.get('business_name', '')
-        tax_id = request.data.get('tax_id', '')
-        business_type = request.data.get('business_type', 'individual')
-        
-        if not email or not password:
-            return Response({
-                'error': 'Email and password are required'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            email = request.data.get('email', '').strip()
+            password = request.data.get('password', '')
+            first_name = request.data.get('first_name', '').strip()
+            last_name = request.data.get('last_name', '').strip()
+            phone_number = request.data.get('phone_number', '').strip()
+            role = request.data.get('role', 'customer').strip()
+            
+            # Partner-specific fields
+            business_name = request.data.get('business_name', '').strip()
+            tax_id = request.data.get('tax_id', '').strip()
+            business_type = request.data.get('business_type', 'individual').strip()
+            
+            # Validate required fields
+            if not email:
+                return Response({
+                    'error': 'Email is required',
+                    'detail': 'Please provide a valid email address'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not password:
+                return Response({
+                    'error': 'Password is required',
+                    'detail': 'Please provide a password'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if len(password) < 8:
+                return Response({
+                    'error': 'Password is too short',
+                    'detail': 'Password must be at least 8 characters long'
+                }, status=status.HTTP_400_BAD_REQUEST)
         
         # Validate partner fields if role is partner
         if role == 'partner':
