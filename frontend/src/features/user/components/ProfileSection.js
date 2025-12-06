@@ -204,6 +204,8 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           />
           {renderFieldError('dateOfBirth')}
         </div>
+      </div>
+
       {/* Driver's License Documents */}
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Driver's License Documents</h3>
