@@ -369,15 +369,34 @@ class ListingListView(APIView):
                         'url': file_url
                     })
         elif 'images' in request.data:
-            # Handle JSON array of image URLs
+            # Handle JSON array of image URLs (can be strings or objects with url property)
             images_data = request.data.get('images')
             if isinstance(images_data, str):
                 try:
                     images = json.loads(images_data)
                 except json.JSONDecodeError:
-                    images = []
+                    # If it's a single URL string, convert to array
+                    if images_data.startswith('http://') or images_data.startswith('https://'):
+                        images = [images_data]
+                    else:
+                        images = []
             else:
                 images = images_data if isinstance(images_data, list) else []
+            
+            # Normalize images to ensure they're in the correct format
+            # Support both string URLs and objects with 'url' property
+            normalized_images = []
+            for img in images:
+                if isinstance(img, str):
+                    # If it's a string URL (like Google profile picture), store as string
+                    normalized_images.append(img)
+                elif isinstance(img, dict) and 'url' in img:
+                    # If it's an object with url property, keep the object format
+                    normalized_images.append(img)
+                elif isinstance(img, dict):
+                    # If it's an object without url, try to use it as-is or extract url
+                    normalized_images.append(img)
+            images = normalized_images
         
         listing_data['images'] = images
         
@@ -3667,9 +3686,10 @@ class GoogleAuthView(APIView):
                     user.first_name = google_first_name
                 if google_last_name and not user.last_name:
                     user.last_name = google_last_name
-                if google_picture and not user.profile_picture:
-                    user.profile_picture = google_picture
-                user.save()
+                # Save Google profile picture URL
+                if google_picture:
+                    user.profile_picture_url = google_picture
+                    user.save()
             except User.DoesNotExist:
                 # Create new user
                 # Generate a random password (user won't need it for Google auth)
@@ -3689,13 +3709,9 @@ class GoogleAuthView(APIView):
                     first_name=google_first_name or '',
                     last_name=google_last_name or '',
                     is_verified=True,  # Google emails are already verified
-                    is_active=True
+                    is_active=True,
+                    profile_picture_url=google_picture if google_picture else None
                 )
-                
-                # Set profile picture if available
-                if google_picture:
-                    user.profile_picture = google_picture
-                    user.save()
             
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)

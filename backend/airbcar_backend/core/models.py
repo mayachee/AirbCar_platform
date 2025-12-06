@@ -21,6 +21,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    profile_picture_url = models.URLField(max_length=500, blank=True, null=True, help_text='URL for profile picture (e.g., Google profile picture)')
     id_front_document = models.ImageField(upload_to='identity_documents/', blank=True, null=True, help_text='Front side of identity document (local storage)')
     id_back_document = models.ImageField(upload_to='identity_documents/', blank=True, null=True, help_text='Back side of identity document (local storage)')
     # Supabase Storage URLs (for new uploads)

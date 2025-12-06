@@ -82,14 +82,20 @@ export function AuthProvider({ children }) {
     const { redirect = true, redirectTo = '/' } = options
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'
-      const response = await fetch(`${apiUrl}/api/login/`, {
+      const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      const loginUrl = `${apiUrl}/api/login/`
+      
+      console.log('🔐 Attempting login:', { email, apiUrl: loginUrl })
+      
+      const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
       })
+      
+      console.log('📡 Login response:', { status: response.status, statusText: response.statusText, ok: response.ok })
 
       if (response.ok) {
         const data = await response.json()
@@ -158,6 +164,42 @@ export function AuthProvider({ children }) {
         
         return { success: true, user: data.user }
       } else {
+        // Handle non-OK responses (400, 401, 403, etc.)
+        let errorMessage = 'Login failed. Please check your credentials.'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.detail || errorData.message || errorData.error || errorMessage
+          
+          // Handle specific error cases
+          if (response.status === 401) {
+            errorMessage = 'Invalid email or password. Please try again.'
+          } else if (response.status === 400) {
+            errorMessage = errorData.detail || errorData.message || 'Invalid request. Please check your input.'
+          } else if (response.status === 403) {
+            errorMessage = errorData.detail || errorData.message || 'Account is inactive or suspended.'
+          } else if (response.status === 404) {
+            errorMessage = 'Login endpoint not found. Please contact support.'
+          } else if (response.status >= 500) {
+            errorMessage = 'Server error. Please try again later.'
+          }
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+        
+        console.error('Login failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorMessage
+        })
+        
+        return { success: false, error: errorMessage }
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      return { success: false, error: error.message || 'Network error. Please check your connection and try again.' }
+    }
+  }
         let errorData
         try {
           errorData = await response.json()

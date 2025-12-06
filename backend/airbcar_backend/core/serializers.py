@@ -42,7 +42,12 @@ class UserSerializer(serializers.ModelSerializer):
         }
     
     def get_profile_picture_url(self, obj):
-        """Return full URL for profile picture."""
+        """Return full URL for profile picture. Prioritizes URL field (e.g., Google profile) over uploaded file."""
+        # First check if there's a profile_picture_url (e.g., from Google Sign-In)
+        if hasattr(obj, 'profile_picture_url') and obj.profile_picture_url:
+            return obj.profile_picture_url
+        
+        # Fallback to uploaded profile_picture file
         if obj.profile_picture:
             request = self.context.get('request')
             if request:
@@ -233,6 +238,14 @@ class ListingSerializer(serializers.ModelSerializer):
             def fix_image_url(url):
                 """Fix image URL to use correct backend URL."""
                 if not url:
+                    return url
+                
+                # If it's already a full URL (http/https), return as is
+                if url.startswith('http://') or url.startswith('https://'):
+                    # Check if it's an external URL (Google, Supabase, etc.)
+                    if 'supabase.co' in url or 'googleusercontent.com' in url or 'lh3.googleusercontent.com' in url:
+                        return url
+                    # For other external URLs, return as is
                     return url
                 
                 # If it's a Supabase Storage URL, return as is (don't modify)

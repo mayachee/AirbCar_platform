@@ -64,9 +64,13 @@ function AuthForm() {
   const mode = searchParams.get('mode')
   
   // Use useEffect to handle mode changes
+  // Always allow users to switch between Sign In and Sign Up
   useEffect(() => {
     if (mode && (mode === 'signin' || mode === 'signup')) {
       setActiveTab(mode)
+    } else {
+      // Default to signin if no mode specified, but tabs remain visible
+      setActiveTab('signin')
     }
   }, [mode])
 
@@ -299,10 +303,16 @@ function AuthForm() {
       if (result.success) {
         // Redirection is handled automatically by AuthContext
       } else {
-        setError(result.error)
+        // Show the actual error message from the API
+        const errorMsg = result.error || 'Login failed. Please check your email and password.'
+        setError(errorMsg)
+        console.error('Login failed:', result)
       }
     } catch (error) {
-      setError('Something went wrong')
+      // Show detailed error message
+      const errorMsg = error.message || error.toString() || 'Network error. Please check your connection and try again.'
+      setError(errorMsg)
+      console.error('Login exception:', error)
     }
 
     setIsLoading(false)
