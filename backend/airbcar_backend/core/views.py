@@ -1789,7 +1789,7 @@ class UserMeView(APIView):
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
                         # Don't block on delete - just try it, continue even if it fails
                         try:
-                        delete_file_from_supabase(bucket_name, file_path)
+                            delete_file_from_supabase(bucket_name, file_path)
                         except Exception:
                             pass  # Continue even if delete fails
             
