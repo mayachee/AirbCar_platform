@@ -213,8 +213,8 @@ function AuthForm() {
                 !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
                 !errorMessage.includes('play.google.com/log')
               ) {
-                console.error('Google sign-in error:', error)
-                setError('Failed to sign in with Google. Please try again.')
+              console.error('Google sign-in error:', error)
+              setError('Failed to sign in with Google. Please try again.')
               }
               setIsLoading(false)
             }
@@ -243,12 +243,12 @@ function AuthForm() {
           !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
           !errorMessage.includes('play.google.com/log')
         ) {
-          console.error('Failed to initialize Google Sign-In:', error)
+        console.error('Failed to initialize Google Sign-In:', error)
         }
         // Still set ready to false if it's a critical error
         if (errorMessage.includes('Google Identity Services failed to load') || 
             errorMessage.includes('Failed to load Google Identity Services')) {
-          setGoogleReady(false)
+        setGoogleReady(false)
         } else {
           // For non-critical errors, still try to proceed
           setGoogleReady(true)
@@ -450,7 +450,7 @@ function AuthForm() {
             !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
             !errorMessage.includes('play.google.com/log')
           ) {
-            console.error('Error rendering Google button (sign-in):', error)
+          console.error('Error rendering Google button (sign-in):', error)
           }
         }
       }
@@ -474,9 +474,9 @@ function AuthForm() {
             !errorMessage.includes('ERR_BLOCKED_BY_CLIENT') &&
             !errorMessage.includes('play.google.com/log')
           ) {
-            console.error('Error rendering Google button (sign-up):', error)
-          }
+          console.error('Error rendering Google button (sign-up):', error)
         }
+      }
       }
 
       checkForOriginError()

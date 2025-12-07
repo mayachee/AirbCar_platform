@@ -345,13 +345,13 @@ class ListingListView(APIView):
                     if settings.DEBUG:
                         print(f"⚠️ Supabase upload failed for {file.name}: {str(e)}")
                 
-                    if supabase_url:
-                        # Use Supabase URL
-                        images.append({
-                            'name': file.name,
-                            'url': supabase_url
-                        })
-                    else:
+                if supabase_url:
+                    # Use Supabase URL
+                    images.append({
+                        'name': file.name,
+                        'url': supabase_url
+                    })
+                else:
                         # Supabase upload failed - don't use local storage fallback
                         # Images must be hosted in Supabase
                         if settings.DEBUG:
@@ -369,7 +369,7 @@ class ListingListView(APIView):
                     if images_data.startswith('http://') or images_data.startswith('https://'):
                         images = [images_data]
                     else:
-                        images = []
+                    images = []
             else:
                 images = images_data if isinstance(images_data, list) else []
             
@@ -1789,7 +1789,7 @@ class UserMeView(APIView):
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
                         # Don't block on delete - just try it, continue even if it fails
                         try:
-                            delete_file_from_supabase(bucket_name, file_path)
+                        delete_file_from_supabase(bucket_name, file_path)
                         except Exception:
                             pass  # Continue even if delete fails
             
@@ -2509,7 +2509,12 @@ class BookingCancelView(APIView):
 
 
 class BookingAcceptView(APIView):
-    """Accept a booking (change status from pending to confirmed)."""
+    """
+    Accept a booking (change status from pending to confirmed).
+    
+    Endpoint: POST /bookings/<id>/accept/
+    Requires: Authentication, Partner ownership of listing
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
@@ -3340,9 +3345,9 @@ class HealthCheckView(APIView):
                 if settings.DEBUG:
                     print(f"Health check - DB check failed (non-critical): {db_error}")
             
-            return Response({
-                'status': 'ok',
-                'message': 'Backend is running',
+        return Response({
+            'status': 'ok',
+            'message': 'Backend is running',
                 'cors_enabled': True,
                 'database': db_status,
                 'timestamp': timezone.now().isoformat()
@@ -3356,17 +3361,17 @@ class HealthCheckView(APIView):
             return Response({
                 'status': 'error',
                 'message': 'Backend is running but encountered an error',
-                'cors_enabled': True
+            'cors_enabled': True
             }, status=status.HTTP_200_OK)  # Still return 200 so health checks don't fail
     
     def post(self, request):
         """Test POST endpoint."""
         try:
-            return Response({
-                'status': 'ok',
-                'method': 'POST',
-                'data_received': str(request.data) if hasattr(request, 'data') else 'No data',
-                'cors_enabled': True
+        return Response({
+            'status': 'ok',
+            'method': 'POST',
+            'data_received': str(request.data) if hasattr(request, 'data') else 'No data',
+            'cors_enabled': True
             }, status=status.HTTP_200_OK)
         except Exception as e:
             if settings.DEBUG:
@@ -3587,15 +3592,15 @@ class RegisterView(APIView):
             last_name = request.data.get('last_name', '').strip()
             phone_number = request.data.get('phone_number', '').strip()
             role = request.data.get('role', 'customer').strip()
-            
-            # Partner-specific fields
+        
+        # Partner-specific fields
             business_name = request.data.get('business_name', '').strip()
             tax_id = request.data.get('tax_id', '').strip()
             business_type = request.data.get('business_type', 'individual').strip()
             
             # Validate required fields
             if not email:
-                return Response({
+            return Response({
                     'error': 'Email is required',
                     'detail': 'Please provide a valid email address'
                 }, status=status.HTTP_400_BAD_REQUEST)
@@ -3610,67 +3615,67 @@ class RegisterView(APIView):
                 return Response({
                     'error': 'Password is too short',
                     'detail': 'Password must be at least 8 characters long'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Validate partner fields if role is partner
-            if role == 'partner':
-                if not business_name or not business_name.strip():
-                    return Response({
-                        'error': 'Business name is required for partner registration'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                if not tax_id or not tax_id.strip():
-                    return Response({
-                        'error': 'Tax ID is required for partner registration'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            
-            if User.objects.filter(email=email).exists():
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate partner fields if role is partner
+        if role == 'partner':
+            if not business_name or not business_name.strip():
                 return Response({
-                    'error': 'User with this email already exists'
+                    'error': 'Business name is required for partner registration'
                 }, status=status.HTTP_400_BAD_REQUEST)
+            if not tax_id or not tax_id.strip():
+                return Response({
+                    'error': 'Tax ID is required for partner registration'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if User.objects.filter(email=email).exists():
+            return Response({
+                'error': 'User with this email already exists'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Create user (initially inactive until email is verified)
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                phone_number=phone_number if phone_number else None,
+                role=role,
+                is_active=False,  # User must verify email before activation
+                is_verified=False
+            )
             
-            try:
-                # Create user (initially inactive until email is verified)
-                user = User.objects.create_user(
-                    username=email,
-                    email=email,
-                    password=password,
-                    first_name=first_name,
-                    last_name=last_name,
-                    phone_number=phone_number if phone_number else None,
-                    role=role,
-                    is_active=False,  # User must verify email before activation
-                    is_verified=False
+            # Create partner profile if role is partner
+            if role == 'partner':
+                Partner.objects.create(
+                    user=user,
+                    business_name=business_name.strip(),
+                    tax_id=tax_id.strip(),
+                    business_type=business_type,
+                    is_verified=False  # Partners need verification
                 )
-                
-                # Create partner profile if role is partner
-                if role == 'partner':
-                    Partner.objects.create(
-                        user=user,
-                        business_name=business_name.strip(),
-                        tax_id=tax_id.strip(),
-                        business_type=business_type,
-                        is_verified=False  # Partners need verification
-                    )
-                
-                # Send verification email
-                verification = send_verification_email(user)
-                
-                if verification:
-                    user_serializer = UserSerializer(user)
-                    return Response({
-                        'data': user_serializer.data,
-                        'message': 'Account created successfully! Please check your email to verify your account.',
-                        'email_sent': True
-                    }, status=status.HTTP_201_CREATED)
-                else:
-                    # If email sending fails, still create the user but warn them
-                    user_serializer = UserSerializer(user)
-                    return Response({
-                        'data': user_serializer.data,
-                        'message': 'Account created, but verification email could not be sent. Please contact support.',
-                        'email_sent': False
-                    }, status=status.HTTP_201_CREATED)
-            except Exception as e:
+            
+            # Send verification email
+            verification = send_verification_email(user)
+            
+            if verification:
+                user_serializer = UserSerializer(user)
+                return Response({
+                    'data': user_serializer.data,
+                    'message': 'Account created successfully! Please check your email to verify your account.',
+                    'email_sent': True
+                }, status=status.HTTP_201_CREATED)
+            else:
+                # If email sending fails, still create the user but warn them
+                user_serializer = UserSerializer(user)
+                return Response({
+                    'data': user_serializer.data,
+                    'message': 'Account created, but verification email could not be sent. Please contact support.',
+                    'email_sent': False
+                }, status=status.HTTP_201_CREATED)
+        except Exception as e:
                 import traceback
                 error_msg = str(e)
                 if settings.DEBUG:
@@ -3895,11 +3900,11 @@ The AirbCar Team
             email_thread.start()
             
             # Return immediately - don't wait for email to be sent
-            # Don't reveal if email exists or not (security best practice)
-            return Response({
-                'message': 'If an account with this email exists, a password reset link has been sent.',
-                'email_sent': True
-            }, status=status.HTTP_200_OK)
+                # Don't reveal if email exists or not (security best practice)
+                return Response({
+                    'message': 'If an account with this email exists, a password reset link has been sent.',
+                    'email_sent': True
+                }, status=status.HTTP_200_OK)
             
         except User.DoesNotExist:
             # Don't reveal if email exists or not (security best practice)
@@ -3968,7 +3973,7 @@ class GoogleAuthView(APIView):
                 # Save Google profile picture URL
                 if google_picture:
                     user.profile_picture_url = google_picture
-                    user.save()
+                user.save()
             except User.DoesNotExist:
                 # Create new user
                 # Generate a random password (user won't need it for Google auth)

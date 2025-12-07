@@ -142,11 +142,11 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
       {/* Basic Information */}
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              First Name *
-            </label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            First Name *
+          </label>
           <input
             type="text"
             name="firstName"
@@ -220,10 +220,10 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           />
           {renderFieldError('dateOfBirth')}
         </div>
-      </div>
-      </div>
-
-      {/* Driver's License Documents */}
+          </div>
+        </div>
+        
+        {/* Driver's License Documents */}
       <div className="border-t-2 border-gray-300 pt-8 mt-8 bg-white rounded-lg p-6 shadow-sm">
         <div className="mb-6">
           <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
@@ -298,9 +298,9 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           )}
           
           {accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl && (
-            <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 mb-4">
               You can replace your documents below if needed.
-            </p>
+          </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {(() => {

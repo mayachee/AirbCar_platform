@@ -129,13 +129,13 @@ export default function AdminUsersPage() {
 
         {/* Debug info - only show in development */}
         {process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && (
-          <div className="bg-gray-50 border border-gray-200 px-4 py-2 rounded mb-4 text-xs">
-            <strong>Debug Status:</strong>
-            <span className="ml-2">Loading: {usersLoading ? 'Yes' : 'No'}</span>
-            <span className="ml-2">Error: {usersError || 'None'}</span>
-            <span className="ml-2">Total Users: {totalUsers}</span>
-            <span className="ml-2">Users Array Length: {Array.isArray(users) ? users.length : 'N/A'}</span>
-          </div>
+        <div className="bg-gray-50 border border-gray-200 px-4 py-2 rounded mb-4 text-xs">
+          <strong>Debug Status:</strong>
+          <span className="ml-2">Loading: {usersLoading ? 'Yes' : 'No'}</span>
+          <span className="ml-2">Error: {usersError || 'None'}</span>
+          <span className="ml-2">Total Users: {totalUsers}</span>
+          <span className="ml-2">Users Array Length: {Array.isArray(users) ? users.length : 'N/A'}</span>
+        </div>
         )}
 
         {/* Debug Info - Show when no users and no error */}
@@ -169,11 +169,11 @@ export default function AdminUsersPage() {
                     alert(`API Response:\n\nStatus: ${response.status}\n\nResponse Structure:\n${JSON.stringify(data, null, 2).substring(0, 2000)}${JSON.stringify(data, null, 2).length > 2000 ? '\n...(truncated)' : ''}\n\nCheck console for full response.`);
                     // Only log in development mode
                     if (process.env.NODE_ENV === 'development') {
-                      console.log('🔍 RAW API RESPONSE:', data);
-                      console.log('🔍 Response type:', typeof data);
-                      console.log('🔍 Is array:', Array.isArray(data));
-                      if (data && typeof data === 'object') {
-                        console.log('🔍 Response keys:', Object.keys(data));
+                    console.log('🔍 RAW API RESPONSE:', data);
+                    console.log('🔍 Response type:', typeof data);
+                    console.log('🔍 Is array:', Array.isArray(data));
+                    if (data && typeof data === 'object') {
+                      console.log('🔍 Response keys:', Object.keys(data));
                       }
                     }
                   } catch (err) {

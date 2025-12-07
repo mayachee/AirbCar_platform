@@ -222,8 +222,25 @@ export default function ImprovedBookingManagement({
       const actionText = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'cancelled';
       alert(`✅ Booking ${actionText} successfully!`);
     } catch (error) {
-      // Log error for debugging (only in console, no user alerts)
+      // Log error for debugging
       console.error(`Error ${action}ing booking:`, error);
+      
+      // Check if it's a 404 error (endpoint not found)
+      const is404 = error?.status === 404 || 
+                   error?.message?.includes('404') || 
+                   error?.message?.includes('not found') ||
+                   error?.message?.includes('Not Found') ||
+                   error?.message?.includes('Endpoint not found');
+      
+      if (is404) {
+        console.warn('⚠️ Backend endpoint not found. This usually means:');
+        console.warn('   1. The backend on Render needs to be redeployed');
+        console.warn('   2. Go to Render dashboard and trigger a manual deployment');
+        console.warn('   3. Or push a new commit to trigger auto-deployment');
+        console.warn(`   Endpoint: POST /bookings/${bookingId}/${action}/`);
+      }
+      
+      // Log full error details for debugging
       console.error('Full error details:', {
         message: error?.message,
         status: error?.status,

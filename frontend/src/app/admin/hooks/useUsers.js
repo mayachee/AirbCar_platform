@@ -219,7 +219,7 @@ export const useUsers = () => {
       throw error;
     }
   };
-
+  
   return {
     users: filteredUsers, // Return filtered users for display
     currentUsers,
