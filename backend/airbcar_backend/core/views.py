@@ -3339,18 +3339,18 @@ class HealthCheckView(APIView):
     
     def get(self, request):
         """Health check endpoint - should always return 200 if server is running."""
+        db_status = 'unknown'
         try:
             # Try a simple database query to check DB connectivity
-            try:
-                # Just check if we can query the database (count users, but don't fail if DB is slow)
-                User.objects.exists()
-                db_status = 'connected'
-            except Exception as db_error:
-                # Database might be slow or unavailable, but server is still running
-                db_status = 'slow_or_unavailable'
-                if settings.DEBUG:
-                    print(f"Health check - DB check failed (non-critical): {db_error}")
-            
+            User.objects.exists()
+            db_status = 'connected'
+        except Exception as db_error:
+            # Database might be slow or unavailable, but server is still running
+            db_status = 'slow_or_unavailable'
+            if settings.DEBUG:
+                print(f"Health check - DB check failed (non-critical): {db_error}")
+        
+        try:
             return Response({
                 'status': 'ok',
                 'message': 'Backend is running',
