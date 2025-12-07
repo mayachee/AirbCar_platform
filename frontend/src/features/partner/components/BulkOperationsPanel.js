@@ -16,7 +16,8 @@ import {
   Square,
   Loader2,
   AlertTriangle,
-  X
+  X,
+  Zap
 } from 'lucide-react';
 import { partnerService } from '@/features/partner/services/partnerService';
 
