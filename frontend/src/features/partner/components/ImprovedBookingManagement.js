@@ -28,22 +28,7 @@ export default function ImprovedBookingManagement({
   const [searchTerm, setSearchTerm] = useState('');
   const [showPendingOnly, setShowPendingOnly] = useState(false);
 
-  useEffect(() => {
-    if (propBookings.length > 0) {
-      setBookings(propBookings);
-    } else {
-      loadBookings();
-    }
-  }, [propBookings, loadBookings]);
-
-  useEffect(() => {
-    setLoading(propLoading);
-  }, [propLoading]);
-
-  useEffect(() => {
-    filterBookings();
-  }, [filterBookings]);
-
+  // Define loadBookings before useEffect that uses it
   const loadBookings = useCallback(async () => {
     try {
       setLoading(true);
@@ -110,6 +95,7 @@ export default function ImprovedBookingManagement({
     }
   }, []);
 
+  // Define filterBookings before useEffect that uses it
   const filterBookings = useCallback(() => {
     let filtered = [...bookings];
 
@@ -146,6 +132,23 @@ export default function ImprovedBookingManagement({
 
     setFilteredBookings(filtered);
   }, [bookings, statusFilter, searchTerm, showPendingOnly]);
+
+  // useEffect hooks after function definitions
+  useEffect(() => {
+    if (propBookings.length > 0) {
+      setBookings(propBookings);
+    } else {
+      loadBookings();
+    }
+  }, [propBookings, loadBookings]);
+
+  useEffect(() => {
+    setLoading(propLoading);
+  }, [propLoading]);
+
+  useEffect(() => {
+    filterBookings();
+  }, [filterBookings]);
 
   const handleAction = async (action, bookingId) => {
     try {
