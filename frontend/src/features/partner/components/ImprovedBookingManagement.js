@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Calendar, Clock, User, Car, CheckCircle, XCircle, Eye, MessageSquare, AlertCircle } from 'lucide-react';
+import { Search, Calendar, Clock, User, Car, CheckCircle, XCircle, Eye, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
 import { bookingService } from '@/features/booking/services/bookingService';
 import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
@@ -171,9 +171,12 @@ export default function ImprovedBookingManagement({
             result = await acceptBooking(bookingId);
           } else {
             // Use bookingService directly - calls POST /bookings/{id}/accept/
+            // bookingService.acceptBooking() returns response.data which is { data: {...}, message: '...' }
             const response = await bookingService.acceptBooking(bookingId);
-            // Handle different response structures
-            result = response?.data?.data || response?.data || response;
+            // Backend returns: { data: serializer.data, message: '...' }
+            // bookingService returns: { data: {...}, message: '...' }
+            // Extract the booking data
+            result = response?.data || response;
           }
           break;
         case 'reject':
@@ -182,9 +185,12 @@ export default function ImprovedBookingManagement({
             result = await rejectBooking(bookingId, reason);
           } else {
             // Use bookingService directly - calls POST /bookings/{id}/reject/ with rejection_reason
+            // bookingService.rejectBooking() returns response.data which is { data: {...}, message: '...' }
             const response = await bookingService.rejectBooking(bookingId, reason);
-            // Handle different response structures
-            result = response?.data?.data || response?.data || response;
+            // Backend returns: { data: serializer.data, message: '...' }
+            // bookingService returns: { data: {...}, message: '...' }
+            // Extract the booking data
+            result = response?.data || response;
           }
           break;
         case 'cancel':
@@ -192,7 +198,8 @@ export default function ImprovedBookingManagement({
             result = await cancelBooking(bookingId);
           } else {
             const response = await bookingService.cancelBooking(bookingId);
-            result = response?.data?.data || response?.data || response;
+            // Extract the booking data
+            result = response?.data || response;
           }
           break;
         default:
@@ -497,35 +504,53 @@ export default function ImprovedBookingManagement({
 
                     </div>
                     
-                    <div className="ml-6 flex flex-col space-y-2">
+                    <div className="ml-6 flex flex-col space-y-3 min-w-[140px]">
                       <button
                         onClick={() => {
                           setSelectedBooking(booking);
                           setShowDetails(true);
                         }}
-                        className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+                        className="px-4 py-2.5 text-sm font-semibold text-blue-700 bg-blue-50 border-2 border-blue-200 rounded-xl hover:bg-blue-100 hover:border-blue-300 hover:shadow-md transition-all duration-200 flex items-center justify-center space-x-2 group"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 group-hover:scale-110 transition-transform" />
                         <span>View Details</span>
                       </button>
                       
                       {isPending && (
-                        <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-2.5">
                           <button
                             onClick={() => handleAction('accept', booking.id)}
                             disabled={actionLoading}
-                            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                            className="relative px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 active:scale-95 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:from-green-600 disabled:hover:to-green-700 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:shadow-green-500/30 group"
                           >
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Accept</span>
+                            {actionLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Processing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                                <span>Accept Booking</span>
+                              </>
+                            )}
                           </button>
                           <button
                             onClick={() => handleAction('reject', booking.id)}
                             disabled={actionLoading}
-                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                            className="relative px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-700 hover:to-red-800 active:scale-95 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:from-red-600 disabled:hover:to-red-700 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl hover:shadow-red-500/30 group"
                           >
-                            <XCircle className="h-4 w-4" />
-                            <span>Reject</span>
+                            {actionLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Processing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                                <span>Reject Booking</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       )}

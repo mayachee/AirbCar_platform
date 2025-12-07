@@ -29,6 +29,7 @@ urlpatterns = [
     path('bookings/', views.BookingListView.as_view(), name='booking-list'),
     path('bookings/pending-requests/', views.BookingPendingRequestsView.as_view(), name='booking-pending-requests'),
     path('bookings/upcoming/', views.BookingUpcomingView.as_view(), name='booking-upcoming'),
+    # Accept/Reject endpoints (must come before detail view for proper URL matching)
     path('bookings/<int:pk>/accept/', views.BookingAcceptView.as_view(), name='booking-accept'),
     path('bookings/<int:pk>/reject/', views.BookingRejectView.as_view(), name='booking-reject'),
     path('bookings/<int:pk>/cancel/', views.BookingCancelView.as_view(), name='booking-cancel'),
