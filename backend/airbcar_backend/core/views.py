@@ -3351,9 +3351,9 @@ class HealthCheckView(APIView):
                 if settings.DEBUG:
                     print(f"Health check - DB check failed (non-critical): {db_error}")
             
-        return Response({
-            'status': 'ok',
-            'message': 'Backend is running',
+            return Response({
+                'status': 'ok',
+                'message': 'Backend is running',
                 'cors_enabled': True,
                 'database': db_status,
                 'timestamp': timezone.now().isoformat()
