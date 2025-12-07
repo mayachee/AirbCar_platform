@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Calendar, Clock, User, Car, CheckCircle, XCircle, Eye, MessageSquare, AlertCircle } from 'lucide-react';
-import { bookingService } from '@/services/api';
+import { bookingService } from '@/features/booking/services/bookingService';
 import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
 import CustomerDocuments from '@/features/partner/components/CustomerDocuments';
@@ -34,7 +34,7 @@ export default function ImprovedBookingManagement({
     } else {
       loadBookings();
     }
-  }, [propBookings]);
+  }, [propBookings, loadBookings]);
 
   useEffect(() => {
     setLoading(propLoading);
@@ -42,30 +42,75 @@ export default function ImprovedBookingManagement({
 
   useEffect(() => {
     filterBookings();
-  }, [bookings, statusFilter, searchTerm, showPendingOnly]);
+  }, [filterBookings]);
 
-  const loadBookings = async () => {
+  const loadBookings = useCallback(async () => {
     try {
       setLoading(true);
-      const allBookings = await bookingService.getBookings();
-      const pendingRequests = await bookingService.getPendingRequests().catch(() => []);
       
-      const all = Array.isArray(allBookings?.data) ? allBookings.data : (Array.isArray(allBookings) ? allBookings : []);
-      const pending = Array.isArray(pendingRequests?.data) ? pendingRequests.data : (Array.isArray(pendingRequests) ? pendingRequests : []);
+      // Fetch bookings from backend
+      const allBookingsResponse = await bookingService.getBookings();
+      const pendingRequestsResponse = await bookingService.getPendingRequests().catch(() => ({ data: [] }));
       
-      // Combine and deduplicate
+      // Handle different response structures from backend
+      let all = [];
+      if (Array.isArray(allBookingsResponse)) {
+        all = allBookingsResponse;
+      } else if (Array.isArray(allBookingsResponse?.data)) {
+        all = allBookingsResponse.data;
+      } else if (Array.isArray(allBookingsResponse?.results)) {
+        all = allBookingsResponse.results;
+      }
+      
+      let pending = [];
+      if (Array.isArray(pendingRequestsResponse)) {
+        pending = pendingRequestsResponse;
+      } else if (Array.isArray(pendingRequestsResponse?.data)) {
+        pending = pendingRequestsResponse.data;
+      } else if (Array.isArray(pendingRequestsResponse?.results)) {
+        pending = pendingRequestsResponse.results;
+      }
+      
+      // Normalize booking data from backend
+      const normalizeBooking = (booking) => {
+        return {
+          ...booking,
+          // Ensure price field is available (backend may use 'price' or 'total_price')
+          price: booking.price || booking.total_price || booking.total_amount || 0,
+          // Ensure date fields are available (backend may use different field names)
+          start_time: booking.start_time || booking.start_date || booking.pickup_date,
+          end_time: booking.end_time || booking.end_date || booking.return_date,
+          // Ensure listing/vehicle data is available
+          listing: booking.listing || booking.vehicle || booking.car || {},
+          // Ensure user/customer data is available
+          user: booking.user || booking.customer || {},
+        };
+      };
+      
+      // Normalize all bookings
+      all = all.map(normalizeBooking);
+      pending = pending.map(normalizeBooking);
+      
+      // Combine and deduplicate by booking ID
       const allIds = new Set(all.map(b => b.id));
       const newBookings = pending.filter(b => !allIds.has(b.id));
-      setBookings([...all, ...newBookings]);
+      const combinedBookings = [...all, ...newBookings];
+      
+      setBookings(combinedBookings);
     } catch (error) {
-      console.error('Error loading bookings:', error);
+      console.error('Error loading bookings from backend:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response
+      });
       setBookings([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterBookings = () => {
+  const filterBookings = useCallback(() => {
     let filtered = [...bookings];
 
     // Show pending only toggle
@@ -100,7 +145,7 @@ export default function ImprovedBookingManagement({
     });
 
     setFilteredBookings(filtered);
-  };
+  }, [bookings, statusFilter, searchTerm, showPendingOnly]);
 
   const handleAction = async (action, bookingId) => {
     try {
@@ -119,18 +164,24 @@ export default function ImprovedBookingManagement({
       switch (action) {
         case 'accept':
           if (acceptBooking) {
+            // Use prop function if provided (from parent component)
             result = await acceptBooking(bookingId);
           } else {
+            // Use bookingService directly - calls POST /bookings/{id}/accept/
             const response = await bookingService.acceptBooking(bookingId);
-            result = response?.data || response;
+            // Handle different response structures
+            result = response?.data?.data || response?.data || response;
           }
           break;
         case 'reject':
           if (rejectBooking) {
+            // Use prop function if provided (from parent component)
             result = await rejectBooking(bookingId, reason);
           } else {
+            // Use bookingService directly - calls POST /bookings/{id}/reject/ with rejection_reason
             const response = await bookingService.rejectBooking(bookingId, reason);
-            result = response?.data || response;
+            // Handle different response structures
+            result = response?.data?.data || response?.data || response;
           }
           break;
         case 'cancel':
@@ -138,52 +189,68 @@ export default function ImprovedBookingManagement({
             result = await cancelBooking(bookingId);
           } else {
             const response = await bookingService.cancelBooking(bookingId);
-            result = response?.data || response;
+            result = response?.data?.data || response?.data || response;
           }
           break;
+        default:
+          throw new Error(`Unknown action: ${action}`);
       }
       
+      // Reload bookings to get updated status from backend
       await loadBookings();
-      onBookingUpdate?.();
+      
+      // Notify parent component of the update
+      if (onBookingUpdate) {
+        onBookingUpdate();
+      }
+      
+      // Close details modal if open
       setShowDetails(false);
+      setSelectedBooking(null);
       
       // Show success message
-      alert(`Booking ${action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'cancelled'} successfully!`);
+      const actionText = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'cancelled';
+      alert(`✅ Booking ${actionText} successfully!`);
     } catch (error) {
       console.error(`Error ${action}ing booking:`, error);
       console.error('Full error details:', {
-        message: error.message,
-        status: error.status,
-        stack: error.stack
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+        data: error?.data,
+        stack: error?.stack
       });
       
-      // Show user-friendly error message
-      let errorMessage = `Failed to ${action} booking. `;
+      // Extract error message from different error formats
+      const errorMsg = error?.message || 
+                      error?.data?.error || 
+                      error?.data?.detail || 
+                      error?.response?.data?.error || 
+                      error?.response?.data?.detail || 
+                      '';
       
-      if (error.message) {
-        if (error.message.includes('403') || error.message.includes('permission') || error.message.includes('own cars')) {
-          errorMessage = 'Permission denied: This booking does not belong to your vehicles. You can only accept/reject bookings for cars you own.';
-        } else if (error.message.includes('conflicts')) {
-          errorMessage = 'Cannot accept: This booking conflicts with an existing booking for the same time period.';
-        } else if (error.message.includes('only pending')) {
-          errorMessage = 'This booking can only be accepted if it is still pending.';
-        } else if (error.message.includes('detail')) {
-          // Extract detail from error message if available
-          try {
-            const detailMatch = error.message.match(/detail[:\s]+([^,}]+)/i);
-            if (detailMatch) {
-              errorMessage = detailMatch[1].trim();
-            } else {
-              errorMessage += error.message;
-            }
-          } catch {
-            errorMessage += error.message;
-          }
+      // Show user-friendly error message
+      let errorMessage = `❌ Failed to ${action} booking. `;
+      
+      if (errorMsg) {
+        if (errorMsg.includes('403') || errorMsg.includes('permission') || errorMsg.includes('not have permission')) {
+          errorMessage = '❌ Permission denied: You can only accept/reject bookings for vehicles you own.';
+        } else if (errorMsg.includes('404') || errorMsg.includes('not found') || errorMsg.includes('Not Found')) {
+          errorMessage = '❌ Booking not found. It may have been deleted or does not exist.';
+        } else if (errorMsg.includes('conflicts') || errorMsg.includes('conflict')) {
+          errorMessage = '❌ Cannot accept: This booking conflicts with an existing booking for the same time period.';
+        } else if (errorMsg.includes('only pending') || errorMsg.includes('Cannot accept booking with status') || errorMsg.includes('Only pending bookings')) {
+          errorMessage = '❌ This booking can only be accepted if it is still pending.';
+        } else if (errorMsg.includes('timeout') || errorMsg.includes('Timeout')) {
+          errorMessage = '❌ Request timed out. Please try again.';
+        } else if (errorMsg.includes('network') || errorMsg.includes('Network')) {
+          errorMessage = '❌ Network error. Please check your connection and try again.';
         } else {
-          errorMessage += error.message;
+          // Use the error message directly
+          errorMessage += errorMsg;
         }
       } else {
-        errorMessage += 'Please check that you own this vehicle and try again.';
+        errorMessage += 'Please check your connection and try again.';
       }
       
       alert(errorMessage);
@@ -205,10 +272,12 @@ export default function ImprovedBookingManagement({
   };
 
   const formatCurrency = (amount) => {
+    // Backend returns prices in MAD (Moroccan Dirham)
+    const price = parseFloat(amount) || 0;
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount || 0);
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(price) + ' MAD';
   };
 
   const formatDate = (dateString) => {
@@ -222,12 +291,21 @@ export default function ImprovedBookingManagement({
 
   const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error);
+      return 'N/A';
+    }
   };
 
   const getStatusStats = () => {
@@ -392,20 +470,24 @@ export default function ImprovedBookingManagement({
                           <Calendar className="h-4 w-4 text-gray-400" />
                           <div>
                             <p className="font-medium text-gray-900">Pickup</p>
-                            <p>{formatDateTime(booking.start_time || booking.start_date)}</p>
+                            <p className="text-xs text-gray-500">
+                              {formatDateTime(booking.start_time || booking.start_date || booking.pickup_date)}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 text-sm text-gray-600">
                           <Calendar className="h-4 w-4 text-gray-400" />
                           <div>
                             <p className="font-medium text-gray-900">Return</p>
-                            <p>{formatDateTime(booking.end_time || booking.end_date)}</p>
+                            <p className="text-xs text-gray-500">
+                              {formatDateTime(booking.end_time || booking.end_date || booking.return_date)}
+                            </p>
                           </div>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Total Price</p>
                           <p className="text-2xl font-bold text-orange-600">
-                            {formatCurrency(booking.price || booking.total_price)}
+                            {formatCurrency(booking.price || booking.total_price || booking.total_amount || 0)}
                           </p>
                         </div>
                       </div>

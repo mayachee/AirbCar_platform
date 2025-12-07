@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { apiClient } from '@/lib/api/client'
 import { authService } from '@/features/auth/services/authService'
 import { BookingSummary, UserInfo, BookingNotice, BookingSuccess, BookingForm } from './components'
+import BookingFlow from './components/BookingFlow'
 
 function BookingPageContent() {
   const searchParams = useSearchParams()
@@ -21,6 +22,8 @@ function BookingPageContent() {
   const [bookingData, setBookingData] = useState(null)
   const [vehicle, setVehicle] = useState(null)
   const [vehicleLoading, setVehicleLoading] = useState(true)
+  const [pickupTime, setPickupTime] = useState('10:00')
+  const [returnTime, setReturnTime] = useState('18:00')
 
   // Try multiple parameter name variations for vehicle ID
   const carId = searchParams.get('carId') || 
@@ -200,11 +203,14 @@ function BookingPageContent() {
       setLoading(true)
       setError(null)
 
-      // Format dates properly for backend
+      // Format dates properly for backend with selected times
       const startTime = new Date(pickupDate)
-      startTime.setHours(10, 0, 0, 0) // Default pickup time: 10 AM
+      const [pickupHour, pickupMinute] = pickupTime.split(':').map(Number)
+      startTime.setHours(pickupHour || 10, pickupMinute || 0, 0, 0)
+      
       const endTime = new Date(returnDate)
-      endTime.setHours(18, 0, 0, 0) // Default return time: 6 PM
+      const [returnHour, returnMinute] = returnTime.split(':').map(Number)
+      endTime.setHours(returnHour || 18, returnMinute || 0, 0, 0)
 
       // Create FormData to handle file upload
       const formData = new FormData()
@@ -346,89 +352,101 @@ function BookingPageContent() {
           </div>
         )}
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Vehicle Info Card */}
-            {vehicleLoading ? (
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              </div>
-            ) : vehicle && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transform transition-all hover:shadow-md">
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Vehicle Details</h2>
-                  <div className="flex gap-4">
-                    {vehicle.pictures && vehicle.pictures.length > 0 && (
-                      <div className="relative group">
-                        <img
-                          src={vehicle.pictures[0]}
-                          alt={`${vehicle.make} ${vehicle.model}`}
-                          className="w-24 h-24 object-cover rounded-lg transition-transform duration-300 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-orange-500 opacity-0 group-hover:opacity-20 transition-opacity rounded-lg"></div>
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">{vehicle.make} {vehicle.model}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{vehicle.year} • {vehicle.transmission} • {vehicle.fuel_type}</p>
-                      <p className="text-sm text-gray-600 mt-1">{vehicle.location}</p>
-                      <div className="mt-3">
-                        <span className="text-2xl font-bold text-orange-600">
-                          {totalPrice} MAD
-                        </span>
-                        <span className="text-sm text-gray-500 ml-2">for {duration} {duration === '1' ? 'day' : 'days'}</span>
-                      </div>
-                    </div>
+        {/* Vehicle Info Card */}
+        {vehicleLoading ? (
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 mb-8">
+            <div className="animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        ) : vehicle && (
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl shadow-lg border-2 border-orange-200 overflow-hidden mb-8 transform transition-all hover:shadow-xl">
+            <div className="p-6">
+              <div className="flex items-center gap-4">
+                {vehicle.pictures && vehicle.pictures.length > 0 && (
+                  <div className="relative group flex-shrink-0">
+                    <img
+                      src={vehicle.pictures[0]}
+                      alt={`${vehicle.make} ${vehicle.model}`}
+                      className="w-32 h-32 object-cover rounded-xl transition-transform duration-300 group-hover:scale-110 shadow-lg"
+                    />
+                    <div className="absolute inset-0 bg-orange-500 opacity-0 group-hover:opacity-20 transition-opacity rounded-xl"></div>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{vehicle.make} {vehicle.model}</h2>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+                    <span className="bg-white px-3 py-1 rounded-full border border-gray-200">{vehicle.year}</span>
+                    <span className="bg-white px-3 py-1 rounded-full border border-gray-200">{vehicle.transmission}</span>
+                    <span className="bg-white px-3 py-1 rounded-full border border-gray-200">{vehicle.fuel_type}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{vehicle.location}</p>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-3xl font-bold text-orange-600">
+                      {totalPrice} MAD
+                    </span>
+                    <span className="text-sm text-gray-500">for {duration} {duration === '1' ? 'day' : 'days'}</span>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Important Notice */}
-            <BookingNotice />
-
-            {/* Booking Form */}
-            <BookingForm
-              onConfirm={handleCreateBooking}
-              onCancel={() => router.back()}
-              loading={loading}
-              error={error}
-              user={currentUser}
-            />
-          </div>
-
-          {/* Right Column - Summary */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
-              {/* Booking Summary */}
-              <BookingSummary 
-                duration={duration}
-                pickupDate={pickupDate}
-                returnDate={returnDate}
-                totalPrice={totalPrice}
-              />
-
-              {/* User Info */}
-              <UserInfo user={currentUser} />
-
-              {/* Help & Support Card */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2">Need Help?</h3>
-                <p className="text-xs text-blue-700 mb-3">
-                  Our support team is available 24/7 to assist you with your booking.
-                </p>
-                <button className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                  Contact Support
-                </button>
-              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Multi-Step Booking Flow */}
+        <BookingFlow
+          pickupDate={pickupDate}
+          returnDate={returnDate}
+          pickupTime={pickupTime}
+          returnTime={returnTime}
+          onDatesChange={(type, date) => {
+            if (type === 'pickup') {
+              // Update URL params
+              const newUrl = new URL(window.location.href)
+              newUrl.searchParams.set('pickupDate', date)
+              window.history.pushState({}, '', newUrl)
+              // Reload to update state from URL params
+              window.location.reload()
+            } else {
+              const newUrl = new URL(window.location.href)
+              newUrl.searchParams.set('returnDate', date)
+              window.history.pushState({}, '', newUrl)
+              window.location.reload()
+            }
+          }}
+          onTimeChange={(type, time) => {
+            if (type === 'pickup') {
+              setPickupTime(time)
+            } else {
+              setReturnTime(time)
+            }
+          }}
+          user={currentUser}
+          vehicle={vehicle}
+          totalPrice={totalPrice}
+          duration={duration}
+          onConfirm={(specialRequest, licenseFiles, paymentMethod) => {
+            // This is called from step 3's confirm button
+            // All form data is collected and passed to handleCreateBooking
+            handleCreateBooking(specialRequest, licenseFiles, paymentMethod)
+          }}
+          loading={loading}
+          error={error}
+        >
+          {/* Step 2 Content - Documents */}
+          <BookingForm
+            onConfirm={(specialRequest, licenseFiles, paymentMethod) => {
+              // This callback is not used when hideButtons=true
+              // Form data is collected via onFormDataUpdate callback instead
+            }}
+            onCancel={() => router.back()}
+            loading={loading}
+            error={error}
+            user={currentUser}
+            hideButtons={true}
+          />
+        </BookingFlow>
       </div>
 
       <Footer />
