@@ -369,7 +369,7 @@ class ListingListView(APIView):
                     if images_data.startswith('http://') or images_data.startswith('https://'):
                         images = [images_data]
                     else:
-                    images = []
+                        images = []
             else:
                 images = images_data if isinstance(images_data, list) else []
             
@@ -2634,7 +2634,13 @@ class BookingAcceptView(APIView):
 
 
 class BookingRejectView(APIView):
-    """Reject a booking (change status from pending to cancelled)."""
+    """
+    Reject a booking (change status from pending to cancelled).
+    
+    Endpoint: POST /bookings/<id>/reject/
+    Requires: Authentication, Partner ownership of listing
+    Body: { "rejection_reason": "optional reason" }
+    """
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
