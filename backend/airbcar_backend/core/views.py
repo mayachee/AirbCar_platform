@@ -1652,7 +1652,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'identity_documents')
@@ -1681,7 +1685,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'identity_documents')
@@ -1710,7 +1718,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'license_documents')
@@ -1734,7 +1746,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'license_documents')
@@ -1822,7 +1838,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'identity_documents')
@@ -1851,7 +1871,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'license_documents')
@@ -1880,7 +1904,11 @@ class UserMeView(APIView):
                         bucket_and_path = parts[1]
                         bucket_name = bucket_and_path.split('/')[0]
                         file_path = '/'.join(bucket_and_path.split('/')[1:])
-                        delete_file_from_supabase(bucket_name, file_path)
+                        # Don't block on delete - just try it, continue even if it fails
+                        try:
+                            delete_file_from_supabase(bucket_name, file_path)
+                        except Exception:
+                            pass  # Continue even if delete fails
             
             # Upload new file to Supabase
             file_path = generate_file_path(user.id, file.name, 'license_documents')
@@ -2145,7 +2173,11 @@ class BookingListView(APIView):
                             bucket_and_path = parts[1]
                             bucket_name = bucket_and_path.split('/')[0]
                             file_path_old = '/'.join(bucket_and_path.split('/')[1:])
-                            delete_file_from_supabase(bucket_name, file_path_old)
+                            # Don't block on delete - just try it, continue even if it fails
+                            try:
+                                delete_file_from_supabase(bucket_name, file_path_old)
+                            except Exception:
+                                pass  # Continue even if delete fails
                 
                 # Upload new file to Supabase
                 file_path = generate_file_path(request.user.id, file.name, 'license_documents')
@@ -2177,7 +2209,11 @@ class BookingListView(APIView):
                             bucket_and_path = parts[1]
                             bucket_name = bucket_and_path.split('/')[0]
                             file_path_old = '/'.join(bucket_and_path.split('/')[1:])
-                            delete_file_from_supabase(bucket_name, file_path_old)
+                            # Don't block on delete - just try it, continue even if it fails
+                            try:
+                                delete_file_from_supabase(bucket_name, file_path_old)
+                            except Exception:
+                                pass  # Continue even if delete fails
                 
                 # Upload new file to Supabase
                 file_path = generate_file_path(request.user.id, file.name, 'license_documents')
