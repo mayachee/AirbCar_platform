@@ -222,6 +222,7 @@ export default function ImprovedBookingManagement({
       const actionText = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'cancelled';
       alert(`✅ Booking ${actionText} successfully!`);
     } catch (error) {
+      // Log error for debugging (only in console, no user alerts)
       console.error(`Error ${action}ing booking:`, error);
       console.error('Full error details:', {
         message: error?.message,
@@ -231,39 +232,8 @@ export default function ImprovedBookingManagement({
         stack: error?.stack
       });
       
-      // Extract error message from different error formats
-      const errorMsg = error?.message || 
-                      error?.data?.error || 
-                      error?.data?.detail || 
-                      error?.response?.data?.error || 
-                      error?.response?.data?.detail || 
-                      '';
-      
-      // Show user-friendly error message
-      let errorMessage = `❌ Failed to ${action} booking. `;
-      
-      if (errorMsg) {
-        if (errorMsg.includes('403') || errorMsg.includes('permission') || errorMsg.includes('not have permission')) {
-          errorMessage = '❌ Permission denied: You can only accept/reject bookings for vehicles you own.';
-        } else if (errorMsg.includes('404') || errorMsg.includes('not found') || errorMsg.includes('Not Found')) {
-          errorMessage = '❌ Booking not found. It may have been deleted or does not exist.';
-        } else if (errorMsg.includes('conflicts') || errorMsg.includes('conflict')) {
-          errorMessage = '❌ Cannot accept: This booking conflicts with an existing booking for the same time period.';
-        } else if (errorMsg.includes('only pending') || errorMsg.includes('Cannot accept booking with status') || errorMsg.includes('Only pending bookings')) {
-          errorMessage = '❌ This booking can only be accepted if it is still pending.';
-        } else if (errorMsg.includes('timeout') || errorMsg.includes('Timeout')) {
-          errorMessage = '❌ Request timed out. Please try again.';
-        } else if (errorMsg.includes('network') || errorMsg.includes('Network')) {
-          errorMessage = '❌ Network error. Please check your connection and try again.';
-        } else {
-          // Use the error message directly
-          errorMessage += errorMsg;
-        }
-      } else {
-        errorMessage += 'Please check your connection and try again.';
-      }
-      
-      alert(errorMessage);
+      // Silently fail - errors are logged to console for debugging
+      // No user-facing error messages
     } finally {
       setActionLoading(false);
     }

@@ -2527,10 +2527,20 @@ class BookingAcceptView(APIView):
             
             # Get the booking
             try:
-                booking = Booking.objects.select_related('customer', 'partner', 'listing').get(pk=pk)
+                booking = Booking.objects.select_related('customer', 'partner', 'listing', 'listing__partner').get(pk=pk)
             except Booking.DoesNotExist:
+                # Provide more detailed error for debugging
+                if settings.DEBUG:
+                    print(f"❌ Booking {pk} not found in database")
+                    # Check if booking exists with different query
+                    try:
+                        all_bookings = Booking.objects.all().values_list('id', flat=True)
+                        print(f"Available booking IDs: {list(all_bookings)}")
+                    except:
+                        pass
                 return Response({
-                    'error': 'Booking not found'
+                    'error': 'Booking not found',
+                    'detail': f'Booking with ID {pk} does not exist in the database'
                 }, status=status.HTTP_404_NOT_FOUND)
             
             # Check permissions: only partner who owns the listing can accept
@@ -2543,15 +2553,44 @@ class BookingAcceptView(APIView):
                 # Partner can accept bookings for their listings
                 try:
                     partner = user.partner_profile
-                    can_accept = (booking.partner == partner)
+                    # Check both booking.partner and listing.partner (in case booking.partner is null)
+                    booking_partner = booking.partner
+                    listing_partner = booking.listing.partner if booking.listing else None
+                    
+                    if settings.DEBUG:
+                        print(f"🔍 Permission check for booking {pk}:")
+                        print(f"   User: {user.username} (role: {user.role})")
+                        print(f"   User's partner: {partner.id if partner else None}")
+                        print(f"   Booking partner: {booking_partner.id if booking_partner else None}")
+                        print(f"   Listing partner: {listing_partner.id if listing_partner else None}")
+                    
+                    # Accept if booking.partner matches OR listing.partner matches
+                    can_accept = (booking_partner == partner) or (listing_partner == partner)
                 except Partner.DoesNotExist:
+                    if settings.DEBUG:
+                        print(f"❌ User {user.username} does not have a partner profile")
+                    can_accept = False
+                except Exception as e:
+                    if settings.DEBUG:
+                        print(f"❌ Error checking partner permission: {str(e)}")
                     can_accept = False
             else:
                 can_accept = False
             
             if not can_accept:
+                # Provide more detailed error message
+                error_detail = 'You do not have permission to accept this booking'
+                if settings.DEBUG:
+                    try:
+                        partner = user.partner_profile if user.role == 'partner' else None
+                        booking_partner = booking.partner
+                        listing_partner = booking.listing.partner if booking.listing else None
+                        error_detail += f'. Your partner ID: {partner.id if partner else "N/A"}, Booking partner ID: {booking_partner.id if booking_partner else "N/A"}, Listing partner ID: {listing_partner.id if listing_partner else "N/A"}'
+                    except:
+                        pass
                 return Response({
-                    'error': 'You do not have permission to accept this booking'
+                    'error': 'You do not have permission to accept this booking',
+                    'detail': error_detail
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Check if booking can be accepted
@@ -2608,10 +2647,20 @@ class BookingRejectView(APIView):
             
             # Get the booking
             try:
-                booking = Booking.objects.select_related('customer', 'partner', 'listing').get(pk=pk)
+                booking = Booking.objects.select_related('customer', 'partner', 'listing', 'listing__partner').get(pk=pk)
             except Booking.DoesNotExist:
+                # Provide more detailed error for debugging
+                if settings.DEBUG:
+                    print(f"❌ Booking {pk} not found in database")
+                    # Check if booking exists with different query
+                    try:
+                        all_bookings = Booking.objects.all().values_list('id', flat=True)
+                        print(f"Available booking IDs: {list(all_bookings)}")
+                    except:
+                        pass
                 return Response({
-                    'error': 'Booking not found'
+                    'error': 'Booking not found',
+                    'detail': f'Booking with ID {pk} does not exist in the database'
                 }, status=status.HTTP_404_NOT_FOUND)
             
             # Check permissions: only partner who owns the listing can reject
@@ -2624,15 +2673,44 @@ class BookingRejectView(APIView):
                 # Partner can reject bookings for their listings
                 try:
                     partner = user.partner_profile
-                    can_reject = (booking.partner == partner)
+                    # Check both booking.partner and listing.partner (in case booking.partner is null)
+                    booking_partner = booking.partner
+                    listing_partner = booking.listing.partner if booking.listing else None
+                    
+                    if settings.DEBUG:
+                        print(f"🔍 Permission check for booking {pk}:")
+                        print(f"   User: {user.username} (role: {user.role})")
+                        print(f"   User's partner: {partner.id if partner else None}")
+                        print(f"   Booking partner: {booking_partner.id if booking_partner else None}")
+                        print(f"   Listing partner: {listing_partner.id if listing_partner else None}")
+                    
+                    # Accept if booking.partner matches OR listing.partner matches
+                    can_reject = (booking_partner == partner) or (listing_partner == partner)
                 except Partner.DoesNotExist:
+                    if settings.DEBUG:
+                        print(f"❌ User {user.username} does not have a partner profile")
+                    can_reject = False
+                except Exception as e:
+                    if settings.DEBUG:
+                        print(f"❌ Error checking partner permission: {str(e)}")
                     can_reject = False
             else:
                 can_reject = False
             
             if not can_reject:
+                # Provide more detailed error message
+                error_detail = 'You do not have permission to reject this booking'
+                if settings.DEBUG:
+                    try:
+                        partner = user.partner_profile if user.role == 'partner' else None
+                        booking_partner = booking.partner
+                        listing_partner = booking.listing.partner if booking.listing else None
+                        error_detail += f'. Your partner ID: {partner.id if partner else "N/A"}, Booking partner ID: {booking_partner.id if booking_partner else "N/A"}, Listing partner ID: {listing_partner.id if listing_partner else "N/A"}'
+                    except:
+                        pass
                 return Response({
-                    'error': 'You do not have permission to reject this booking'
+                    'error': 'You do not have permission to reject this booking',
+                    'detail': error_detail
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Check if booking can be rejected
