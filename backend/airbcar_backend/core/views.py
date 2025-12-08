@@ -3899,18 +3899,18 @@ The AirbCar Team
                     if settings.DEBUG:
                         print(f"Error sending password reset email asynchronously: {e}")
                         print(traceback.format_exc())
-            
+
             # Start email sending in background thread
             email_thread = threading.Thread(target=send_email_async)
             email_thread.daemon = True
             email_thread.start()
-            
+
             # Return immediately - don't wait for email to be sent
-                # Don't reveal if email exists or not (security best practice)
-                return Response({
-                    'message': 'If an account with this email exists, a password reset link has been sent.',
-                    'email_sent': True
-                }, status=status.HTTP_200_OK)
+            # Don't reveal if email exists or not (security best practice)
+            return Response({
+                'message': 'If an account with this email exists, a password reset link has been sent.',
+                'email_sent': True
+            }, status=status.HTTP_200_OK)
             
         except User.DoesNotExist:
             # Don't reveal if email exists or not (security best practice)
