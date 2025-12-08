@@ -361,6 +361,7 @@ class ListingSerializer(serializers.ModelSerializer):
                     else:
                         processed_images.append(img)
                 else:
+                    # For any other type, append as-is
                     processed_images.append(img)
             data['images'] = processed_images
         
