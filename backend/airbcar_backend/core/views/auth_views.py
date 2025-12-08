@@ -65,17 +65,48 @@ class LoginView(APIView):
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Generate JWT tokens
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
+            try:
+                refresh = RefreshToken.for_user(user)
+                access_token = str(refresh.access_token)
+                refresh_token = str(refresh)
+            except Exception as token_error:
+                error_msg = f"Error generating tokens: {str(token_error)}"
+                if settings.DEBUG:
+                    print(f"Token generation error: {error_msg}")
+                    traceback.print_exc()
+                return Response({
+                    'error': 'Failed to generate authentication tokens',
+                    'message': error_msg if settings.DEBUG else None
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Serialize user data
-            serializer = UserSerializer(user, context={'request': request})
+            try:
+                serializer = UserSerializer(user, context={'request': request})
+                user_data = serializer.data
+            except Exception as serialization_error:
+                error_msg = f"Error serializing user data: {str(serialization_error)}"
+                if settings.DEBUG:
+                    print(f"Serialization error: {error_msg}")
+                    traceback.print_exc()
+                # Return tokens even if serialization fails (user can still authenticate)
+                return Response({
+                    'access': access_token,
+                    'refresh': refresh_token,
+                    'user': {
+                        'id': user.id,
+                        'email': user.email,
+                        'username': user.username,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'role': user.role,
+                    },
+                    'warning': 'Some user data could not be serialized'
+                }, status=status.HTTP_200_OK)
             
             return Response({
                 'access': access_token,
                 'refresh': refresh_token,
-                'user': serializer.data
+                'user': user_data
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
