@@ -334,6 +334,10 @@ class ListingSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             processed_images = []
             from django.conf import settings
+            import os
+            
+            # Check if we're on Render (ephemeral filesystem)
+            is_render = os.environ.get('RENDER', '').lower() == 'true' or 'onrender.com' in os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
             
             # Get backend URL - prefer request host if available, otherwise use settings
             if request:
@@ -360,8 +364,13 @@ class ListingSerializer(serializers.ModelSerializer):
                 if url.startswith('http://') or url.startswith('https://'):
                     return url
                 
+                # If we're on Render and the URL points to local media, we need to handle it differently
+                # On Render, local files don't exist, so we should return None or a placeholder
+                # But for now, let's still return the URL - the frontend can handle 404s with fallback images
+                
                 # If it's a local media path (/media/), convert to full backend URL
                 if url.startswith('/media/'):
+                    # On Render, these files won't exist, but return URL anyway for frontend fallback handling
                     return f"{backend_url}{url}"
                 
                 # Handle URLs that contain /media/ anywhere in the string
@@ -378,6 +387,7 @@ class ListingSerializer(serializers.ModelSerializer):
                     # Ensure it starts with / (should already, but be safe)
                     if not clean_path.startswith('/'):
                         clean_path = '/' + clean_path
+                    # On Render, these files won't exist, but return URL anyway for frontend fallback handling
                     return f"{backend_url}{clean_path}"
                 
                 # Handle relative paths that might be media files
