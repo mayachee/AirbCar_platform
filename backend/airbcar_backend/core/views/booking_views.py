@@ -27,19 +27,187 @@ class BookingListView(APIView):
     
     def get(self, request):
         """List user's bookings."""
-        # TODO: Implement booking list
-        return Response({
-            'data': [],
-            'message': 'Booking list endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        try:
+            user = request.user
+            
+            # Filter by status if provided
+            status_filter = request.query_params.get('status')
+            bookings = Booking.objects.filter(customer=user)
+            
+            if status_filter:
+                bookings = bookings.filter(status=status_filter)
+            
+            # Filter by date range if provided
+            start_date = request.query_params.get('start_date')
+            end_date = request.query_params.get('end_date')
+            if start_date:
+                try:
+                    start = datetime.strptime(start_date, '%Y-%m-%d').date()
+                    bookings = bookings.filter(pickup_date__gte=start)
+                except ValueError:
+                    pass
+            if end_date:
+                try:
+                    end = datetime.strptime(end_date, '%Y-%m-%d').date()
+                    bookings = bookings.filter(return_date__lte=end)
+                except ValueError:
+                    pass
+            
+            bookings = bookings.select_related(
+                'listing', 'listing__partner', 'partner'
+            ).order_by('-created_at')
+            
+            # Pagination
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 20))
+            page_size = min(page_size, 100)
+            
+            total_count = bookings.count()
+            start = (page - 1) * page_size
+            end = start + page_size
+            
+            bookings = bookings[start:end]
+            
+            serializer = BookingSerializer(bookings, many=True, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'count': len(serializer.data),
+                'total_count': total_count,
+                'page': page,
+                'page_size': page_size,
+                'total_pages': (total_count + page_size - 1) // page_size if total_count > 0 else 0,
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingListView.get: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
         """Create a new booking."""
-        # TODO: Implement booking creation
-        return Response({
-            'error': 'Not implemented',
-            'message': 'Booking creation endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        try:
+            listing_id = request.data.get('listing_id') or request.data.get('listing')
+            if not listing_id:
+                return Response({
+                    'error': 'listing_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                listing = Listing.objects.get(pk=listing_id)
+            except Listing.DoesNotExist:
+                return Response({
+                    'error': 'Listing not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if listing is available
+            if not listing.is_available:
+                return Response({
+                    'error': 'Listing is not available'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if instant booking is enabled (if not, booking needs partner approval)
+            # For now, all bookings go to pending status
+            
+            # Get partner
+            partner = listing.partner
+            
+            # Validate and parse dates
+            pickup_date_str = request.data.get('pickup_date')
+            return_date_str = request.data.get('return_date')
+            
+            if not pickup_date_str or not return_date_str:
+                return Response({
+                    'error': 'pickup_date and return_date are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                pickup_date = datetime.strptime(pickup_date_str, '%Y-%m-%d').date()
+                return_date = datetime.strptime(return_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({
+                    'error': 'Invalid date format. Use YYYY-MM-DD'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate dates
+            today = timezone.now().date()
+            if pickup_date < today:
+                return Response({
+                    'error': 'Pickup date cannot be in the past'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if return_date <= pickup_date:
+                return Response({
+                    'error': 'Return date must be after pickup date'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check for date conflicts
+            conflicting_bookings = Booking.objects.filter(
+                listing=listing,
+                status__in=['pending', 'confirmed', 'active'],
+                pickup_date__lt=return_date,
+                return_date__gt=pickup_date
+            ).exists()
+            
+            if conflicting_bookings:
+                return Response({
+                    'error': 'Listing is not available for the selected dates'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Calculate total amount
+            days = (return_date - pickup_date).days + 1
+            total_amount = listing.price_per_day * days
+            
+            # Determine booking status based on instant_booking setting
+            booking_status = 'confirmed' if listing.instant_booking else 'pending'
+            
+            # Create booking
+            booking_data = {
+                'listing': listing,
+                'customer': request.user,
+                'partner': partner,
+                'pickup_date': pickup_date,
+                'return_date': return_date,
+                'pickup_time': request.data.get('pickup_time', '10:00:00'),
+                'return_time': request.data.get('return_time', '10:00:00'),
+                'pickup_location': request.data.get('pickup_location', listing.location),
+                'return_location': request.data.get('return_location', listing.location),
+                'total_amount': total_amount,
+                'status': booking_status,
+                'payment_status': 'pending',
+                'payment_method': request.data.get('payment_method', 'online'),
+                'special_requests': request.data.get('special_requests', ''),
+            }
+            
+            booking = Booking.objects.create(**booking_data)
+            
+            # If instant booking, mark payment as paid (assuming payment is processed)
+            if listing.instant_booking and request.data.get('payment_status') == 'paid':
+                booking.payment_status = 'paid'
+                booking.save()
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'message': 'Booking created successfully'
+            }, status=status.HTTP_201_CREATED)
+            
+        except ValueError as e:
+            return Response({
+                'error': 'Invalid date format. Use YYYY-MM-DD'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingListView.post: {error_msg}")
+                traceback.print_exc()
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BookingPendingRequestsView(APIView):
@@ -47,11 +215,36 @@ class BookingPendingRequestsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        # TODO: Implement pending requests
-        return Response({
-            'data': [],
-            'message': 'Pending requests endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        """Get pending booking requests for partner."""
+        try:
+            # Get partner profile
+            try:
+                partner = Partner.objects.get(user=request.user)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get pending bookings
+            bookings = Booking.objects.filter(
+                partner=partner,
+                status='pending'
+            ).select_related('listing', 'customer').order_by('-created_at')
+            
+            serializer = BookingSerializer(bookings, many=True, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'count': len(serializer.data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingPendingRequestsView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BookingUpcomingView(APIView):
@@ -59,11 +252,32 @@ class BookingUpcomingView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        # TODO: Implement upcoming bookings
-        return Response({
-            'data': [],
-            'message': 'Upcoming bookings endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        """Get upcoming bookings."""
+        try:
+            user = request.user
+            today = timezone.now().date()
+            
+            # Get upcoming bookings
+            bookings = Booking.objects.filter(
+                Q(customer=user) | Q(partner__user=user),
+                pickup_date__gte=today,
+                status__in=['pending', 'confirmed', 'active']
+            ).select_related('listing', 'customer', 'partner').order_by('pickup_date')
+            
+            serializer = BookingSerializer(bookings, many=True, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'count': len(serializer.data)
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingUpcomingView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BookingCancelView(APIView):
@@ -71,11 +285,43 @@ class BookingCancelView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
-        # TODO: Implement booking cancellation
-        return Response({
-            'error': 'Not implemented',
-            'message': 'Booking cancellation endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        """Cancel a booking."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+            
+            # Check permissions
+            if booking.customer != request.user and booking.partner.user != request.user:
+                return Response({
+                    'error': 'Permission denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Only allow cancellation if not completed
+            if booking.status == 'completed':
+                return Response({
+                    'error': 'Cannot cancel completed booking'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            booking.status = 'cancelled'
+            booking.save()
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'message': 'Booking cancelled successfully'
+            }, status=status.HTTP_200_OK)
+            
+        except Booking.DoesNotExist:
+            return Response({
+                'error': 'Booking not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingCancelView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BookingAcceptView(APIView):
@@ -83,11 +329,49 @@ class BookingAcceptView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
-        # TODO: Implement booking acceptance
-        return Response({
-            'error': 'Not implemented',
-            'message': 'Booking acceptance endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        """Accept a booking request."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+            
+            # Check if user is the partner
+            try:
+                partner = Partner.objects.get(user=request.user)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if booking.partner != partner:
+                return Response({
+                    'error': 'Permission denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            if booking.status != 'pending':
+                return Response({
+                    'error': 'Booking is not pending'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            booking.status = 'confirmed'
+            booking.save()
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'message': 'Booking accepted successfully'
+            }, status=status.HTTP_200_OK)
+            
+        except Booking.DoesNotExist:
+            return Response({
+                'error': 'Booking not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingAcceptView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BookingRejectView(APIView):
@@ -95,11 +379,49 @@ class BookingRejectView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
-        # TODO: Implement booking rejection
-        return Response({
-            'error': 'Not implemented',
-            'message': 'Booking rejection endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        """Reject a booking request."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+            
+            # Check if user is the partner
+            try:
+                partner = Partner.objects.get(user=request.user)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if booking.partner != partner:
+                return Response({
+                    'error': 'Permission denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            if booking.status != 'pending':
+                return Response({
+                    'error': 'Booking is not pending'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            booking.status = 'cancelled'
+            booking.save()
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data,
+                'message': 'Booking rejected successfully'
+            }, status=status.HTTP_200_OK)
+            
+        except Booking.DoesNotExist:
+            return Response({
+                'error': 'Booking not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingRejectView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BookingDetailView(APIView):
@@ -107,11 +429,35 @@ class BookingDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, pk):
-        # TODO: Implement booking detail
-        return Response({
-            'error': 'Not implemented',
-            'message': 'Booking detail endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
+        """Get booking detail."""
+        try:
+            booking = Booking.objects.select_related(
+                'listing', 'customer', 'partner'
+            ).get(pk=pk)
+            
+            # Check permissions
+            if booking.customer != request.user and booking.partner.user != request.user:
+                return Response({
+                    'error': 'Permission denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            serializer = BookingSerializer(booking, context={'request': request})
+            return Response({
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Booking.DoesNotExist:
+            return Response({
+                'error': 'Booking not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in BookingDetailView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PartnerCustomerInfoView(APIView):
@@ -119,9 +465,39 @@ class PartnerCustomerInfoView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, booking_id):
-        # TODO: Implement customer info retrieval
-        return Response({
-            'error': 'Not implemented',
-            'message': 'Customer info endpoint - implementation needed'
-        }, status=status.HTTP_501_NOT_IMPLEMENTED)
-
+        """Get customer info for a booking."""
+        try:
+            booking = Booking.objects.select_related('customer').get(pk=booking_id)
+            
+            # Check if user is the partner
+            try:
+                partner = Partner.objects.get(user=request.user)
+            except Partner.DoesNotExist:
+                return Response({
+                    'error': 'Partner profile not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if booking.partner != partner:
+                return Response({
+                    'error': 'Permission denied'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            customer = booking.customer
+            serializer = UserSerializer(customer, context={'request': request})
+            
+            return Response({
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Booking.DoesNotExist:
+            return Response({
+                'error': 'Booking not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in PartnerCustomerInfoView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
