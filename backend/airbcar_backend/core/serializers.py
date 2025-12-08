@@ -339,7 +339,7 @@ class ListingSerializer(serializers.ModelSerializer):
                 
                 # If it's an external URL (http/https), allow it (Supabase, Google, CDNs, etc.)
                 if url.startswith('http://') or url.startswith('https://'):
-                            return url
+                    return url
                 
                 # If it's a relative path or local file reference, return None
                 return None
@@ -359,7 +359,7 @@ class ListingSerializer(serializers.ModelSerializer):
                             img['url'] = fixed_url
                             processed_images.append(img)
                     else:
-                    processed_images.append(img)
+                        processed_images.append(img)
                 else:
                     # For any other type, append as-is
                     processed_images.append(img)
