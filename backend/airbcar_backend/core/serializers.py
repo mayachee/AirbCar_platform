@@ -347,8 +347,10 @@ class ListingSerializer(serializers.ModelSerializer):
             
             def fix_image_url(url):
                 """Fix image URL - convert local media paths to full backend URLs."""
-                if not url:
+                if not url or not isinstance(url, str):
                     return None
+                
+                url = url.strip()
                 
                 # If it's a Supabase Storage URL, return as is
                 if 'supabase.co' in url and '/storage/v1/object/public/' in url:
@@ -362,14 +364,33 @@ class ListingSerializer(serializers.ModelSerializer):
                 if url.startswith('/media/'):
                     return f"{backend_url}{url}"
                 
-                # If it contains /media/ but is not a full URL, try to extract and convert
+                # Handle URLs that contain /media/ anywhere in the string
+                # Examples: 
+                # - "airbcar-backend/media/listings/image.jpg"
+                # - "media/listings/image.jpg"
+                # - "/media/listings/image.jpg" (already handled above, but safe to check)
                 if '/media/' in url:
-                    # Extract the media path
+                    # Extract the media path starting from /media/
                     media_index = url.find('/media/')
                     media_path = url[media_index:]  # Get /media/... onwards
                     # Remove query parameters and fragments
                     clean_path = media_path.split('?')[0].split('#')[0]
+                    # Ensure it starts with / (should already, but be safe)
+                    if not clean_path.startswith('/'):
+                        clean_path = '/' + clean_path
                     return f"{backend_url}{clean_path}"
+                
+                # Handle relative paths that might be media files
+                # Check if it looks like a media file path (contains media folder names)
+                if not url.startswith('/') and not url.startswith('http'):
+                    # Check if it contains media folder names
+                    media_folders = ['listings', 'profiles', 'partner_logos', 'identity_documents', 'license_documents', 'booking_documents']
+                    if any(folder in url.lower() for folder in media_folders):
+                        # Check if it has an image extension
+                        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+                        if any(url.lower().endswith(ext) for ext in image_extensions):
+                            # Construct full media path
+                            return f"{backend_url}/media/{url}"
                 
                 # If it's a relative path starting with /, assume it's a frontend asset
                 if url.startswith('/'):
