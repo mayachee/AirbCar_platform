@@ -28,8 +28,20 @@ else:
     # This allows access to media files that were uploaded before redeploy
     from django.views.static import serve
     from django.urls import re_path
+    from django.http import FileResponse, Http404
+    import os
+    
+    def serve_media_with_fallback(request, path):
+        """Serve media files, or return 404 if file doesn't exist."""
+        file_path = os.path.join(settings.MEDIA_ROOT, path)
+        if os.path.exists(file_path):
+            return serve(request, path, document_root=settings.MEDIA_ROOT)
+        else:
+            # File doesn't exist - return 404
+            # Frontend will handle this with onError handler to show fallback image
+            raise Http404("File not found")
     
     urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+        re_path(r'^media/(?P<path>.*)$', serve_media_with_fallback),
     ]
 

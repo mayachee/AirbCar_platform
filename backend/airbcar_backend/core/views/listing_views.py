@@ -276,15 +276,61 @@ class ListingListView(APIView):
                     'message': 'Please provide all required vehicle information'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Handle images if provided
-            images = listing_data.get('images', [])
-            if isinstance(images, str):
-                try:
-                    images = json.loads(images)
-                except json.JSONDecodeError:
-                    images = [images] if images else []
+            # Handle image file uploads from FormData
+            uploaded_images = []
             
-            listing_data['images'] = images
+            # Process uploaded files (from 'pictures' field in FormData)
+            if 'pictures' in request.FILES:
+                # Handle single file or multiple files
+                files = request.FILES.getlist('pictures')
+                for file in files:
+                    try:
+                        # Generate unique filename
+                        import uuid
+                        file_ext = os.path.splitext(file.name)[1]
+                        unique_filename = f"{uuid.uuid4()}{file_ext}"
+                        file_path = os.path.join('listings', unique_filename)
+                        
+                        # Save file to media directory
+                        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                        
+                        with open(full_path, 'wb+') as destination:
+                            for chunk in file.chunks():
+                                destination.write(chunk)
+                        
+                        # Store the relative path for the images field
+                        media_path = f"/media/{file_path}"
+                        uploaded_images.append({
+                            'url': media_path,
+                            'name': file.name
+                        })
+                        
+                        if settings.DEBUG:
+                            print(f"✓ Saved image: {full_path}")
+                    except Exception as e:
+                        if settings.DEBUG:
+                            print(f"Error saving image {file.name}: {str(e)}")
+                        # Continue with other files even if one fails
+            
+            # Handle existing images from JSON (if provided as JSON string or array)
+            existing_images = []
+            images_data = listing_data.get('images', [])
+            
+            if isinstance(images_data, str):
+                try:
+                    existing_images = json.loads(images_data)
+                except json.JSONDecodeError:
+                    existing_images = [images_data] if images_data else []
+            elif isinstance(images_data, list):
+                existing_images = images_data
+            
+            # Combine uploaded images with existing images
+            all_images = uploaded_images + existing_images
+            listing_data['images'] = all_images
+            
+            if settings.DEBUG and all_images:
+                print(f"📸 Total images for listing: {len(all_images)}")
             
             # Validate and create listing
             serializer = ListingSerializer(data=listing_data, context={'request': request})
@@ -382,16 +428,67 @@ class ListingDetailView(APIView):
                     'message': 'You must have a partner profile to update listings'
                 }, status=status.HTTP_403_FORBIDDEN)
             
-            # Handle images if provided
-            listing_data = request.data.copy()
-            if 'images' in listing_data:
-                images = listing_data['images']
-                if isinstance(images, str):
+            # Handle image file uploads from FormData
+            uploaded_images = []
+            
+            # Process uploaded files (from 'pictures' field in FormData)
+            if 'pictures' in request.FILES:
+                # Handle single file or multiple files
+                files = request.FILES.getlist('pictures')
+                for file in files:
                     try:
-                        images = json.loads(images)
-                    except json.JSONDecodeError:
-                        images = [images] if images else []
-                listing_data['images'] = images
+                        # Generate unique filename
+                        import uuid
+                        file_ext = os.path.splitext(file.name)[1]
+                        unique_filename = f"{uuid.uuid4()}{file_ext}"
+                        file_path = os.path.join('listings', unique_filename)
+                        
+                        # Save file to media directory
+                        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                        
+                        with open(full_path, 'wb+') as destination:
+                            for chunk in file.chunks():
+                                destination.write(chunk)
+                        
+                        # Store the relative path for the images field
+                        media_path = f"/media/{file_path}"
+                        uploaded_images.append({
+                            'url': media_path,
+                            'name': file.name
+                        })
+                        
+                        if settings.DEBUG:
+                            print(f"✓ Saved image: {full_path}")
+                    except Exception as e:
+                        if settings.DEBUG:
+                            print(f"Error saving image {file.name}: {str(e)}")
+                        # Continue with other files even if one fails
+            
+            # Prepare listing data
+            listing_data = request.data.copy()
+            
+            # Handle existing images from JSON (if provided as JSON string or array)
+            existing_images = []
+            images_data = listing_data.get('images', [])
+            
+            if isinstance(images_data, str):
+                try:
+                    existing_images = json.loads(images_data)
+                except json.JSONDecodeError:
+                    existing_images = [images_data] if images_data else []
+            elif isinstance(images_data, list):
+                existing_images = images_data
+            
+            # Combine uploaded images with existing images
+            # If new files were uploaded, add them to existing images
+            if uploaded_images:
+                all_images = existing_images + uploaded_images
+            else:
+                # If no new uploads, keep existing images as-is (or update if provided)
+                all_images = existing_images if existing_images else listing.images
+            
+            listing_data['images'] = all_images
             
             serializer = ListingSerializer(
                 listing,

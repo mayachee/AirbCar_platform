@@ -412,22 +412,32 @@ class ListingSerializer(serializers.ModelSerializer):
             for img in data['images']:
                 if isinstance(img, str):
                     fixed_url = fix_image_url(img)
-                    # Only include if URL is valid (not None - which means local file)
+                    # Only include if URL is valid (not None)
                     if fixed_url:
+                        # If it's a local media URL and we're not in DEBUG mode, 
+                        # we can optionally check if file exists, but it's better to let frontend handle 404s
                         processed_images.append(fixed_url)
                 elif isinstance(img, dict):
                     # If it's an object, process the url field
                     if 'url' in img:
                         fixed_url = fix_image_url(img['url'])
-                        # Only include if URL is valid (not None - which means local file)
+                        # Only include if URL is valid (not None)
                         if fixed_url:
                             img['url'] = fixed_url
                             processed_images.append(img)
+                        # If URL is None but dict has other fields, we could keep it with a fallback
+                        # but for now, we'll skip it
                     else:
+                        # Dict without url field, keep as-is
                         processed_images.append(img)
                 else:
                     # For any other type, append as-is
                     processed_images.append(img)
+            
+            # If no valid images found, provide a fallback
+            if len(processed_images) == 0:
+                processed_images = ['/carsymbol.jpg']  # Frontend fallback image
+            
             data['images'] = processed_images
         
         return data
