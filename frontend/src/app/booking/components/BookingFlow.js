@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import React from 'react'
 import { 
   Calendar, 
@@ -109,13 +109,30 @@ export default function BookingFlow({
     return true
   }
   
-  // Handle form data update from BookingForm
-  const handleFormDataUpdate = (data) => {
+  // Handle form data update from BookingForm - memoized to prevent infinite loops
+  const handleFormDataUpdate = useCallback((data) => {
     if (data) {
-      setFormData(prev => ({ ...prev, ...data }))
+      setFormData(prev => {
+        // Only update if data actually changed to prevent unnecessary re-renders
+        const hasChanges = Object.keys(data).some(key => {
+          if (key === 'licenseFiles') {
+            // Deep compare for licenseFiles object
+            const prevFiles = prev.licenseFiles || {}
+            const newFiles = data.licenseFiles || {}
+            return prevFiles.front !== newFiles.front || prevFiles.back !== newFiles.back
+          }
+          return prev[key] !== data[key]
+        })
+        
+        if (!hasChanges) {
+          return prev // Return same reference if no changes
+        }
+        
+        return { ...prev, ...data }
+      })
       setFormReady(true)
     }
-  }
+  }, []) // Empty deps - function doesn't depend on any props/state
 
   const handleNext = () => {
     if (currentStep === 1) {

@@ -1,5 +1,6 @@
 // Re-export feature-specific services for backward compatibility
 export { apiClient } from '@/lib/api/client'
+export { enhancedApiClient } from '@/lib/api/enhancedClient'
 export { authService } from '@/features/auth/services/authService'
 export { userService } from '@/features/user/services/userService'
 export { vehicleService as listingsService } from '@/features/vehicle/services/vehicleService'

@@ -1,53 +1,74 @@
 import { apiClient } from '@/lib/api/client'
+import { enhancedApiClient } from '@/lib/api/enhancedClient'
 
 /**
  * Booking Service - API integration for bookings
+ * Uses enhanced client for better error handling and retry logic
  */
 export class BookingService {
+  // Use enhanced client if available, fallback to regular client
+  get client() {
+    return enhancedApiClient || apiClient;
+  }
   async getBookings() {
-    // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
-    const response = await apiClient.get('/bookings/', undefined, { timeout: 90000 })
-    // apiClient returns { data, success, message }
-    return response.data
+    // Enhanced client handles retries and timeouts automatically
+    const response = await this.client.get('/bookings/', undefined, { timeout: 120000 })
+    // Client returns { data, success, message }
+    // Backend returns { data: [...], count, total_count, page, page_size }
+    // So response.data is { data: [...], count, ... }
+    // We need to return response.data.data (the actual array) or response.data
+    console.log('📡 BookingService.getBookings response:', response);
+    if (response && response.data) {
+      // If response.data has a 'data' property, return that (backend structure)
+      if (Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+      // If response.data is already an array, return it
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      // Otherwise return the whole response.data object
+      return response.data;
+    }
+    return response.data || [];
   }
 
   async getBooking(bookingId) {
-    const response = await apiClient.get(`/bookings/${bookingId}/`)
+    const response = await this.client.get(`/bookings/${bookingId}/`)
     return response.data
   }
 
   async createBooking(bookingData) {
-    // Increase timeout to 90 seconds for booking creation (backend may be slow, especially with file uploads)
-    const response = await apiClient.post('/bookings/', bookingData, { timeout: 90000 })
+    // Enhanced client handles file uploads and retries
+    const response = await this.client.post('/bookings/', bookingData, { timeout: 120000 })
     return response.data
   }
 
   async cancelBooking(bookingId) {
-    const response = await apiClient.post(`/bookings/${bookingId}/cancel/`)
+    const response = await this.client.post(`/bookings/${bookingId}/cancel/`)
     return response.data
   }
 
   async acceptBooking(bookingId) {
-    const response = await apiClient.post(`/bookings/${bookingId}/accept/`)
+    const response = await this.client.post(`/bookings/${bookingId}/accept/`)
     return response.data
   }
 
   async rejectBooking(bookingId, rejectionReason = '') {
-    const response = await apiClient.post(`/bookings/${bookingId}/reject/`, { 
+    const response = await this.client.post(`/bookings/${bookingId}/reject/`, { 
       rejection_reason: rejectionReason 
     })
     return response.data
   }
 
   async getPendingRequests() {
-    const response = await apiClient.get('/bookings/pending-requests/')
+    const response = await this.client.get('/bookings/pending-requests/')
     return response.data
   }
 
   async getUpcomingBookings() {
     try {
-      // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
-      const response = await apiClient.get('/bookings/upcoming/', undefined, { timeout: 90000 })
+      const response = await this.client.get('/bookings/upcoming/', undefined, { timeout: 120000 })
       // Handle different response structures
       if (Array.isArray(response)) {
         return response
@@ -69,7 +90,7 @@ export class BookingService {
    * @returns {Promise} Updated booking data
    */
   async updateBooking(bookingId, bookingData) {
-    const response = await apiClient.put(`/bookings/${bookingId}/`, bookingData)
+    const response = await this.client.put(`/bookings/${bookingId}/`, bookingData)
     return response.data
   }
 
@@ -80,7 +101,7 @@ export class BookingService {
    * @returns {Promise} Updated booking data
    */
   async patchBooking(bookingId, bookingData) {
-    const response = await apiClient.patch(`/bookings/${bookingId}/`, bookingData)
+    const response = await this.client.patch(`/bookings/${bookingId}/`, bookingData)
     return response.data
   }
 
@@ -90,7 +111,7 @@ export class BookingService {
    * @returns {Promise}
    */
   async deleteBooking(bookingId) {
-    const response = await apiClient.delete(`/bookings/${bookingId}/`)
+    const response = await this.client.delete(`/bookings/${bookingId}/`)
     return response.data
   }
 }

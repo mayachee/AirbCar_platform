@@ -12,20 +12,29 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# Upgrade pip first
+RUN pip install --upgrade pip setuptools wheel
+
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Verify whitenoise is installed
+RUN pip show whitenoise || echo "WARNING: whitenoise not found"
+
 # Copy application code
 COPY . .
 
-# Copy entrypoint
+# Copy entrypoint and make it executable
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && sed -i 's/\r$//' /entrypoint.sh
 
 WORKDIR /app/airbcar_backend
 
 EXPOSE 8000
+
+# Set entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Use environment PORT for Render/Railway compatibility
 # Use fewer workers in development to reduce memory usage

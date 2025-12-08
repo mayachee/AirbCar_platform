@@ -177,9 +177,19 @@ class Listing(models.Model):
     class Meta:
         ordering = ['-created_at']
         indexes = [
+            # Composite indexes for common query patterns
             models.Index(fields=['location', 'is_available']),
-            models.Index(fields=['price_per_day']),
+            models.Index(fields=['is_available', 'is_verified']),
+            models.Index(fields=['price_per_day', 'is_available']),
             models.Index(fields=['make', 'model']),
+            models.Index(fields=['rating', 'review_count']),
+            models.Index(fields=['partner', 'is_available']),
+            models.Index(fields=['created_at']),  # For sorting
+            # Single field indexes for filtering
+            models.Index(fields=['transmission']),
+            models.Index(fields=['fuel_type']),
+            models.Index(fields=['vehicle_style']),
+            models.Index(fields=['seating_capacity']),
         ]
 
     def __str__(self):
@@ -250,9 +260,13 @@ class Booking(models.Model):
     class Meta:
         ordering = ['-created_at']
         indexes = [
+            # Composite indexes for common query patterns
             models.Index(fields=['customer', 'status']),
             models.Index(fields=['partner', 'status']),
-            models.Index(fields=['pickup_date', 'return_date']),
+            models.Index(fields=['listing', 'status']),
+            models.Index(fields=['pickup_date', 'return_date', 'status']),  # For availability checks
+            models.Index(fields=['status', 'pickup_date']),  # For filtering by status and date
+            models.Index(fields=['created_at']),  # For sorting
         ]
 
     def __str__(self):
@@ -268,6 +282,10 @@ class Favorite(models.Model):
     class Meta:
         unique_together = ['user', 'listing']
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),  # For user's favorites list
+            models.Index(fields=['listing']),  # For listing's favorites count
+        ]
 
     def __str__(self):
         return f"{self.user.username} favorited {self.listing}"
@@ -286,6 +304,11 @@ class Review(models.Model):
     class Meta:
         ordering = ['-created_at']
         unique_together = ['listing', 'user']  # One review per user per listing
+        indexes = [
+            models.Index(fields=['listing', 'is_published', 'created_at']),  # For listing reviews
+            models.Index(fields=['user', 'created_at']),  # For user's reviews
+            models.Index(fields=['rating']),  # For rating filters
+        ]
 
     def __str__(self):
         return f"Review by {self.user.username} for {self.listing} - {self.rating} stars"

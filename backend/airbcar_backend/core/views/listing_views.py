@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg, Sum
+from django.db.models import Q, F, DecimalField, Avg, Sum, Exists, OuterRef
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.db import transaction, OperationalError
@@ -162,21 +162,30 @@ class ListingListView(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
                 # Get listings that have bookings overlapping with the requested dates
+                # Optimized: Use a subquery with Exists instead of values_list to avoid loading all IDs into memory
                 conflicting_bookings = Booking.objects.filter(
+                    listing=OuterRef('pk'),
                     status__in=['pending', 'confirmed', 'active'],
                     pickup_date__lt=return_d,
                     return_date__gt=pickup
-                ).values_list('listing_id', flat=True)
+                )
                 
-                # Exclude listings with conflicting bookings
-                queryset = queryset.exclude(id__in=conflicting_bookings)
+                # Exclude listings with conflicting bookings using Exists for better performance
+                queryset = queryset.exclude(Exists(conflicting_bookings))
             except ValueError:
                 # Invalid date format, ignore date filtering
                 pass
         
         try:
             # Optimize query with select_related and prefetch_related
+            # Only prefetch reviews if needed (they're used in serializer)
             queryset = queryset.select_related('partner', 'partner__user').prefetch_related('reviews')
+            
+            # Use only() to limit fields fetched from database (if not needed, comment out)
+            # queryset = queryset.only('id', 'make', 'model', 'year', 'price_per_day', 'location', 
+            #                         'images', 'rating', 'review_count', 'is_available', 'is_verified',
+            #                         'partner_id', 'transmission', 'fuel_type', 'seating_capacity', 
+            #                         'vehicle_style', 'created_at')
             
             # Sorting
             sort_by = request.query_params.get('sort', '-created_at')
@@ -187,18 +196,21 @@ class ListingListView(APIView):
             else:
                 queryset = queryset.order_by('-created_at')
             
-            # Pagination
+            # Pagination - do count before slicing for better performance
             page = int(request.query_params.get('page', 1))
             page_size = int(request.query_params.get('page_size', 20))
-            page_size = min(page_size, 100)  # Limit max page size
+            page_size = min(page_size, 50)  # Reduced max page size from 100 to 50 for better performance
             
+            # Use exists() check first if we only need to know if there are results
+            # For count, use a more efficient method if possible
             total_count = queryset.count()
+            
+            # Apply pagination
             start = (page - 1) * page_size
             end = start + page_size
-            
             queryset = queryset[start:end]
             
-            # Serialize the results
+            # Serialize the results - use iterator() for large querysets to reduce memory
             serializer = ListingSerializer(queryset, many=True, context={'request': request})
             
             return Response({

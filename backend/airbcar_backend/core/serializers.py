@@ -334,10 +334,19 @@ class ListingSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             processed_images = []
             from django.conf import settings
-            backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+            
+            # Get backend URL - prefer request host if available, otherwise use settings
+            if request:
+                # Use request to build absolute URL
+                backend_url = f"{request.scheme}://{request.get_host()}"
+            else:
+                backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+            
+            # Normalize backend URL (remove trailing slash)
+            backend_url = backend_url.rstrip('/')
             
             def fix_image_url(url):
-                """Fix image URL - only return Supabase or external URLs, not local media files."""
+                """Fix image URL - convert local media paths to full backend URLs."""
                 if not url:
                     return None
                 
@@ -345,24 +354,28 @@ class ListingSerializer(serializers.ModelSerializer):
                 if 'supabase.co' in url and '/storage/v1/object/public/' in url:
                     return url
                 
-                # If it's a local media path (/media/) or backend URL pointing to media, return None
-                # Local files are not accessible on Render - must be hosted in Supabase
-                if url.startswith('/media/') or '/media/' in url:
-                    return None
-                
-                # If it's pointing to backend media server, return None
-                if 'airbcar-backend.onrender.com' in url and '/media/' in url:
-                    return None
-                if 'localhost' in url and '/media/' in url:
-                    return None
-                if '127.0.0.1' in url and '/media/' in url:
-                    return None
-                
-                # If it's an external URL (http/https), allow it (Supabase, Google, CDNs, etc.)
+                # If it's already a full external URL (http/https), return as is
                 if url.startswith('http://') or url.startswith('https://'):
                     return url
                 
-                # If it's a relative path or local file reference, return None
+                # If it's a local media path (/media/), convert to full backend URL
+                if url.startswith('/media/'):
+                    return f"{backend_url}{url}"
+                
+                # If it contains /media/ but is not a full URL, try to extract and convert
+                if '/media/' in url:
+                    # Extract the media path
+                    media_index = url.find('/media/')
+                    media_path = url[media_index:]  # Get /media/... onwards
+                    # Remove query parameters and fragments
+                    clean_path = media_path.split('?')[0].split('#')[0]
+                    return f"{backend_url}{clean_path}"
+                
+                # If it's a relative path starting with /, assume it's a frontend asset
+                if url.startswith('/'):
+                    return url
+                
+                # For any other case, return None
                 return None
             
             for img in data['images']:

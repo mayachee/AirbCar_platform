@@ -8,6 +8,7 @@ import PartnerStats from '@/features/partner/components/PartnerStats';
 import VehiclesList from '@/features/partner/components/VehiclesList';
 import BookingManagement from '@/features/partner/components/BookingManagement';
 import ImprovedBookingManagement from '@/features/partner/components/ImprovedBookingManagement';
+import EnhancedBookingManagement from '@/features/partner/components/EnhancedBookingManagement';
 import NotificationCenter from '@/features/partner/components/NotificationCenter';
 import PartnerProfileSettings from '@/features/partner/components/PartnerProfileSettings';
 import AdvancedAnalytics from '@/features/partner/components/AdvancedAnalytics';
@@ -449,7 +450,7 @@ export default function PartnerDashboard() {
         )}
 
         {currentView === 'bookings' && (
-          <ImprovedBookingManagement
+          <EnhancedBookingManagement
             bookings={bookings}
             loading={dataLoading}
             onBookingUpdate={handleBookingUpdate}

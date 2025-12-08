@@ -26,13 +26,21 @@ class BookingListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """List user's bookings."""
+        """List user's bookings (as customer) or partner's bookings (as partner)."""
         try:
             user = request.user
             
             # Filter by status if provided
             status_filter = request.query_params.get('status')
-            bookings = Booking.objects.filter(customer=user)
+            
+            # Check if user is a partner
+            try:
+                partner = Partner.objects.get(user=user)
+                # If user is a partner, get bookings for their listings
+                bookings = Booking.objects.filter(listing__partner=partner)
+            except Partner.DoesNotExist:
+                # If user is not a partner, get bookings where they are the customer
+                bookings = Booking.objects.filter(customer=user)
             
             if status_filter:
                 bookings = bookings.filter(status=status_filter)
@@ -346,11 +354,24 @@ class BookingAcceptView(APIView):
                     'error': 'Permission denied'
                 }, status=status.HTTP_403_FORBIDDEN)
             
-            if booking.status != 'pending':
+            # Check booking status
+            if booking.status == 'confirmed':
+                # Already confirmed - return success (idempotent operation)
+                serializer = BookingSerializer(booking, context={'request': request})
                 return Response({
-                    'error': 'Booking is not pending'
+                    'data': serializer.data,
+                    'message': 'Booking is already confirmed'
+                }, status=status.HTTP_200_OK)
+            
+            if booking.status != 'pending':
+                # Provide more informative error message
+                return Response({
+                    'error': f'Booking cannot be accepted. Current status: {booking.status}',
+                    'current_status': booking.status,
+                    'message': f'Only pending bookings can be accepted. This booking is currently {booking.status}.'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # Accept the booking
             booking.status = 'confirmed'
             booking.save()
             
@@ -396,9 +417,21 @@ class BookingRejectView(APIView):
                     'error': 'Permission denied'
                 }, status=status.HTTP_403_FORBIDDEN)
             
-            if booking.status != 'pending':
+            # Check booking status
+            if booking.status == 'cancelled':
+                # Already cancelled - return success (idempotent operation)
+                serializer = BookingSerializer(booking, context={'request': request})
                 return Response({
-                    'error': 'Booking is not pending'
+                    'data': serializer.data,
+                    'message': 'Booking is already rejected'
+                }, status=status.HTTP_200_OK)
+            
+            if booking.status != 'pending':
+                # Provide more informative error message
+                return Response({
+                    'error': f'Booking cannot be rejected. Current status: {booking.status}',
+                    'current_status': booking.status,
+                    'message': f'Only pending bookings can be rejected. This booking is currently {booking.status}.'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             booking.status = 'cancelled'

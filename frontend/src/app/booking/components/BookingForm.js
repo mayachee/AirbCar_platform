@@ -18,10 +18,18 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
   const errorRef = useRef(null)
   const router = useRouter()
 
+  // Use ref to store the latest callback to avoid dependency issues
+  const onFormDataUpdateRef = useRef(onFormDataUpdate)
+  
+  // Update ref when callback changes
+  useEffect(() => {
+    onFormDataUpdateRef.current = onFormDataUpdate
+  }, [onFormDataUpdate])
+
   // Expose form data to parent component (BookingFlow)
   useEffect(() => {
-    if (onFormDataUpdate) {
-      onFormDataUpdate({
+    if (onFormDataUpdateRef.current) {
+      onFormDataUpdateRef.current({
         specialRequest,
         licenseFiles: {
           front: licenseFrontFile,
@@ -31,7 +39,8 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
         agreedToTerms
       })
     }
-  }, [specialRequest, licenseFrontFile, licenseBackFile, paymentMethod, agreedToTerms, onFormDataUpdate])
+  }, [specialRequest, licenseFrontFile, licenseBackFile, paymentMethod, agreedToTerms])
+  // Removed onFormDataUpdate from deps - using ref instead to prevent infinite loops
 
   const isAuthenticated = Boolean(user)
   

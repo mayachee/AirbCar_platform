@@ -65,6 +65,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
+    'django.middleware.gzip.GZipMiddleware',  # Compress responses for faster transfer
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -112,13 +113,15 @@ IS_LOCAL_DB = (
 
 # Base database options
 db_options = {
-    # Connection timeout - shorter for faster failure and reconnection
-    'connect_timeout': 10,
+    # Connection timeout - increased for slow connections
+    'connect_timeout': 20,
     # Keepalive settings - more aggressive to detect dead connections faster
     'keepalives': 1,
     'keepalives_idle': 30,  # Start sending keepalives after 30 seconds of idle
     'keepalives_interval': 10,  # Send keepalive probe every 10 seconds
     'keepalives_count': 3,  # Allow 3 failed probes before considering connection dead
+    # Connection pool settings for better performance
+    'options': '-c statement_timeout=60000',  # 60 second statement timeout
 }
 
 # Add SSL configuration only for remote databases (Supabase, etc.)
