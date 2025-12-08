@@ -78,87 +78,88 @@ class ReviewListView(APIView):
     
     def post(self, request):
         """Create a new review."""
-        listing_id = request.data.get('listing_id') or request.data.get('listing')
-        rating = request.data.get('rating')
-        comment = request.data.get('comment', '')
-        
-        if not listing_id:
-            return Response({
-                'error': 'listing_id is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if not rating or not (1 <= int(rating) <= 5):
-            return Response({
-                'error': 'Rating is required and must be between 1 and 5'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
         try:
-            listing = Listing.objects.get(pk=listing_id)
-        except Listing.DoesNotExist:
-            return Response({
-                'error': 'Listing not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Check if user has completed a booking for this listing
-        has_booking = Booking.objects.filter(
-            customer=request.user,
-            listing=listing,
-            status='completed'
-        ).exists()
-        
-        if not has_booking:
-            return Response({
-                'error': 'You can only review listings you have booked and completed'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
-        # Check if user already reviewed this listing
-        existing_review = Review.objects.filter(
-            user=request.user,
-            listing=listing
-        ).first()
-        
-        if existing_review:
-            # Update existing review
-            existing_review.rating = rating
-            existing_review.comment = comment
-            existing_review.is_published = True
-            existing_review.save()
+            listing_id = request.data.get('listing_id') or request.data.get('listing')
+            rating = request.data.get('rating')
+            comment = request.data.get('comment', '')
             
-            # Update listing rating
-            reviews = Review.objects.filter(listing=listing, is_published=True)
-            avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
-            listing.rating = round(avg_rating, 2)
-            listing.review_count = reviews.count()
-            listing.save()
+            if not listing_id:
+                return Response({
+                    'error': 'listing_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
             
-            serializer = ReviewSerializer(existing_review, context={'request': request})
-            return Response({
-                'data': serializer.data,
-                'message': 'Review updated successfully'
-            }, status=status.HTTP_200_OK)
-        else:
-            # Create new review
-            review = Review.objects.create(
-                user=request.user,
+            if not rating or not (1 <= int(rating) <= 5):
+                return Response({
+                    'error': 'Rating is required and must be between 1 and 5'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                listing = Listing.objects.get(pk=listing_id)
+            except Listing.DoesNotExist:
+                return Response({
+                    'error': 'Listing not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Check if user has completed a booking for this listing
+            has_booking = Booking.objects.filter(
+                customer=request.user,
                 listing=listing,
-                rating=rating,
-                comment=comment,
-                is_published=True
-            )
+                status='completed'
+            ).exists()
             
-            # Update listing rating
-            reviews = Review.objects.filter(listing=listing, is_published=True)
-            avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
-            listing.rating = round(avg_rating, 2)
-            listing.review_count = reviews.count()
-            listing.save()
+            if not has_booking:
+                return Response({
+                    'error': 'You can only review listings you have booked and completed'
+                }, status=status.HTTP_403_FORBIDDEN)
             
-            serializer = ReviewSerializer(review, context={'request': request})
-            return Response({
-                'data': serializer.data,
-                'message': 'Review created successfully'
-            }, status=status.HTTP_201_CREATED)
+            # Check if user already reviewed this listing
+            existing_review = Review.objects.filter(
+                user=request.user,
+                listing=listing
+            ).first()
             
+            if existing_review:
+                # Update existing review
+                existing_review.rating = rating
+                existing_review.comment = comment
+                existing_review.is_published = True
+                existing_review.save()
+                
+                # Update listing rating
+                reviews = Review.objects.filter(listing=listing, is_published=True)
+                avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
+                listing.rating = round(avg_rating, 2)
+                listing.review_count = reviews.count()
+                listing.save()
+                
+                serializer = ReviewSerializer(existing_review, context={'request': request})
+                return Response({
+                    'data': serializer.data,
+                    'message': 'Review updated successfully'
+                }, status=status.HTTP_200_OK)
+            else:
+                # Create new review
+                review = Review.objects.create(
+                    user=request.user,
+                    listing=listing,
+                    rating=rating,
+                    comment=comment,
+                    is_published=True
+                )
+                
+                # Update listing rating
+                reviews = Review.objects.filter(listing=listing, is_published=True)
+                avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
+                listing.rating = round(avg_rating, 2)
+                listing.review_count = reviews.count()
+                listing.save()
+                
+                serializer = ReviewSerializer(review, context={'request': request})
+                return Response({
+                    'data': serializer.data,
+                    'message': 'Review created successfully'
+                }, status=status.HTTP_201_CREATED)
+                
         except Exception as e:
             error_msg = str(e)
             if settings.DEBUG:
