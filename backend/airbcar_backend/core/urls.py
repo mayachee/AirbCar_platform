@@ -6,6 +6,10 @@ from . import views
 
 app_name = 'core'
 
+# Ensure critical views exist before creating URL patterns
+if views.RootView is None:
+    raise ImportError("RootView failed to import. Check server logs for details.")
+
 urlpatterns = [
     # Root endpoint
     path('', views.RootView.as_view(), name='root'),

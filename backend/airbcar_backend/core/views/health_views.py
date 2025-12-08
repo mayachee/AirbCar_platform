@@ -17,6 +17,7 @@ class RootView(APIView):
     
     def get(self, request):
         """Root endpoint - should always work, no database required."""
+        # This endpoint should NEVER fail - it doesn't use database or complex imports
         try:
             return Response({
                 'status': 'ok',
@@ -34,18 +35,20 @@ class RootView(APIView):
                     'bookings': '/bookings/',
                 },
                 'docs': 'See API documentation for more details'
-            })
+            }, status=status.HTTP_200_OK)
         except Exception as e:
-            # Fallback response if something goes wrong
-            if settings.DEBUG:
-                import traceback
-                print(f"RootView error: {e}")
-                traceback.print_exc()
+            # Fallback response if something goes wrong - this should never happen
+            import traceback
+            import sys
+            error_msg = str(e)
+            print(f"CRITICAL: RootView error: {error_msg}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            # Return minimal response that should always work
             return Response({
                 'status': 'ok',
                 'message': 'AirbCar Backend API',
                 'version': '1.0.0',
-                'note': 'Some features may be unavailable'
+                'error': error_msg if settings.DEBUG else None
             }, status=status.HTTP_200_OK)
 
 
