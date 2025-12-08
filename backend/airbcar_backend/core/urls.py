@@ -2,77 +2,170 @@
 URL configuration for core app API endpoints.
 """
 from django.urls import path
-from . import views
+import sys
+import traceback
+
+# Import views with error handling
+try:
+    from . import views
+except Exception as e:
+    # If views fail to import, create minimal fallback
+    print(f"CRITICAL: Failed to import views module: {e}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    
+    # Create emergency fallback views
+    from rest_framework.views import APIView
+    from rest_framework.response import Response
+    from rest_framework.permissions import AllowAny
+    
+    class EmergencyRootView(APIView):
+        permission_classes = [AllowAny]
+        def get(self, request):
+            return Response({
+                'status': 'error',
+                'message': 'Views module failed to import. Check server logs.',
+                'error': str(e) if hasattr(e, '__str__') else 'Unknown error'
+            }, status=500)
+    
+    # Create a minimal views object
+    class ViewsModule:
+        RootView = EmergencyRootView
+        HealthCheckView = EmergencyRootView
+        LoginView = EmergencyRootView
+        RegisterView = EmergencyRootView
+        serve_media = None
+    
+    views = ViewsModule()
 
 app_name = 'core'
 
-# Ensure critical views exist before creating URL patterns
-if views.RootView is None:
-    raise ImportError("RootView failed to import. Check server logs for details.")
+# Helper function to safely add URL patterns only if view exists
+def safe_path(pattern, view, name=None):
+    """Only add URL pattern if view is not None."""
+    if view is not None:
+        return path(pattern, view.as_view(), name=name)
+    return None
 
-urlpatterns = [
-    # Root endpoint
-    path('', views.RootView.as_view(), name='root'),
-    # Listings endpoints
-    path('listings/', views.ListingListView.as_view(), name='listing-list'),
-    path('listings/<int:pk>/', views.ListingDetailView.as_view(), name='listing-detail'),
-    
-    # Favorites endpoints
-    path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'),
-    path('favorites/my-favorites/', views.MyFavoritesView.as_view(), name='my-favorites'),
-    path('favorites/<int:pk>/', views.FavoriteDetailView.as_view(), name='favorite-detail'),
-    
-    # Users endpoints
-    path('users/', views.UserListView.as_view(), name='user-list'),
-    path('users/me/', views.UserMeView.as_view(), name='user-me'),
-    path('users/me/stats/', views.UserStatsView.as_view(), name='user-stats'),
-    path('users/me/change-password/', views.ChangePasswordView.as_view(), name='change-password'),
-    path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
-    
-    # Bookings endpoints
-    path('bookings/', views.BookingListView.as_view(), name='booking-list'),
-    path('bookings/pending-requests/', views.BookingPendingRequestsView.as_view(), name='booking-pending-requests'),
-    path('bookings/upcoming/', views.BookingUpcomingView.as_view(), name='booking-upcoming'),
-    # Accept/Reject endpoints (must come before detail view for proper URL matching)
-    path('bookings/<int:pk>/accept/', views.BookingAcceptView.as_view(), name='booking-accept'),
-    path('bookings/<int:pk>/reject/', views.BookingRejectView.as_view(), name='booking-reject'),
-    path('bookings/<int:pk>/cancel/', views.BookingCancelView.as_view(), name='booking-cancel'),
-    path('bookings/<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'),
-    path('bookings/<int:booking_id>/customer-info/', views.PartnerCustomerInfoView.as_view(), name='booking-customer-info'),
-    
-    # Partners endpoints
-    path('partners/', views.PartnerListView.as_view(), name='partner-list'),
-    path('partners/me/', views.PartnerMeView.as_view(), name='partner-me'),
-    path('partners/me/earnings/', views.PartnerEarningsView.as_view(), name='partner-earnings'),
-    path('partners/me/analytics/', views.PartnerAnalyticsView.as_view(), name='partner-analytics'),
-    path('partners/me/reviews/', views.PartnerReviewsView.as_view(), name='partner-reviews'),
-    path('partners/me/activity/', views.PartnerActivityView.as_view(), name='partner-activity'),
-    path('partners/<int:pk>/', views.PartnerDetailView.as_view(), name='partner-detail'),
-    
-    # Reviews endpoints
-    path('reviews/', views.ReviewListView.as_view(), name='review-list'),
-    path('reviews/can_review/', views.CanReviewView.as_view(), name='can-review'),
-    
-    # Health check endpoint
-    path('api/health/', views.HealthCheckView.as_view(), name='health'),
-    
-    # Media file serving (for production)
-    path('media/<path:path>', views.serve_media, name='serve-media'),
-    
-    # Auth endpoints
-    path('api/login/', views.LoginView.as_view(), name='login'),
-    path('api/register/', views.RegisterView.as_view(), name='register'),
-    path('api/token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'),
-    path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify-token'),
-    path('api/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
-    path('api/resend-verification/', views.ResendVerificationEmailView.as_view(), name='resend-verification'),
-    path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset-request'),
-    path('api/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
-    path('api/auth/google/', views.GoogleAuthView.as_view(), name='google-auth'),
-    
-    # Admin endpoints
-    path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'),
-    path('admin/analytics/', views.AdminAnalyticsView.as_view(), name='admin-analytics'),
-    path('admin/revenue/', views.AdminRevenueView.as_view(), name='admin-revenue'),
-]
+# Build URL patterns conditionally - only include views that exist
+urlpatterns = []
+
+# Root endpoint - CRITICAL, must exist
+if views.RootView is not None:
+    urlpatterns.append(path('', views.RootView.as_view(), name='root'))
+else:
+    # Emergency fallback if RootView failed
+    from rest_framework.views import APIView
+    from rest_framework.response import Response
+    from rest_framework.permissions import AllowAny
+    class EmergencyRootView(APIView):
+        permission_classes = [AllowAny]
+        def get(self, request):
+            return Response({
+                'status': 'error',
+                'message': 'RootView failed to import. Check server logs.',
+                'version': '1.0.0'
+            }, status=500)
+    urlpatterns.append(path('', EmergencyRootView.as_view(), name='root'))
+
+# Health check endpoint - CRITICAL
+if views.HealthCheckView is not None:
+    urlpatterns.append(path('api/health/', views.HealthCheckView.as_view(), name='health'))
+
+# Auth endpoints - CRITICAL
+if views.LoginView is not None:
+    urlpatterns.append(path('api/login/', views.LoginView.as_view(), name='login'))
+if views.RegisterView is not None:
+    urlpatterns.append(path('api/register/', views.RegisterView.as_view(), name='register'))
+if views.RefreshTokenView is not None:
+    urlpatterns.append(path('api/token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'))
+if views.VerifyTokenView is not None:
+    urlpatterns.append(path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify-token'))
+if views.VerifyEmailView is not None:
+    urlpatterns.append(path('api/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'))
+if views.ResendVerificationEmailView is not None:
+    urlpatterns.append(path('api/resend-verification/', views.ResendVerificationEmailView.as_view(), name='resend-verification'))
+if views.PasswordResetRequestView is not None:
+    urlpatterns.append(path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset-request'))
+if views.PasswordResetConfirmView is not None:
+    urlpatterns.append(path('api/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'))
+if views.GoogleAuthView is not None:
+    urlpatterns.append(path('api/auth/google/', views.GoogleAuthView.as_view(), name='google-auth'))
+
+# Media file serving
+if views.serve_media is not None:
+    urlpatterns.append(path('media/<path:path>', views.serve_media, name='serve-media'))
+
+# Listings endpoints
+if views.ListingListView is not None:
+    urlpatterns.append(path('listings/', views.ListingListView.as_view(), name='listing-list'))
+if views.ListingDetailView is not None:
+    urlpatterns.append(path('listings/<int:pk>/', views.ListingDetailView.as_view(), name='listing-detail'))
+
+# Favorites endpoints
+if views.FavoriteListView is not None:
+    urlpatterns.append(path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'))
+if views.MyFavoritesView is not None:
+    urlpatterns.append(path('favorites/my-favorites/', views.MyFavoritesView.as_view(), name='my-favorites'))
+if views.FavoriteDetailView is not None:
+    urlpatterns.append(path('favorites/<int:pk>/', views.FavoriteDetailView.as_view(), name='favorite-detail'))
+
+# Users endpoints
+if views.UserListView is not None:
+    urlpatterns.append(path('users/', views.UserListView.as_view(), name='user-list'))
+if views.UserMeView is not None:
+    urlpatterns.append(path('users/me/', views.UserMeView.as_view(), name='user-me'))
+if views.UserStatsView is not None:
+    urlpatterns.append(path('users/me/stats/', views.UserStatsView.as_view(), name='user-stats'))
+if views.ChangePasswordView is not None:
+    urlpatterns.append(path('users/me/change-password/', views.ChangePasswordView.as_view(), name='change-password'))
+if views.UserDetailView is not None:
+    urlpatterns.append(path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'))
+
+# Bookings endpoints
+if views.BookingListView is not None:
+    urlpatterns.append(path('bookings/', views.BookingListView.as_view(), name='booking-list'))
+if views.BookingPendingRequestsView is not None:
+    urlpatterns.append(path('bookings/pending-requests/', views.BookingPendingRequestsView.as_view(), name='booking-pending-requests'))
+if views.BookingUpcomingView is not None:
+    urlpatterns.append(path('bookings/upcoming/', views.BookingUpcomingView.as_view(), name='booking-upcoming'))
+if views.BookingAcceptView is not None:
+    urlpatterns.append(path('bookings/<int:pk>/accept/', views.BookingAcceptView.as_view(), name='booking-accept'))
+if views.BookingRejectView is not None:
+    urlpatterns.append(path('bookings/<int:pk>/reject/', views.BookingRejectView.as_view(), name='booking-reject'))
+if views.BookingCancelView is not None:
+    urlpatterns.append(path('bookings/<int:pk>/cancel/', views.BookingCancelView.as_view(), name='booking-cancel'))
+if views.BookingDetailView is not None:
+    urlpatterns.append(path('bookings/<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'))
+if views.PartnerCustomerInfoView is not None:
+    urlpatterns.append(path('bookings/<int:booking_id>/customer-info/', views.PartnerCustomerInfoView.as_view(), name='booking-customer-info'))
+
+# Partners endpoints
+if views.PartnerListView is not None:
+    urlpatterns.append(path('partners/', views.PartnerListView.as_view(), name='partner-list'))
+if views.PartnerMeView is not None:
+    urlpatterns.append(path('partners/me/', views.PartnerMeView.as_view(), name='partner-me'))
+if views.PartnerEarningsView is not None:
+    urlpatterns.append(path('partners/me/earnings/', views.PartnerEarningsView.as_view(), name='partner-earnings'))
+if views.PartnerAnalyticsView is not None:
+    urlpatterns.append(path('partners/me/analytics/', views.PartnerAnalyticsView.as_view(), name='partner-analytics'))
+if views.PartnerReviewsView is not None:
+    urlpatterns.append(path('partners/me/reviews/', views.PartnerReviewsView.as_view(), name='partner-reviews'))
+if views.PartnerActivityView is not None:
+    urlpatterns.append(path('partners/me/activity/', views.PartnerActivityView.as_view(), name='partner-activity'))
+if views.PartnerDetailView is not None:
+    urlpatterns.append(path('partners/<int:pk>/', views.PartnerDetailView.as_view(), name='partner-detail'))
+
+# Reviews endpoints
+if views.ReviewListView is not None:
+    urlpatterns.append(path('reviews/', views.ReviewListView.as_view(), name='review-list'))
+if views.CanReviewView is not None:
+    urlpatterns.append(path('reviews/can_review/', views.CanReviewView.as_view(), name='can-review'))
+
+# Admin endpoints
+if views.AdminStatsView is not None:
+    urlpatterns.append(path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'))
+if views.AdminAnalyticsView is not None:
+    urlpatterns.append(path('admin/analytics/', views.AdminAnalyticsView.as_view(), name='admin-analytics'))
+if views.AdminRevenueView is not None:
+    urlpatterns.append(path('admin/revenue/', views.AdminRevenueView.as_view(), name='admin-revenue'))
 
