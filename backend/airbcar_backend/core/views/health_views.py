@@ -9,8 +9,6 @@ from django.utils import timezone
 from django.conf import settings
 import os
 
-from ..models import User
-
 
 class RootView(APIView):
     """Root API endpoint - provides API information."""
@@ -18,23 +16,37 @@ class RootView(APIView):
     authentication_classes = []
     
     def get(self, request):
-        return Response({
-            'status': 'ok',
-            'message': 'AirbCar Backend API',
-            'version': '1.0.0',
-            'endpoints': {
-                'health': '/api/health/',
-                'auth': {
-                    'login': '/api/login/',
-                    'register': '/api/register/',
-                    'token_refresh': '/api/token/refresh/',
+        """Root endpoint - should always work, no database required."""
+        try:
+            return Response({
+                'status': 'ok',
+                'message': 'AirbCar Backend API',
+                'version': '1.0.0',
+                'endpoints': {
+                    'health': '/api/health/',
+                    'auth': {
+                        'login': '/api/login/',
+                        'register': '/api/register/',
+                        'token_refresh': '/api/token/refresh/',
+                    },
+                    'listings': '/listings/',
+                    'partners': '/partners/',
+                    'bookings': '/bookings/',
                 },
-                'listings': '/listings/',
-                'partners': '/partners/',
-                'bookings': '/bookings/',
-            },
-            'docs': 'See API documentation for more details'
-        })
+                'docs': 'See API documentation for more details'
+            })
+        except Exception as e:
+            # Fallback response if something goes wrong
+            if settings.DEBUG:
+                import traceback
+                print(f"RootView error: {e}")
+                traceback.print_exc()
+            return Response({
+                'status': 'ok',
+                'message': 'AirbCar Backend API',
+                'version': '1.0.0',
+                'note': 'Some features may be unavailable'
+            }, status=status.HTTP_200_OK)
 
 
 class HealthCheckView(APIView):
@@ -46,10 +58,18 @@ class HealthCheckView(APIView):
         """Health check endpoint - should always return 200 if server is running."""
         try:
             # Try a simple database query to check DB connectivity
+            db_status = 'unknown'
             try:
+                # Import User model only when needed to avoid import errors
+                from ..models import User
                 # Just check if we can query the database (count users, but don't fail if DB is slow)
                 User.objects.exists()
                 db_status = 'connected'
+            except ImportError as import_error:
+                # Model import failed - might be a migration issue
+                db_status = 'model_import_failed'
+                if settings.DEBUG:
+                    print(f"Health check - Model import failed: {import_error}")
             except Exception as db_error:
                 # Database might be slow or unavailable, but server is still running
                 db_status = 'slow_or_unavailable'
