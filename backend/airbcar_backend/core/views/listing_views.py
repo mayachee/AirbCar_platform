@@ -279,10 +279,19 @@ class ListingListView(APIView):
             # Handle image file uploads from FormData
             uploaded_images = []
             
+            # Debug: Log what we received
+            if settings.DEBUG:
+                print(f"📥 POST /listings/ - Received request data keys: {list(request.data.keys())}")
+                print(f"📁 POST /listings/ - Received FILES keys: {list(request.FILES.keys())}")
+                print(f"📋 POST /listings/ - Content-Type: {request.content_type}")
+            
             # Process uploaded files (from 'pictures' field in FormData)
             if 'pictures' in request.FILES:
                 # Handle single file or multiple files
                 files = request.FILES.getlist('pictures')
+                if settings.DEBUG:
+                    print(f"📸 POST /listings/ - Found {len(files)} picture file(s) to upload")
+                
                 for file in files:
                     try:
                         # Generate unique filename
@@ -329,8 +338,10 @@ class ListingListView(APIView):
             all_images = uploaded_images + existing_images
             listing_data['images'] = all_images
             
-            if settings.DEBUG and all_images:
-                print(f"📸 Total images for listing: {len(all_images)}")
+            if settings.DEBUG:
+                print(f"📸 Image summary - Uploaded: {len(uploaded_images)}, Existing: {len(existing_images)}, Total: {len(all_images)}")
+                if all_images:
+                    print(f"📸 Image URLs: {[img.get('url', img) if isinstance(img, dict) else img for img in all_images]}")
             
             # Validate and create listing
             serializer = ListingSerializer(data=listing_data, context={'request': request})

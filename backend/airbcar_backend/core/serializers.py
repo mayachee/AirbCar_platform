@@ -342,9 +342,17 @@ class ListingSerializer(serializers.ModelSerializer):
             # Get backend URL - prefer request host if available, otherwise use settings
             if request:
                 # Use request to build absolute URL
-                backend_url = f"{request.scheme}://{request.get_host()}"
+                # Force HTTPS for production (onrender.com)
+                scheme = request.scheme
+                host = request.get_host()
+                if 'onrender.com' in host and scheme == 'http':
+                    scheme = 'https'  # Force HTTPS for Render
+                backend_url = f"{scheme}://{host}"
             else:
                 backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+                # Force HTTPS for production URLs
+                if 'onrender.com' in backend_url and backend_url.startswith('http://'):
+                    backend_url = backend_url.replace('http://', 'https://')
             
             # Normalize backend URL (remove trailing slash)
             backend_url = backend_url.rstrip('/')
