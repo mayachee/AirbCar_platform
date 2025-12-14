@@ -83,8 +83,12 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         raise ValueError(f"Image file is too large. Maximum size is {MAX_FILE_SIZE / (1024 * 1024):.1f}MB")
     
     try:
+        # Save file metadata before reading (file.size might not be available after chunks())
+        file_name = file.name if hasattr(file, 'name') else 'unknown'
+        file_size = file.size if hasattr(file, 'size') else 0
+        
         # Generate unique filename
-        file_ext = os.path.splitext(file.name)[1]
+        file_ext = os.path.splitext(file_name)[1] if file_name else '.jpg'
         unique_filename = f"{uuid.uuid4()}{file_ext}"
         file_path = os.path.join(upload_dir, unique_filename)
         
@@ -94,9 +98,32 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         
         # Optimized image processing - only resize if significantly large
         # Read file content once to avoid file pointer issues
-        file.seek(0)
-        file_content = b''.join(file.chunks())
-        file.seek(0)  # Reset for potential reuse
+        try:
+            file.seek(0)
+        except (AttributeError, OSError):
+            pass  # Some file objects don't support seek
+        
+        # Read file content using chunks() method
+        file_content = b''
+        try:
+            for chunk in file.chunks():
+                file_content += chunk
+        except (AttributeError, TypeError) as e:
+            # Fallback: try reading directly if chunks() doesn't work
+            if settings.DEBUG:
+                print(f"Warning: file.chunks() failed, trying direct read: {str(e)}")
+            try:
+                file.seek(0)
+                file_content = file.read()
+            except Exception as read_error:
+                raise ValueError(f"Cannot read file content: {str(read_error)}")
+        
+        if not file_content:
+            raise ValueError("File content is empty")
+        
+        # Update file_size if we couldn't get it before
+        if file_size == 0:
+            file_size = len(file_content)
         
         try:
             from io import BytesIO
@@ -129,6 +156,8 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
             # If processing fails, try to save original (fallback)
             if settings.DEBUG:
                 print(f"Warning: Could not process image, saving original: {str(e)}")
+                import traceback
+                traceback.print_exc()
             with open(full_path, 'wb') as destination:
                 destination.write(file_content)
         
@@ -136,8 +165,8 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         media_path = f"/media/{file_path}"
         return {
             'url': media_path,
-            'name': file.name,
-            'size': file.size
+            'name': file_name,
+            'size': file_size
         }
     except Exception as e:
         if settings.DEBUG:
