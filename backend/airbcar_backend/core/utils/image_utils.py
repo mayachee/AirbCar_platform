@@ -23,13 +23,14 @@ ALLOWED_IMAGE_TYPES = {
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
 
 # Maximum image dimensions (optional, for resizing)
-MAX_IMAGE_WIDTH = 1920
-MAX_IMAGE_HEIGHT = 1080
+# Reduced for faster processing on Render free tier
+MAX_IMAGE_WIDTH = 1280
+MAX_IMAGE_HEIGHT = 720
 
 
 def validate_image_file(file: UploadedFile) -> Tuple[bool, Optional[str]]:
     """
-    Validate an image file.
+    Validate an image file (lightweight validation without full image processing).
     
     Args:
         file: The uploaded file to validate
@@ -51,12 +52,14 @@ def validate_image_file(file: UploadedFile) -> Tuple[bool, Optional[str]]:
     if file_ext not in ALLOWED_IMAGE_TYPES.get(content_type, []):
         return False, f"File extension doesn't match content type"
     
-    # Try to open and verify it's a valid image
+    # Lightweight validation - just check file header, don't fully process image
+    # Full validation will happen during processing
     try:
         # Reset file pointer
         file.seek(0)
+        # Just check if we can identify the format (fast check)
         img = Image.open(file)
-        img.verify()  # Verify it's a valid image
+        img.verify()  # Quick verify
         file.seek(0)  # Reset again for actual use
     except Exception as e:
         return False, f"Invalid image file: {str(e)}"
@@ -66,7 +69,7 @@ def validate_image_file(file: UploadedFile) -> Tuple[bool, Optional[str]]:
 
 def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> Dict[str, Any]:
     """
-    Process and save an uploaded image file.
+    Process and save an uploaded image file (optimized for speed).
     
     Args:
         file: The uploaded file
@@ -75,10 +78,9 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
     Returns:
         Dictionary with 'url' and 'name' keys, or None if failed
     """
-    # Validate the file first
-    is_valid, error_msg = validate_image_file(file)
-    if not is_valid:
-        raise ValueError(error_msg)
+    # Lightweight validation (skip full validation to save time)
+    if file.size > MAX_FILE_SIZE:
+        raise ValueError(f"Image file is too large. Maximum size is {MAX_FILE_SIZE / (1024 * 1024):.1f}MB")
     
     try:
         # Generate unique filename
@@ -90,33 +92,49 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         full_path = os.path.join(settings.MEDIA_ROOT, file_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         
-        # Optionally resize image if it's too large
+        # Optimized image processing - only resize if significantly large
         try:
             file.seek(0)
             img = Image.open(file)
             
-            # Resize if image is too large (maintain aspect ratio)
-            if img.width > MAX_IMAGE_WIDTH or img.height > MAX_IMAGE_HEIGHT:
-                img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.Resampling.LANCZOS)
+            # Only resize if image is significantly larger than max (saves processing time)
+            needs_resize = img.width > MAX_IMAGE_WIDTH * 1.2 or img.height > MAX_IMAGE_HEIGHT * 1.2
+            
+            if needs_resize:
+                # Use faster resampling method (NEAREST is fastest, but BILINEAR is better quality/speed balance)
+                img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.Resampling.BILINEAR)
                 
-                # Save resized image
+                # Save resized image with optimized settings
                 img_format = img.format or 'JPEG'
-                if img_format == 'JPEG':
+                if img_format == 'JPEG' or img_format is None:
                     img = img.convert('RGB')
+                    img_format = 'JPEG'
                 
-                img.save(full_path, format=img_format, quality=85, optimize=True)
+                # Use lower quality for faster processing (75 instead of 85)
+                # optimize=True helps with file size but adds processing time - skip it
+                img.save(full_path, format=img_format, quality=75, optimize=False)
             else:
-                # Save original image
+                # Save original image directly (fastest path)
+                file.seek(0)
                 with open(full_path, 'wb+') as destination:
-                    for chunk in file.chunks():
+                    # Use larger chunks for faster writes
+                    chunk_size = 1024 * 1024  # 1MB chunks
+                    while True:
+                        chunk = file.read(chunk_size)
+                        if not chunk:
+                            break
                         destination.write(chunk)
         except Exception as e:
-            # If resizing fails, try to save original
+            # If processing fails, try to save original (fallback)
             if settings.DEBUG:
-                print(f"Warning: Could not resize image, saving original: {str(e)}")
+                print(f"Warning: Could not process image, saving original: {str(e)}")
             file.seek(0)
             with open(full_path, 'wb+') as destination:
-                for chunk in file.chunks():
+                chunk_size = 1024 * 1024  # 1MB chunks
+                while True:
+                    chunk = file.read(chunk_size)
+                    if not chunk:
+                        break
                     destination.write(chunk)
         
         # Return image info

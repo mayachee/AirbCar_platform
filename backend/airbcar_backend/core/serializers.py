@@ -329,122 +329,72 @@ class ListingSerializer(serializers.ModelSerializer):
         if 'reviewCount' not in data:
             data['reviewCount'] = data.get('review_count', 0)
         
-        # Process images to ensure full URLs
+        # Process images to ensure full URLs (optimized for speed)
         if 'images' in data and data['images']:
             request = self.context.get('request')
             processed_images = []
             from django.conf import settings
             import os
             
-            # Check if we're on Render (ephemeral filesystem)
-            is_render = os.environ.get('RENDER', '').lower() == 'true' or 'onrender.com' in os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
-            
-            # Get backend URL - prefer request host if available, otherwise use settings
+            # Cache backend URL calculation (only compute once)
             if request:
-                # Use request to build absolute URL
-                # Force HTTPS for production (onrender.com)
                 scheme = request.scheme
                 host = request.get_host()
                 if 'onrender.com' in host and scheme == 'http':
-                    scheme = 'https'  # Force HTTPS for Render
-                backend_url = f"{scheme}://{host}"
+                    scheme = 'https'
+                backend_url = f"{scheme}://{host}".rstrip('/')
             else:
-                backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
-                # Force HTTPS for production URLs
+                backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000').rstrip('/')
                 if 'onrender.com' in backend_url and backend_url.startswith('http://'):
                     backend_url = backend_url.replace('http://', 'https://')
             
-            # Normalize backend URL (remove trailing slash)
-            backend_url = backend_url.rstrip('/')
-            
+            # Optimized fix_image_url - simplified logic for speed
             def fix_image_url(url):
-                """Fix image URL - convert local media paths to full backend URLs."""
+                """Fix image URL - convert local media paths to full backend URLs (optimized)."""
                 if not url or not isinstance(url, str):
                     return None
                 
                 url = url.strip()
                 
-                # If it's a Supabase Storage URL, return as is
-                if 'supabase.co' in url and '/storage/v1/object/public/' in url:
+                # Fast path: Already a full URL (Supabase or external)
+                if 'supabase.co' in url or url.startswith(('http://', 'https://')):
                     return url
                 
-                # If it's already a full external URL (http/https), return as is
-                if url.startswith('http://') or url.startswith('https://'):
-                    return url
-                
-                # If we're on Render and the URL points to local media, we need to handle it differently
-                # On Render, local files don't exist, so we should return None or a placeholder
-                # But for now, let's still return the URL - the frontend can handle 404s with fallback images
-                
-                # If it's a local media path (/media/), convert to full backend URL
+                # Fast path: Already a proper /media/ path
                 if url.startswith('/media/'):
-                    # On Render, these files won't exist, but return URL anyway for frontend fallback handling
                     return f"{backend_url}{url}"
                 
-                # Handle URLs that contain /media/ anywhere in the string
-                # Examples: 
-                # - "airbcar-backend/media/listings/image.jpg"
-                # - "media/listings/image.jpg"
-                # - "/media/listings/image.jpg" (already handled above, but safe to check)
+                # Handle /media/ anywhere in string (less common, but needed)
                 if '/media/' in url:
-                    # Extract the media path starting from /media/
                     media_index = url.find('/media/')
-                    media_path = url[media_index:]  # Get /media/... onwards
-                    # Remove query parameters and fragments
-                    clean_path = media_path.split('?')[0].split('#')[0]
-                    # Ensure it starts with / (should already, but be safe)
-                    if not clean_path.startswith('/'):
-                        clean_path = '/' + clean_path
-                    # On Render, these files won't exist, but return URL anyway for frontend fallback handling
-                    return f"{backend_url}{clean_path}"
+                    media_path = url[media_index:].split('?')[0].split('#')[0]
+                    if not media_path.startswith('/'):
+                        media_path = '/' + media_path
+                    return f"{backend_url}{media_path}"
                 
-                # Handle relative paths that might be media files
-                # Check if it looks like a media file path (contains media folder names)
-                if not url.startswith('/') and not url.startswith('http'):
-                    # Check if it contains media folder names
-                    media_folders = ['listings', 'profiles', 'partner_logos', 'identity_documents', 'license_documents', 'booking_documents']
-                    if any(folder in url.lower() for folder in media_folders):
-                        # Check if it has an image extension
-                        image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
-                        if any(url.lower().endswith(ext) for ext in image_extensions):
-                            # Construct full media path
-                            return f"{backend_url}/media/{url}"
-                
-                # If it's a relative path starting with /, assume it's a frontend asset
-                if url.startswith('/'):
-                    return url
-                
-                # For any other case, return None
+                # Skip complex processing for other cases (return None for invalid)
                 return None
             
+            # Process images (optimized loop)
             for img in data['images']:
                 if isinstance(img, str):
                     fixed_url = fix_image_url(img)
-                    # Only include if URL is valid (not None)
                     if fixed_url:
-                        # If it's a local media URL and we're not in DEBUG mode, 
-                        # we can optionally check if file exists, but it's better to let frontend handle 404s
                         processed_images.append(fixed_url)
+                elif isinstance(img, dict) and 'url' in img:
+                    fixed_url = fix_image_url(img['url'])
+                    if fixed_url:
+                        processed_images.append({**img, 'url': fixed_url})
                 elif isinstance(img, dict):
-                    # If it's an object, process the url field
-                    if 'url' in img:
-                        fixed_url = fix_image_url(img['url'])
-                        # Only include if URL is valid (not None)
-                        if fixed_url:
-                            img['url'] = fixed_url
-                            processed_images.append(img)
-                        # If URL is None but dict has other fields, we could keep it with a fallback
-                        # but for now, we'll skip it
-                    else:
-                        # Dict without url field, keep as-is
-                        processed_images.append(img)
+                    # Dict without url, keep as-is
+                    processed_images.append(img)
                 else:
-                    # For any other type, append as-is
+                    # Other types, keep as-is
                     processed_images.append(img)
             
-            # If no valid images found, provide a fallback
-            if len(processed_images) == 0:
-                processed_images = ['/carsymbol.jpg']  # Frontend fallback image
+            # Only add fallback if truly empty
+            if not processed_images:
+                processed_images = ['/carsymbol.jpg']
             
             data['images'] = processed_images
         

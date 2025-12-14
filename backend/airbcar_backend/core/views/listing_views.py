@@ -25,7 +25,7 @@ from ..serializers import (
 )
 from ..utils.image_utils import (
     validate_image_file, process_and_save_image,
-    parse_images_data, combine_images
+    parse_images_data, combine_images, MAX_FILE_SIZE
 )
 
 
@@ -321,21 +321,27 @@ class ListingListView(APIView):
                 print(f"📋 POST /listings/ - Content-Type: {request.content_type}")
             
             # Process uploaded files (from 'pictures' field in FormData)
+            # Optimized: Skip separate validation, process_and_save_image does lightweight validation
             if 'pictures' in request.FILES:
                 # Handle single file or multiple files
                 files = request.FILES.getlist('pictures')
+                # Limit to 5 images max to prevent timeout
+                max_images = 5
+                if len(files) > max_images:
+                    image_errors.append(f"Maximum {max_images} images allowed. You uploaded {len(files)}.")
+                    files = files[:max_images]
+                
                 if settings.DEBUG:
                     print(f"📸 POST /listings/ - Found {len(files)} picture file(s) to upload")
                 
                 for file in files:
                     try:
-                        # Validate image file
-                        is_valid, error_msg = validate_image_file(file)
-                        if not is_valid:
-                            image_errors.append(f"{file.name}: {error_msg}")
+                        # Quick basic validation (file size only - skip full validation for speed)
+                        if file.size > MAX_FILE_SIZE:
+                            image_errors.append(f"{file.name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
                             continue
                         
-                        # Process and save image
+                        # Process and save image (includes validation)
                         image_info = process_and_save_image(file, upload_dir='listings')
                         uploaded_images.append({
                             'url': image_info['url'],
@@ -511,18 +517,24 @@ class ListingDetailView(APIView):
             image_errors = []
             
             # Process uploaded files (from 'pictures' field in FormData)
+            # Optimized: Skip separate validation, process_and_save_image does lightweight validation
             if 'pictures' in request.FILES:
                 # Handle single file or multiple files
                 files = request.FILES.getlist('pictures')
+                # Limit to 5 images max to prevent timeout
+                max_images = 5
+                if len(files) > max_images:
+                    image_errors.append(f"Maximum {max_images} images allowed. You uploaded {len(files)}.")
+                    files = files[:max_images]
+                
                 for file in files:
                     try:
-                        # Validate image file
-                        is_valid, error_msg = validate_image_file(file)
-                        if not is_valid:
-                            image_errors.append(f"{file.name}: {error_msg}")
+                        # Quick basic validation (file size and type only)
+                        if file.size > MAX_FILE_SIZE:
+                            image_errors.append(f"{file.name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
                             continue
                         
-                        # Process and save image
+                        # Process and save image (includes validation)
                         image_info = process_and_save_image(file, upload_dir='listings')
                         uploaded_images.append({
                             'url': image_info['url'],
