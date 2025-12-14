@@ -23,6 +23,10 @@ from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
 )
+from ..utils.image_utils import (
+    validate_image_file, process_and_save_image,
+    parse_images_data, combine_images
+)
 
 
 class ListingListView(APIView):
@@ -267,6 +271,32 @@ class ListingListView(APIView):
             listing_data = request.data.copy()
             listing_data['partner_id'] = partner.id
             
+            # Convert FormData string values to proper types
+            # FormData sends everything as strings, so we need to convert numbers
+            if 'year' in listing_data and isinstance(listing_data['year'], str):
+                try:
+                    listing_data['year'] = int(listing_data['year'])
+                except (ValueError, TypeError):
+                    pass  # Keep as string if conversion fails, serializer will handle validation
+            
+            if 'price_per_day' in listing_data and isinstance(listing_data['price_per_day'], str):
+                try:
+                    listing_data['price_per_day'] = float(listing_data['price_per_day'])
+                except (ValueError, TypeError):
+                    pass
+            
+            if 'seating_capacity' in listing_data and isinstance(listing_data['seating_capacity'], str):
+                try:
+                    listing_data['seating_capacity'] = int(listing_data['seating_capacity'])
+                except (ValueError, TypeError):
+                    pass
+            
+            if 'is_available' in listing_data and isinstance(listing_data['is_available'], str):
+                listing_data['is_available'] = listing_data['is_available'].lower() in ('true', '1', 'yes')
+            
+            if 'instant_booking' in listing_data and isinstance(listing_data['instant_booking'], str):
+                listing_data['instant_booking'] = listing_data['instant_booking'].lower() in ('true', '1', 'yes')
+            
             # Validate required fields
             required_fields = ['make', 'model', 'year', 'price_per_day', 'location']
             missing_fields = [field for field in required_fields if not listing_data.get(field)]
@@ -278,6 +308,7 @@ class ListingListView(APIView):
             
             # Handle image file uploads from FormData
             uploaded_images = []
+            image_errors = []
             
             # Debug: Log what we received
             if settings.DEBUG:
@@ -294,49 +325,58 @@ class ListingListView(APIView):
                 
                 for file in files:
                     try:
-                        # Generate unique filename
-                        import uuid
-                        file_ext = os.path.splitext(file.name)[1]
-                        unique_filename = f"{uuid.uuid4()}{file_ext}"
-                        file_path = os.path.join('listings', unique_filename)
+                        # Validate image file
+                        is_valid, error_msg = validate_image_file(file)
+                        if not is_valid:
+                            image_errors.append(f"{file.name}: {error_msg}")
+                            continue
                         
-                        # Save file to media directory
-                        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-                        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                        
-                        with open(full_path, 'wb+') as destination:
-                            for chunk in file.chunks():
-                                destination.write(chunk)
-                        
-                        # Store the relative path for the images field
-                        media_path = f"/media/{file_path}"
+                        # Process and save image
+                        image_info = process_and_save_image(file, upload_dir='listings')
                         uploaded_images.append({
-                            'url': media_path,
-                            'name': file.name
+                            'url': image_info['url'],
+                            'name': image_info['name']
                         })
                         
                         if settings.DEBUG:
-                            print(f"✓ Saved image: {full_path}")
-                    except Exception as e:
+                            print(f"✓ Saved image: {image_info['url']}")
+                    except ValueError as e:
+                        # Validation error
+                        image_errors.append(f"{file.name}: {str(e)}")
                         if settings.DEBUG:
-                            print(f"Error saving image {file.name}: {str(e)}")
-                        # Continue with other files even if one fails
+                            print(f"❌ Validation error for {file.name}: {str(e)}")
+                    except Exception as e:
+                        # Other errors
+                        error_msg = f"Error processing {file.name}: {str(e)}"
+                        image_errors.append(error_msg)
+                        if settings.DEBUG:
+                            print(f"❌ {error_msg}")
+                        traceback.print_exc()
             
             # Handle existing images from JSON (if provided as JSON string or array)
-            existing_images = []
-            images_data = listing_data.get('images', [])
-            
-            if isinstance(images_data, str):
-                try:
-                    existing_images = json.loads(images_data)
-                except json.JSONDecodeError:
-                    existing_images = [images_data] if images_data else []
-            elif isinstance(images_data, list):
-                existing_images = images_data
+            # Remove 'images' from listing_data first to avoid serializer validation issues
+            # We'll set it properly after processing
+            images_data = listing_data.pop('images', [])
+            existing_images = parse_images_data(images_data)
             
             # Combine uploaded images with existing images
-            all_images = uploaded_images + existing_images
+            all_images = combine_images(uploaded_images, existing_images)
+            
+            # If there were image errors but we have some valid images, include them in the response
+            # If all images failed, return an error
+            if image_errors and len(uploaded_images) == 0 and len(existing_images) == 0:
+                return Response({
+                    'error': 'Image upload failed',
+                    'message': 'All image files failed validation',
+                    'errors': {'images': image_errors}
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Set images as a list (serializer expects JSON-serializable data)
             listing_data['images'] = all_images
+            
+            # Store image errors for potential warning in response
+            if image_errors and settings.DEBUG:
+                print(f"⚠️ Some images failed: {image_errors}")
             
             if settings.DEBUG:
                 print(f"📸 Image summary - Uploaded: {len(uploaded_images)}, Existing: {len(existing_images)}, Total: {len(all_images)}")
@@ -346,13 +386,23 @@ class ListingListView(APIView):
             # Validate and create listing
             serializer = ListingSerializer(data=listing_data, context={'request': request})
             
+            if settings.DEBUG:
+                print(f"🔍 POST /listings/ - Serializer data keys: {list(listing_data.keys())}")
+                print(f"🔍 POST /listings/ - Images data: {listing_data.get('images', [])}")
+            
             if serializer.is_valid():
+                if settings.DEBUG:
+                    print(f"✅ POST /listings/ - Serializer is valid, saving...")
                 listing = serializer.save()
+                if settings.DEBUG:
+                    print(f"✅ POST /listings/ - Listing saved with ID: {listing.id}")
                 return Response({
                     'data': ListingSerializer(listing, context={'request': request}).data,
                     'message': 'Listing created successfully'
                 }, status=status.HTTP_201_CREATED)
             else:
+                if settings.DEBUG:
+                    print(f"❌ POST /listings/ - Serializer validation failed: {serializer.errors}")
                 return Response({
                     'error': 'Validation failed',
                     'errors': serializer.errors
@@ -361,8 +411,13 @@ class ListingListView(APIView):
         except Exception as e:
             error_msg = str(e)
             if settings.DEBUG:
-                print(f"Error in ListingListView.post: {error_msg}")
+                print(f"❌ POST /listings/ - Exception: {error_msg}")
                 traceback.print_exc()
+            else:
+                # Even in production, log to stderr
+                import sys
+                print(f"❌ POST /listings/ - Exception: {error_msg}", file=sys.stderr)
+                traceback.print_exc(file=sys.stderr)
             return Response({
                 'error': 'An error occurred while creating the listing',
                 'message': error_msg if settings.DEBUG else 'Please try again later'
@@ -441,6 +496,7 @@ class ListingDetailView(APIView):
             
             # Handle image file uploads from FormData
             uploaded_images = []
+            image_errors = []
             
             # Process uploaded files (from 'pictures' field in FormData)
             if 'pictures' in request.FILES:
@@ -448,58 +504,65 @@ class ListingDetailView(APIView):
                 files = request.FILES.getlist('pictures')
                 for file in files:
                     try:
-                        # Generate unique filename
-                        import uuid
-                        file_ext = os.path.splitext(file.name)[1]
-                        unique_filename = f"{uuid.uuid4()}{file_ext}"
-                        file_path = os.path.join('listings', unique_filename)
+                        # Validate image file
+                        is_valid, error_msg = validate_image_file(file)
+                        if not is_valid:
+                            image_errors.append(f"{file.name}: {error_msg}")
+                            continue
                         
-                        # Save file to media directory
-                        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
-                        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                        
-                        with open(full_path, 'wb+') as destination:
-                            for chunk in file.chunks():
-                                destination.write(chunk)
-                        
-                        # Store the relative path for the images field
-                        media_path = f"/media/{file_path}"
+                        # Process and save image
+                        image_info = process_and_save_image(file, upload_dir='listings')
                         uploaded_images.append({
-                            'url': media_path,
-                            'name': file.name
+                            'url': image_info['url'],
+                            'name': image_info['name']
                         })
                         
                         if settings.DEBUG:
-                            print(f"✓ Saved image: {full_path}")
-                    except Exception as e:
+                            print(f"✓ Saved image: {image_info['url']}")
+                    except ValueError as e:
+                        # Validation error
+                        image_errors.append(f"{file.name}: {str(e)}")
                         if settings.DEBUG:
-                            print(f"Error saving image {file.name}: {str(e)}")
-                        # Continue with other files even if one fails
+                            print(f"❌ Validation error for {file.name}: {str(e)}")
+                    except Exception as e:
+                        # Other errors
+                        error_msg = f"Error processing {file.name}: {str(e)}"
+                        image_errors.append(error_msg)
+                        if settings.DEBUG:
+                            print(f"❌ {error_msg}")
+                        traceback.print_exc()
             
             # Prepare listing data
             listing_data = request.data.copy()
             
             # Handle existing images from JSON (if provided as JSON string or array)
-            existing_images = []
-            images_data = listing_data.get('images', [])
-            
-            if isinstance(images_data, str):
-                try:
-                    existing_images = json.loads(images_data)
-                except json.JSONDecodeError:
-                    existing_images = [images_data] if images_data else []
-            elif isinstance(images_data, list):
-                existing_images = images_data
+            # Remove 'images' from listing_data first to avoid serializer validation issues
+            images_data = listing_data.pop('images', [])
+            existing_images = parse_images_data(images_data)
             
             # Combine uploaded images with existing images
             # If new files were uploaded, add them to existing images
             if uploaded_images:
-                all_images = existing_images + uploaded_images
+                all_images = combine_images(uploaded_images, existing_images)
             else:
                 # If no new uploads, keep existing images as-is (or update if provided)
                 all_images = existing_images if existing_images else listing.images
             
+            # If there were image errors but we have some valid images, include them in the response
+            # If all images failed, return an error
+            if image_errors and len(uploaded_images) == 0 and len(existing_images) == 0:
+                return Response({
+                    'error': 'Image upload failed',
+                    'message': 'All image files failed validation',
+                    'errors': {'images': image_errors}
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Set images as a list (serializer expects JSON-serializable data)
             listing_data['images'] = all_images
+            
+            # Store image errors for potential warning in response
+            if image_errors and settings.DEBUG:
+                print(f"⚠️ Some images failed: {image_errors}")
             
             serializer = ListingSerializer(
                 listing,

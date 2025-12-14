@@ -104,19 +104,40 @@ class PartnerMeView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def put(self, request):
-        """Update partner profile."""
+        """Update partner profile (full update)."""
+        return self._update_partner(request, partial=False)
+    
+    def patch(self, request):
+        """Update partner profile (partial update)."""
+        return self._update_partner(request, partial=True)
+    
+    def _update_partner(self, request, partial=True):
+        """Internal method to update partner profile."""
         try:
             try:
                 partner = Partner.objects.get(user=request.user)
             except Partner.DoesNotExist:
                 return Response({
-                    'error': 'Partner profile not found'
+                    'error': 'Partner profile not found',
+                    'message': 'Please complete your partner profile first'
                 }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Handle FormData for logo upload
+            # The serializer will handle the file upload automatically if 'logo' is in request.FILES
+            # For JSON requests, we need to handle logo removal explicitly
+            partner_data = request.data.copy()
+            
+            # Handle logo removal (empty string in JSON request)
+            if 'logo' in partner_data and isinstance(partner_data['logo'], str) and partner_data['logo'] == '':
+                # Empty string means remove logo
+                partner_data['logo'] = None
+            # If logo is in FILES, the serializer will handle it automatically
+            # No need to manually process it
             
             serializer = PartnerSerializer(
                 partner,
-                data=request.data,
-                partial=True,
+                data=partner_data,
+                partial=partial,
                 context={'request': request}
             )
             
@@ -135,10 +156,11 @@ class PartnerMeView(APIView):
         except Exception as e:
             error_msg = str(e)
             if settings.DEBUG:
-                print(f"Error in PartnerMeView.put: {error_msg}")
+                print(f"Error in PartnerMeView._update_partner: {error_msg}")
+                traceback.print_exc()
             return Response({
                 'error': 'An error occurred',
-                'message': error_msg if settings.DEBUG else None
+                'message': error_msg if settings.DEBUG else 'Please try again later'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

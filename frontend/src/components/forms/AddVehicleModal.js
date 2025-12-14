@@ -399,12 +399,88 @@ export default function AddVehicleModal({
     }
   };
 
+  // Image validation constants
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const MAX_IMAGES = 10;
+
+  const validateImageFile = (file) => {
+    const errors = [];
+    
+    // Check file type
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      errors.push(`${file.name}: Invalid file type. Allowed types: JPEG, PNG, GIF, WebP`);
+    }
+    
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      errors.push(`${file.name}: File is too large. Maximum size is ${(MAX_FILE_SIZE / (1024 * 1024)).toFixed(1)}MB`);
+    }
+    
+    // Check if file is actually an image by checking extension
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+    if (!validExtensions.includes(fileExt)) {
+      errors.push(`${file.name}: Invalid file extension`);
+    }
+    
+    return errors;
+  };
+
   const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setFormData(prev => ({
-      ...prev,
-      pictures: [...prev.pictures, ...files]
-    }));
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length === 0) return;
+    
+    // Check total image count
+    const currentImageCount = formData.pictures.filter(p => p instanceof File).length;
+    if (currentImageCount + files.length > MAX_IMAGES) {
+      setErrors(prev => ({
+        ...prev,
+        pictures: `Maximum ${MAX_IMAGES} images allowed. You have ${currentImageCount} and trying to add ${files.length} more.`
+      }));
+      e.target.value = ''; // Reset file input
+      return;
+    }
+    
+    // Validate each file
+    const validationErrors = [];
+    const validFiles = [];
+    
+    files.forEach(file => {
+      const fileErrors = validateImageFile(file);
+      if (fileErrors.length > 0) {
+        validationErrors.push(...fileErrors);
+      } else {
+        validFiles.push(file);
+      }
+    });
+    
+    // Show validation errors if any
+    if (validationErrors.length > 0) {
+      setErrors(prev => ({
+        ...prev,
+        pictures: validationErrors.join('; ')
+      }));
+    } else {
+      // Clear any previous errors
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.pictures;
+        return newErrors;
+      });
+    }
+    
+    // Add valid files to form data
+    if (validFiles.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        pictures: [...prev.pictures, ...validFiles]
+      }));
+    }
+    
+    // Reset file input to allow selecting the same file again
+    e.target.value = '';
   };
 
   const removePicture = (index) => {
@@ -531,7 +607,13 @@ export default function AddVehicleModal({
         dataToSend = new FormData();
         
         // Append all text fields - ensure numeric values are converted to strings for FormData
+        // Exclude 'images' and 'pictures' from vehicleData loop - we handle them separately
         Object.keys(vehicleData).forEach(key => {
+          // Skip images and pictures - we handle them separately
+          if (key === 'images' || key === 'pictures') {
+            return;
+          }
+          
           const value = vehicleData[key];
           // Handle different value types
           if (value !== null && value !== undefined) {
@@ -970,25 +1052,55 @@ export default function AddVehicleModal({
           {/* Photos */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Photos
+              Photos {formData.pictures.filter(p => p instanceof File).length > 0 && (
+                <span className="text-xs text-gray-500 font-normal">
+                  ({formData.pictures.filter(p => p instanceof File).length} new, max {MAX_IMAGES})
+                </span>
+              )}
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+            <div className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
+              errors.pictures 
+                ? 'border-red-300 bg-red-50' 
+                : 'border-gray-300 hover:border-gray-400'
+            }`}>
               <input
                 type="file"
                 multiple
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                 onChange={handleFileUpload}
                 className="hidden"
                 id="vehicle-photos"
+                disabled={formData.pictures.filter(p => p instanceof File).length >= MAX_IMAGES}
               />
               <label
                 htmlFor="vehicle-photos"
-                className="flex flex-col items-center justify-center cursor-pointer"
+                className={`flex flex-col items-center justify-center cursor-pointer ${
+                  formData.pictures.filter(p => p instanceof File).length >= MAX_IMAGES 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : ''
+                }`}
               >
                 <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-600">Click to upload photos</span>
+                <span className="text-sm text-gray-600 text-center">
+                  {formData.pictures.filter(p => p instanceof File).length >= MAX_IMAGES
+                    ? `Maximum ${MAX_IMAGES} images reached`
+                    : 'Click to upload photos'}
+                </span>
+                <span className="text-xs text-gray-500 mt-1">
+                  JPEG, PNG, GIF, WebP (max {(MAX_FILE_SIZE / (1024 * 1024)).toFixed(1)}MB each)
+                </span>
               </label>
             </div>
+            {errors.pictures && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+                {errors.pictures.split('; ').map((error, idx) => (
+                  <div key={idx} className="flex items-start">
+                    <span className="mr-1">⚠️</span>
+                    <span>{error}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             
             {formData.pictures.length > 0 && (
               <div className="mt-4">
@@ -1027,11 +1139,16 @@ export default function AddVehicleModal({
                         <button
                           type="button"
                           onClick={() => removePicture(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-opacity opacity-0 group-hover:opacity-100 shadow-md"
                           title={isExistingImage ? "Remove image" : "Remove uploaded image"}
                         >
                           <X className="h-3 w-3" />
                         </button>
+                        {picture instanceof File && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs px-1 py-0.5 rounded-b-lg">
+                            {(picture.size / (1024 * 1024)).toFixed(2)}MB
+                          </div>
+                        )}
                       </div>
                     );
                   })}
