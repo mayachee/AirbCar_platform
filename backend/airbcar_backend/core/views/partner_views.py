@@ -125,29 +125,14 @@ class PartnerMeView(APIView):
             # Handle FormData for logo upload
             # Create clean partner_data without file objects to prevent pickle issues
             partner_data = {}
-            user_data = {}
-            
-            # Address fields that should be mapped to user model
-            address_fields = ['address', 'city', 'state']
             
             for key, value in request.data.items():
                 # Skip file objects - they're handled separately via request.FILES
                 if hasattr(value, 'read') or hasattr(value, 'chunks'):
                     continue
                 
-                # Map address fields to user data structure
-                if key in address_fields:
-                    if key == 'state':
-                        # Map 'state' to 'country' in user model
-                        user_data['country'] = value
-                    else:
-                        user_data[key] = value
-                else:
-                    partner_data[key] = value
-            
-            # Nest user data if any address fields were provided
-            if user_data:
-                partner_data['user'] = user_data
+                # Include all fields including address, city, state (serializer will handle them)
+                partner_data[key] = value
             
             # Handle logo file upload from FormData
             if 'logo' in request.FILES:

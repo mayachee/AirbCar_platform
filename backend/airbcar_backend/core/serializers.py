@@ -229,9 +229,24 @@ class PartnerSerializer(serializers.ModelSerializer):
     businessName = serializers.CharField(source='business_name', read_only=True)
     
     # Address fields from related User model
-    address = serializers.CharField(source='user.address', required=False, allow_blank=True)
-    city = serializers.CharField(source='user.city', required=False, allow_blank=True)
-    state = serializers.CharField(source='user.country', required=False, allow_blank=True)  # Using country as state
+    # These are writable fields that will be handled in update method
+    address = serializers.CharField(required=False, allow_blank=True, write_only=False)
+    city = serializers.CharField(required=False, allow_blank=True, write_only=False)
+    state = serializers.CharField(required=False, allow_blank=True, write_only=False)
+    
+    def to_representation(self, instance):
+        """Override to include address fields from user model."""
+        ret = super().to_representation(instance)
+        # Get address fields from user model
+        if instance.user:
+            ret['address'] = instance.user.address or ''
+            ret['city'] = instance.user.city or ''
+            ret['state'] = instance.user.country or ''  # state maps to country
+        else:
+            ret['address'] = ''
+            ret['city'] = ''
+            ret['state'] = ''
+        return ret
     
     class Meta:
         model = Partner
@@ -256,19 +271,38 @@ class PartnerSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         """Update partner and related user address fields."""
-        # Extract user data if present (from nested structure: user: {address: ..., city: ..., country: ...})
-        user_updates = validated_data.pop('user', {})
+        # Extract address fields from validated_data (use _MARKER to distinguish None from not provided)
+        _MARKER = object()
+        address = validated_data.pop('address', _MARKER)
+        city = validated_data.pop('city', _MARKER)
+        state = validated_data.pop('state', _MARKER)
         
-        # Update user address fields if provided
-        if user_updates:
-            user = instance.user
-            if 'address' in user_updates:
-                user.address = user_updates['address']
-            if 'city' in user_updates:
-                user.city = user_updates['city']
-            if 'country' in user_updates:
-                user.country = user_updates['country']  # state maps to country
-            user.save()
+        # Also check if 'user' key exists (from nested data structure from view)
+        if 'user' in validated_data:
+            user_data = validated_data.pop('user', {})
+            # Use nested data if flat fields weren't provided
+            if address is _MARKER and 'address' in user_data:
+                address = user_data['address']
+            if city is _MARKER and 'city' in user_data:
+                city = user_data['city']
+            if state is _MARKER:
+                # Check both 'state' and 'country' in nested data
+                state = user_data.get('state') or user_data.get('country')
+        
+        # Update user address fields if provided (convert empty strings to None)
+        user_updated = False
+        if address is not _MARKER:
+            user_updated = True
+            instance.user.address = address.strip() if address and address.strip() else None
+        if city is not _MARKER:
+            user_updated = True
+            instance.user.city = city.strip() if city and city.strip() else None
+        if state is not _MARKER:
+            user_updated = True
+            instance.user.country = state.strip() if state and state.strip() else None  # state maps to country
+        
+        if user_updated:
+            instance.user.save()
         
         # Update partner fields (excluding logo if it's a file - handled by ModelSerializer)
         for attr, value in validated_data.items():
@@ -276,7 +310,9 @@ class PartnerSerializer(serializers.ModelSerializer):
             if attr == 'logo' and (hasattr(value, 'read') or hasattr(value, 'chunks')):
                 # File will be handled by ModelSerializer's default behavior
                 continue
-            setattr(instance, attr, value)
+            # Skip fields that don't exist on the model
+            if hasattr(instance, attr):
+                setattr(instance, attr, value)
         
         instance.save()
         return instance
