@@ -272,7 +272,12 @@ class ListingListView(APIView):
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Prepare listing data
-            listing_data = request.data.copy()
+            # IMPORTANT: Create a clean copy without file objects to prevent pickle errors
+            listing_data = {}
+            for key, value in request.data.items():
+                # Skip file objects - they're handled separately via request.FILES
+                if not hasattr(value, 'read') and not hasattr(value, 'chunks'):
+                    listing_data[key] = value
             listing_data['partner_id'] = partner.id
             
             # Convert FormData string values to proper types
@@ -335,10 +340,15 @@ class ListingListView(APIView):
                     print(f"📸 POST /listings/ - Found {len(files)} picture file(s) to upload")
                 
                 for file in files:
+                    # Save file name before processing (to avoid referencing file object in exceptions)
+                    file_name = file.name if hasattr(file, 'name') else 'unknown'
+                    file_size = file.size if hasattr(file, 'size') else 0
+                    
                     try:
                         # Quick basic validation (file size only - skip full validation for speed)
-                        if file.size > MAX_FILE_SIZE:
-                            image_errors.append(f"{file.name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
+                        if file_size > MAX_FILE_SIZE:
+                            image_errors.append(f"{file_name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
+                            file = None  # Clear reference
                             continue
                         
                         # Process and save image (includes validation)
@@ -352,16 +362,19 @@ class ListingListView(APIView):
                             print(f"✓ Saved image: {image_info['url']}")
                     except ValueError as e:
                         # Validation error
-                        image_errors.append(f"{file.name}: {str(e)}")
+                        image_errors.append(f"{file_name}: {str(e)}")
                         if settings.DEBUG:
-                            print(f"❌ Validation error for {file.name}: {str(e)}")
+                            print(f"❌ Validation error for {file_name}: {str(e)}")
                     except Exception as e:
                         # Other errors
-                        error_msg = f"Error processing {file.name}: {str(e)}"
+                        error_msg = f"Error processing {file_name}: {str(e)}"
                         image_errors.append(error_msg)
                         if settings.DEBUG:
                             print(f"❌ {error_msg}")
                         traceback.print_exc()
+                    finally:
+                        # Always clear file reference to prevent pickle issues
+                        file = None
             
             # Handle existing images from JSON (if provided as JSON string or array)
             # Remove 'images' from listing_data first to avoid serializer validation issues
@@ -421,9 +434,16 @@ class ListingListView(APIView):
         except Exception as e:
             error_msg = str(e)
             error_type = type(e).__name__
-            # Get full traceback for logging
+            # Get full traceback for logging (but format it safely to avoid pickle issues)
             import traceback
-            tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+            try:
+                tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+            except Exception:
+                # If traceback formatting fails (e.g., due to pickle issues), use simpler format
+                tb_str = f"{error_type}: {error_msg}"
+            
+            # Note: File objects are already cleared in the loop's finally block
+            # This prevents them from being in the exception context
             
             if settings.DEBUG:
                 print(f"❌ POST /listings/ - Exception ({error_type}): {error_msg}")
