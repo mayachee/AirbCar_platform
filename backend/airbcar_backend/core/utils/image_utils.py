@@ -98,25 +98,30 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         
         # Optimized image processing - only resize if significantly large
         # Read file content once to avoid file pointer issues
+        # IMPORTANT: Read file content immediately and don't keep reference to file object
         try:
             file.seek(0)
         except (AttributeError, OSError):
             pass  # Some file objects don't support seek
         
         # Read file content using chunks() method
-        file_content = b''
+        # IMPORTANT: Create a fresh bytes object to avoid any reference to the file object
+        file_content = bytearray()
         try:
             for chunk in file.chunks():
-                file_content += chunk
+                file_content.extend(chunk)
         except (AttributeError, TypeError) as e:
             # Fallback: try reading directly if chunks() doesn't work
             if settings.DEBUG:
                 print(f"Warning: file.chunks() failed, trying direct read: {str(e)}")
             try:
                 file.seek(0)
-                file_content = file.read()
+                file_content = bytearray(file.read())
             except Exception as read_error:
                 raise ValueError(f"Cannot read file content: {str(read_error)}")
+        
+        # Convert to immutable bytes to ensure no references to file object
+        file_content = bytes(file_content)
         
         if not file_content:
             raise ValueError("File content is empty")
@@ -125,33 +130,59 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         if file_size == 0:
             file_size = len(file_content)
         
+        # At this point, we have all the data we need from the file:
+        # - file_content (bytes)
+        # - file_name (string)
+        # - file_size (int)
+        # We no longer need the file object itself, so we won't reference it again
+        
         try:
             from io import BytesIO
+            # Create BytesIO from file content (in-memory copy, no reference to original file)
             img_file = BytesIO(file_content)
-            img = Image.open(img_file)
             
-            # Only resize if image is significantly larger than max (saves processing time)
-            needs_resize = img.width > MAX_IMAGE_WIDTH * 1.2 or img.height > MAX_IMAGE_HEIGHT * 1.2
-            
-            if needs_resize:
-                # Use faster resampling method (NEAREST is fastest, but BILINEAR is better quality/speed balance)
-                img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.Resampling.BILINEAR)
+            try:
+                img = Image.open(img_file)
                 
-                # Save resized image with optimized settings
+                # Get image dimensions and format
+                img_width = img.width
+                img_height = img.height
                 img_format = img.format or 'JPEG'
-                if img_format == 'JPEG' or img_format is None:
-                    img = img.convert('RGB')
-                    img_format = 'JPEG'
                 
-                # Use lower quality for faster processing (75 instead of 85)
-                # optimize=True helps with file size but adds processing time - skip it
-                img.save(full_path, format=img_format, quality=75, optimize=False)
-                img.close()  # Close the image to free resources
-            else:
-                # Save original image directly (fastest path)
-                img.close()  # Close the image first
-                with open(full_path, 'wb') as destination:
-                    destination.write(file_content)
+                # Only resize if image is significantly larger than max (saves processing time)
+                needs_resize = img_width > MAX_IMAGE_WIDTH * 1.2 or img_height > MAX_IMAGE_HEIGHT * 1.2
+                
+                if needs_resize:
+                    # Use faster resampling method (NEAREST is fastest, but BILINEAR is better quality/speed balance)
+                    img.thumbnail((MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT), Image.Resampling.BILINEAR)
+                    
+                    # Save resized image with optimized settings
+                    if img_format == 'JPEG' or img_format is None:
+                        img = img.convert('RGB')
+                        img_format = 'JPEG'
+                    
+                    # Use lower quality for faster processing (75 instead of 85)
+                    # optimize=True helps with file size but adds processing time - skip it
+                    img.save(full_path, format=img_format, quality=75, optimize=False)
+                    # Close image after saving
+                    img.close()
+                    img = None
+                else:
+                    # Save original image directly (fastest path)
+                    # Close image first to free resources
+                    img.close()
+                    img = None
+                    # Write file content directly (no resize needed)
+                    with open(full_path, 'wb') as destination:
+                        destination.write(file_content)
+            finally:
+                # Always close BytesIO properly
+                try:
+                    img_file.close()
+                except:
+                    pass
+                # Clear reference
+                img_file = None
         except Exception as e:
             # If processing fails, try to save original (fallback)
             if settings.DEBUG:
@@ -170,7 +201,8 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         }
     except Exception as e:
         if settings.DEBUG:
-            print(f"Error processing image {file.name}: {str(e)}")
+            file_name_for_error = file_name if 'file_name' in locals() else 'unknown'
+            print(f"Error processing image {file_name_for_error}: {str(e)}")
         raise
 
 
