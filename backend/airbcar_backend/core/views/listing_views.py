@@ -420,17 +420,20 @@ class ListingListView(APIView):
                 
         except Exception as e:
             error_msg = str(e)
+            error_type = type(e).__name__
             if settings.DEBUG:
-                print(f"❌ POST /listings/ - Exception: {error_msg}")
+                print(f"❌ POST /listings/ - Exception ({error_type}): {error_msg}")
                 traceback.print_exc()
             else:
-                # Even in production, log to stderr
+                # Even in production, log to stderr with full traceback
                 import sys
-                print(f"❌ POST /listings/ - Exception: {error_msg}", file=sys.stderr)
+                print(f"❌ POST /listings/ - Exception ({error_type}): {error_msg}", file=sys.stderr)
                 traceback.print_exc(file=sys.stderr)
+            # Include error type in response for better debugging (even in production)
             return Response({
                 'error': 'An error occurred while creating the listing',
-                'message': error_msg if settings.DEBUG else 'Please try again later'
+                'message': f'{error_type}: {error_msg}' if settings.DEBUG else f'Error: {error_type}',
+                'error_type': error_type
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

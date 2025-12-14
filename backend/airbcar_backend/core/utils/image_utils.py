@@ -93,9 +93,15 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         
         # Optimized image processing - only resize if significantly large
+        # Read file content once to avoid file pointer issues
+        file.seek(0)
+        file_content = b''.join(file.chunks())
+        file.seek(0)  # Reset for potential reuse
+        
         try:
-            file.seek(0)
-            img = Image.open(file)
+            from io import BytesIO
+            img_file = BytesIO(file_content)
+            img = Image.open(img_file)
             
             # Only resize if image is significantly larger than max (saves processing time)
             needs_resize = img.width > MAX_IMAGE_WIDTH * 1.2 or img.height > MAX_IMAGE_HEIGHT * 1.2
@@ -113,29 +119,18 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
                 # Use lower quality for faster processing (75 instead of 85)
                 # optimize=True helps with file size but adds processing time - skip it
                 img.save(full_path, format=img_format, quality=75, optimize=False)
+                img.close()  # Close the image to free resources
             else:
                 # Save original image directly (fastest path)
-                file.seek(0)
-                with open(full_path, 'wb+') as destination:
-                    # Use larger chunks for faster writes
-                    chunk_size = 1024 * 1024  # 1MB chunks
-                    while True:
-                        chunk = file.read(chunk_size)
-                        if not chunk:
-                            break
-                        destination.write(chunk)
+                img.close()  # Close the image first
+                with open(full_path, 'wb') as destination:
+                    destination.write(file_content)
         except Exception as e:
             # If processing fails, try to save original (fallback)
             if settings.DEBUG:
                 print(f"Warning: Could not process image, saving original: {str(e)}")
-            file.seek(0)
-            with open(full_path, 'wb+') as destination:
-                chunk_size = 1024 * 1024  # 1MB chunks
-                while True:
-                    chunk = file.read(chunk_size)
-                    if not chunk:
-                        break
-                    destination.write(chunk)
+            with open(full_path, 'wb') as destination:
+                destination.write(file_content)
         
         # Return image info
         media_path = f"/media/{file_path}"
