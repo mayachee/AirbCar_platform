@@ -123,16 +123,42 @@ class PartnerMeView(APIView):
                 }, status=status.HTTP_404_NOT_FOUND)
             
             # Handle FormData for logo upload
-            # The serializer will handle the file upload automatically if 'logo' is in request.FILES
-            # For JSON requests, we need to handle logo removal explicitly
-            partner_data = request.data.copy()
+            # Create clean partner_data without file objects to prevent pickle issues
+            partner_data = {}
+            user_data = {}
             
-            # Handle logo removal (empty string in JSON request)
-            if 'logo' in partner_data and isinstance(partner_data['logo'], str) and partner_data['logo'] == '':
-                # Empty string means remove logo
-                partner_data['logo'] = None
-            # If logo is in FILES, the serializer will handle it automatically
-            # No need to manually process it
+            # Address fields that should be mapped to user model
+            address_fields = ['address', 'city', 'state']
+            
+            for key, value in request.data.items():
+                # Skip file objects - they're handled separately via request.FILES
+                if hasattr(value, 'read') or hasattr(value, 'chunks'):
+                    continue
+                
+                # Map address fields to user data structure
+                if key in address_fields:
+                    if key == 'state':
+                        # Map 'state' to 'country' in user model
+                        user_data['country'] = value
+                    else:
+                        user_data[key] = value
+                else:
+                    partner_data[key] = value
+            
+            # Nest user data if any address fields were provided
+            if user_data:
+                partner_data['user'] = user_data
+            
+            # Handle logo file upload from FormData
+            if 'logo' in request.FILES:
+                # Logo file is in request.FILES, will be handled by serializer automatically
+                # The serializer can access request.FILES via context
+                pass
+            elif 'logo' in partner_data:
+                # Handle logo removal (empty string in JSON request)
+                if isinstance(partner_data['logo'], str) and partner_data['logo'] == '':
+                    # Empty string means remove logo
+                    partner_data['logo'] = None
             
             serializer = PartnerSerializer(
                 partner,

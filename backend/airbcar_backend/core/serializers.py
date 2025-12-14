@@ -228,11 +228,17 @@ class PartnerSerializer(serializers.ModelSerializer):
     companyName = serializers.CharField(source='business_name', read_only=True)
     businessName = serializers.CharField(source='business_name', read_only=True)
     
+    # Address fields from related User model
+    address = serializers.CharField(source='user.address', required=False, allow_blank=True)
+    city = serializers.CharField(source='user.city', required=False, allow_blank=True)
+    state = serializers.CharField(source='user.country', required=False, allow_blank=True)  # Using country as state
+    
     class Meta:
         model = Partner
         fields = ['id', 'user', 'business_name', 'business_type', 'business_license',
                   'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
-                  'total_bookings', 'total_earnings', 'created_at', 'companyName', 'businessName']
+                  'total_bookings', 'total_earnings', 'created_at', 'companyName', 'businessName',
+                  'address', 'city', 'state']
         read_only_fields = ['id', 'created_at', 'logo_url']
     
     def get_logo_url(self, obj):
@@ -247,6 +253,33 @@ class PartnerSerializer(serializers.ModelSerializer):
             return obj.user.profile_picture_url
         
         return None
+    
+    def update(self, instance, validated_data):
+        """Update partner and related user address fields."""
+        # Extract user data if present (from nested structure: user: {address: ..., city: ..., country: ...})
+        user_updates = validated_data.pop('user', {})
+        
+        # Update user address fields if provided
+        if user_updates:
+            user = instance.user
+            if 'address' in user_updates:
+                user.address = user_updates['address']
+            if 'city' in user_updates:
+                user.city = user_updates['city']
+            if 'country' in user_updates:
+                user.country = user_updates['country']  # state maps to country
+            user.save()
+        
+        # Update partner fields (excluding logo if it's a file - handled by ModelSerializer)
+        for attr, value in validated_data.items():
+            # Skip logo if it's a file object (will be handled automatically)
+            if attr == 'logo' and (hasattr(value, 'read') or hasattr(value, 'chunks')):
+                # File will be handled by ModelSerializer's default behavior
+                continue
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
 
 class ListingSerializer(serializers.ModelSerializer):
