@@ -62,13 +62,17 @@ class ListingListView(APIView):
                     Partner.objects.get(pk=partner_id_int)
                     queryset = Listing.objects.filter(partner_id=partner_id_int)
                 except Partner.DoesNotExist:
-                    # Partner doesn't exist, return empty result
+                    # Partner doesn't exist, return empty result with 200 status
+                    # (not 404, as the endpoint itself exists)
                     return Response({
                         'data': [],
                         'count': 0,
-                        'error': f'Partner with id {partner_id_int} not found',
-                        'message': 'Partner not found'
-                    }, status=status.HTTP_404_NOT_FOUND)
+                        'total_count': 0,
+                        'page': 1,
+                        'page_size': 20,
+                        'total_pages': 0,
+                        'message': f'Partner with id {partner_id_int} not found'
+                    }, status=status.HTTP_200_OK)
             except (ValueError, TypeError):
                 queryset = Listing.objects.filter(is_available=True)
         else:
@@ -470,7 +474,15 @@ class ListingDetailView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def put(self, request, pk):
-        """Update a listing."""
+        """Update a listing (full update)."""
+        return self._update_listing(request, pk, partial=False)
+    
+    def patch(self, request, pk):
+        """Update a listing (partial update)."""
+        return self._update_listing(request, pk, partial=True)
+    
+    def _update_listing(self, request, pk, partial=True):
+        """Internal method to update a listing."""
         if not request.user.is_authenticated:
             return Response({
                 'error': 'Authentication required',
@@ -567,7 +579,7 @@ class ListingDetailView(APIView):
             serializer = ListingSerializer(
                 listing,
                 data=listing_data,
-                partial=True,
+                partial=partial,
                 context={'request': request}
             )
             
