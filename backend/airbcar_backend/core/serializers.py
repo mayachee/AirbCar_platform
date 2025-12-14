@@ -304,12 +304,22 @@ class PartnerSerializer(serializers.ModelSerializer):
         if user_updated:
             instance.user.save()
         
-        # Update partner fields (excluding logo if it's a file - handled by ModelSerializer)
+        # Handle logo file upload explicitly
+        # Check if logo is in request.FILES first (actual file upload)
+        request = self.context.get('request')
+        if request and 'logo' in request.FILES:
+            # Logo file is being uploaded from FormData
+            logo_file = request.FILES['logo']
+            instance.logo = logo_file
+        elif 'logo' in validated_data:
+            # Logo is in validated_data (could be None for removal, or filtered out earlier)
+            logo_value = validated_data.pop('logo')
+            # Set to None if explicitly provided as None (for removal)
+            # If it was a file object that got filtered, it should have been in request.FILES above
+            instance.logo = logo_value
+        
+        # Update partner fields
         for attr, value in validated_data.items():
-            # Skip logo if it's a file object (will be handled automatically)
-            if attr == 'logo' and (hasattr(value, 'read') or hasattr(value, 'chunks')):
-                # File will be handled by ModelSerializer's default behavior
-                continue
             # Skip fields that don't exist on the model
             if hasattr(instance, attr):
                 setattr(instance, attr, value)

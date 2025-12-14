@@ -135,10 +135,12 @@ class PartnerMeView(APIView):
                 partner_data[key] = value
             
             # Handle logo file upload from FormData
+            # If logo is in request.FILES, we need to tell the serializer to update it
+            # Add a marker to partner_data so DRF knows we want to update the logo field
             if 'logo' in request.FILES:
-                # Logo file is in request.FILES, will be handled by serializer automatically
-                # The serializer can access request.FILES via context
-                pass
+                # Logo file is in request.FILES - add a marker so serializer knows to update it
+                # The actual file will be accessed from request.FILES in serializer's update method
+                partner_data['logo'] = None  # Marker - actual file comes from request.FILES
             elif 'logo' in partner_data:
                 # Handle logo removal (empty string in JSON request)
                 if isinstance(partner_data['logo'], str) and partner_data['logo'] == '':
