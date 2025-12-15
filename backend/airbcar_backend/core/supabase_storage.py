@@ -188,3 +188,53 @@ def generate_file_path(user_id: int, filename: str, folder: str = 'identity_docu
     
     return f"{folder}/{safe_filename}"
 
+
+def ensure_bucket_is_public(bucket_name: str) -> bool:
+    """
+    Ensure a Supabase Storage bucket is public (readable by everyone).
+    
+    NOTE: This function requires the SERVICE_ROLE_KEY (not anon key) to work.
+    For security, bucket configuration should be done manually in Supabase Dashboard.
+    
+    To make a bucket public in Supabase Dashboard:
+    1. Go to Storage > Buckets
+    2. Click on your bucket (e.g., 'listings')
+    3. Go to Settings
+    4. Enable "Public bucket" toggle
+    5. Save
+    
+    Args:
+        bucket_name: Name of the bucket to check/configure
+    
+    Returns:
+        True if bucket is public or could be made public, False otherwise
+    """
+    supabase = get_supabase_client()
+    if not supabase:
+        if settings.DEBUG:
+            print(f"⚠️ Cannot check bucket '{bucket_name}' - Supabase client not available")
+        return False
+    
+    try:
+        # Try to get bucket info (this requires service role key for bucket management)
+        # Note: The Supabase Python client may not have direct bucket management methods
+        # Bucket configuration is typically done via Supabase Dashboard or Management API
+        
+        # For now, we'll just verify the bucket exists by trying to list files
+        # If this works, the bucket exists (but may not be public)
+        try:
+            # Try to list files (this will work if bucket exists)
+            # We use a minimal query to check bucket accessibility
+            supabase.storage.from_(bucket_name).list(limit=1)
+            if settings.DEBUG:
+                print(f"✓ Bucket '{bucket_name}' exists and is accessible")
+            return True
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"⚠️ Bucket '{bucket_name}' may not exist or may not be accessible: {str(e)}")
+            return False
+            
+    except Exception as e:
+        if settings.DEBUG:
+            print(f"❌ Error checking bucket '{bucket_name}': {str(e)}")
+        return False

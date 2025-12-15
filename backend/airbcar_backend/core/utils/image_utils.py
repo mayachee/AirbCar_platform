@@ -195,7 +195,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         
         # Upload to Supabase Storage if available, otherwise use local path
         supabase_url = None
-        bucket_name = 'listings'  # Use 'listings' bucket for all images
+        bucket_name = 'listings'  # Use 'listings' bucket for all images (MUST BE PUBLIC)
         
         # Determine content type from file extension
         content_type = 'image/jpeg'  # default
@@ -221,6 +221,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         except Exception as e:
             if settings.DEBUG:
                 print(f"⚠️ Could not upload to Supabase Storage: {str(e)}")
+                print(f"   Make sure the '{bucket_name}' bucket exists and is PUBLIC in Supabase Dashboard")
             supabase_url = None
         
         # Return image info - prefer Supabase URL, fallback to local path
