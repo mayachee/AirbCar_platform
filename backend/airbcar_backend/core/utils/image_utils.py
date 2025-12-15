@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from PIL import Image
 import io
+from ..supabase_storage import upload_file_to_supabase
 
 
 # Allowed image MIME types
@@ -192,13 +193,51 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
             with open(full_path, 'wb') as destination:
                 destination.write(file_content)
         
-        # Return image info
-        media_path = f"/media/{file_path}"
-        return {
-            'url': media_path,
-            'name': file_name,
-            'size': file_size
-        }
+        # Upload to Supabase Storage if available, otherwise use local path
+        supabase_url = None
+        bucket_name = 'listings'  # Use 'listings' bucket for all images
+        
+        # Determine content type from file extension
+        content_type = 'image/jpeg'  # default
+        if file_ext.lower() in ['.jpg', '.jpeg']:
+            content_type = 'image/jpeg'
+        elif file_ext.lower() == '.png':
+            content_type = 'image/png'
+        elif file_ext.lower() == '.gif':
+            content_type = 'image/gif'
+        elif file_ext.lower() == '.webp':
+            content_type = 'image/webp'
+        
+        # Try to upload to Supabase Storage
+        try:
+            # Read the saved file to upload to Supabase
+            with open(full_path, 'rb') as saved_file:
+                supabase_url = upload_file_to_supabase(
+                    file=saved_file,
+                    bucket_name=bucket_name,
+                    file_path=file_path,
+                    content_type=content_type
+                )
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"⚠️ Could not upload to Supabase Storage: {str(e)}")
+            supabase_url = None
+        
+        # Return image info - prefer Supabase URL, fallback to local path
+        if supabase_url:
+            return {
+                'url': supabase_url,
+                'name': file_name,
+                'size': file_size
+            }
+        else:
+            # Fallback to local media path
+            media_path = f"/media/{file_path}"
+            return {
+                'url': media_path,
+                'name': file_name,
+                'size': file_size
+            }
     except Exception as e:
         if settings.DEBUG:
             file_name_for_error = file_name if 'file_name' in locals() else 'unknown'
