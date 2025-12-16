@@ -103,15 +103,22 @@ class ListingListView(APIView):
         if instant_booking == 'true':
             queryset = queryset.filter(instant_booking=True)
         
-        # General search (make, model, description)
+        # General search (make, model, description, location) - Enhanced with better matching
         search = request.query_params.get('search', '').strip()
         if search:
-            queryset = queryset.filter(
-                Q(make__icontains=search) |
-                Q(model__icontains=search) |
-                Q(vehicle_description__icontains=search) |
-                Q(location__icontains=search)
-            )
+            # Split search into words for better matching
+            search_terms = search.split()
+            search_query = Q()
+            for term in search_terms:
+                search_query |= (
+                    Q(make__icontains=term) |
+                    Q(model__icontains=term) |
+                    Q(vehicle_description__icontains=term) |
+                    Q(location__icontains=term) |
+                    Q(color__icontains=term) |
+                    Q(vehicle_style__icontains=term)
+                )
+            queryset = queryset.filter(search_query)
         
         # Minimum rating filter
         min_rating = request.query_params.get('min_rating')
@@ -146,6 +153,29 @@ class ListingListView(APIView):
         
         if verified == 'true':
             queryset = queryset.filter(is_verified=True)
+        
+        # Color filter
+        if color:
+            colors = [c.strip() for c in color.split(',')]
+            queryset = queryset.filter(color__in=colors)
+        
+        # Year range filter
+        if year_min:
+            try:
+                year_min_int = int(year_min)
+                if year_min_int >= 1900:
+                    queryset = queryset.filter(year__gte=year_min_int)
+            except (ValueError, TypeError):
+                pass
+        
+        if year_max:
+            try:
+                year_max_int = int(year_max)
+                current_year = timezone.now().year
+                if year_max_int <= current_year + 1:
+                    queryset = queryset.filter(year__lte=year_max_int)
+            except (ValueError, TypeError):
+                pass
         
         # Filter by date availability (exclude listings with conflicting bookings)
         if pickup_date and return_date:
@@ -189,20 +219,27 @@ class ListingListView(APIView):
             # Only prefetch reviews if needed (they're used in serializer)
             queryset = queryset.select_related('partner', 'partner__user').prefetch_related('reviews')
             
-            # Use only() to limit fields fetched from database (if not needed, comment out)
-            # queryset = queryset.only('id', 'make', 'model', 'year', 'price_per_day', 'location', 
-            #                         'images', 'rating', 'review_count', 'is_available', 'is_verified',
-            #                         'partner_id', 'transmission', 'fuel_type', 'seating_capacity', 
-            #                         'vehicle_style', 'created_at')
+            # Additional optimization: Use distinct() if there might be duplicates
+            # (e.g., from joins or filters)
+            queryset = queryset.distinct()
             
-            # Sorting
+            # Sorting - Enhanced with more options
             sort_by = request.query_params.get('sort', '-created_at')
-            valid_sorts = ['created_at', '-created_at', 'price_per_day', '-price_per_day', 
-                          'rating', '-rating', 'review_count', '-review_count']
+            valid_sorts = [
+                'created_at', '-created_at', 
+                'price_per_day', '-price_per_day', 
+                'rating', '-rating', 
+                'review_count', '-review_count',
+                'year', '-year',
+                'make', '-make',
+                'model', '-model',
+                'updated_at', '-updated_at'
+            ]
             if sort_by in valid_sorts:
                 queryset = queryset.order_by(sort_by)
             else:
-                queryset = queryset.order_by('-created_at')
+                # Default: newest first, then by rating
+                queryset = queryset.order_by('-created_at', '-rating')
             
             # Pagination - do count before slicing for better performance
             page = int(request.query_params.get('page', 1))
@@ -219,7 +256,29 @@ class ListingListView(APIView):
             queryset = queryset[start:end]
             
             # Serialize the results - use iterator() for large querysets to reduce memory
-            serializer = ListingSerializer(queryset, many=True, context={'request': request})
+            # For smaller result sets, regular serialization is fine
+            if total_count > 100:
+                # Use iterator for large querysets to reduce memory usage
+                serializer = ListingSerializer(list(queryset.iterator()), many=True, context={'request': request})
+            else:
+                serializer = ListingSerializer(queryset, many=True, context={'request': request})
+            
+            total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 0
+            
+            # Calculate summary statistics for the filtered results
+            price_stats = {}
+            if total_count > 0:
+                from django.db.models import Min, Max, Avg
+                price_aggregates = queryset.aggregate(
+                    min_price=Min('price_per_day'),
+                    max_price=Max('price_per_day'),
+                    avg_price=Avg('price_per_day')
+                )
+                price_stats = {
+                    'min': float(price_aggregates['min_price'] or 0),
+                    'max': float(price_aggregates['max_price'] or 0),
+                    'avg': float(price_aggregates['avg_price'] or 0)
+                }
             
             return Response({
                 'data': serializer.data,
@@ -227,7 +286,14 @@ class ListingListView(APIView):
                 'total_count': total_count,
                 'page': page,
                 'page_size': page_size,
-                'total_pages': (total_count + page_size - 1) // page_size if total_count > 0 else 0,
+                'total_pages': total_pages,
+                'has_next': page < total_pages,
+                'has_previous': page > 1,
+                'next_page': page + 1 if page < total_pages else None,
+                'previous_page': page - 1 if page > 1 else None,
+                'statistics': {
+                    'price_range': price_stats
+                } if price_stats else None
             }, status=status.HTTP_200_OK)
             
         except OperationalError as db_err:
@@ -276,8 +342,31 @@ class ListingListView(APIView):
             listing_data = {}
             for key, value in request.data.items():
                 # Skip file objects - they're handled separately via request.FILES
-                if not hasattr(value, 'read') and not hasattr(value, 'chunks'):
-                    listing_data[key] = value
+                if hasattr(value, 'read') or hasattr(value, 'chunks'):
+                    continue  # Skip file objects
+                listing_data[key] = value
+            
+            # Map frontend field names to backend field names (if needed)
+            # Frontend might send 'brand' instead of 'make', 'model_name' instead of 'model', etc.
+            field_mapping = {
+                'brand': 'make',
+                'model_name': 'model',
+                'dailyRate': 'price_per_day',
+                'price': 'price_per_day',
+            }
+            
+            for frontend_key, backend_key in field_mapping.items():
+                if frontend_key in listing_data and backend_key not in listing_data:
+                    listing_data[backend_key] = listing_data.pop(frontend_key)
+            
+            # Debug: Log what we received
+            if settings.DEBUG:
+                print(f"📋 POST /listings/ - Received data keys: {list(listing_data.keys())}")
+                print(f"📋 POST /listings/ - Required fields check:")
+                for field in ['make', 'model', 'year', 'price_per_day', 'location']:
+                    value = listing_data.get(field)
+                    print(f"   {field}: {value} (type: {type(value).__name__})")
+            
             listing_data['partner_id'] = partner.id
             
             # Convert FormData string values to proper types
@@ -307,12 +396,57 @@ class ListingListView(APIView):
                 listing_data['instant_booking'] = listing_data['instant_booking'].lower() in ('true', '1', 'yes')
             
             # Validate required fields
-            required_fields = ['make', 'model', 'year', 'price_per_day', 'location']
-            missing_fields = [field for field in required_fields if not listing_data.get(field)]
+            # Check if fields exist and have valid values
+            required_fields = {
+                'make': 'string',
+                'model': 'string', 
+                'year': 'number',
+                'price_per_day': 'number',
+                'location': 'string'
+            }
+            missing_fields = []
+            for field, field_type in required_fields.items():
+                value = listing_data.get(field)
+                
+                # Check if field is missing or invalid
+                is_missing = False
+                if value is None:
+                    is_missing = True
+                elif field_type == 'string':
+                    # String fields must not be empty after stripping
+                    if not isinstance(value, str) or value.strip() == '':
+                        is_missing = True
+                elif field_type == 'number':
+                    # Numeric fields must be valid numbers (not empty strings, None, or NaN)
+                    if value == '' or value is None:
+                        is_missing = True
+                    elif isinstance(value, str):
+                        # Try to convert string to number
+                        try:
+                            if field == 'year':
+                                num_value = int(value)
+                            else:
+                                num_value = float(value)
+                            # Update listing_data with converted value
+                            listing_data[field] = num_value
+                        except (ValueError, TypeError):
+                            is_missing = True
+                
+                if is_missing:
+                    missing_fields.append(field)
+            
             if missing_fields:
+                if settings.DEBUG:
+                    print(f"❌ POST /listings/ - Missing required fields: {missing_fields}")
+                    print(f"   Available fields: {list(listing_data.keys())}")
+                    print(f"   Field values:")
+                    for field in required_fields.keys():
+                        print(f"     {field}: {listing_data.get(field)} (type: {type(listing_data.get(field)).__name__})")
                 return Response({
                     'error': f'Missing required fields: {", ".join(missing_fields)}',
-                    'message': 'Please provide all required vehicle information'
+                    'message': f'Please provide all required vehicle information: {", ".join(missing_fields)}',
+                    'received_fields': list(listing_data.keys()) if settings.DEBUG else None,
+                    'missing_fields': missing_fields
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Handle image file uploads from FormData
@@ -406,7 +540,7 @@ class ListingListView(APIView):
                 if all_images:
                     print(f"📸 Image URLs: {[img.get('url', img) if isinstance(img, dict) else img for img in all_images]}")
             
-            # Validate and create listing
+            # Validate and create listing with transaction for data consistency
             serializer = ListingSerializer(data=listing_data, context={'request': request})
             
             if settings.DEBUG:
@@ -416,19 +550,42 @@ class ListingListView(APIView):
             if serializer.is_valid():
                 if settings.DEBUG:
                     print(f"✅ POST /listings/ - Serializer is valid, saving...")
-                listing = serializer.save()
-                if settings.DEBUG:
-                    print(f"✅ POST /listings/ - Listing saved with ID: {listing.id}")
-                return Response({
-                    'data': ListingSerializer(listing, context={'request': request}).data,
-                    'message': 'Listing created successfully'
-                }, status=status.HTTP_201_CREATED)
+                
+                # Use transaction to ensure data consistency
+                try:
+                    with transaction.atomic():
+                        listing = serializer.save()
+                        
+                        # Update partner's total listings count (if needed)
+                        # This could be done with a signal, but doing it here for clarity
+                        partner.total_bookings = Booking.objects.filter(partner=partner).count()
+                        partner.save(update_fields=['total_bookings'])
+                        
+                        if settings.DEBUG:
+                            print(f"✅ POST /listings/ - Listing saved with ID: {listing.id}")
+                        
+                        # Return created listing with full details
+                        response_serializer = ListingSerializer(listing, context={'request': request})
+                        return Response({
+                            'data': response_serializer.data,
+                            'message': 'Listing created successfully',
+                            'id': listing.id
+                        }, status=status.HTTP_201_CREATED)
+                except Exception as save_error:
+                    if settings.DEBUG:
+                        print(f"❌ POST /listings/ - Error saving listing: {str(save_error)}")
+                        traceback.print_exc()
+                    return Response({
+                        'error': 'Failed to save listing',
+                        'message': str(save_error) if settings.DEBUG else 'An error occurred while saving the listing'
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
                 if settings.DEBUG:
                     print(f"❌ POST /listings/ - Serializer validation failed: {serializer.errors}")
                 return Response({
                     'error': 'Validation failed',
-                    'errors': serializer.errors
+                    'errors': serializer.errors,
+                    'message': 'Please check the form data and try again'
                 }, status=status.HTTP_400_BAD_REQUEST)
                 
         except Exception as e:
@@ -587,21 +744,51 @@ class ListingDetailView(APIView):
                             print(f"❌ {error_msg}")
                         traceback.print_exc()
             
-            # Prepare listing data
-            listing_data = request.data.copy()
+            # Prepare listing data - create clean copy without file objects
+            listing_data = {}
+            for key, value in request.data.items():
+                # Skip file objects - they're handled separately via request.FILES
+                if hasattr(value, 'read') or hasattr(value, 'chunks'):
+                    continue
+                listing_data[key] = value
+            
+            if settings.DEBUG:
+                print(f"📋 PATCH/PUT /listings/{pk}/ - Received data keys: {list(listing_data.keys())}")
+                print(f"📋 PATCH/PUT /listings/{pk}/ - Has images in data: {'images' in listing_data}")
+                print(f"📋 PATCH/PUT /listings/{pk}/ - Has pictures in FILES: {'pictures' in request.FILES}")
             
             # Handle existing images from JSON (if provided as JSON string or array)
             # Remove 'images' from listing_data first to avoid serializer validation issues
-            images_data = listing_data.pop('images', [])
-            existing_images = parse_images_data(images_data)
+            images_data = listing_data.pop('images', None)
+            
+            # Parse existing images from request data
+            try:
+                existing_images = parse_images_data(images_data) if images_data is not None else []
+            except (json.JSONDecodeError, ValueError, TypeError) as parse_error:
+                if settings.DEBUG:
+                    print(f"⚠️ Error parsing images data: {str(parse_error)}")
+                existing_images = []
             
             # Combine uploaded images with existing images
             # If new files were uploaded, add them to existing images
             if uploaded_images:
                 all_images = combine_images(uploaded_images, existing_images)
             else:
-                # If no new uploads, keep existing images as-is (or update if provided)
-                all_images = existing_images if existing_images else listing.images
+                # If no new uploads, keep existing images as-is (or use current listing images if not provided)
+                if existing_images:
+                    all_images = existing_images
+                else:
+                    # Use current listing images, but ensure they're in the right format
+                    try:
+                        current_images = listing.images or []
+                        if isinstance(current_images, list):
+                            all_images = current_images
+                        else:
+                            # Try to parse if it's a string or other format
+                            all_images = parse_images_data(current_images)
+                    except (json.JSONDecodeError, ValueError, TypeError, AttributeError):
+                        # Fallback to empty list if parsing fails
+                        all_images = []
             
             # If there were image errors but we have some valid images, include them in the response
             # If all images failed, return an error
@@ -619,6 +806,35 @@ class ListingDetailView(APIView):
             if image_errors and settings.DEBUG:
                 print(f"⚠️ Some images failed: {image_errors}")
             
+            # Convert FormData string values to proper types (same as POST)
+            if 'year' in listing_data and isinstance(listing_data['year'], str):
+                try:
+                    listing_data['year'] = int(listing_data['year'])
+                except (ValueError, TypeError):
+                    pass
+            
+            if 'price_per_day' in listing_data and isinstance(listing_data['price_per_day'], str):
+                try:
+                    listing_data['price_per_day'] = float(listing_data['price_per_day'])
+                except (ValueError, TypeError):
+                    pass
+            
+            if 'seating_capacity' in listing_data and isinstance(listing_data['seating_capacity'], str):
+                try:
+                    listing_data['seating_capacity'] = int(listing_data['seating_capacity'])
+                except (ValueError, TypeError):
+                    pass
+            
+            if 'is_available' in listing_data and isinstance(listing_data['is_available'], str):
+                listing_data['is_available'] = listing_data['is_available'].lower() in ('true', '1', 'yes')
+            
+            if 'instant_booking' in listing_data and isinstance(listing_data['instant_booking'], str):
+                listing_data['instant_booking'] = listing_data['instant_booking'].lower() in ('true', '1', 'yes')
+            
+            if settings.DEBUG:
+                print(f"🔍 PATCH/PUT /listings/{pk}/ - Serializer data keys: {list(listing_data.keys())}")
+                print(f"🔍 PATCH/PUT /listings/{pk}/ - Partial update: {partial}")
+            
             serializer = ListingSerializer(
                 listing,
                 data=listing_data,
@@ -627,29 +843,108 @@ class ListingDetailView(APIView):
             )
             
             if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'data': serializer.data,
-                    'message': 'Listing updated successfully'
-                }, status=status.HTTP_200_OK)
+                # Use transaction for data consistency
+                try:
+                    with transaction.atomic():
+                        # Save the listing
+                        updated_listing = serializer.save()
+                        
+                        # Refresh from database to get updated data (including computed fields)
+                        try:
+                            updated_listing.refresh_from_db()
+                        except Exception as refresh_error:
+                            # If refresh fails, log but continue (the save was successful)
+                            if settings.DEBUG:
+                                print(f"⚠️ PATCH/PUT /listings/{pk}/ - Warning: Could not refresh from DB: {str(refresh_error)}")
+                        
+                        if settings.DEBUG:
+                            print(f"✅ PATCH/PUT /listings/{pk}/ - Listing updated successfully")
+                        
+                        # Serialize the updated listing for response
+                        try:
+                            response_serializer = ListingSerializer(updated_listing, context={'request': request})
+                            response_data = response_serializer.data
+                        except Exception as serialize_error:
+                            # If serialization fails, return basic success response
+                            if settings.DEBUG:
+                                print(f"⚠️ PATCH/PUT /listings/{pk}/ - Warning: Could not serialize response: {str(serialize_error)}")
+                            response_data = {'id': updated_listing.id, 'message': 'Listing updated successfully'}
+                        
+                        return Response({
+                            'data': response_data,
+                            'message': 'Listing updated successfully',
+                            'id': updated_listing.id
+                        }, status=status.HTTP_200_OK)
+                except Exception as save_error:
+                    error_type = type(save_error).__name__
+                    error_msg = str(save_error)
+                    if settings.DEBUG:
+                        print(f"❌ PATCH/PUT /listings/{pk}/ - Error saving ({error_type}): {error_msg}")
+                        traceback.print_exc()
+                    return Response({
+                        'error': 'Failed to save listing',
+                        'message': f'{error_type}: {error_msg}' if settings.DEBUG else 'An error occurred while saving the listing. Please check your data and try again.',
+                        'error_type': error_type
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
+                if settings.DEBUG:
+                    print(f"❌ PATCH/PUT /listings/{pk}/ - Validation failed: {serializer.errors}")
+                    print(f"   Data keys: {list(listing_data.keys())}")
+                    print(f"   Partial: {partial}")
                 return Response({
                     'error': 'Validation failed',
-                    'errors': serializer.errors
+                    'errors': serializer.errors,
+                    'message': 'Please check the form data and try again'
                 }, status=status.HTTP_400_BAD_REQUEST)
                 
         except Listing.DoesNotExist:
             return Response({
                 'error': 'Listing not found'
             }, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            error_msg = str(e)
+        except (json.JSONDecodeError, ValueError) as parse_error:
+            # Handle JSON parsing errors
+            error_msg = str(parse_error)
             if settings.DEBUG:
-                print(f"Error in ListingDetailView.put: {error_msg}")
+                print(f"❌ PATCH/PUT /listings/{pk}/ - Parse error: {error_msg}")
                 traceback.print_exc()
             return Response({
+                'error': 'Invalid data format',
+                'message': f'Error parsing request data: {error_msg}' if settings.DEBUG else 'Invalid data format. Please check your input and try again.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except OperationalError as db_error:
+            # Handle database connection errors
+            error_msg = str(db_error)
+            if settings.DEBUG:
+                print(f"❌ PATCH/PUT /listings/{pk}/ - Database error: {error_msg}")
+            return Response({
+                'error': 'Database connection error',
+                'message': 'Service temporarily unavailable. Please try again later.'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except Exception as e:
+            error_msg = str(e)
+            error_type = type(e).__name__
+            # Get full traceback for logging
+            try:
+                tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+            except Exception:
+                tb_str = f"{error_type}: {error_msg}"
+            
+            if settings.DEBUG:
+                print(f"❌ PATCH/PUT /listings/{pk}/ - Exception ({error_type}): {error_msg}")
+                print(f"Full traceback:\n{tb_str}")
+            else:
+                # Even in production, log to stderr with full traceback
+                import sys
+                print(f"❌ PATCH/PUT /listings/{pk}/ - Exception ({error_type}): {error_msg}", file=sys.stderr)
+                print(f"Full traceback:\n{tb_str}", file=sys.stderr)
+            
+            # Include more details in response for debugging
+            display_msg = error_msg[:500] if len(error_msg) > 500 else error_msg
+            return Response({
                 'error': 'An error occurred while updating the listing',
-                'message': error_msg if settings.DEBUG else 'Please try again later'
+                'message': f'{error_type}: {display_msg}' if settings.DEBUG else 'An error occurred. Please try again later.',
+                'error_type': error_type,
+                'traceback': tb_str if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def delete(self, request, pk):
@@ -661,7 +956,7 @@ class ListingDetailView(APIView):
             }, status=status.HTTP_401_UNAUTHORIZED)
         
         try:
-            listing = Listing.objects.get(pk=pk)
+            listing = Listing.objects.select_related('partner').get(pk=pk)
             
             # Check permissions
             try:
@@ -677,10 +972,30 @@ class ListingDetailView(APIView):
                     'message': 'You must have a partner profile to delete listings'
                 }, status=status.HTTP_403_FORBIDDEN)
             
-            listing.delete()
+            # Check if listing has active bookings (prevent deletion of listings with active bookings)
+            active_bookings = Booking.objects.filter(
+                listing=listing,
+                status__in=['pending', 'confirmed', 'active']
+            ).exists()
+            
+            if active_bookings:
+                return Response({
+                    'error': 'Cannot delete listing',
+                    'message': 'This listing has active bookings and cannot be deleted. Please cancel or complete all bookings first.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Use transaction for data consistency
+            listing_id = listing.id
+            with transaction.atomic():
+                listing.delete()
+                
+                if settings.DEBUG:
+                    print(f"✅ DELETE /listings/{pk}/ - Listing {listing_id} deleted successfully")
+            
             return Response({
-                'message': 'Listing deleted successfully'
-            }, status=status.HTTP_204_NO_CONTENT)
+                'message': 'Listing deleted successfully',
+                'id': listing_id
+            }, status=status.HTTP_200_OK)
             
         except Listing.DoesNotExist:
             return Response({
