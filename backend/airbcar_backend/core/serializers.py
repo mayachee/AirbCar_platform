@@ -228,7 +228,11 @@ class UserSerializer(serializers.ModelSerializer):
         # Handle document uploads to Supabase Storage
         # Process files from request.FILES and upload to Supabase
         if request and request.FILES:
-            from ..utils.image_utils import upload_file_to_supabase_storage
+            # Use absolute import to avoid relative import issues
+            try:
+                from core.utils.image_utils import upload_file_to_supabase_storage
+            except ImportError:
+                from ..utils.image_utils import upload_file_to_supabase_storage
             
             # Handle ID front document
             if 'id_front_document' in request.FILES:
@@ -450,7 +454,11 @@ class PartnerSerializer(serializers.ModelSerializer):
             # Logo file is being uploaded from FormData - upload to Supabase
             logo_file = request.FILES['logo']
             try:
-                from ..utils.image_utils import upload_file_to_supabase_storage
+                # Use absolute import to avoid relative import issues
+                try:
+                    from core.utils.image_utils import upload_file_to_supabase_storage
+                except ImportError:
+                    from ..utils.image_utils import upload_file_to_supabase_storage
                 # Upload logo to Supabase Storage in 'listings' bucket (or create 'partner_logos' bucket)
                 supabase_url = upload_file_to_supabase_storage(
                     file=logo_file,
@@ -724,7 +732,11 @@ class BookingSerializer(serializers.ModelSerializer):
         
         # Handle document uploads to Supabase Storage
         if request and request.FILES:
-            from ..utils.image_utils import upload_file_to_supabase_storage
+            # Use absolute import to avoid relative import issues
+            try:
+                from core.utils.image_utils import upload_file_to_supabase_storage
+            except ImportError:
+                from ..utils.image_utils import upload_file_to_supabase_storage
             
             # Handle ID front document
             if 'id_front_document' in request.FILES:
@@ -774,7 +786,11 @@ class BookingSerializer(serializers.ModelSerializer):
         
         # Handle document uploads to Supabase Storage
         if request and request.FILES:
-            from ..utils.image_utils import upload_file_to_supabase_storage
+            # Use absolute import to avoid relative import issues
+            try:
+                from core.utils.image_utils import upload_file_to_supabase_storage
+            except ImportError:
+                from ..utils.image_utils import upload_file_to_supabase_storage
             
             # Handle ID front document
             if 'id_front_document' in request.FILES:

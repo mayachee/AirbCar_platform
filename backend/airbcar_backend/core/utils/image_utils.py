@@ -9,7 +9,6 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from PIL import Image
 import io
-from core.supabase_storage import upload_file_to_supabase
 
 
 # Allowed image MIME types
@@ -90,7 +89,11 @@ def upload_file_to_supabase_storage(
     Raises:
         ValueError: If Supabase is not configured or upload fails
     """
-    from core.supabase_storage import get_supabase_client, upload_file_to_supabase
+    # Import with fallback for different import contexts
+    try:
+        from core.supabase_storage import get_supabase_client, upload_file_to_supabase
+    except ImportError:
+        from ..supabase_storage import get_supabase_client, upload_file_to_supabase
     
     # Early check: Verify Supabase is configured
     supabase_client = get_supabase_client()
@@ -149,6 +152,12 @@ def upload_file_to_supabase_storage(
     # Upload to Supabase
     try:
         from io import BytesIO
+        # Import supabase_storage function (lazy import to avoid import errors)
+        try:
+            from core.supabase_storage import upload_file_to_supabase
+        except ImportError:
+            from ..supabase_storage import upload_file_to_supabase
+        
         file_obj = BytesIO(file_content)
         # upload_file_to_supabase will raise ValueError if upload fails
         supabase_url = upload_file_to_supabase(
@@ -195,7 +204,11 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         ValueError: If Supabase is not configured or upload fails
     """
     # Early check: Verify Supabase is configured before processing
-    from core.supabase_storage import get_supabase_client
+    # Import with fallback for different import contexts
+    try:
+        from core.supabase_storage import get_supabase_client
+    except ImportError:
+        from ..supabase_storage import get_supabase_client
     supabase_client = get_supabase_client()
     if not supabase_client:
         error_msg = (
@@ -358,6 +371,12 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
                 print(f"   File size: {file_size} bytes")
             
             # Read the saved file to upload to Supabase
+            # Import supabase_storage function (lazy import to avoid import errors)
+            try:
+                from core.supabase_storage import upload_file_to_supabase
+            except ImportError:
+                from ..supabase_storage import upload_file_to_supabase
+            
             # upload_file_to_supabase will raise ValueError if upload fails
             with open(full_path, 'rb') as saved_file:
                 supabase_url = upload_file_to_supabase(
