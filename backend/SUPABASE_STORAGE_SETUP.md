@@ -30,15 +30,27 @@ This bucket stores all files organized in folders:
 ### Step 2: Configure Environment Variables
 Add these to your Render environment variables:
 
-```
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key-here
-```
+**Option A: Via Render Dashboard (Recommended)**
+1. Go to your Render Dashboard
+2. Select your `airbcar-backend` service
+3. Go to **Environment** tab
+4. Click **Add Environment Variable**
+5. Add these two variables:
+   - **Key**: `SUPABASE_URL`
+     **Value**: `https://your-project-id.supabase.co` (get from Supabase Dashboard → Settings → API → Project URL)
+   - **Key**: `SUPABASE_ANON_KEY`
+     **Value**: `your-anon-key-here` (get from Supabase Dashboard → Settings → API → anon/public key)
 
-Or use service role key (for admin operations):
-```
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-```
+**Option B: Via render.yaml**
+The `render.yaml` file has been updated with placeholders. Set the values manually in Render Dashboard (they're marked as `sync: false` for security).
+
+**Where to find your Supabase credentials:**
+1. Go to Supabase Dashboard
+2. Select your project
+3. Go to **Settings** → **API**
+4. Copy:
+   - **Project URL** → Use as `SUPABASE_URL`
+   - **anon public** key → Use as `SUPABASE_ANON_KEY`
 
 ### Step 3: Verify Bucket is Public
 1. Go to Storage → Buckets → `listings`
