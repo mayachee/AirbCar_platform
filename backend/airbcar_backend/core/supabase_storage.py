@@ -100,18 +100,10 @@ def upload_file_to_supabase(
         if settings.DEBUG:
             print(f"⚠️ Removed duplicate bucket name from file path: {file_path}")
     
-    # Verify bucket exists and is accessible (quick check)
-    try:
-        # Try to list bucket (this will fail if bucket doesn't exist or we don't have access)
-        supabase.storage.from_(bucket_name).list(limit=1)
-    except Exception as bucket_check_error:
-        if settings.DEBUG:
-            print(f"⚠️ Bucket '{bucket_name}' check failed: {str(bucket_check_error)}")
-            print(f"💡 Make sure:")
-            print(f"   1. The '{bucket_name}' bucket exists in Supabase Dashboard")
-            print(f"   2. The bucket is set to PUBLIC")
-            print(f"   3. SUPABASE_ANON_KEY has proper permissions")
-        # Continue anyway - the upload might still work
+    # Skip bucket check to speed up uploads - the upload itself will fail if bucket doesn't exist
+    # This check was causing delays/timeouts, especially on slow connections
+    # if settings.DEBUG:
+    #     print(f"⏩ Skipping bucket check for faster upload")
     
     try:
         # Read file content
@@ -157,19 +149,8 @@ def upload_file_to_supabase(
                 )
             
             # If we get here, upload succeeded (no exception raised)
-            # Verify file exists by trying to list it (optional verification)
-            try:
-                # Try to verify the file was uploaded by listing files with the same path
-                files = supabase.storage.from_(bucket_name).list(path=os.path.dirname(file_path) if os.path.dirname(file_path) else '')
-                if settings.DEBUG and files:
-                    file_names = [f.get('name', '') for f in files if isinstance(f, dict)]
-                    if os.path.basename(file_path) in file_names:
-                        if settings.DEBUG:
-                            print(f"✅ Verified file exists in bucket: {file_path}")
-            except Exception as verify_error:
-                # Verification failed, but upload might still have succeeded
-                if settings.DEBUG:
-                    print(f"⚠️ Could not verify file upload (this is OK): {str(verify_error)}")
+            # Skip file verification to speed up - the upload either succeeded or failed
+            # Verification was causing delays/timeouts
             
             # Get public URL
             try:

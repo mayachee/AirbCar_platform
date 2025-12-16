@@ -505,8 +505,10 @@ class ListingListView(APIView):
                 
                 if settings.DEBUG:
                     print(f"📸 POST /listings/ - Found {len(files)} picture file(s) to upload")
+                    import time
+                    upload_start_time = time.time()
                 
-                for file in files:
+                for idx, file in enumerate(files, 1):
                     # Save file name before processing (to avoid referencing file object in exceptions)
                     file_name = file.name if hasattr(file, 'name') else 'unknown'
                     file_size = file.size if hasattr(file, 'size') else 0
@@ -527,20 +529,57 @@ class ListingListView(APIView):
                         
                         # OPTIMIZED: Upload directly to Supabase (no local save, no resizing)
                         # This is much faster than process_and_save_image
-                        supabase_url = upload_file_to_supabase_storage(
-                            file=file,
-                            bucket_name='listings',
-                            folder='listings',
-                            user_id=partner.id if partner else None
-                        )
-                        
-                        uploaded_images.append({
-                            'url': supabase_url,
-                            'name': file_name
-                        })
-                        
                         if settings.DEBUG:
-                            print(f"✓ Uploaded image to Supabase: {supabase_url}")
+                            img_start = time.time()
+                            print(f"📤 Uploading image {idx}/{len(files)}: {file_name} ({file_size / 1024:.1f}KB)...")
+                        
+                        # Add per-image timeout protection (max 20 seconds per image)
+                        # This prevents one slow image from blocking all others
+                        import signal
+                        img_timeout = 20  # 20 seconds per image max
+                        
+                        try:
+                            if hasattr(signal, 'SIGALRM'):
+                                # Unix: Use signal-based timeout
+                                def timeout_handler(signum, frame):
+                                    raise TimeoutError(f"Image upload timed out after {img_timeout} seconds")
+                                
+                                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                                signal.alarm(img_timeout)
+                                try:
+                                    supabase_url = upload_file_to_supabase_storage(
+                                        file=file,
+                                        bucket_name='listings',
+                                        folder='listings',
+                                        user_id=partner.id if partner else None
+                                    )
+                                finally:
+                                    signal.alarm(0)
+                                    signal.signal(signal.SIGALRM, old_handler)
+                            else:
+                                # Windows/Render: No signal support, just try upload
+                                # The Supabase client should have its own timeout
+                                supabase_url = upload_file_to_supabase_storage(
+                                    file=file,
+                                    bucket_name='listings',
+                                    folder='listings',
+                                    user_id=partner.id if partner else None
+                                )
+                            
+                            if settings.DEBUG:
+                                img_elapsed = time.time() - img_start
+                                print(f"✓ Uploaded image {idx}/{len(files)} in {img_elapsed:.2f}s: {supabase_url}")
+                            
+                            uploaded_images.append({
+                                'url': supabase_url,
+                                'name': file_name
+                            })
+                        except TimeoutError as timeout_err:
+                            error_msg = f"{file_name}: Upload timed out after {img_timeout}s"
+                            image_errors.append(error_msg)
+                            if settings.DEBUG:
+                                print(f"⏱️ {error_msg}")
+                            # Continue with next image instead of failing completely
                     except ValueError as e:
                         # Validation error
                         image_errors.append(f"{file_name}: {str(e)}")
@@ -556,6 +595,10 @@ class ListingListView(APIView):
                     finally:
                         # Always clear file reference to prevent pickle issues
                         file = None
+                
+                if settings.DEBUG:
+                    upload_elapsed = time.time() - upload_start_time
+                    print(f"⏱️ Total image upload time: {upload_elapsed:.2f}s for {len(uploaded_images)} images")
             
             # Handle existing images from JSON (if provided as JSON string or array)
             # Remove 'images' from listing_data first to avoid serializer validation issues
@@ -566,14 +609,14 @@ class ListingListView(APIView):
             # Combine uploaded images with existing images
             all_images = combine_images(uploaded_images, existing_images)
             
-            # If there were image errors but we have some valid images, include them in the response
-            # If all images failed, return an error
-            if image_errors and len(uploaded_images) == 0 and len(existing_images) == 0:
-                return Response({
-                    'error': 'Image upload failed',
-                    'message': 'All image files failed validation',
-                    'errors': {'images': image_errors}
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Allow listing creation even if some/all images fail
+            # Images are optional - user can add them later
+            if image_errors:
+                if settings.DEBUG:
+                    print(f"⚠️ Some images failed ({len(image_errors)} errors), but proceeding with listing creation")
+                    print(f"   Successful uploads: {len(uploaded_images)}, Errors: {image_errors}")
+                # Don't block listing creation - just log the errors
+                # The listing will be created with whatever images succeeded
             
             # Set images as a list (serializer expects JSON-serializable data)
             listing_data['images'] = all_images
@@ -603,10 +646,10 @@ class ListingListView(APIView):
                     with transaction.atomic():
                         listing = serializer.save()
                         
-                        # Update partner's total listings count (if needed)
-                        # This could be done with a signal, but doing it here for clarity
-                        partner.total_bookings = Booking.objects.filter(partner=partner).count()
-                        partner.save(update_fields=['total_bookings'])
+                        # Skip updating partner.total_bookings here - it's not critical and causes delay
+                        # This can be calculated on-demand or via a background task if needed
+                        # partner.total_bookings = Booking.objects.filter(partner=partner).count()
+                        # partner.save(update_fields=['total_bookings'])
                         
                         if settings.DEBUG:
                             print(f"✅ POST /listings/ - Listing saved with ID: {listing.id}")
@@ -856,14 +899,14 @@ class ListingDetailView(APIView):
                         # Fallback to empty list if parsing fails
                         all_images = []
             
-            # If there were image errors but we have some valid images, include them in the response
-            # If all images failed, return an error
-            if image_errors and len(uploaded_images) == 0 and len(existing_images) == 0:
-                return Response({
-                    'error': 'Image upload failed',
-                    'message': 'All image files failed validation',
-                    'errors': {'images': image_errors}
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Allow listing creation even if some/all images fail
+            # Images are optional - user can add them later
+            if image_errors:
+                if settings.DEBUG:
+                    print(f"⚠️ Some images failed ({len(image_errors)} errors), but proceeding with listing creation")
+                    print(f"   Successful uploads: {len(uploaded_images)}, Errors: {image_errors}")
+                # Don't block listing creation - just log the errors
+                # The listing will be created with whatever images succeeded
             
             # Set images as a list (serializer expects JSON-serializable data)
             listing_data['images'] = all_images
