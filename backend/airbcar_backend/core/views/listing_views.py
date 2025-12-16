@@ -508,7 +508,19 @@ class ListingListView(APIView):
                     import time
                     upload_start_time = time.time()
                 
+                # Total timeout for all images: 60 seconds max
+                # This prevents the entire request from timing out
+                total_upload_timeout = 60
+                
                 for idx, file in enumerate(files, 1):
+                    # Check if we've exceeded total time limit
+                    elapsed_time = time.time() - upload_start_time
+                    if elapsed_time > total_upload_timeout:
+                        remaining = len(files) - idx + 1
+                        if settings.DEBUG:
+                            print(f"⏱️ Total upload time limit ({total_upload_timeout}s) reached. Skipping {remaining} remaining image(s).")
+                        image_errors.append(f"Skipped {remaining} image(s) due to time limit")
+                        break
                     # Save file name before processing (to avoid referencing file object in exceptions)
                     file_name = file.name if hasattr(file, 'name') else 'unknown'
                     file_size = file.size if hasattr(file, 'size') else 0
@@ -520,12 +532,9 @@ class ListingListView(APIView):
                             file = None  # Clear reference
                             continue
                         
-                        # Lightweight validation (just check file type, no full processing)
-                        is_valid, validation_error = validate_image_file(file)
-                        if not is_valid:
-                            image_errors.append(f"{file_name}: {validation_error}")
-                            file = None
-                            continue
+                        # Skip full validation to speed up - just check file size
+                        # Full validation with PIL is slow and can cause timeouts
+                        # We'll let Supabase handle invalid files
                         
                         # OPTIMIZED: Upload directly to Supabase (no local save, no resizing)
                         # This is much faster than process_and_save_image
@@ -533,10 +542,10 @@ class ListingListView(APIView):
                             img_start = time.time()
                             print(f"📤 Uploading image {idx}/{len(files)}: {file_name} ({file_size / 1024:.1f}KB)...")
                         
-                        # Add per-image timeout protection (max 20 seconds per image)
+                        # Add per-image timeout protection (max 15 seconds per image)
                         # This prevents one slow image from blocking all others
                         import signal
-                        img_timeout = 20  # 20 seconds per image max
+                        img_timeout = 15  # 15 seconds per image max (reduced from 20)
                         
                         try:
                             if hasattr(signal, 'SIGALRM'):
@@ -599,6 +608,10 @@ class ListingListView(APIView):
                 if settings.DEBUG:
                     upload_elapsed = time.time() - upload_start_time
                     print(f"⏱️ Total image upload time: {upload_elapsed:.2f}s for {len(uploaded_images)} images")
+                    if image_errors:
+                        print(f"⚠️ Image upload errors: {image_errors}")
+                    if len(uploaded_images) == 0 and len(files) > 0:
+                        print(f"⚠️ No images uploaded successfully. Listing will be created without images.")
             
             # Handle existing images from JSON (if provided as JSON string or array)
             # Remove 'images' from listing_data first to avoid serializer validation issues

@@ -20,7 +20,9 @@ def get_supabase_client() -> Optional[Client]:
     supabase_url = os.environ.get('SUPABASE_URL')
     # Prioritize SERVICE_ROLE_KEY for uploads (has full permissions)
     # Fall back to ANON_KEY only if SERVICE_ROLE_KEY is not available
-    supabase_key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or os.environ.get('SUPABASE_ANON_KEY')
+    service_role_key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+    anon_key = os.environ.get('SUPABASE_ANON_KEY')
+    supabase_key = service_role_key or anon_key
     
     if not supabase_url or not supabase_key:
         if settings.DEBUG:
@@ -28,8 +30,22 @@ def get_supabase_client() -> Optional[Client]:
             print("   Required: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY)")
         return None
     
+    # CRITICAL: Check if SERVICE_ROLE_KEY is actually a publishable key (wrong key type)
+    if service_role_key and 'publishable' in service_role_key.lower():
+        error_msg = (
+            "❌ ERROR: SUPABASE_SERVICE_ROLE_KEY is set to a PUBLISHABLE key, not a SERVICE_ROLE key!\n"
+            "   Publishable keys (sb_publishable_...) do NOT have upload permissions.\n"
+            "   You need the SERVICE_ROLE key (starts with different prefix, much longer).\n"
+            "   Get it from: Supabase Dashboard → Settings → API → service_role key\n"
+            "   The service_role key is secret and should NOT be exposed to clients."
+        )
+        if settings.DEBUG:
+            print(error_msg)
+        # Still try to use it, but it will likely fail
+        print("⚠️ Attempting upload with publishable key (will likely fail due to permissions)")
+    
     # Warn if using ANON_KEY (might not have upload permissions)
-    if not os.environ.get('SUPABASE_SERVICE_ROLE_KEY') and os.environ.get('SUPABASE_ANON_KEY'):
+    if not service_role_key and anon_key:
         if settings.DEBUG:
             print("⚠️ Using SUPABASE_ANON_KEY for uploads. This may fail if ANON_KEY doesn't have upload permissions.")
             print("   For uploads, SUPABASE_SERVICE_ROLE_KEY is recommended (has full permissions).")
@@ -67,7 +83,7 @@ def upload_file_to_supabase(
     bucket_name: str,
     file_path: str,
     content_type: Optional[str] = None,
-    timeout: int = 30
+    timeout: int = 15  # Reduced to 15 seconds for faster failure on slow connections
 ) -> Optional[str]:
     """
     Upload a file to Supabase Storage with timeout handling.
