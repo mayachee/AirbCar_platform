@@ -489,185 +489,23 @@ class ListingListView(APIView):
                 print(f"📋 POST /listings/ - Content-Type: {request.content_type}")
             
             # Process uploaded files (from 'pictures' field in FormData)
-            # STRATEGY: Try to upload images quickly, but skip if they take too long
-            # This ensures listing is created even if Supabase uploads are slow
+            # STRATEGY: Skip image uploads during listing creation to prevent timeouts
+            # Images can be added later via PATCH /listings/{id}/
+            # This ensures listing is created immediately without waiting for slow Supabase uploads
             if 'pictures' in request.FILES:
-                # Import upload function (lazy import with fallback)
-                try:
-                    from core.utils.image_utils import upload_file_to_supabase_storage
-                    from core.supabase_storage import get_supabase_client
-                except ImportError:
-                    from ..utils.image_utils import upload_file_to_supabase_storage
-                    from ..supabase_storage import get_supabase_client
+                files = request.FILES.getlist('pictures')
+                num_files = len(files)
                 
-                # Quick check: Verify Supabase is available before attempting uploads
-                # If Supabase is not configured, skip uploads entirely
-                supabase_client = get_supabase_client()
-                if not supabase_client:
-                    if settings.DEBUG:
-                        print("⚠️ Supabase client not available. Skipping image uploads.")
-                    image_errors.append("Supabase not configured. Images cannot be uploaded. Please configure SUPABASE_SERVICE_ROLE_KEY.")
-                    # Continue without images
-                else:
-                    # Handle single file or multiple files
-                    files = request.FILES.getlist('pictures')
-                    
-                    # Limit to 5 images max to prevent timeout
-                    max_images = 5
-                    if len(files) > max_images:
-                        image_errors.append(f"Maximum {max_images} images allowed. You uploaded {len(files)}.")
-                        files = files[:max_images]
-                    
-                    if settings.DEBUG:
-                        print(f"📸 POST /listings/ - Attempting quick upload of {len(files)} image(s)")
-                    
-                    # Initialize upload timing (needed for timeout check)
-                    upload_start_time = time.time()
-                    
-                    # CRITICAL: Very short timeout (15 seconds total) to avoid blocking listing creation
-                    # If images take longer, we'll skip them and create listing without images
-                    total_upload_timeout = 15
-                    
-                    for idx, file in enumerate(files, 1):
-                        # Check if we've exceeded total time limit
-                        elapsed_time = time.time() - upload_start_time
-                        if elapsed_time > total_upload_timeout:
-                            remaining = len(files) - idx + 1
-                            if settings.DEBUG:
-                                print(f"⏱️ Total upload time limit ({total_upload_timeout}s) reached. Skipping {remaining} remaining image(s).")
-                            image_errors.append(f"Skipped {remaining} image(s) due to time limit. Add images later via update endpoint.")
-                            break
-                        # Save file name before processing (to avoid referencing file object in exceptions)
-                        file_name = file.name if hasattr(file, 'name') else 'unknown'
-                        file_size = file.size if hasattr(file, 'size') else 0
-                        
-                        try:
-                            # Quick basic validation (file size only - skip full validation for speed)
-                            if file_size > MAX_FILE_SIZE:
-                                image_errors.append(f"{file_name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
-                                file = None  # Clear reference
-                                continue
-                            
-                            # Skip full validation to speed up - just check file size
-                            # Full validation with PIL is slow and can cause timeouts
-                            # We'll let Supabase handle invalid files
-                            
-                            # OPTIMIZED: Upload directly to Supabase (no local save, no resizing)
-                            # This is much faster than process_and_save_image
-                            img_start = time.time()  # Always initialize for timing
-                            if settings.DEBUG:
-                                print(f"📤 Uploading image {idx}/{len(files)}: {file_name} ({file_size / 1024:.1f}KB)...")
-                            
-                            # Add per-image timeout protection (max 8 seconds per image)
-                            # Very short timeout to avoid blocking listing creation
-                            img_timeout = 8  # 8 seconds per image max (very aggressive)
-                            
-                            # Upload with timeout protection
-                            # Note: Render doesn't support SIGALRM, so timeout is handled by Supabase client
-                            try:
-                                # Try upload with retry logic (1 retry on failure)
-                                max_retries = 1
-                                last_error = None
-                                
-                                for attempt in range(max_retries + 1):
-                                    try:
-                                        if hasattr(signal, 'SIGALRM'):
-                                            # Unix: Use signal-based timeout
-                                            def timeout_handler(signum, frame):
-                                                raise TimeoutError(f"Image upload timed out after {img_timeout} seconds")
-                                            
-                                            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-                                            signal.alarm(img_timeout)
-                                            try:
-                                                supabase_url = upload_file_to_supabase_storage(
-                                                    file=file,
-                                                    bucket_name='listings',
-                                                    folder='listings',
-                                                    user_id=partner.id if partner else None
-                                                )
-                                                break  # Success, exit retry loop
-                                            finally:
-                                                signal.alarm(0)
-                                                signal.signal(signal.SIGALRM, old_handler)
-                                        else:
-                                            # Windows/Render: No signal support, rely on Supabase client timeout
-                                            supabase_url = upload_file_to_supabase_storage(
-                                                file=file,
-                                                bucket_name='listings',
-                                                folder='listings',
-                                                user_id=partner.id if partner else None
-                                            )
-                                            break  # Success, exit retry loop
-                                    except (TimeoutError, ValueError) as e:
-                                        last_error = e
-                                        if attempt < max_retries:
-                                            if settings.DEBUG:
-                                                print(f"⚠️ Upload attempt {attempt + 1} failed, retrying...")
-                                            # Reset file pointer for retry
-                                            try:
-                                                file.seek(0)
-                                            except:
-                                                pass
-                                        else:
-                                            raise  # Re-raise on final attempt
-                                    except Exception as e:
-                                        # Other errors - don't retry
-                                        raise
-                                
-                                if 'supabase_url' not in locals():
-                                    raise last_error if last_error else Exception("Upload failed")
-                                
-                                img_elapsed = time.time() - img_start
-                                if settings.DEBUG:
-                                    print(f"✓ Uploaded image {idx}/{len(files)} in {img_elapsed:.2f}s: {supabase_url}")
-                                
-                                uploaded_images.append({
-                                    'url': supabase_url,
-                                    'name': file_name
-                                })
-                            except (TimeoutError, ValueError) as e:
-                                # Timeout or validation error
-                                error_type = "timeout" if isinstance(e, TimeoutError) else "validation"
-                                error_msg = f"{file_name}: {str(e)}"
-                                image_errors.append(error_msg)
-                                if settings.DEBUG:
-                                    print(f"❌ {error_type.capitalize()} error for {file_name}: {str(e)}")
-                                # Continue with next image instead of failing completely
-                            except Exception as e:
-                                # Other errors (network, Supabase, etc.)
-                                error_msg = f"{file_name}: {str(e)}"
-                                image_errors.append(error_msg)
-                                if settings.DEBUG:
-                                    print(f"❌ Upload error for {file_name}: {str(e)}")
-                                    # Only print full traceback in DEBUG mode
-                                    traceback.print_exc()
-                                # Continue with next image
-                        finally:
-                            # Always clear file reference to prevent memory issues
-                            try:
-                                if hasattr(file, 'close'):
-                                    file.close()
-                            except:
-                                pass
-                            file = None
-                    
-                    upload_elapsed = time.time() - upload_start_time
-                    if settings.DEBUG:
-                        print(f"⏱️ Total image upload time: {upload_elapsed:.2f}s for {len(uploaded_images)}/{len(files)} images")
-                        if image_errors:
-                            print(f"⚠️ Image upload errors: {image_errors}")
-                        if len(uploaded_images) == 0 and len(files) > 0:
-                            print(f"⚠️ No images uploaded successfully. Listing will be created without images.")
-                            print(f"   Images can be added later via the update endpoint.")
-                    
-                    # If uploads took too long or failed, proceed without images
-                    # This ensures listing creation doesn't timeout
-                    if upload_elapsed > total_upload_timeout:
-                        if settings.DEBUG:
-                            print(f"⏱️ Image uploads exceeded time limit ({total_upload_timeout}s). Proceeding with listing creation.")
-                        # Clear any partial uploads to avoid confusion
-                        if len(uploaded_images) == 0:
-                            image_errors.append("Image uploads timed out. Please add images later via the update endpoint.")
+                if settings.DEBUG:
+                    print(f"📸 POST /listings/ - Received {num_files} image(s), but skipping upload during creation to prevent timeout")
+                    print(f"   Images can be added later via PATCH /listings/{{id}}/")
+                
+                # Skip image uploads entirely during listing creation
+                # This prevents timeouts - user can add images via update endpoint
+                image_errors.append(f"Skipped {num_files} image(s) during listing creation to prevent timeout. Please add images later via the update endpoint (PATCH /listings/{{id}}/).")
+                
+                # Don't attempt any uploads - just create listing without images
+                uploaded_images = []
             
             # Handle existing images from JSON (if provided as JSON string or array)
             # Remove 'images' from listing_data first to avoid serializer validation issues
