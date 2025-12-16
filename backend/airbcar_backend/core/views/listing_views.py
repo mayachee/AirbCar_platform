@@ -16,6 +16,8 @@ from django.core.files.base import ContentFile
 import traceback
 import json
 import os
+import time
+import signal
 from pathlib import Path
 
 from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
@@ -489,14 +491,15 @@ class ListingListView(APIView):
             # Process uploaded files (from 'pictures' field in FormData)
             # OPTIMIZED: Use direct Supabase upload (no local save) for faster processing
             if 'pictures' in request.FILES:
-                # Import upload function
+                # Import upload function (lazy import with fallback)
                 try:
-                    from core.utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                    from core.utils.image_utils import upload_file_to_supabase_storage
                 except ImportError:
-                    from ..utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                    from ..utils.image_utils import upload_file_to_supabase_storage
                 
                 # Handle single file or multiple files
                 files = request.FILES.getlist('pictures')
+                
                 # Limit to 5 images max to prevent timeout
                 max_images = 5
                 if len(files) > max_images:
@@ -504,13 +507,14 @@ class ListingListView(APIView):
                     files = files[:max_images]
                 
                 if settings.DEBUG:
-                    print(f"📸 POST /listings/ - Found {len(files)} picture file(s) to upload")
-                    import time
-                    upload_start_time = time.time()
+                    print(f"📸 POST /listings/ - Processing {len(files)} image(s)")
                 
-                # Total timeout for all images: 60 seconds max
+                # Initialize upload timing (needed for timeout check)
+                upload_start_time = time.time()
+                
+                # Total timeout for all images: 50 seconds max (reduced for faster response)
                 # This prevents the entire request from timing out
-                total_upload_timeout = 60
+                total_upload_timeout = 50
                 
                 for idx, file in enumerate(files, 1):
                     # Check if we've exceeded total time limit
@@ -538,71 +542,101 @@ class ListingListView(APIView):
                         
                         # OPTIMIZED: Upload directly to Supabase (no local save, no resizing)
                         # This is much faster than process_and_save_image
+                        img_start = time.time()  # Always initialize for timing
                         if settings.DEBUG:
-                            img_start = time.time()
                             print(f"📤 Uploading image {idx}/{len(files)}: {file_name} ({file_size / 1024:.1f}KB)...")
                         
-                        # Add per-image timeout protection (max 15 seconds per image)
+                        # Add per-image timeout protection (max 12 seconds per image)
                         # This prevents one slow image from blocking all others
-                        import signal
-                        img_timeout = 15  # 15 seconds per image max (reduced from 20)
+                        img_timeout = 12  # 12 seconds per image max (optimized for speed)
                         
+                        # Upload with timeout protection
+                        # Note: Render doesn't support SIGALRM, so timeout is handled by Supabase client
                         try:
-                            if hasattr(signal, 'SIGALRM'):
-                                # Unix: Use signal-based timeout
-                                def timeout_handler(signum, frame):
-                                    raise TimeoutError(f"Image upload timed out after {img_timeout} seconds")
-                                
-                                old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-                                signal.alarm(img_timeout)
-                                try:
-                                    supabase_url = upload_file_to_supabase_storage(
-                                        file=file,
-                                        bucket_name='listings',
-                                        folder='listings',
-                                        user_id=partner.id if partner else None
-                                    )
-                                finally:
-                                    signal.alarm(0)
-                                    signal.signal(signal.SIGALRM, old_handler)
-                            else:
-                                # Windows/Render: No signal support, just try upload
-                                # The Supabase client should have its own timeout
-                                supabase_url = upload_file_to_supabase_storage(
-                                    file=file,
-                                    bucket_name='listings',
-                                    folder='listings',
-                                    user_id=partner.id if partner else None
-                                )
+                            # Try upload with retry logic (1 retry on failure)
+                            max_retries = 1
+                            last_error = None
                             
+                            for attempt in range(max_retries + 1):
+                                try:
+                                    if hasattr(signal, 'SIGALRM'):
+                                        # Unix: Use signal-based timeout
+                                        def timeout_handler(signum, frame):
+                                            raise TimeoutError(f"Image upload timed out after {img_timeout} seconds")
+                                        
+                                        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+                                        signal.alarm(img_timeout)
+                                        try:
+                                            supabase_url = upload_file_to_supabase_storage(
+                                                file=file,
+                                                bucket_name='listings',
+                                                folder='listings',
+                                                user_id=partner.id if partner else None
+                                            )
+                                            break  # Success, exit retry loop
+                                        finally:
+                                            signal.alarm(0)
+                                            signal.signal(signal.SIGALRM, old_handler)
+                                    else:
+                                        # Windows/Render: No signal support, rely on Supabase client timeout
+                                        supabase_url = upload_file_to_supabase_storage(
+                                            file=file,
+                                            bucket_name='listings',
+                                            folder='listings',
+                                            user_id=partner.id if partner else None
+                                        )
+                                        break  # Success, exit retry loop
+                                except (TimeoutError, ValueError) as e:
+                                    last_error = e
+                                    if attempt < max_retries:
+                                        if settings.DEBUG:
+                                            print(f"⚠️ Upload attempt {attempt + 1} failed, retrying...")
+                                        # Reset file pointer for retry
+                                        try:
+                                            file.seek(0)
+                                        except:
+                                            pass
+                                    else:
+                                        raise  # Re-raise on final attempt
+                                except Exception as e:
+                                    # Other errors - don't retry
+                                    raise
+                            
+                            if 'supabase_url' not in locals():
+                                raise last_error if last_error else Exception("Upload failed")
+                            
+                            img_elapsed = time.time() - img_start
                             if settings.DEBUG:
-                                img_elapsed = time.time() - img_start
                                 print(f"✓ Uploaded image {idx}/{len(files)} in {img_elapsed:.2f}s: {supabase_url}")
                             
                             uploaded_images.append({
                                 'url': supabase_url,
                                 'name': file_name
                             })
-                        except TimeoutError as timeout_err:
-                            error_msg = f"{file_name}: Upload timed out after {img_timeout}s"
+                        except (TimeoutError, ValueError) as e:
+                            # Timeout or validation error
+                            error_type = "timeout" if isinstance(e, TimeoutError) else "validation"
+                            error_msg = f"{file_name}: {str(e)}"
                             image_errors.append(error_msg)
                             if settings.DEBUG:
-                                print(f"⏱️ {error_msg}")
+                                print(f"❌ {error_type.capitalize()} error for {file_name}: {str(e)}")
                             # Continue with next image instead of failing completely
-                    except ValueError as e:
-                        # Validation error
-                        image_errors.append(f"{file_name}: {str(e)}")
-                        if settings.DEBUG:
-                            print(f"❌ Validation error for {file_name}: {str(e)}")
-                    except Exception as e:
-                        # Other errors
-                        error_msg = f"Error processing {file_name}: {str(e)}"
-                        image_errors.append(error_msg)
-                        if settings.DEBUG:
-                            print(f"❌ {error_msg}")
-                        traceback.print_exc()
+                        except Exception as e:
+                            # Other errors (network, Supabase, etc.)
+                            error_msg = f"{file_name}: {str(e)}"
+                            image_errors.append(error_msg)
+                            if settings.DEBUG:
+                                print(f"❌ Upload error for {file_name}: {str(e)}")
+                                # Only print full traceback in DEBUG mode
+                                traceback.print_exc()
+                            # Continue with next image
                     finally:
-                        # Always clear file reference to prevent pickle issues
+                        # Always clear file reference to prevent memory issues
+                        try:
+                            if hasattr(file, 'close'):
+                                file.close()
+                        except:
+                            pass
                         file = None
                 
                 if settings.DEBUG:
@@ -647,12 +681,13 @@ class ListingListView(APIView):
             serializer = ListingSerializer(data=listing_data, context={'request': request})
             
             if settings.DEBUG:
-                print(f"🔍 POST /listings/ - Serializer data keys: {list(listing_data.keys())}")
-                print(f"🔍 POST /listings/ - Images data: {listing_data.get('images', [])}")
+                print(f"🔍 POST /listings/ - Validating listing data...")
+                print(f"   Fields: {list(listing_data.keys())}")
+                print(f"   Images count: {len(all_images)}")
             
             if serializer.is_valid():
                 if settings.DEBUG:
-                    print(f"✅ POST /listings/ - Serializer is valid, saving...")
+                    print(f"✅ POST /listings/ - Serializer is valid, saving to database...")
                 
                 # Use transaction to ensure data consistency
                 try:
@@ -665,15 +700,26 @@ class ListingListView(APIView):
                         # partner.save(update_fields=['total_bookings'])
                         
                         if settings.DEBUG:
-                            print(f"✅ POST /listings/ - Listing saved with ID: {listing.id}")
+                            print(f"✅ POST /listings/ - Listing created successfully with ID: {listing.id}")
                         
                         # Return created listing with full details
                         response_serializer = ListingSerializer(listing, context={'request': request})
-                        return Response({
+                        response_data = {
                             'data': response_serializer.data,
                             'message': 'Listing created successfully',
                             'id': listing.id
-                        }, status=status.HTTP_201_CREATED)
+                        }
+                        
+                        # Include image upload status in response
+                        if image_errors:
+                            response_data['warnings'] = {
+                                'image_errors': image_errors,
+                                'successful_uploads': len(uploaded_images),
+                                'failed_uploads': len(image_errors)
+                            }
+                            response_data['message'] += f'. {len(uploaded_images)} image(s) uploaded successfully.'
+                        
+                        return Response(response_data, status=status.HTTP_201_CREATED)
                 except Exception as save_error:
                     if settings.DEBUG:
                         print(f"❌ POST /listings/ - Error saving listing: {str(save_error)}")

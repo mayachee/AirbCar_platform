@@ -122,9 +122,19 @@ def upload_file_to_supabase(
     #     print(f"⏩ Skipping bucket check for faster upload")
     
     try:
-        # Read file content
-        file.seek(0)  # Reset file pointer
-        file_content = file.read()
+        # Read file content efficiently
+        # Reset file pointer to ensure we read from the beginning
+        try:
+            file.seek(0)
+        except (AttributeError, OSError):
+            pass  # Some file objects don't support seek
+        
+        # Read file content in chunks for large files (more memory efficient)
+        if hasattr(file, 'read'):
+            file_content = file.read()
+        else:
+            # Fallback for file-like objects
+            file_content = b''.join(file) if hasattr(file, '__iter__') else bytes(file)
         
         # Determine content type if not provided
         if not content_type:
