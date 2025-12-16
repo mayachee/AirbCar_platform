@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from PIL import Image
 import io
-from ..supabase_storage import upload_file_to_supabase
+from core.supabase_storage import upload_file_to_supabase
 
 
 # Allowed image MIME types
@@ -90,7 +90,7 @@ def upload_file_to_supabase_storage(
     Raises:
         ValueError: If Supabase is not configured or upload fails
     """
-    from ..supabase_storage import get_supabase_client, upload_file_to_supabase
+    from core.supabase_storage import get_supabase_client, upload_file_to_supabase
     
     # Early check: Verify Supabase is configured
     supabase_client = get_supabase_client()
@@ -195,7 +195,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         ValueError: If Supabase is not configured or upload fails
     """
     # Early check: Verify Supabase is configured before processing
-    from ..supabase_storage import get_supabase_client
+    from core.supabase_storage import get_supabase_client
     supabase_client = get_supabase_client()
     if not supabase_client:
         error_msg = (
