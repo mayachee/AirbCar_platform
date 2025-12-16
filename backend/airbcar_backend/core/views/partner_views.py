@@ -155,17 +155,40 @@ class PartnerMeView(APIView):
             )
             
             if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'data': serializer.data,
-                    'message': 'Partner profile updated successfully'
-                }, status=status.HTTP_200_OK)
+                try:
+                    serializer.save()
+                    return Response({
+                        'data': serializer.data,
+                        'message': 'Partner profile updated successfully'
+                    }, status=status.HTTP_200_OK)
+                except ValueError as ve:
+                    # ValueError from Supabase upload or other validation errors
+                    error_msg = str(ve)
+                    if settings.DEBUG:
+                        print(f"ValueError in PartnerMeView._update_partner.save: {error_msg}")
+                        traceback.print_exc()
+                    return Response({
+                        'error': 'Validation failed',
+                        'message': error_msg,
+                        'errors': {'logo': [error_msg]} if 'logo' in error_msg.lower() else {}
+                    }, status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response({
                     'error': 'Validation failed',
                     'errors': serializer.errors
                 }, status=status.HTTP_400_BAD_REQUEST)
                 
+        except ValueError as ve:
+            # Catch ValueError before generic Exception
+            error_msg = str(ve)
+            if settings.DEBUG:
+                print(f"ValueError in PartnerMeView._update_partner: {error_msg}")
+                traceback.print_exc()
+            return Response({
+                'error': 'Validation failed',
+                'message': error_msg,
+                'errors': {'logo': [error_msg]} if 'logo' in error_msg.lower() else {}
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             error_msg = str(e)
             if settings.DEBUG:

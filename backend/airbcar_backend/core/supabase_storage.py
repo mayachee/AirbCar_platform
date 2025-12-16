@@ -70,9 +70,14 @@ def upload_file_to_supabase(
     """
     supabase = get_supabase_client()
     if not supabase:
+        error_msg = (
+            "Supabase client not available. "
+            "Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables. "
+            "Local file storage is not available on Render's ephemeral filesystem."
+        )
         if settings.DEBUG:
-            print("❌ Supabase client not available - check SUPABASE_URL and SUPABASE_ANON_KEY")
-        return None
+            print(f"❌ {error_msg}")
+        raise ValueError(error_msg)
     
     # Safety check: Remove bucket name from file_path if it's duplicated
     # This prevents paths like "listings/listings/file.png" when bucket is "listings"
@@ -166,9 +171,10 @@ def upload_file_to_supabase(
             # Fallback: construct URL manually (this is the standard format)
             supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
             if not supabase_url:
+                error_msg = "SUPABASE_URL environment variable is not set. Cannot construct file URL."
                 if settings.DEBUG:
-                    print("❌ SUPABASE_URL not set, cannot construct file URL")
-                return None
+                    print(f"❌ {error_msg}")
+                raise ValueError(error_msg)
             
             # Construct the public URL
             # Format: {SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}
@@ -178,9 +184,10 @@ def upload_file_to_supabase(
             return constructed_url
                 
         except TimeoutError:
+            error_msg = f"Upload timed out after {timeout} seconds for {file_path}"
             if settings.DEBUG:
-                print(f"⏱️ Upload timed out after {timeout} seconds for {file_path}")
-            return None
+                print(f"⏱️ {error_msg}")
+            raise ValueError(error_msg)
         except Exception as upload_error:
             error_msg = str(upload_error)
             if settings.DEBUG:
@@ -188,20 +195,35 @@ def upload_file_to_supabase(
                 import traceback
                 print(f"Full traceback: {traceback.format_exc()}")
             
-            # Check for specific error messages
+            # Provide helpful error messages based on error type
             if "not found" in error_msg.lower() or "bucket" in error_msg.lower():
-                if settings.DEBUG:
-                    print(f"💡 Tip: Make sure the '{bucket_name}' bucket exists and is PUBLIC in Supabase Dashboard")
+                detailed_msg = (
+                    f"Supabase bucket '{bucket_name}' not found or not accessible. "
+                    f"Make sure: 1) The bucket exists in Supabase Dashboard, "
+                    f"2) The bucket is set to PUBLIC, 3) SUPABASE_ANON_KEY has proper permissions. "
+                    f"Original error: {error_msg}"
+                )
             elif "permission" in error_msg.lower() or "unauthorized" in error_msg.lower():
-                if settings.DEBUG:
-                    print(f"💡 Tip: Check that SUPABASE_ANON_KEY has upload permissions for bucket '{bucket_name}'")
+                detailed_msg = (
+                    f"Permission denied uploading to Supabase bucket '{bucket_name}'. "
+                    f"Check that SUPABASE_ANON_KEY has upload permissions. "
+                    f"Original error: {error_msg}"
+                )
+            else:
+                detailed_msg = f"Failed to upload to Supabase Storage: {error_msg}"
             
-            return None
+            raise ValueError(detailed_msg)
             
+    except ValueError:
+        # Re-raise ValueError (our custom errors)
+        raise
     except Exception as e:
+        error_msg = f"Unexpected error uploading to Supabase Storage: {str(e)}"
         if settings.DEBUG:
-            print(f"❌ Error uploading to Supabase Storage: {str(e)}")
-        return None
+            print(f"❌ {error_msg}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
+        raise ValueError(error_msg)
 
 
 def delete_file_from_supabase(bucket_name: str, file_path: str) -> bool:

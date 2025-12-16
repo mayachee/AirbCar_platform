@@ -150,6 +150,7 @@ def upload_file_to_supabase_storage(
     try:
         from io import BytesIO
         file_obj = BytesIO(file_content)
+        # upload_file_to_supabase will raise ValueError if upload fails
         supabase_url = upload_file_to_supabase(
             file=file_obj,
             bucket_name=bucket_name,
@@ -157,10 +158,12 @@ def upload_file_to_supabase_storage(
             content_type=content_type
         )
         
+        # Safety check (should never be reached since upload_file_to_supabase raises on failure)
         if not supabase_url:
             raise ValueError(
-                f"Supabase upload returned no URL. "
-                f"Please check that the '{bucket_name}' bucket exists and is PUBLIC."
+                f"Supabase upload returned no URL unexpectedly. "
+                f"Please check that SUPABASE_URL and SUPABASE_ANON_KEY are set, "
+                f"and that the '{bucket_name}' bucket exists and is PUBLIC."
             )
         
         return supabase_url
@@ -355,6 +358,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
                 print(f"   File size: {file_size} bytes")
             
             # Read the saved file to upload to Supabase
+            # upload_file_to_supabase will raise ValueError if upload fails
             with open(full_path, 'rb') as saved_file:
                 supabase_url = upload_file_to_supabase(
                     file=saved_file,
@@ -363,9 +367,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
                     content_type=content_type
                 )
             
-            if not supabase_url:
-                raise ValueError("Upload function returned None - upload may have failed silently")
-            
+            # If we get here, upload succeeded (no exception was raised)
             if settings.DEBUG:
                 print(f"✅ Image uploaded successfully: {supabase_url}")
                 
