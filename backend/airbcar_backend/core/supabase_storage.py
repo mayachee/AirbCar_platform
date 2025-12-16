@@ -91,10 +91,11 @@ def upload_file_to_supabase(
         
         # Upload to Supabase Storage with timeout handling
         try:
+            upload_response = None
             # Use timeout context if available (Unix), otherwise proceed normally
             if hasattr(signal, 'SIGALRM'):
                 with timeout_context(timeout):
-                    response = supabase.storage.from_(bucket_name).upload(
+                    upload_response = supabase.storage.from_(bucket_name).upload(
                         path=file_path,
                         file=file_content,
                         file_options={
@@ -102,15 +103,9 @@ def upload_file_to_supabase(
                             "upsert": "true"  # Overwrite if exists
                         }
                     )
-                    
-                    # Get public URL
-                    public_url_response = supabase.storage.from_(bucket_name).get_public_url(file_path)
-                    
-                    if public_url_response:
-                        return public_url_response
             else:
                 # Windows - no timeout support, proceed normally
-                response = supabase.storage.from_(bucket_name).upload(
+                upload_response = supabase.storage.from_(bucket_name).upload(
                     path=file_path,
                     file=file_content,
                     file_options={
@@ -118,24 +113,64 @@ def upload_file_to_supabase(
                         "upsert": "true"  # Overwrite if exists
                     }
                 )
+            
+            # Check if upload was successful
+            # Supabase upload returns a response with 'path' key if successful
+            if upload_response:
+                # Check if response indicates success
+                # The response might be a dict with 'path' or a string path
+                response_path = None
+                if isinstance(upload_response, dict):
+                    response_path = upload_response.get('path') or upload_response.get('Key')
+                elif isinstance(upload_response, str):
+                    response_path = upload_response
                 
-                # Get public URL
-                public_url_response = supabase.storage.from_(bucket_name).get_public_url(file_path)
+                # If we got a path, the upload likely succeeded
+                if response_path or (hasattr(upload_response, 'path') and upload_response.path):
+                    # Get public URL
+                    public_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
+                    if public_url:
+                        if settings.DEBUG:
+                            print(f"✅ Successfully uploaded {file_path} to Supabase")
+                        return public_url
+                    else:
+                        # Construct URL manually if get_public_url doesn't work
+                        supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+                        constructed_url = f"{supabase_url}/storage/v1/object/public/{bucket_name}/{file_path}"
+                        if settings.DEBUG:
+                            print(f"✅ Upload succeeded, using constructed URL: {constructed_url}")
+                        return constructed_url
+                else:
+                    # Upload response doesn't indicate success
+                    if settings.DEBUG:
+                        print(f"⚠️ Upload response doesn't indicate success: {upload_response}")
+                    return None
+            else:
+                # No response from upload
+                if settings.DEBUG:
+                    print(f"⚠️ No response from Supabase upload for {file_path}")
+                return None
                 
-                if public_url_response:
-                    return public_url_response
         except TimeoutError:
             if settings.DEBUG:
                 print(f"⏱️ Upload timed out after {timeout} seconds for {file_path}")
             return None
         except Exception as upload_error:
+            error_msg = str(upload_error)
             if settings.DEBUG:
-                print(f"❌ Upload error: {str(upload_error)}")
-            # Continue to fallback
-        
-        # Fallback: construct URL manually
-        supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
-        return f"{supabase_url}/storage/v1/object/public/{bucket_name}/{file_path}"
+                print(f"❌ Upload error for {file_path}: {error_msg}")
+                import traceback
+                print(f"Full traceback: {traceback.format_exc()}")
+            
+            # Check for specific error messages
+            if "not found" in error_msg.lower() or "bucket" in error_msg.lower():
+                if settings.DEBUG:
+                    print(f"💡 Tip: Make sure the '{bucket_name}' bucket exists and is PUBLIC in Supabase Dashboard")
+            elif "permission" in error_msg.lower() or "unauthorized" in error_msg.lower():
+                if settings.DEBUG:
+                    print(f"💡 Tip: Check that SUPABASE_ANON_KEY has upload permissions for bucket '{bucket_name}'")
+            
+            return None
             
     except Exception as e:
         if settings.DEBUG:

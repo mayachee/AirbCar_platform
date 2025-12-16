@@ -335,12 +335,16 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         
         # Try to upload to Supabase Storage (REQUIRED)
         try:
+            # For Supabase, use just the filename (bucket name already indicates folder)
+            # file_path is "listings/{uuid}.png" but bucket is "listings", so we use just "{uuid}.png"
+            supabase_file_path = unique_filename  # Just the filename, not the full path with folder
+            
             # Read the saved file to upload to Supabase
             with open(full_path, 'rb') as saved_file:
                 supabase_url = upload_file_to_supabase(
                     file=saved_file,
                     bucket_name=bucket_name,
-                    file_path=file_path,
+                    file_path=supabase_file_path,
                     content_type=content_type
                 )
         except Exception as e:
