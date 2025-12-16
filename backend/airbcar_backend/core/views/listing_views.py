@@ -50,6 +50,9 @@ class ListingListView(APIView):
         partner_id = request.query_params.get('partner_id')
         search = request.query_params.get('search', '').strip()  # General search
         min_rating = request.query_params.get('min_rating')  # Minimum rating filter
+        color = request.query_params.get('color')  # Color filter
+        year_min = request.query_params.get('year_min')  # Minimum year
+        year_max = request.query_params.get('year_max')  # Maximum year
         
         # Start with all available listings
         # If partner_id is provided, don't filter by is_available (show all partner's vehicles)
@@ -250,7 +253,28 @@ class ListingListView(APIView):
             # For count, use a more efficient method if possible
             total_count = queryset.count()
             
-            # Apply pagination
+            # Calculate summary statistics BEFORE pagination (aggregates don't work on sliced querysets)
+            price_stats = {}
+            if total_count > 0:
+                from django.db.models import Min, Max, Avg
+                try:
+                    price_aggregates = queryset.aggregate(
+                        min_price=Min('price_per_day'),
+                        max_price=Max('price_per_day'),
+                        avg_price=Avg('price_per_day')
+                    )
+                    price_stats = {
+                        'min': float(price_aggregates['min_price'] or 0),
+                        'max': float(price_aggregates['max_price'] or 0),
+                        'avg': float(price_aggregates['avg_price'] or 0)
+                    }
+                except Exception as agg_error:
+                    # If aggregate fails, log but don't fail the request
+                    if settings.DEBUG:
+                        print(f"⚠️ Warning: Could not calculate price statistics: {str(agg_error)}")
+                    price_stats = {}
+            
+            # Apply pagination AFTER calculating aggregates
             start = (page - 1) * page_size
             end = start + page_size
             queryset = queryset[start:end]
@@ -264,21 +288,6 @@ class ListingListView(APIView):
                 serializer = ListingSerializer(queryset, many=True, context={'request': request})
             
             total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 0
-            
-            # Calculate summary statistics for the filtered results
-            price_stats = {}
-            if total_count > 0:
-                from django.db.models import Min, Max, Avg
-                price_aggregates = queryset.aggregate(
-                    min_price=Min('price_per_day'),
-                    max_price=Max('price_per_day'),
-                    avg_price=Avg('price_per_day')
-                )
-                price_stats = {
-                    'min': float(price_aggregates['min_price'] or 0),
-                    'max': float(price_aggregates['max_price'] or 0),
-                    'avg': float(price_aggregates['avg_price'] or 0)
-                }
             
             return Response({
                 'data': serializer.data,
@@ -309,13 +318,31 @@ class ListingListView(APIView):
         except Exception as e:
             # Handle other errors
             error_msg = str(e)
+            error_type = type(e).__name__
+            # Get full traceback for logging
+            try:
+                tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+            except Exception:
+                tb_str = f"{error_type}: {error_msg}"
+            
             if settings.DEBUG:
-                print(f"Error in ListingListView: {error_msg}")
-                traceback.print_exc()
+                print(f"❌ GET /listings/ - Exception ({error_type}): {error_msg}")
+                print(f"Full traceback:\n{tb_str}")
+            else:
+                # Even in production, log to stderr with full traceback
+                import sys
+                print(f"❌ GET /listings/ - Exception ({error_type}): {error_msg}", file=sys.stderr)
+                print(f"Full traceback:\n{tb_str}", file=sys.stderr)
+            
+            # Include more details in response for debugging
+            display_msg = error_msg[:500] if len(error_msg) > 500 else error_msg
             return Response({
                 'data': [],
                 'count': 0,
-                'error': f'An error occurred while fetching listings: {error_msg}' if settings.DEBUG else 'An error occurred while fetching listings',
+                'error': 'Internal server error',
+                'message': f'{error_type}: {display_msg}' if settings.DEBUG else 'An unexpected error occurred. Please try again later.',
+                'error_type': error_type,
+                'traceback': tb_str if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
