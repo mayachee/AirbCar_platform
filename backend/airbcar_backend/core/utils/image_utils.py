@@ -336,8 +336,23 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         # Try to upload to Supabase Storage (REQUIRED)
         try:
             # For Supabase, use just the filename (bucket name already indicates folder)
+            # IMPORTANT: For 'listings' bucket, NEVER include 'listings/' in the path
             # file_path is "listings/{uuid}.png" but bucket is "listings", so we use just "{uuid}.png"
             supabase_file_path = unique_filename  # Just the filename, not the full path with folder
+            
+            # Safety check: Remove any 'listings/' prefix if it exists (shouldn't happen, but just in case)
+            if supabase_file_path.startswith('listings/'):
+                supabase_file_path = supabase_file_path.replace('listings/', '', 1)
+                if settings.DEBUG:
+                    print(f"⚠️ Removed 'listings/' prefix from file path: {supabase_file_path}")
+            
+            if settings.DEBUG:
+                print(f"📤 Uploading image to Supabase:")
+                print(f"   Bucket: {bucket_name}")
+                print(f"   File path (Supabase): {supabase_file_path}")
+                print(f"   Local file path: {file_path}")
+                print(f"   Content type: {content_type}")
+                print(f"   File size: {file_size} bytes")
             
             # Read the saved file to upload to Supabase
             with open(full_path, 'rb') as saved_file:
@@ -347,10 +362,19 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
                     file_path=supabase_file_path,
                     content_type=content_type
                 )
+            
+            if not supabase_url:
+                raise ValueError("Upload function returned None - upload may have failed silently")
+            
+            if settings.DEBUG:
+                print(f"✅ Image uploaded successfully: {supabase_url}")
+                
         except Exception as e:
             error_msg = str(e)
             if settings.DEBUG:
                 print(f"❌ Could not upload to Supabase Storage: {error_msg}")
+                import traceback
+                print(f"Full traceback: {traceback.format_exc()}")
                 print(f"   Make sure:")
                 print(f"   1. SUPABASE_URL and SUPABASE_ANON_KEY are set in environment variables")
                 print(f"   2. The '{bucket_name}' bucket exists in Supabase Dashboard")
