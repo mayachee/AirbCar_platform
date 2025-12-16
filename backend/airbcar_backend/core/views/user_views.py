@@ -109,20 +109,44 @@ class UserMeView(APIView):
     def put(self, request):
         """Update current user profile."""
         try:
+            # Prepare user data - create clean copy without file objects
+            user_data = {}
+            for key, value in request.data.items():
+                # Skip file objects - they're handled separately via request.FILES
+                if hasattr(value, 'read') or hasattr(value, 'chunks'):
+                    continue
+                user_data[key] = value
+            
             serializer = UserSerializer(
                 request.user,
-                data=request.data,
+                data=user_data,
                 partial=True,
                 context={'request': request}
             )
             
             if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'data': serializer.data,
-                    'message': 'Profile updated successfully'
-                }, status=status.HTTP_200_OK)
+                try:
+                    with transaction.atomic():
+                        serializer.save()
+                        # Refresh from database
+                        request.user.refresh_from_db()
+                        
+                        if settings.DEBUG:
+                            print(f"✅ PUT /users/me/ - User profile updated successfully")
+                        
+                        return Response({
+                            'data': UserSerializer(request.user, context={'request': request}).data,
+                            'message': 'Profile updated successfully'
+                        }, status=status.HTTP_200_OK)
+                except ValueError as ve:
+                    # Supabase upload errors
+                    return Response({
+                        'error': 'File upload failed',
+                        'message': str(ve)
+                    }, status=status.HTTP_400_BAD_REQUEST)
             else:
+                if settings.DEBUG:
+                    print(f"❌ PUT /users/me/ - Validation failed: {serializer.errors}")
                 return Response({
                     'error': 'Validation failed',
                     'errors': serializer.errors
@@ -130,11 +154,13 @@ class UserMeView(APIView):
                 
         except Exception as e:
             error_msg = str(e)
+            error_type = type(e).__name__
             if settings.DEBUG:
-                print(f"Error in UserMeView.put: {error_msg}")
+                print(f"❌ PUT /users/me/ - Exception ({error_type}): {error_msg}")
+                traceback.print_exc()
             return Response({
                 'error': 'An error occurred',
-                'message': error_msg if settings.DEBUG else None
+                'message': f'{error_type}: {error_msg}' if settings.DEBUG else 'An error occurred while updating profile'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

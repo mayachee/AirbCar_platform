@@ -7,7 +7,8 @@ from .image_utils import (
     process_and_save_image,
     parse_images_data,
     combine_images,
-    normalize_image_entry
+    normalize_image_entry,
+    upload_file_to_supabase_storage
 )
 
 # Import email utilities from parent utils.py module
@@ -94,6 +95,7 @@ __all__ = [
     'parse_images_data',
     'combine_images',
     'normalize_image_entry',
+    'upload_file_to_supabase_storage',
     # Email utilities
     'send_verification_email',
     'send_password_reset_email',

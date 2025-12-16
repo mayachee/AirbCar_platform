@@ -172,36 +172,57 @@ class BookingListView(APIView):
             # Determine booking status based on instant_booking setting
             booking_status = 'confirmed' if listing.instant_booking else 'pending'
             
-            # Create booking
-            booking_data = {
-                'listing': listing,
-                'customer': request.user,
-                'partner': partner,
-                'pickup_date': pickup_date,
-                'return_date': return_date,
-                'pickup_time': request.data.get('pickup_time', '10:00:00'),
-                'return_time': request.data.get('return_time', '10:00:00'),
-                'pickup_location': request.data.get('pickup_location', listing.location),
-                'return_location': request.data.get('return_location', listing.location),
-                'total_amount': total_amount,
-                'status': booking_status,
-                'payment_status': 'pending',
-                'payment_method': request.data.get('payment_method', 'online'),
-                'special_requests': request.data.get('special_requests', ''),
-            }
+            # Prepare booking data - create clean copy without file objects
+            booking_data = {}
+            for key, value in request.data.items():
+                # Skip file objects - they're handled separately via request.FILES
+                if hasattr(value, 'read') or hasattr(value, 'chunks'):
+                    continue
+                booking_data[key] = value
             
-            booking = Booking.objects.create(**booking_data)
+            # Set required fields
+            booking_data['listing'] = listing.id
+            booking_data['customer'] = request.user.id
+            booking_data['partner'] = partner.id
+            booking_data['pickup_date'] = pickup_date
+            booking_data['return_date'] = return_date
+            booking_data['total_amount'] = total_amount
+            booking_data['status'] = booking_status
+            booking_data['payment_status'] = 'pending'
             
-            # If instant booking, mark payment as paid (assuming payment is processed)
-            if listing.instant_booking and request.data.get('payment_status') == 'paid':
-                booking.payment_status = 'paid'
-                booking.save()
+            # Use serializer to create booking (handles document uploads to Supabase)
+            serializer = BookingSerializer(data=booking_data, context={'request': request})
             
-            serializer = BookingSerializer(booking, context={'request': request})
-            return Response({
-                'data': serializer.data,
-                'message': 'Booking created successfully'
-            }, status=status.HTTP_201_CREATED)
+            if serializer.is_valid():
+                try:
+                    with transaction.atomic():
+                        booking = serializer.save()
+                        
+                        # If instant booking, mark payment as paid (assuming payment is processed)
+                        if listing.instant_booking and request.data.get('payment_status') == 'paid':
+                            booking.payment_status = 'paid'
+                            booking.save()
+                        
+                        if settings.DEBUG:
+                            print(f"✅ POST /bookings/ - Booking created with ID: {booking.id}")
+                        
+                        return Response({
+                            'data': BookingSerializer(booking, context={'request': request}).data,
+                            'message': 'Booking created successfully'
+                        }, status=status.HTTP_201_CREATED)
+                except ValueError as ve:
+                    # Supabase upload errors
+                    return Response({
+                        'error': 'File upload failed',
+                        'message': str(ve)
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                if settings.DEBUG:
+                    print(f"❌ POST /bookings/ - Validation failed: {serializer.errors}")
+                return Response({
+                    'error': 'Validation failed',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
             
         except ValueError as e:
             return Response({

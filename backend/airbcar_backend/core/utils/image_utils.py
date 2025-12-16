@@ -68,17 +68,142 @@ def validate_image_file(file: UploadedFile) -> Tuple[bool, Optional[str]]:
     return True, None
 
 
+def upload_file_to_supabase_storage(
+    file: UploadedFile,
+    bucket_name: str,
+    folder: str = 'listings',
+    user_id: Optional[int] = None
+) -> str:
+    """
+    Upload a file directly to Supabase Storage without saving locally first.
+    This is optimized for files that should go directly to Supabase.
+    
+    Args:
+        file: The uploaded file to process
+        bucket_name: Supabase bucket name (e.g., 'listings', 'partner_logos', 'user_documents')
+        folder: Folder within the bucket (e.g., 'listings', 'logos', 'identity_documents')
+        user_id: Optional user ID for generating unique file paths
+        
+    Returns:
+        Supabase public URL of the uploaded file
+        
+    Raises:
+        ValueError: If Supabase is not configured or upload fails
+    """
+    from ..supabase_storage import get_supabase_client, upload_file_to_supabase
+    
+    # Early check: Verify Supabase is configured
+    supabase_client = get_supabase_client()
+    if not supabase_client:
+        error_msg = (
+            "Supabase Storage is not configured. "
+            "Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables. "
+            "Local file storage is not available on Render's ephemeral filesystem."
+        )
+        if settings.DEBUG:
+            print(f"❌ {error_msg}")
+        raise ValueError(error_msg)
+    
+    # Generate unique file path
+    file_name = file.name if hasattr(file, 'name') else 'unknown'
+    file_ext = os.path.splitext(file_name)[1] if file_name else '.jpg'
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    
+    if user_id:
+        file_path = f"{folder}/{user_id}_{unique_filename}"
+    else:
+        file_path = f"{folder}/{unique_filename}"
+    
+    # Determine content type
+    content_type = 'image/jpeg'  # default
+    if file_ext.lower() in ['.jpg', '.jpeg']:
+        content_type = 'image/jpeg'
+    elif file_ext.lower() == '.png':
+        content_type = 'image/png'
+    elif file_ext.lower() == '.gif':
+        content_type = 'image/gif'
+    elif file_ext.lower() == '.webp':
+        content_type = 'image/webp'
+    elif file_ext.lower() == '.pdf':
+        content_type = 'application/pdf'
+    
+    # Read file content
+    try:
+        file.seek(0)
+    except (AttributeError, OSError):
+        pass
+    
+    file_content = bytearray()
+    try:
+        for chunk in file.chunks():
+            file_content.extend(chunk)
+    except (AttributeError, TypeError):
+        try:
+            file.seek(0)
+            file_content = bytearray(file.read())
+        except Exception as read_error:
+            raise ValueError(f"Cannot read file content: {str(read_error)}")
+    
+    file_content = bytes(file_content)
+    
+    # Upload to Supabase
+    try:
+        from io import BytesIO
+        file_obj = BytesIO(file_content)
+        supabase_url = upload_file_to_supabase(
+            file=file_obj,
+            bucket_name=bucket_name,
+            file_path=file_path,
+            content_type=content_type
+        )
+        
+        if not supabase_url:
+            raise ValueError(
+                f"Supabase upload returned no URL. "
+                f"Please check that the '{bucket_name}' bucket exists and is PUBLIC."
+            )
+        
+        return supabase_url
+    except Exception as e:
+        error_msg = str(e)
+        if settings.DEBUG:
+            print(f"❌ Could not upload to Supabase Storage: {error_msg}")
+        raise ValueError(
+            f"Failed to upload file to Supabase Storage: {error_msg}. "
+            f"Please ensure Supabase is configured correctly."
+        )
+
+
 def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> Dict[str, Any]:
     """
     Process and save an uploaded image file (optimized for speed).
+    
+    IMPORTANT: This function REQUIRES Supabase Storage to be configured.
+    Local file storage is not available on Render's ephemeral filesystem.
     
     Args:
         file: The uploaded file
         upload_dir: Directory to save the image (relative to MEDIA_ROOT)
         
     Returns:
-        Dictionary with 'url' and 'name' keys, or None if failed
+        Dictionary with 'url' (Supabase URL), 'name', and 'size' keys
+        
+    Raises:
+        ValueError: If Supabase is not configured or upload fails
     """
+    # Early check: Verify Supabase is configured before processing
+    from ..supabase_storage import get_supabase_client
+    supabase_client = get_supabase_client()
+    if not supabase_client:
+        error_msg = (
+            "Supabase Storage is not configured. "
+            "Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables. "
+            "Local file storage is not available on Render's ephemeral filesystem."
+        )
+        if settings.DEBUG:
+            print(f"❌ {error_msg}")
+        raise ValueError(error_msg)
+    
     # Lightweight validation (skip full validation to save time)
     if file.size > MAX_FILE_SIZE:
         raise ValueError(f"Image file is too large. Maximum size is {MAX_FILE_SIZE / (1024 * 1024):.1f}MB")
@@ -193,7 +318,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
             with open(full_path, 'wb') as destination:
                 destination.write(file_content)
         
-        # Upload to Supabase Storage if available, otherwise use local path
+        # Upload to Supabase Storage (REQUIRED - no fallback to local paths on Render)
         supabase_url = None
         bucket_name = 'listings'  # Use 'listings' bucket for all images (MUST BE PUBLIC)
         
@@ -208,7 +333,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         elif file_ext.lower() == '.webp':
             content_type = 'image/webp'
         
-        # Try to upload to Supabase Storage
+        # Try to upload to Supabase Storage (REQUIRED)
         try:
             # Read the saved file to upload to Supabase
             with open(full_path, 'rb') as saved_file:
@@ -219,26 +344,38 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
                     content_type=content_type
                 )
         except Exception as e:
+            error_msg = str(e)
             if settings.DEBUG:
-                print(f"⚠️ Could not upload to Supabase Storage: {str(e)}")
-                print(f"   Make sure the '{bucket_name}' bucket exists and is PUBLIC in Supabase Dashboard")
-            supabase_url = None
+                print(f"❌ Could not upload to Supabase Storage: {error_msg}")
+                print(f"   Make sure:")
+                print(f"   1. SUPABASE_URL and SUPABASE_ANON_KEY are set in environment variables")
+                print(f"   2. The '{bucket_name}' bucket exists in Supabase Dashboard")
+                print(f"   3. The '{bucket_name}' bucket is set to PUBLIC in Supabase Dashboard")
+                print(f"   4. The bucket has proper permissions")
+            # Don't fallback to local - raise error instead
+            raise ValueError(
+                f"Failed to upload image to Supabase Storage: {error_msg}. "
+                f"Please ensure Supabase is configured correctly. "
+                f"Local file storage is not available on Render's ephemeral filesystem."
+            )
         
-        # Return image info - prefer Supabase URL, fallback to local path
-        if supabase_url:
-            return {
-                'url': supabase_url,
-                'name': file_name,
-                'size': file_size
-            }
-        else:
-            # Fallback to local media path
-            media_path = f"/media/{file_path}"
-            return {
-                'url': media_path,
-                'name': file_name,
-                'size': file_size
-            }
+        # Verify we got a Supabase URL
+        if not supabase_url:
+            error_msg = (
+                f"Supabase upload returned no URL. "
+                f"Please check that SUPABASE_URL and SUPABASE_ANON_KEY are set, "
+                f"and that the '{bucket_name}' bucket exists and is PUBLIC."
+            )
+            if settings.DEBUG:
+                print(f"❌ {error_msg}")
+            raise ValueError(error_msg)
+        
+        # Return image info with Supabase URL
+        return {
+            'url': supabase_url,
+            'name': file_name,
+            'size': file_size
+        }
     except Exception as e:
         if settings.DEBUG:
             file_name_for_error = file_name if 'file_name' in locals() else 'unknown'
@@ -311,20 +448,82 @@ def normalize_image_entry(img: Any) -> Dict[str, Any]:
         return {'url': str(img)}
 
 
+def is_local_media_url(url: str) -> bool:
+    """
+    Check if a URL is a local media URL that won't work on Render's ephemeral filesystem.
+    
+    Args:
+        url: URL string to check
+        
+    Returns:
+        True if URL is a local media URL, False otherwise
+    """
+    if not url or not isinstance(url, str):
+        return False
+    
+    url_lower = url.lower()
+    
+    # Check for local media patterns
+    local_media_patterns = [
+        '/media/',
+        '/profiles/',
+        'localhost/media',
+        'localhost/profiles',
+        '127.0.0.1/media',
+        '127.0.0.1/profiles',
+        'airbcar-backend.onrender.com/media',
+        'airbcar-backend.onrender.com/profiles',
+        '.onrender.com/media',  # Catch any Render subdomain with /media
+        '.onrender.com/profiles',  # Catch any Render subdomain with /profiles
+    ]
+    
+    # Check if URL contains any local media pattern
+    if any(pattern in url_lower for pattern in local_media_patterns):
+        return True
+    
+    # Check for paths starting with /media/ or /profiles/
+    if url_lower.startswith('/media/') or url_lower.startswith('/profiles/'):
+        return True
+    
+    return False
+
+
 def combine_images(uploaded_images: List[Dict[str, Any]], existing_images: List[Any]) -> List[Dict[str, Any]]:
     """
     Combine uploaded images with existing images, normalizing the format.
+    Filters out local media URLs that won't work on Render's ephemeral filesystem.
     
     Args:
         uploaded_images: List of newly uploaded images (already processed)
         existing_images: List of existing images (various formats)
         
     Returns:
-        Combined and normalized list of images
+        Combined and normalized list of images (only Supabase/external URLs)
     """
     # Normalize existing images
     normalized_existing = [normalize_image_entry(img) for img in existing_images]
     
-    # Combine and return
-    return uploaded_images + normalized_existing
+    # Filter out local media URLs from existing images
+    filtered_existing = []
+    for img in normalized_existing:
+        if isinstance(img, dict) and 'url' in img:
+            url = img['url']
+            if not is_local_media_url(url):
+                filtered_existing.append(img)
+        elif isinstance(img, str):
+            if not is_local_media_url(img):
+                filtered_existing.append(img)
+        else:
+            # Keep non-URL entries (might be other metadata)
+            filtered_existing.append(img)
+    
+    # Combine uploaded images (which should all be Supabase URLs) with filtered existing images
+    combined = uploaded_images + filtered_existing
+    
+    # Log if we filtered out any images
+    if settings.DEBUG and len(normalized_existing) > len(filtered_existing):
+        filtered_count = len(normalized_existing) - len(filtered_existing)
+        print(f"⚠️ Filtered out {filtered_count} local media URL(s) from existing images")
+    
+    return combined
 
