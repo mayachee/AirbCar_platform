@@ -11,14 +11,28 @@ from contextlib import contextmanager
 
 
 def get_supabase_client() -> Optional[Client]:
-    """Get Supabase client instance."""
+    """
+    Get Supabase client instance.
+    
+    For uploads, SERVICE_ROLE_KEY is required (has upload permissions).
+    ANON_KEY typically doesn't have upload permissions for security.
+    """
     supabase_url = os.environ.get('SUPABASE_URL')
-    supabase_key = os.environ.get('SUPABASE_ANON_KEY') or os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+    # Prioritize SERVICE_ROLE_KEY for uploads (has full permissions)
+    # Fall back to ANON_KEY only if SERVICE_ROLE_KEY is not available
+    supabase_key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY') or os.environ.get('SUPABASE_ANON_KEY')
     
     if not supabase_url or not supabase_key:
         if settings.DEBUG:
             print("⚠️ Supabase credentials not found. File uploads will use local storage.")
+            print("   Required: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY)")
         return None
+    
+    # Warn if using ANON_KEY (might not have upload permissions)
+    if not os.environ.get('SUPABASE_SERVICE_ROLE_KEY') and os.environ.get('SUPABASE_ANON_KEY'):
+        if settings.DEBUG:
+            print("⚠️ Using SUPABASE_ANON_KEY for uploads. This may fail if ANON_KEY doesn't have upload permissions.")
+            print("   For uploads, SUPABASE_SERVICE_ROLE_KEY is recommended (has full permissions).")
     
     try:
         return create_client(supabase_url, supabase_key)

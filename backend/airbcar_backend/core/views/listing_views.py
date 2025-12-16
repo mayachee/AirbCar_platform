@@ -487,8 +487,14 @@ class ListingListView(APIView):
                 print(f"📋 POST /listings/ - Content-Type: {request.content_type}")
             
             # Process uploaded files (from 'pictures' field in FormData)
-            # Optimized: Skip separate validation, process_and_save_image does lightweight validation
+            # OPTIMIZED: Use direct Supabase upload (no local save) for faster processing
             if 'pictures' in request.FILES:
+                # Import upload function
+                try:
+                    from core.utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                except ImportError:
+                    from ..utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                
                 # Handle single file or multiple files
                 files = request.FILES.getlist('pictures')
                 # Limit to 5 images max to prevent timeout
@@ -512,15 +518,29 @@ class ListingListView(APIView):
                             file = None  # Clear reference
                             continue
                         
-                        # Process and save image (includes validation)
-                        image_info = process_and_save_image(file, upload_dir='listings')
+                        # Lightweight validation (just check file type, no full processing)
+                        is_valid, validation_error = validate_image_file(file)
+                        if not is_valid:
+                            image_errors.append(f"{file_name}: {validation_error}")
+                            file = None
+                            continue
+                        
+                        # OPTIMIZED: Upload directly to Supabase (no local save, no resizing)
+                        # This is much faster than process_and_save_image
+                        supabase_url = upload_file_to_supabase_storage(
+                            file=file,
+                            bucket_name='listings',
+                            folder='listings',
+                            user_id=partner.id if partner else None
+                        )
+                        
                         uploaded_images.append({
-                            'url': image_info['url'],
-                            'name': image_info['name']
+                            'url': supabase_url,
+                            'name': file_name
                         })
                         
                         if settings.DEBUG:
-                            print(f"✓ Saved image: {image_info['url']}")
+                            print(f"✓ Uploaded image to Supabase: {supabase_url}")
                     except ValueError as e:
                         # Validation error
                         image_errors.append(f"{file_name}: {str(e)}")
@@ -749,15 +769,34 @@ class ListingDetailView(APIView):
                             image_errors.append(f"{file.name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
                             continue
                         
-                        # Process and save image (includes validation)
-                        image_info = process_and_save_image(file, upload_dir='listings')
+                        # OPTIMIZED: Upload directly to Supabase (no local save, no resizing)
+                        # Import upload function
+                        try:
+                            from core.utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                        except ImportError:
+                            from ..utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                        
+                        # Lightweight validation
+                        is_valid, validation_error = validate_image_file(file)
+                        if not is_valid:
+                            image_errors.append(f"{file.name}: {validation_error}")
+                            continue
+                        
+                        # Upload directly to Supabase
+                        supabase_url = upload_file_to_supabase_storage(
+                            file=file,
+                            bucket_name='listings',
+                            folder='listings',
+                            user_id=partner.id if partner else None
+                        )
+                        
                         uploaded_images.append({
-                            'url': image_info['url'],
-                            'name': image_info['name']
+                            'url': supabase_url,
+                            'name': file.name
                         })
                         
                         if settings.DEBUG:
-                            print(f"✓ Saved image: {image_info['url']}")
+                            print(f"✓ Uploaded image to Supabase: {supabase_url}")
                     except ValueError as e:
                         # Validation error
                         image_errors.append(f"{file.name}: {str(e)}")
