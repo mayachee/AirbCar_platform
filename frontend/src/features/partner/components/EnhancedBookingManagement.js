@@ -423,17 +423,17 @@ export default function EnhancedBookingManagement({
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl shadow-sm border-2 border-orange-200 dark:border-orange-800 p-6">
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl shadow-sm border-2 border-orange-200 dark:border-orange-800 p-4 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Booking Management</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Booking Management</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage all your vehicle bookings</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <button
               onClick={loadBookings}
               disabled={loading}
-              className="px-4 py-2 bg-white dark:bg-gray-800 border-2 border-orange-300 dark:border-orange-700 rounded-lg text-orange-700 dark:text-orange-300 font-medium hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              className="w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border-2 border-orange-300 dark:border-orange-700 rounded-lg text-orange-700 dark:text-orange-300 font-medium hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
@@ -441,7 +441,7 @@ export default function EnhancedBookingManagement({
             <button
               onClick={exportBookings}
               disabled={filteredBookings.length === 0}
-              className="px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white rounded-lg font-medium hover:bg-orange-700 dark:hover:bg-orange-800 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              className="w-full sm:w-auto px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white rounded-lg font-medium hover:bg-orange-700 dark:hover:bg-orange-800 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
             >
               <Download className="h-4 w-4" />
               <span>Export CSV</span>
@@ -450,43 +450,43 @@ export default function EnhancedBookingManagement({
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-orange-200 dark:border-orange-800">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total Bookings</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
           </div>
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border-2 border-yellow-300 dark:border-yellow-700">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 sm:p-4 border-2 border-yellow-300 dark:border-yellow-700">
             <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-1">Pending</p>
-            <p className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">{stats.pending}</p>
+            <p className="text-xl sm:text-2xl font-bold text-yellow-800 dark:text-yellow-200">{stats.pending}</p>
           </div>
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 sm:p-4 border border-green-200 dark:border-green-800">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Confirmed</p>
-            <p className="text-2xl font-bold text-green-700 dark:text-green-400">{stats.confirmed}</p>
+            <p className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400">{stats.confirmed}</p>
           </div>
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Completed</p>
-            <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.completed}</p>
+            <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.completed}</p>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-600">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Cancelled</p>
-            <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">{stats.cancelled}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-300">{stats.cancelled}</p>
           </div>
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-800">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 sm:p-4 border border-emerald-200 dark:border-emerald-800">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 flex items-center space-x-1">
               <TrendingUp className="h-3 w-3" />
               <span>Total Revenue</span>
             </p>
-            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-lg sm:text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.totalRevenue)}</p>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 sm:p-4 border border-amber-200 dark:border-amber-800">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Pending Revenue</p>
-            <p className="text-xl font-bold text-amber-700 dark:text-amber-400">{formatCurrency(stats.pendingRevenue)}</p>
+            <p className="text-lg sm:text-xl font-bold text-amber-700 dark:text-amber-400">{formatCurrency(stats.pendingRevenue)}</p>
           </div>
         </div>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
@@ -505,7 +505,7 @@ export default function EnhancedBookingManagement({
               setStatusFilter(e.target.value);
               setShowPendingOnly(false);
             }}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -517,7 +517,7 @@ export default function EnhancedBookingManagement({
           <select
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="all">All Payments</option>
             <option value="paid">Paid</option>
@@ -532,7 +532,7 @@ export default function EnhancedBookingManagement({
               setSortBy(field);
               setSortOrder(order);
             }}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="date-desc">Sort: Date (Newest)</option>
             <option value="date-asc">Sort: Date (Oldest)</option>
@@ -626,10 +626,10 @@ export default function EnhancedBookingManagement({
                 }`}
               >
                 <div className="p-6">
-                  <div className="flex items-start justify-between">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                     <div className="flex-1">
                       {/* Header Row */}
-                      <div className="flex items-center space-x-3 mb-4">
+                      <div className="flex flex-wrap items-center gap-2 mb-4">
                         <span className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 ${getStatusColor(booking.status)}`}>
                           {booking.status?.toUpperCase()}
                         </span>
@@ -760,13 +760,13 @@ export default function EnhancedBookingManagement({
                     </div>
                     
                     {/* Action Buttons */}
-                    <div className="ml-6 flex flex-col space-y-3 min-w-[160px]">
+                    <div className="w-full lg:w-auto lg:ml-6 flex flex-col gap-3">
                       <button
                         onClick={() => {
                           setSelectedBooking(booking);
                           setShowDetails(true);
                         }}
-                        className="px-4 py-2.5 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all flex items-center justify-center space-x-2"
+                        className="w-full lg:w-auto px-4 py-2.5 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all flex items-center justify-center space-x-2"
                       >
                         <Eye className="h-4 w-4" />
                         <span>Details</span>
@@ -774,7 +774,7 @@ export default function EnhancedBookingManagement({
                       
                       <button
                         onClick={() => toggleExpand(booking.id)}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all flex items-center justify-center space-x-2"
+                        className="w-full lg:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all flex items-center justify-center space-x-2"
                       >
                         {isExpanded ? (
                           <>
@@ -790,11 +790,11 @@ export default function EnhancedBookingManagement({
                       </button>
                       
                       {isPending && (
-                        <div className="flex flex-col space-y-2.5 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-col gap-2.5 pt-2 border-t border-gray-200 dark:border-gray-700">
                           <button
                             onClick={() => handleAction('accept', booking.id)}
                             disabled={isLoading}
-                            className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 rounded-xl hover:from-green-700 hover:to-green-800 dark:hover:from-green-800 dark:hover:to-green-900 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                            className="w-full lg:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 rounded-xl hover:from-green-700 hover:to-green-800 dark:hover:from-green-800 dark:hover:to-green-900 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl space-x-2"
                           >
                             {isLoading ? (
                               <>
@@ -811,7 +811,7 @@ export default function EnhancedBookingManagement({
                           <button
                             onClick={() => handleAction('reject', booking.id)}
                             disabled={isLoading}
-                            className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 rounded-xl hover:from-red-700 hover:to-red-800 dark:hover:from-red-800 dark:hover:to-red-900 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                            className="w-full lg:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 rounded-xl hover:from-red-700 hover:to-red-800 dark:hover:from-red-800 dark:hover:to-red-900 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
                           >
                             {isLoading ? (
                               <>

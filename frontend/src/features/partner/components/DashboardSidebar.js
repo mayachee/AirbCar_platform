@@ -43,7 +43,7 @@ export default function DashboardSidebar({
       className={`bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 ease-in-out flex flex-col ${
         isMobile
           ? 'fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] h-full border-r border-gray-200 dark:border-gray-700'
-          : 'h-screen border-r border-gray-200 dark:border-gray-700'
+          : 'sticky top-0 h-screen border-r border-gray-200 dark:border-gray-700'
       }`}
     >
       <div className="p-4 flex-1 overflow-y-auto">

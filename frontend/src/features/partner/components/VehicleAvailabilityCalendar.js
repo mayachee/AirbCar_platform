@@ -105,32 +105,34 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="flex items-center space-x-3">
           <Calendar className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Vehicle Availability Calendar</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+            Vehicle Availability Calendar
+          </h3>
         </div>
         
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <select
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-60 sm:w-auto h-11 sm:h-auto px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="month">Month View</option>
-            <option value="week">Week View</option>
-            <option value="day">Day View</option>
+            <option value="month">Month</option>
+            <option value="week">Week</option>
+            <option value="day">Day</option>
           </select>
           
-          <div className="flex items-center space-x-2">
+          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start sm:space-x-2 min-w-0">
             <button
               onClick={() => navigateMonth(-1)}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white min-w-[150px] text-center">
+            <span className="flex-1 sm:flex-none min-w-0 text-base sm:text-lg font-semibold text-gray-900 dark:text-white text-center px-2 truncate">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </span>
             <button
@@ -146,38 +148,42 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
         <div className="lg:col-span-2">
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {dayNames.map((day) => (
-              <div key={day} className="p-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-                {day}
-              </div>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1">
-            {days.map((day, index) => (
-              <div
-                key={index}
-                className={`aspect-square p-2 border border-gray-200 dark:border-gray-700 ${
-                  day ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-50 dark:bg-gray-900'
-                }`}
-              >
-                {day && (
-                  <div className="h-full flex flex-col">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {day.getDate()}
-                    </span>
-                    <div className="flex-1 flex items-center justify-center">
-                      {selectedVehicle && (
-                        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getAvailabilityColor(getVehicleAvailability(selectedVehicle.id, day))}`}>
-                          {getAvailabilityIcon(getVehicleAvailability(selectedVehicle.id, day))}
-                        </div>
-                      )}
-                    </div>
+          <div className="overflow-x-auto -mx-2 px-2 pb-2">
+            <div className="min-w-[360px] sm:min-w-[420px]">
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {dayNames.map((day) => (
+                  <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {day}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
+              
+              <div className="grid grid-cols-7 gap-1">
+                {days.map((day, index) => (
+                  <div
+                    key={index}
+                    className={`aspect-square p-1 sm:p-2 border border-gray-200 dark:border-gray-700 ${
+                      day ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-50 dark:bg-gray-900'
+                    }`}
+                  >
+                    {day && (
+                      <div className="h-full flex flex-col">
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                          {day.getDate()}
+                        </span>
+                        <div className="flex-1 flex items-center justify-center">
+                          {selectedVehicle && (
+                            <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getAvailabilityColor(getVehicleAvailability(selectedVehicle.id, day))}`}>
+                              {getAvailabilityIcon(getVehicleAvailability(selectedVehicle.id, day))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

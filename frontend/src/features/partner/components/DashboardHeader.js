@@ -32,7 +32,7 @@ export default function DashboardHeader({
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4"
+      className="sticky top-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
