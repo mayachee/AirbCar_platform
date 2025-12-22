@@ -312,11 +312,11 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
 
   if (vehicles.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border-2 border-gray-200 p-8">
+      <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-700 p-8">
         <div className="text-center py-12">
-          <Car className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Vehicles Available</h3>
-          <p className="text-gray-600">Add vehicles to your fleet to perform bulk operations</p>
+          <Car className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Vehicles Available</h3>
+          <p className="text-gray-600 dark:text-gray-400">Add vehicles to your fleet to perform bulk operations</p>
         </div>
       </div>
     );
@@ -325,9 +325,9 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
   return (
     <div className="space-y-6">
       {/* Main Bulk Operations Panel */}
-      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border-2 border-gray-200 overflow-hidden">
+      <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 border-b border-blue-800">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 px-6 py-5 border-b border-blue-800 dark:border-blue-900">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -335,7 +335,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">Bulk Operations</h2>
-                <p className="text-sm text-blue-100 mt-0.5">Manage multiple vehicles at once</p>
+                <p className="text-sm text-blue-100 dark:text-blue-200 mt-0.5">Manage multiple vehicles at once</p>
               </div>
             </div>
             {selectedVehicles.length > 0 && (
@@ -353,17 +353,17 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <CheckSquare className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   Select Vehicles
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Choose vehicles to perform bulk operations on
                 </p>
               </div>
               <button
                 onClick={handleSelectAll}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
               >
                 {selectedVehicles.length === vehicles.length ? (
                   <>
@@ -379,7 +379,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-2 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-700">
               {vehicles.map((vehicle) => {
                 const isSelected = selectedVehicles.includes(vehicle.id);
                 return (
@@ -387,15 +387,15 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                     key={vehicle.id} 
                     className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                       isSelected 
-                        ? 'bg-blue-50 border-blue-500 shadow-md' 
-                        : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-600 shadow-md' 
+                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-sm'
                     }`}
                   >
                     <div className="flex-shrink-0">
                       {isSelected ? (
-                        <CheckSquare className="h-5 w-5 text-blue-600" />
+                        <CheckSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       ) : (
-                        <Square className="h-5 w-5 text-gray-400" />
+                        <Square className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                       )}
                     </div>
                     <input
@@ -405,15 +405,15 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                       className="hidden"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate">
+                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
                         {vehicle.make} {vehicle.model}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
                           {vehicle.year}
                         </p>
-                        <span className="text-gray-400">•</span>
-                        <p className="text-xs font-semibold text-orange-600">
+                        <span className="text-gray-400 dark:text-gray-500">•</span>
+                        <p className="text-xs font-semibold text-orange-600 dark:text-orange-400">
                           {vehicle.price_per_day ? `${vehicle.price_per_day} MAD/day` : 'N/A'}
                         </p>
                       </div>
@@ -424,14 +424,14 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
             </div>
             
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-700">
-                <span className="text-blue-600 font-bold">{selectedVehicles.length}</span> of{' '}
-                <span className="text-gray-900 font-bold">{vehicles.length}</span> vehicles selected
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-blue-600 dark:text-blue-400 font-bold">{selectedVehicles.length}</span> of{' '}
+                <span className="text-gray-900 dark:text-white font-bold">{vehicles.length}</span> vehicles selected
               </p>
               {selectedVehicles.length > 0 && (
                 <button
                   onClick={() => setSelectedVehicles([])}
-                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
                 >
                   Clear Selection
                 </button>
@@ -440,13 +440,13 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
           </div>
 
           {/* Operation Selection */}
-          <div className="border-t-2 border-gray-200 pt-6">
+          <div className="border-t-2 border-gray-200 dark:border-gray-700 pt-6">
             <div className="mb-4">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Settings className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Choose Operation
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Select the action you want to perform on selected vehicles
               </p>
             </div>
@@ -461,7 +461,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                     className={`relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                       isSelected 
                         ? `${colorClasses[op.color]} shadow-lg scale-105` 
-                        : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                        : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:shadow-md'
                     }`}
                   >
                     <input
@@ -475,25 +475,25 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                     <div className="flex items-start space-x-3">
                       <div className={`p-2 rounded-lg ${
                         isSelected 
-                          ? 'bg-white' 
-                          : 'bg-gray-100'
+                          ? 'bg-white dark:bg-gray-800' 
+                          : 'bg-gray-100 dark:bg-gray-600'
                       }`}>
                         <IconComponent className={`h-5 w-5 ${
                           isSelected 
                             ? iconColorClasses[op.color]
-                            : 'text-gray-600'
+                            : 'text-gray-600 dark:text-gray-400'
                         }`} />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-gray-900 mb-1">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">
                           {op.label}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {op.description}
                         </p>
                       </div>
                       {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                       )}
                     </div>
                   </label>
@@ -503,17 +503,17 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
           </div>
 
           {/* Execute Button */}
-          <div className="border-t-2 border-gray-200 pt-6">
+          <div className="border-t-2 border-gray-200 dark:border-gray-700 pt-6">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 {selectedVehicles.length > 0 && operation && selectedOperation && (
-                  <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <AlertTriangle className="h-5 w-5 text-blue-600" />
+                  <div className="flex items-center space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <AlertTriangle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     <div>
-                      <p className="text-sm font-semibold text-blue-900">
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-200">
                         Ready to {selectedOperation.label.toLowerCase()}
                       </p>
-                      <p className="text-xs text-blue-700">
+                      <p className="text-xs text-blue-700 dark:text-blue-300">
                         This will affect {selectedVehicles.length} vehicle{selectedVehicles.length !== 1 ? 's' : ''}
                       </p>
                     </div>
@@ -524,7 +524,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
               <button
                 onClick={handleBulkOperation}
                 disabled={!operation || selectedVehicles.length === 0 || loading}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:transform-none"
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 hover:from-green-700 hover:to-green-800 dark:hover:from-green-800 dark:hover:to-green-900 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:transform-none"
               >
                 {loading ? (
                   <>
@@ -545,20 +545,20 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
 
       {/* Success/Error Messages */}
       {successMessage && (
-        <div className="fixed top-4 right-4 bg-green-50 border-2 border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-lg z-50 flex items-center space-x-3 max-w-md">
-          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+        <div className="fixed top-4 right-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 px-6 py-4 rounded-lg shadow-lg z-50 flex items-center space-x-3 max-w-md">
+          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
           <p className="font-semibold flex-1">{successMessage}</p>
-          <button onClick={() => setSuccessMessage('')} className="text-green-600 hover:text-green-800">
+          <button onClick={() => setSuccessMessage('')} className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300">
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
       {errorMessage && (
-        <div className="fixed top-4 right-4 bg-red-50 border-2 border-red-200 text-red-800 px-6 py-4 rounded-lg shadow-lg z-50 flex items-center space-x-3 max-w-md">
-          <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+        <div className="fixed top-4 right-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 px-6 py-4 rounded-lg shadow-lg z-50 flex items-center space-x-3 max-w-md">
+          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
           <p className="font-semibold flex-1">{errorMessage}</p>
-          <button onClick={() => setErrorMessage('')} className="text-red-600 hover:text-red-800">
+          <button onClick={() => setErrorMessage('')} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -567,29 +567,29 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
       {/* Confirmation Modal */}
       {showConfirm && selectedOperation && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center space-x-3 mb-4">
               <div className={`p-2 rounded-lg ${
-                selectedOperation.color === 'red' ? 'bg-red-100' : 'bg-orange-100'
+                selectedOperation.color === 'red' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-orange-100 dark:bg-orange-900/30'
               }`}>
                 <AlertTriangle className={`h-6 w-6 ${
-                  selectedOperation.color === 'red' ? 'text-red-600' : 'text-orange-600'
+                  selectedOperation.color === 'red' ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'
                 }`} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Confirm Operation</h3>
-                <p className="text-sm text-gray-500">This action cannot be undone</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirm Operation</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
               </div>
             </div>
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
               Are you sure you want to <span className="font-bold">{selectedOperation.label.toLowerCase()}</span> on{' '}
-              <span className="font-bold text-blue-600">{selectedVehicles.length}</span> vehicle{selectedVehicles.length !== 1 ? 's' : ''}?
+              <span className="font-bold text-blue-600 dark:text-blue-400">{selectedVehicles.length}</span> vehicle{selectedVehicles.length !== 1 ? 's' : ''}?
             </p>
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowConfirm(false)}
                 disabled={loading}
-                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -598,8 +598,8 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                 disabled={loading}
                 className={`flex-1 px-4 py-2 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 ${
                   selectedOperation.color === 'red' 
-                    ? 'bg-red-600 hover:bg-red-700' 
-                    : 'bg-orange-600 hover:bg-orange-700'
+                    ? 'bg-red-600 dark:bg-red-700 hover:bg-red-700 dark:hover:bg-red-800' 
+                    : 'bg-orange-600 dark:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-800'
                 }`}
               >
                 {loading ? (
@@ -619,15 +619,15 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
       {/* Pricing Update Modal */}
       {showPricingModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <DollarSign className="h-6 w-6 text-blue-600" />
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Update Pricing</h3>
-                  <p className="text-sm text-gray-500">Set new price for selected vehicles</p>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Update Pricing</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Set new price for selected vehicles</p>
                 </div>
               </div>
               <button
@@ -635,13 +635,13 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                   setShowPricingModal(false);
                   setNewPrice('');
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 New Price Per Day (MAD)
               </label>
               <input
@@ -651,10 +651,10 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                 value={newPrice}
                 onChange={(e) => setNewPrice(e.target.value)}
                 placeholder="Enter price in MAD"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+                className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 This will update {selectedVehicles.length} vehicle{selectedVehicles.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -665,14 +665,14 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                   setNewPrice('');
                 }}
                 disabled={loading}
-                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleBulkPricingUpdate}
                 disabled={loading || !newPrice}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -689,10 +689,10 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
       )}
 
       {/* Quick Actions */}
-      <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border-2 border-gray-200 p-6">
+      <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center space-x-2 mb-5">
-          <Zap className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
+          <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Quick Actions</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -704,14 +704,14 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                 console.log('Navigate to Analytics');
               }
             }}
-            className="group p-5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+            className="group p-5 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
           >
             <div className="text-center">
-              <div className="inline-flex p-3 bg-blue-600 rounded-lg mb-3 group-hover:scale-110 transition-transform">
+              <div className="inline-flex p-3 bg-blue-600 dark:bg-blue-700 rounded-lg mb-3 group-hover:scale-110 transition-transform">
                 <BarChart3 className="h-6 w-6 text-white" />
               </div>
-              <p className="text-sm font-bold text-blue-900">Analytics</p>
-              <p className="text-xs text-blue-700 mt-1">View insights</p>
+              <p className="text-sm font-bold text-blue-900 dark:text-blue-200">Analytics</p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">View insights</p>
             </div>
           </button>
           
@@ -728,14 +728,14 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                 setTimeout(() => setErrorMessage(''), 5000);
               }
             }}
-            className="group p-5 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border-2 border-green-200 hover:border-green-400 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+            className="group p-5 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border-2 border-green-200 dark:border-green-800 hover:border-green-400 dark:hover:border-green-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
           >
             <div className="text-center">
-              <div className="inline-flex p-3 bg-green-600 rounded-lg mb-3 group-hover:scale-110 transition-transform">
+              <div className="inline-flex p-3 bg-green-600 dark:bg-green-700 rounded-lg mb-3 group-hover:scale-110 transition-transform">
                 <FileText className="h-6 w-6 text-white" />
               </div>
-              <p className="text-sm font-bold text-green-900">Reports</p>
-              <p className="text-xs text-green-700 mt-1">Export all data</p>
+              <p className="text-sm font-bold text-green-900 dark:text-green-200">Reports</p>
+              <p className="text-xs text-green-700 dark:text-green-300 mt-1">Export all data</p>
             </div>
           </button>
           
@@ -747,14 +747,14 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                 console.log('Navigate to Settings');
               }
             }}
-            className="group p-5 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+            className="group p-5 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
           >
             <div className="text-center">
-              <div className="inline-flex p-3 bg-purple-600 rounded-lg mb-3 group-hover:scale-110 transition-transform">
+              <div className="inline-flex p-3 bg-purple-600 dark:bg-purple-700 rounded-lg mb-3 group-hover:scale-110 transition-transform">
                 <Settings className="h-6 w-6 text-white" />
               </div>
-              <p className="text-sm font-bold text-purple-900">Settings</p>
-              <p className="text-xs text-purple-700 mt-1">Configure options</p>
+              <p className="text-sm font-bold text-purple-900 dark:text-purple-200">Settings</p>
+              <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">Configure options</p>
             </div>
           </button>
           
@@ -763,14 +763,14 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
               // Open support/help
               window.open('mailto:support@airbcar.com?subject=Partner Support Request', '_blank');
             }}
-            className="group p-5 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border-2 border-orange-200 hover:border-orange-400 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+            className="group p-5 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl border-2 border-orange-200 dark:border-orange-800 hover:border-orange-400 dark:hover:border-orange-600 hover:shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
           >
             <div className="text-center">
-              <div className="inline-flex p-3 bg-orange-600 rounded-lg mb-3 group-hover:scale-110 transition-transform">
+              <div className="inline-flex p-3 bg-orange-600 dark:bg-orange-700 rounded-lg mb-3 group-hover:scale-110 transition-transform">
                 <MessageCircle className="h-6 w-6 text-white" />
               </div>
-              <p className="text-sm font-bold text-orange-900">Support</p>
-              <p className="text-xs text-orange-700 mt-1">Get help</p>
+              <p className="text-sm font-bold text-orange-900 dark:text-orange-200">Support</p>
+              <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">Get help</p>
             </div>
           </button>
         </div>

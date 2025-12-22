@@ -78,12 +78,12 @@ export default function DashboardSidebar({
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''} p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50`}
+            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''} p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700`}
           >
             {isOnline ? (
-              <Wifi className="h-4 w-4 text-green-500 mr-2" />
+              <Wifi className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
             ) : (
-              <WifiOff className="h-4 w-4 text-red-500 mr-2" />
+              <WifiOff className="h-4 w-4 text-red-500 dark:text-red-400 mr-2" />
             )}
             {!sidebarCollapsed && (
               <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -95,12 +95,12 @@ export default function DashboardSidebar({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''} p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50`}
+            className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''} p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700`}
           >
             {backendAvailable ? (
-              <Server className="h-4 w-4 text-blue-500 mr-2" />
+              <Server className="h-4 w-4 text-blue-500 dark:text-blue-400 mr-2" />
             ) : (
-              <ServerOff className="h-4 w-4 text-yellow-500 mr-2" />
+              <ServerOff className="h-4 w-4 text-yellow-500 dark:text-yellow-400 mr-2" />
             )}
             {!sidebarCollapsed && (
               <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -123,7 +123,7 @@ export default function DashboardSidebar({
               onClick={() => setCurrentView(item.id)}
               className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group ${
                 currentView === item.id
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white shadow-md'
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
@@ -148,7 +148,7 @@ export default function DashboardSidebar({
                   className={`text-xs px-2 py-1 rounded-full font-semibold ${
                     currentView === item.id
                       ? 'bg-white/20 text-white'
-                      : 'bg-blue-500 text-white'
+                      : 'bg-blue-500 dark:bg-blue-600 text-white'
                   }`}
                 >
                   {item.badge}
