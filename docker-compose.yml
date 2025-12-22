@@ -2,6 +2,8 @@
 services:
   web:
     build: backend/
+    env_file:
+      - .env
     volumes:
       - ./backend/airbcar_backend:/app/airbcar_backend
       - ./backend/airbcar_backend/media:/app/airbcar_backend/media
@@ -17,26 +19,28 @@ services:
           memory: 512M
     environment:
       DEBUG: "True"
+      # IMPORTANT: set SECRET_KEY in .env (never commit real values)
       SECRET_KEY: ${SECRET_KEY:-django-insecure-dev-key-change-in-production}
       DATABASE_NAME: postgres
-      DATABASE_USER: postgres.wtbmqtmmdobfvvecinif
-      DATABASE_PASSWORD: Mayache+123455
-      DATABASE_HOST: aws-1-eu-north-1.pooler.supabase.com
-      DATABASE_PORT: 5432
+      DATABASE_USER: ${DATABASE_USER:-}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-}
+      DATABASE_HOST: ${DATABASE_HOST:-}
+      DATABASE_PORT: ${DATABASE_PORT:-5432}
       ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
-      DJANGO_SUPERUSER_USERNAME: amine
-      DJANGO_SUPERUSER_EMAIL: amine@a.com
-      DJANGO_SUPERUSER_PASSWORD: amineamine
+      # Optional bootstrap superuser (avoid committing defaults)
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
       LOAD_INITIAL_FIXTURE: "1"
       # Email Configuration (Gmail SMTP)
       EMAIL_HOST: smtp.gmail.com
       EMAIL_PORT: 587
       EMAIL_USE_TLS: "True"
-      EMAIL_HOST_USER: ayacheyassine2000@gmail.com
-      EMAIL_HOST_PASSWORD: rmqjpvkmekdiugnz
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
       FRONTEND_URL: http://localhost:3001
       BACKEND_URL: http://localhost:8000
-      DEFAULT_FROM_EMAIL: ayacheyassine2000@gmail.com
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
       PORT: 8000
       
@@ -44,6 +48,8 @@ services:
 
   app:
     build: frontend/
+    env_file:
+      - .env
     deploy:
       resources:
         limits:
@@ -58,10 +64,10 @@ services:
       # Frontend port configuration - must match port mapping above
       - PORT=3001
       - DJANGO_API_URL=http://web:8000
-      - NEXT_PUBLIC_DJANGO_API_URL=http://localhost:8000
-      - NEXTAUTH_URL=http://localhost:3001
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=712108051146-g9ksbf313hhl7n3nt69ot8np7gtvvd8o.apps.googleusercontent.com
-      - DATABASE_URL=postgresql://postgres.wtbmqtmmdobfvvecinif:Mayache+123455@aws-1-eu-north-1.pooler.supabase.com:5432/postgres
+      - NEXT_PUBLIC_DJANGO_API_URL=${NEXT_PUBLIC_DJANGO_API_URL:-http://localhost:8000}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3001}
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+      - DATABASE_URL=${DATABASE_URL:-}
       - NODE_OPTIONS=--max-old-space-size=4096 --openssl-legacy-provider
       - WATCHPACK_POLLING=true
       - WATCHPACK_POLLING_INTERVAL=2000
