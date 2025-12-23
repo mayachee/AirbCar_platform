@@ -5,7 +5,7 @@ import { Save, Upload, Building2, FileText, CheckCircle, AlertCircle, Image as I
 import { useAuth } from '@/contexts/AuthContext';
 import { MOROCCAN_CITIES } from '@/constants';
 
-export default function PartnerProfileSettings({ partnerData, onUpdate, loading }) {
+export default function PartnerProfileSettings({ partnerData, hasPartnerProfile = true, onUpdate, loading }) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     company_name: '',
@@ -33,6 +33,9 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
   // Fetch partner data if not provided
   useEffect(() => {
     const fetchPartnerData = async () => {
+      if (hasPartnerProfile === false) {
+        return;
+      }
       if (!partnerData && !fetchingData) {
         setFetchingData(true);
         try {
@@ -62,6 +65,10 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
             // The parent component should handle this, but we'll process it here as fallback
           }
         } catch (error) {
+          // Expected when user hasn't created a partner profile yet
+          if (error?.status === 404 && (error?.message || '').toLowerCase().includes('partner profile not found')) {
+            return;
+          }
           console.error('PartnerProfileSettings - Error fetching partner data:', error);
         } finally {
           setFetchingData(false);
@@ -70,7 +77,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
     };
     
     fetchPartnerData();
-  }, [partnerData, fetchingData]);
+  }, [partnerData, fetchingData, hasPartnerProfile]);
 
   // Fetch email from API (partnerData.user.email from API response or user context)
   useEffect(() => {

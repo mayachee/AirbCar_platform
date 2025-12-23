@@ -18,7 +18,8 @@ export default function EnhancedBookingManagement({
   onBookingUpdate,
   acceptBooking,
   rejectBooking,
-  cancelBooking 
+  cancelBooking,
+  hasPartnerProfile = true
 }) {
   const { user: currentUser } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -57,7 +58,9 @@ export default function EnhancedBookingManagement({
       console.log('🔍 Loading bookings...');
       
       const allBookingsResponse = await bookingService.getBookings();
-      const pendingRequestsResponse = await bookingService.getPendingRequests().catch(() => ({ data: [] }));
+      const pendingRequestsResponse = hasPartnerProfile
+        ? await bookingService.getPendingRequests().catch(() => ({ data: [] }))
+        : { data: [] };
       
       console.log('📦 Raw bookings response:', allBookingsResponse);
       console.log('📦 Raw pending response:', pendingRequestsResponse);

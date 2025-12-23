@@ -359,6 +359,7 @@ export function usePartnerData() {
 
   const getPendingRequests = async () => {
     try {
+      if (!hasPartnerProfile) return [];
       const response = await partnerService.getPendingRequests();
       // API client wraps: { data: backendResponse, success: true }
       // Backend returns: { data: [...], count: N }
@@ -366,6 +367,10 @@ export function usePartnerData() {
       const data = response?.data?.data || response?.data || [];
       return Array.isArray(data) ? data : [];
     } catch (error) {
+      // Expected when user has no partner profile yet
+      if (error?.status === 404 && (error?.message || '').toLowerCase().includes('partner profile not found')) {
+        return [];
+      }
       console.error('Error fetching pending requests:', error);
       return [];
     }
@@ -373,6 +378,7 @@ export function usePartnerData() {
 
   const getUpcomingBookings = async () => {
     try {
+      if (!hasPartnerProfile) return [];
       const response = await partnerService.getUpcomingBookings();
       // API client wraps: { data: backendResponse, success: true }
       // Backend returns: { data: [...], count: N }
@@ -380,6 +386,10 @@ export function usePartnerData() {
       const data = response?.data?.data || response?.data || [];
       return Array.isArray(data) ? data : [];
     } catch (error) {
+      // Expected when user has no partner profile yet
+      if (error?.status === 404 && (error?.message || '').toLowerCase().includes('partner profile not found')) {
+        return [];
+      }
       console.error('Error fetching upcoming bookings:', error);
       return [];
     }
