@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Car, BarChart3 } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function AdvancedAnalytics({ analytics, stats, bookings, vehicles }) {
   const [timeRange, setTimeRange] = useState('30d');
@@ -91,25 +92,27 @@ export default function AdvancedAnalytics({ analytics, stats, bookings, vehicles
         </div>
         
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-          <select
+          <SelectField
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
+            options={[
+              { value: '7d', label: 'Last 7 days' },
+              { value: '30d', label: 'Last 30 days' },
+              { value: '90d', label: 'Last 90 days' },
+            ]}
             className="w-60 sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-          </select>
+          />
           
-          <select
+          <SelectField
             value={chartType}
             onChange={(e) => setChartType(e.target.value)}
+            options={[
+              { value: 'revenue', label: 'Revenue' },
+              { value: 'bookings', label: 'Bookings' },
+              { value: 'vehicles', label: 'Vehicles' },
+            ]}
             className="w-60 sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="revenue">Revenue</option>
-            <option value="bookings">Bookings</option>
-            <option value="vehicles">Vehicles</option>
-          </select>
+          />
         </div>
       </div>
 

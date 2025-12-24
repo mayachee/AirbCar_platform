@@ -11,6 +11,7 @@ import { bookingService } from '@/features/booking/services/bookingService';
 import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
 import CustomerDocuments from '@/features/partner/components/CustomerDocuments';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function EnhancedBookingManagement({ 
   bookings: propBookings = [], 
@@ -502,48 +503,51 @@ export default function EnhancedBookingManagement({
             />
           </div>
           
-          <select
+          <SelectField
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setShowPendingOnly(false);
             }}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'confirmed', label: 'Confirmed' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ]}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
 
-          <select
+          <SelectField
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="all">All Payments</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending Payment</option>
-            <option value="refunded">Refunded</option>
-          </select>
+            options={[
+              { value: 'all', label: 'All Payments' },
+              { value: 'paid', label: 'Paid' },
+              { value: 'pending', label: 'Pending Payment' },
+              { value: 'refunded', label: 'Refunded' },
+            ]}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
 
-          <select
+          <SelectField
             value={`${sortBy}-${sortOrder}`}
             onChange={(e) => {
               const [field, order] = e.target.value.split('-');
               setSortBy(field);
               setSortOrder(order);
             }}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="date-desc">Sort: Date (Newest)</option>
-            <option value="date-asc">Sort: Date (Oldest)</option>
-            <option value="price-desc">Sort: Price (High)</option>
-            <option value="price-asc">Sort: Price (Low)</option>
-            <option value="customer-asc">Sort: Customer (A-Z)</option>
-            <option value="status-asc">Sort: Status</option>
-          </select>
+            options={[
+              { value: 'date-desc', label: 'Sort: Date (Newest)' },
+              { value: 'date-asc', label: 'Sort: Date (Oldest)' },
+              { value: 'price-desc', label: 'Sort: Price (High)' },
+              { value: 'price-asc', label: 'Sort: Price (Low)' },
+              { value: 'customer-asc', label: 'Sort: Customer (A-Z)' },
+              { value: 'status-asc', label: 'Sort: Status' },
+            ]}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
 
           <label className="flex items-center space-x-2 cursor-pointer">
             <input

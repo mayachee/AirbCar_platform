@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Save, Upload, Building2, FileText, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MOROCCAN_CITIES } from '@/constants';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function PartnerProfileSettings({ partnerData, hasPartnerProfile = true, onUpdate, loading }) {
   const { user } = useAuth();
@@ -564,19 +565,21 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Business Type
             </label>
-            <select
+            <SelectField
               name="business_type"
-              value={formData.business_type}
+              value={formData.business_type ?? ''}
+              placeholder="Select business type"
+              showPlaceholderOption
               onChange={handleInputChange}
               disabled={!isEditing}
+              options={[
+                { value: 'individual', label: 'Individual' },
+                { value: 'company', label: 'Company' },
+                { value: 'fleet', label: 'Fleet Operator' },
+                { value: 'dealership', label: 'Dealership' },
+              ]}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="">Select business type</option>
-              <option value="individual">Individual</option>
-              <option value="company">Company</option>
-              <option value="fleet">Fleet Operator</option>
-              <option value="dealership">Dealership</option>
-            </select>
+            />
           </div>
         </div>
 
@@ -646,21 +649,17 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 City <span className="text-red-500 dark:text-red-400">*</span>
               </label>
-              <select
+              <SelectField
                 name="city"
-                value={formData.city}
+                value={formData.city ?? ''}
+                placeholder="Select a city"
+                showPlaceholderOption
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 required
+                options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">Select a city</option>
-                {MOROCCAN_CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

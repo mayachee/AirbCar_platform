@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { APP_NAME } from '@/constants'
+import { SelectField } from '@/components/ui/select-field'
 
 // Navigation items
 const navigationItems = [
@@ -241,30 +242,32 @@ export default function Header() {
                     <label className="block text-xs font-semibold tracking-wide text-white/60 mb-2">
                       Language
                     </label>
-                    <select
-                      value={language}
-                      onChange={handleLanguageChange}
-                      className="w-full rounded-2xl bg-white/10 text-white px-4 py-3 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
-                    >
-                      <option className="text-gray-900" value="ar">Arabic</option>
-                      <option className="text-gray-900" value="en">English</option>
-                      <option className="text-gray-900" value="fr">French</option>
-                    </select>
+                      <SelectField
+                        value={language}
+                        onChange={(e) => handleLanguageChange(e)}
+                        options={[
+                          { value: 'ar', label: 'Arabic' },
+                          { value: 'en', label: 'English' },
+                          { value: 'fr', label: 'French' },
+                        ]}
+                        className="rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white focus:ring-white/20 focus:border-white/20 supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:backdrop-saturate-150"
+                      />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold tracking-wide text-white/60 mb-2">
                       Currency
                     </label>
-                    <select
-                      value={currency}
-                      onChange={handleCurrencyChange}
-                      className="w-full rounded-2xl bg-white/10 text-white px-4 py-3 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors"
-                    >
-                      <option className="text-gray-900" value="USD">Dollar (USD)</option>
-                      <option className="text-gray-900" value="EUR">Euro (EUR)</option>
-                      <option className="text-gray-900" value="MAD">Dirham (MAD)</option>
-                    </select>
+                      <SelectField
+                        value={currency}
+                        onChange={(e) => handleCurrencyChange(e)}
+                        options={[
+                          { value: 'USD', label: 'Dollar (USD)' },
+                          { value: 'EUR', label: 'Euro (EUR)' },
+                          { value: 'MAD', label: 'Dirham (MAD)' },
+                        ]}
+                        className="rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white focus:ring-white/20 focus:border-white/20 supports-[backdrop-filter]:backdrop-blur-md supports-[backdrop-filter]:backdrop-saturate-150"
+                      />
                   </div>
                 </div>
               </div>

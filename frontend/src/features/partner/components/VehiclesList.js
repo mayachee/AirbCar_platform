@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { CarFront, Edit, Trash2, Eye, Plus, Search, Filter, ArrowUpDown, MapPin, DollarSign, Users, Fuel, Calendar, Star, RefreshCw, Grid3x3, List, Copy, MoreVertical, CheckCircle2, XCircle, Wrench, TrendingUp, Eye as EyeIcon, Download } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function VehiclesList({ 
   vehicles, 
@@ -293,33 +294,35 @@ export default function VehiclesList({
             {/* Status Filter */}
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
-              <select
+              <SelectField
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="all">All Vehicles</option>
-                <option value="available">Available</option>
-                <option value="rented">Rented</option>
-                <option value="maintenance">Maintenance</option>
-              </select>
+                options={[
+                  { value: 'all', label: 'All Vehicles' },
+                  { value: 'available', label: 'Available' },
+                  { value: 'rented', label: 'Rented' },
+                  { value: 'maintenance', label: 'Maintenance' },
+                ]}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
             
             {/* Sort */}
             <div className="relative">
               <ArrowUpDown className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
-              <select
+              <SelectField
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="name-asc">Name: A to Z</option>
-                <option value="name-desc">Name: Z to A</option>
-              </select>
+                options={[
+                  { value: 'newest', label: 'Newest First' },
+                  { value: 'oldest', label: 'Oldest First' },
+                  { value: 'price-high', label: 'Price: High to Low' },
+                  { value: 'price-low', label: 'Price: Low to High' },
+                  { value: 'name-asc', label: 'Name: A to Z' },
+                  { value: 'name-desc', label: 'Name: Z to A' },
+                ]}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
 

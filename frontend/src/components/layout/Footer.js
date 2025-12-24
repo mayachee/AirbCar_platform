@@ -22,7 +22,6 @@ export default function Footer() {
         { label: 'About Us', href: '/about', prefetch: false },
         { label: 'Mission', href: '/mission', prefetch: true },
         { label: 'Careers', href: '/careers', prefetch: false },
-        { label: 'Press', href: '/press', prefetch: false },
       ]
     },
     {
@@ -30,7 +29,6 @@ export default function Footer() {
       links: [
         { label: 'Car Rental', href: '/search', prefetch: true },
         { label: 'Partner Program', href: '/partner', prefetch: true },
-        { label: 'Gift Cards', href: '/gift-cards', prefetch: false },
       ]
     },
     {
@@ -39,7 +37,6 @@ export default function Footer() {
         { label: 'Help Center', href: '/help', prefetch: false },
         { label: 'Contact Us', href: '/contact', prefetch: false },
         { label: 'Safety', href: '/safety', prefetch: false },
-        { label: 'Insurance', href: '/insurance', prefetch: false },
       ]
     },
     {

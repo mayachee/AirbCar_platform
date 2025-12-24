@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg, Sum, Count
+from django.db.models import Q, F, DecimalField, Avg, Sum, Count, Min
 from django.utils import timezone
 from django.db import transaction, OperationalError
 from datetime import datetime, timedelta
@@ -32,7 +32,16 @@ class PartnerListView(APIView):
     def get(self, request):
         """List all partners."""
         try:
-            partners = Partner.objects.filter(is_verified=True).select_related('user')
+            partners = (
+                Partner.objects.filter(is_verified=True)
+                .select_related('user')
+                .annotate(
+                    min_price_per_day=Min(
+                        'listings__price_per_day',
+                        filter=Q(listings__is_available=True, listings__is_verified=True),
+                    )
+                )
+            )
             
             # Filter by rating if provided
             min_rating = request.query_params.get('min_rating')

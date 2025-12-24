@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Car, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -115,15 +116,16 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
         </div>
         
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <select
+          <SelectField
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
+            options={[
+              { value: 'month', label: 'Month' },
+              { value: 'week', label: 'Week' },
+              { value: 'day', label: 'Day' },
+            ]}
             className="w-60 sm:w-auto h-11 sm:h-auto px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="month">Month</option>
-            <option value="week">Week</option>
-            <option value="day">Day</option>
-          </select>
+          />
           
           <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start sm:space-x-2 min-w-0">
             <button

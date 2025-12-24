@@ -8,6 +8,7 @@ import { reviewService } from '../services/reviewService';
 import { Star, Loader2, Filter, SortAsc, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function ReviewList({ 
   listingId, 
@@ -314,18 +315,18 @@ export default function ReviewList({
             <div className="flex items-center space-x-4 flex-1">
               {/* Sort Dropdown */}
               <div className="relative">
-                <select
+                <SelectField
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="rating_high">Highest Rating</option>
-                  <option value="rating_low">Lowest Rating</option>
-                  <option value="helpful">Most Helpful</option>
-                </select>
-                <SortAsc className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  options={[
+                    { value: 'newest', label: 'Newest First' },
+                    { value: 'oldest', label: 'Oldest First' },
+                    { value: 'rating_high', label: 'Highest Rating' },
+                    { value: 'rating_low', label: 'Lowest Rating' },
+                    { value: 'helpful', label: 'Most Helpful' },
+                  ]}
+                  className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                />
               </div>
 
               {/* Rating Filter */}

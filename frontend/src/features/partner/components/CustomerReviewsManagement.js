@@ -6,6 +6,7 @@ import { ReviewCard } from '@/features/reviews';
 import { Star, Loader2, Eye, EyeOff, FileText, Search, Filter, TrendingUp, MessageSquare, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/contexts/ToastContext';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function CustomerReviewsManagement({ vehicles, reviews: reviewsData }) {
   const [reviews, setReviews] = useState([]);
@@ -224,35 +225,32 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
             </div>
 
             {/* Status Filter */}
-            <div className="relative">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="unpublished">Unpublished</option>
-              </select>
-              <Filter className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
+            <SelectField
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'published', label: 'Published' },
+                { value: 'unpublished', label: 'Unpublished' },
+              ]}
+              className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
 
             {/* Rating Filter */}
-            <div className="relative">
-              <select
-                value={filterRating || ''}
-                onChange={(e) => setFilterRating(e.target.value ? parseInt(e.target.value) : null)}
-                className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">All Ratings</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="2">2 Stars</option>
-                <option value="1">1 Star</option>
-              </select>
-              <Star className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-            </div>
+            <SelectField
+              value={filterRating ?? ''}
+              placeholder="All Ratings"
+              showPlaceholderOption
+              onChange={(e) => setFilterRating(e.target.value ? parseInt(e.target.value) : null)}
+              options={[
+                { value: '5', label: '5 Stars' },
+                { value: '4', label: '4 Stars' },
+                { value: '3', label: '3 Stars' },
+                { value: '2', label: '2 Stars' },
+                { value: '1', label: '1 Star' },
+              ]}
+              className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
         

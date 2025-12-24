@@ -3,17 +3,76 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { MOROCCAN_CITIES } from '@/constants';
 import { motion, useInView } from 'framer-motion';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function Hero() {
   // Get current date and tomorrow's date
-  const today = new Date()
-  const tomorrow = new Date(today)
-  tomorrow.setDate(today.getDate() + 1)
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const dateToYmd = (date) =>
+    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+
+  const todayStr = dateToYmd(today);
+  const tomorrowStr = dateToYmd(tomorrow);
+
+  const ymdToLocalDate = (dateStr) => {
+    const parts = String(dateStr).split('-');
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts.map((p) => Number(p));
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+
+  const formatDateLabel = (dateStr) => {
+    const date = ymdToLocalDate(dateStr);
+    if (!date || Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const buildDateOptions = (startDateStr, days) => {
+    const start = ymdToLocalDate(startDateStr);
+    if (!start || Number.isNaN(start.getTime())) return [];
+
+    const options = [];
+    const seen = new Set();
+    for (let i = 0; i <= days; i += 1) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const value = dateToYmd(d);
+      if (seen.has(value)) continue;
+      seen.add(value);
+      options.push({ value, label: formatDateLabel(value) });
+    }
+    return options;
+  };
+
+  const heroBlurFieldClass =
+    'bg-white/10 hover:bg-white/15 ' +
+    'dark:bg-white/10 dark:hover:bg-white/15 ' +
+    'border border-white/25 hover:border-white/35 ' +
+    'dark:border-white/25 dark:hover:border-white/35 ' +
+    'text-white ' +
+    'backdrop-blur-xl backdrop-saturate-150 ' +
+    'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:backdrop-saturate-150 ' +
+    'focus:ring-orange-500/30 focus:border-orange-400';
+
+  const heroBlurContentClass =
+    'border border-white/20 bg-white/10 text-white ' +
+    'dark:border-white/20 dark:bg-white/10 dark:text-white ' +
+    'backdrop-blur-2xl backdrop-saturate-150 ' +
+    'supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150';
   
   const [searchForm, setSearchForm] = useState({
     location: '',
-    pickupDate: today.toISOString().split('T')[0],
-    dropoffDate: tomorrow.toISOString().split('T')[0]
+    pickupDate: todayStr,
+    dropoffDate: tomorrowStr,
   });
   const router = useRouter();
 
@@ -22,6 +81,28 @@ export default function Hero() {
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handlePickupDateChange = (e) => {
+    const nextPickupDate = e.target.value;
+    setSearchForm((prev) => {
+      const next = { ...prev, pickupDate: nextPickupDate };
+      if (next.dropoffDate && nextPickupDate && next.dropoffDate < nextPickupDate) {
+        next.dropoffDate = nextPickupDate;
+      }
+      return next;
+    });
+  };
+
+  const handleDropoffDateChange = (e) => {
+    const nextDropoffDate = e.target.value;
+    setSearchForm((prev) => {
+      const next = { ...prev, dropoffDate: nextDropoffDate };
+      if (next.dropoffDate && next.pickupDate && next.dropoffDate < next.pickupDate) {
+        next.pickupDate = next.dropoffDate;
+      }
+      return next;
+    });
   };
 
   const handleSearch = (e) => {
@@ -72,57 +153,62 @@ export default function Hero() {
             initial={{ opacity: 0, y: 16, scale: 0.99 }}
             animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
             transition={{ delay: 0.08, duration: 0.5 }}
-            className="mt-8 bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 max-w-6xl w-full shadow-2xl border border-white/20"
+            className="mt-8 rounded-2xl p-6 md:p-8 max-w-6xl w-full border border-white/25 shadow-2xl bg-transparent supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-120"
           >
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Pickup Location */}
             <div className="md:col-span-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <label htmlFor="hero-location" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
                 Pickup location
               </label>
-              <select
-                name="location"
+              <SelectField
+                id="hero-location"
                 value={searchForm.location}
-                onChange={handleInputChange}
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-3 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-gray-700"
-                required
-              >
-                <option value="">Select a city</option>
-                {MOROCCAN_CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select a city"
+                onChange={(e) =>
+                  setSearchForm((prev) => ({
+                    ...prev,
+                    location: e.target.value,
+                  }))
+                }
+                options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
+                triggerProps={{ 'aria-label': 'Pickup location' }}
+                contentProps={{ className: heroBlurContentClass }}
+                className={heroBlurFieldClass}
+              />
             </div>
             
             {/* Pickup Date */}
             <div className="md:col-span-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <label htmlFor="hero-pickup-date" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
                 Pickup date
               </label>
-              <input
-                type="date"
-                name="pickupDate"
+              <SelectField
+                id="hero-pickup-date"
                 value={searchForm.pickupDate}
-                onChange={handleInputChange}
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-3 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-gray-700"
+                onChange={handlePickupDateChange}
+                options={buildDateOptions(todayStr, 180)}
+                triggerProps={{ 'aria-label': 'Pickup date' }}
+                contentProps={{ className: heroBlurContentClass }}
                 required
+                className={heroBlurFieldClass}
               />
             </div>
             
             {/* Drop-off Date */}
             <div className="md:col-span-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
+              <label htmlFor="hero-dropoff-date" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
                 Drop-off date
               </label>
-              <input
-                type="date"
-                name="dropoffDate"
+              <SelectField
+                id="hero-dropoff-date"
                 value={searchForm.dropoffDate}
-                onChange={handleInputChange}
-                className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-3 focus:ring-orange-500/50 focus:border-orange-500 transition-all duration-200 text-gray-700"
+                onChange={handleDropoffDateChange}
+                options={buildDateOptions(searchForm.pickupDate || todayStr, 180)}
+                triggerProps={{ 'aria-label': 'Drop-off date' }}
+                contentProps={{ className: heroBlurContentClass }}
                 required
+                className={heroBlurFieldClass}
               />
             </div>
             
@@ -132,12 +218,12 @@ export default function Hero() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 px-6 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+                className="w-full py-4 px-6 rounded-xl font-bold text-lg text-white border border-orange/20 bg-orange-700/[0.55] shadow-lg hover:shadow-xl hover:bg-orange-700/[0.65] focus:outline-none focus:ring-4 focus:ring-orange-500/40 backdrop-blur-2xl backdrop-saturate-150 transition-colors"
               >
                 Search Cars
               </motion.button>
             </div>
-          </div>
+            </div>
           </motion.form>
         </div>
       </div>

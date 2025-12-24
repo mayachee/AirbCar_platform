@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { adminService } from '@/features/admin/services/adminService';
 import { useToast } from '@/contexts/ToastContext';
 import UserDetailsModal from './UserDetailsModal';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function UsersTable({ users, loading, error: propError, onRefresh }) {
   const { addToast } = useToast();
@@ -343,30 +344,32 @@ export default function UsersTable({ users, loading, error: propError, onRefresh
           {/* Status Filter */}
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-            <select
+            <SelectField
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
           {/* Role Filter */}
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-            <select
+            <SelectField
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-            >
-              <option value="all">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="partner">Partner</option>
-              <option value="user">User</option>
-            </select>
+              options={[
+                { value: 'all', label: 'All Roles' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'partner', label: 'Partner' },
+                { value: 'user', label: 'User' },
+              ]}
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
           {/* Show All Toggle */}
@@ -594,19 +597,20 @@ export default function UsersTable({ users, loading, error: propError, onRefresh
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
           <div className="flex items-center space-x-2">
             <label className="text-sm text-gray-600">Items per page:</label>
-            <select
-              value={itemsPerPage}
+            <SelectField
+              value={String(itemsPerPage)}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-            </select>
+              options={[
+                { value: '5', label: '5' },
+                { value: '10', label: '10' },
+                { value: '25', label: '25' },
+                { value: '50', label: '50' },
+              ]}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
 
           <div className="flex items-center space-x-2">

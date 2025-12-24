@@ -78,40 +78,6 @@ export default function InfoSection() {
             </div>
           </div>
         </div>
-
-        {/* How to find section */}
-        <div className="mb-20">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              How to find the best car rental deal
-            </h2>
-            <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-4xl mx-auto">
-              We're frequently named the most trusted travel search site out there. We're free to use and we'll do the hard work for you by searching hundreds of car rental companies, so you can instantly compare prices and then book.
-            </p>
-          </div>
-
-          {/* Enhanced Tips Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {tips.map((tip, index) => (
-              <TipCard key={index} {...tip} />
-            ))}
-          </div>
-
-          {/* Call to Action */}
-          <div className="text-center mt-16">
-            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-8 md:p-12 border border-orange-100">
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                Ready to find your perfect rental?
-              </h3>
-              <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-                Start comparing prices from over 500+ rental companies and save up to 40% on your next car rental.
-              </p>
-              <button className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                Search Rentals Now
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Car, Upload, Save } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 // Car makes options
 const CAR_MAKES = [
@@ -870,20 +871,19 @@ export default function AddVehicleModal({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Year *
               </label>
-              <select
+              <SelectField
                 name="year"
                 value={formData.year}
                 onChange={handleInputChange}
                 required
+                placeholder="Select Year"
+                showPlaceholderOption
+                options={generateYears().map((year) => ({ value: year, label: String(year) }))}
                 className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.year ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="">Select Year</option>
-                {generateYears().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+              />
+              
               {errors.year && <p className="text-red-500 text-xs mt-1">{errors.year}</p>}
             </div>
           </div>
@@ -913,20 +913,18 @@ export default function AddVehicleModal({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Location *
               </label>
-              <select
+              <SelectField
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
                 required
+                placeholder="Select Location"
+                showPlaceholderOption
+                options={LOCATIONS.map((location) => ({ value: location, label: location }))}
                 className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.location ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="">Select Location</option>
-                {LOCATIONS.map(location => (
-                  <option key={location} value={location}>{location}</option>
-                ))}
-              </select>
+              />
               {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
             </div>
           </div>
@@ -937,54 +935,55 @@ export default function AddVehicleModal({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Fuel Type
               </label>
-              <select
+              <SelectField
                 name="fuel_type"
                 value={formData.fuel_type}
                 onChange={handleInputChange}
+                options={[
+                  { value: 'gasoline', label: 'Gasoline' },
+                  { value: 'diesel', label: 'Diesel' },
+                  { value: 'hybrid', label: 'Hybrid' },
+                  { value: 'electric', label: 'Electric' },
+                ]}
                 className="w-60 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="gasoline">Gasoline</option>
-                <option value="diesel">Diesel</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="electric">Electric</option>
-              </select>
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Transmission
               </label>
-              <select
+              <SelectField
                 name="transmission"
                 value={formData.transmission}
                 onChange={handleInputChange}
+                options={[
+                  { value: 'automatic', label: 'Automatic' },
+                  { value: 'manual', label: 'Manual' },
+                ]}
                 className="w-60 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="automatic">Automatic</option>
-                <option value="manual">Manual</option>
-              </select>
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Seating Capacity *
               </label>
-              <select
+              <SelectField
                 name="seating_capacity"
                 value={formData.seating_capacity}
                 onChange={handleInputChange}
                 required
+                placeholder="Select Seating Capacity"
+                showPlaceholderOption
+                options={[2, 3, 4, 5, 6, 7, 8].map((seats) => ({
+                  value: seats,
+                  label: `${seats} ${seats === 1 ? 'Seat' : 'Seats'}`,
+                }))}
                 className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.seating_capacity ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="">Select Seating Capacity</option>
-                {[2, 3, 4, 5, 6, 7, 8].map(seats => (
-                  <option key={seats} value={seats}>
-                    {seats} {seats === 1 ? 'Seat' : 'Seats'}
-                  </option>
-                ))}
-              </select>
+              />
               {errors.seating_capacity && <p className="text-red-500 text-xs mt-1">{errors.seating_capacity}</p>}
             </div>
 
@@ -992,20 +991,21 @@ export default function AddVehicleModal({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Vehicle Condition *
               </label>
-              <select
+              <SelectField
                 name="vehicle_condition"
                 value={formData.vehicle_condition}
                 onChange={handleInputChange}
                 required
+                options={[
+                  { value: 'excellent', label: 'Excellent' },
+                  { value: 'good', label: 'Good' },
+                  { value: 'fair', label: 'Fair' },
+                  { value: 'poor', label: 'Poor' },
+                ]}
                 className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.vehicle_condition ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="excellent">Excellent</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="poor">Poor</option>
-              </select>
+              />
               {errors.vehicle_condition && <p className="text-red-500 text-xs mt-1">{errors.vehicle_condition}</p>}
             </div>
           </div>
