@@ -180,7 +180,7 @@ export default function Header() {
             {/* Logo */}
             <div className="flex items-center justify-center">
               <Link href="/" className="select-none group flex items-center space-x-3">
-                <span className={`text-2xl font-bold tracking-tight transition-colors duration-300 ${navTextClassName}`}>
+                <span className={`text-3xl font-black tracking-tighter transition-all duration-300 ${navTextClassName} drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]`}>
                   {APP_NAME}
                 </span>
               </Link>
