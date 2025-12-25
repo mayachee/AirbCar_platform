@@ -125,14 +125,14 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden h-[560px] md:h-[680px] bg-slate-800"
+      className="relative overflow-hidden min-h-[800px] md:min-h-0 md:h-[680px] bg-slate-800"
       style={{ backgroundImage: 'url(/sven-d-a4S6KUuLeoM-unsplash.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
       {/* overlays */}
       <div className="absolute inset-0 bg-black/30" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
 
-      <div className="relative max-w-7xl mx-auto h-full flex items-end px-4 pb-12 md:pb-16">
+      <div className="relative max-w-7xl mx-auto h-full flex md:items-end px-4 pb-12 md:pb-16">
         <div className="w-full">
           {/* Headline */}
           <motion.div
@@ -153,9 +153,9 @@ export default function Hero() {
             initial={{ opacity: 0, y: 16, scale: 0.99 }}
             animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
             transition={{ delay: 0.08, duration: 0.5 }}
-            className="mt-8 rounded-2xl p-6 md:p-8 max-w-6xl w-full border border-white/25 shadow-2xl bg-transparent supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-120"
+            className="mt-6 md:mt-8 rounded-2xl p-5 md:p-8 max-w-6xl w-full border border-white/25 shadow-2xl bg-transparent supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-120"
           >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
             {/* Pickup Location */}
             <div className="md:col-span-1">
               <label htmlFor="hero-location" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">

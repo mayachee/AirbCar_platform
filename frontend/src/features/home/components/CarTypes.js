@@ -153,7 +153,7 @@ export default function CarTypes() {
                   className="group relative block py-3 md:py-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/20"
                 >
                   <div className="flex items-center sm:items-start justify-between gap-4 sm:gap-6">
-                    <span className="min-w-0 text-2xl sm:text-5xl md:text-7xl font-black text-gray-900 leading-[0.9] tracking-tight truncate transition-colors duration-200 group-hover:text-orange-700 group-hover:underline group-hover:underline-offset-8 decoration-orange-300">
+                    <span className="min-w-0 text-2xl sm:text-5xl md:text-7xl font-black text-gray-900 leading-[0.9] tracking-tight truncate transition-colors duration-200 group-hover:text-orange-500 group-hover:underline group-hover:underline-offset-8 decoration-orange-300">
                       {displayName}
                     </span>
                     <span className="text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-gray-500 whitespace-nowrap shrink-0 transition-colors duration-200 group-hover:text-orange-700">

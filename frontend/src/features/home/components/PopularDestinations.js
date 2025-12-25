@@ -338,18 +338,12 @@ export default function PopularDestinations() {
                   <div
                     className={
                       isFeatured
-                        ? 'absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300'
+                        ? 'absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent'
                         : 'absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent'
                     }
                   ></div>
 
-                  <div
-                    className={
-                      isFeatured
-                        ? 'absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2'
-                        : 'absolute bottom-0 left-0 right-0 p-6 text-white'
-                    }
-                  >
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
                     <div className="mb-4">
                       {d.kicker && (
                         <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mb-2">
@@ -357,12 +351,7 @@ export default function PopularDestinations() {
                         </p>
                       )}
                       <h3
-                        className={
-                          isFeatured
-                            ? 'text-3xl font-bold mb-2 group-hover:text-orange-500 transition-colors duration-300'
-                            : 'text-3xl font-bold mb-2 group-hover:text-orange-500 transition-colors duration-300'
-                        }
-                      >
+                        className="text-3xl font-bold mb-2 group-hover:text-orange-500 transition-colors duration-300">
                         {d.destination}
                       </h3>
                       <p className={isFeatured ? 'text-sm font-medium opacity-90 mb-1' : 'text-sm text-white/80 mt-2'}>
@@ -377,12 +366,7 @@ export default function PopularDestinations() {
                         e.stopPropagation();
                         safeNavigate(d.destination);
                       }}
-                      className={
-                        isFeatured
-                          ? 'backdrop-blur-md px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                          : 'backdrop-blur-md px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                      }
-                    >
+                      className="backdrop-blur-md bg-gery-700/20 hover:bg-white hover:text-black px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white">
                       Explore Cars
                     </button>
                   </div>
