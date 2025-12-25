@@ -219,46 +219,46 @@ export default function PopularDestinations() {
 
   const destinations = [
     {
+      destination: 'Tetouan',
+      image: 'https://ik.imagekit.io/szcfr7vth/tetouan.jpg',
+      kicker: null,
+      subtitle: 'White Dove • Andalusian Heritage',
+      note: 'Most popular: Compact Cars'
+    },
+    {
       destination: 'Marrakech',
-      image: '/cities/marrakesh.jpg',
+      image: 'https://ik.imagekit.io/szcfr7vth/unnamed5.jpg',
       kicker: 'Coming soon',
       subtitle: 'Imperial City • Red City',
       note: null
     },
     {
       destination: 'Agadir',
-      image: '/cities/agadir.jpg',
+      image: 'https://ik.imagekit.io/szcfr7vth/agadir.jpg',
       kicker: 'Coming soon',
       subtitle: 'Beach Resort • Atlantic Coast',
       note: null
     },
     {
       destination: 'Tangier',
-      image: '/cities/tangier.jpg',
+      image: 'https://ik.imagekit.io/szcfr7vth/shutterstock2625490969.jpg',
       kicker: 'Coming soon',
       subtitle: 'Gateway to Africa • Mediterranean',
       note: null
     },
     {
       destination: 'Casablanca',
-      image: '/cities/casablanca.jpg',
+      image: 'https://ik.imagekit.io/szcfr7vth/casablanca.jpg',
       kicker: null,
       subtitle: 'Economic Capital • Modern City',
       note: 'Most popular: Business Class'
     },
     {
       destination: 'Rabat',
-      image: '/cities/rabat.jpg',
+      image: 'https://ik.imagekit.io/szcfr7vth/rabat.jpg',
       kicker: null,
       subtitle: 'Royal Capital • UNESCO Heritage',
       note: 'Most popular: Luxury & Economy'
-    },
-    {
-      destination: 'Tetouan',
-      image: '/cities/tetouan.jpg',
-      kicker: null,
-      subtitle: 'White Dove • Andalusian Heritage',
-      note: 'Most popular: Compact Cars'
     }
   ];
 
