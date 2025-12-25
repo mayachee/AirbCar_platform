@@ -637,7 +637,7 @@ class ListingSerializer(serializers.ModelSerializer):
                     if settings.DEBUG:
                         print(f"⚠️ Filtering out local media path: {url}")
                     return None
-                
+
                 # Only return valid external URLs (not local)
                 if url.startswith(('http://', 'https://')):
                     # Already checked for local patterns above, so this is a valid external URL
