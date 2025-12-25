@@ -1,17 +1,83 @@
 'use client';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function PopularDestinations() {
   const scrollContainerRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const isPointerDownRef = useRef(false);
+  const scrollEndTimerRef = useRef(null);
+  const startXRef = useRef(0);
+  const startScrollLeftRef = useRef(0);
+  const didDragRef = useRef(false);
   const router = useRouter();
 
-  const handleDestinationClick = (destination) => {
+  const getCardElements = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('[data-destination-card="true"]'));
+  }, []);
+
+  const jumpScrollLeft = useCallback((nextScrollLeft) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const prevBehavior = container.style.scrollBehavior;
+    const prevSnapType = container.style.scrollSnapType;
+    container.style.scrollBehavior = 'auto';
+    container.style.scrollSnapType = 'none';
+    container.scrollLeft = nextScrollLeft;
+    requestAnimationFrame(() => {
+      container.style.scrollBehavior = prevBehavior;
+      container.style.scrollSnapType = prevSnapType;
+    });
+  }, []);
+
+  const wrapIfOnClone = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const cards = getCardElements();
+    // Expect: [lastClone, ...realItems, firstClone]
+    if (cards.length < 3) return;
+
+    const firstReal = cards[1];
+    const lastReal = cards[cards.length - 2];
+
+    // With scroll snap + touchpads, scrollLeft may not match offsetLeft exactly.
+    // So find the nearest card and only wrap if that nearest is a clone.
+    const scrollLeft = container.scrollLeft;
+    let nearestIdx = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < cards.length; i += 1) {
+      const dist = Math.abs(scrollLeft - cards[i].offsetLeft);
+      if (dist < bestDist) {
+        bestDist = dist;
+        nearestIdx = i;
+      }
+    }
+
+    if (nearestIdx === 0) {
+      jumpScrollLeft(lastReal.offsetLeft);
+    } else if (nearestIdx === cards.length - 1) {
+      jumpScrollLeft(firstReal.offsetLeft);
+    }
+  }, [getCardElements, jumpScrollLeft]);
+
+  const scheduleWrapIfNeeded = useCallback(() => {
+    if (scrollEndTimerRef.current) {
+      clearTimeout(scrollEndTimerRef.current);
+    }
+
+    // Debounce: treat "no scroll events for N ms" as scroll end.
+    scrollEndTimerRef.current = setTimeout(() => {
+      scrollEndTimerRef.current = null;
+      if (!isPointerDownRef.current) wrapIfOnClone();
+    }, 120);
+  }, [wrapIfOnClone]);
+
+  const handleDestinationClick = useCallback((destination) => {
     // Navigate to search page with destination pre-filled
     const searchParams = new URLSearchParams({
       location: destination,
@@ -20,17 +86,18 @@ export default function PopularDestinations() {
     });
     
     router.push(`/search?${searchParams.toString()}`);
-  };
+  }, [router]);
 
-  const checkScrollPosition = () => {
+  const checkScrollPosition = useCallback(() => {
     const container = scrollContainerRef.current;
-    if (container) {
-      setShowLeftArrow(container.scrollLeft > 0);
-      setShowRightArrow(
-        container.scrollLeft < container.scrollWidth - container.clientWidth
-      );
-    }
-  };
+    if (!container) return;
+
+    // With looping enabled, arrows (if rendered) should always be available
+    // as long as there is enough content to scroll.
+    const canScroll = container.scrollWidth - container.clientWidth > 4;
+    setShowLeftArrow(canScroll);
+    setShowRightArrow(canScroll);
+  }, []);
 
   const scrollToLeft = () => {
     const container = scrollContainerRef.current;
@@ -52,330 +119,264 @@ export default function PopularDestinations() {
     }
   };
 
-  const handleMouseDown = (e) => {
-    setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-    scrollContainerRef.current.style.cursor = 'grabbing';
+  const handlePointerDown = (e) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (e.button !== undefined && e.button !== 0) return;
+
+    isPointerDownRef.current = true;
+    didDragRef.current = false;
+    startXRef.current = e.clientX;
+    startScrollLeftRef.current = container.scrollLeft;
+
+    container.style.cursor = 'grabbing';
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // no-op
+    }
   };
 
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  const handlePointerMove = (e) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (!isPointerDownRef.current) return;
+
+    const dx = e.clientX - startXRef.current;
+    if (Math.abs(dx) > 6) didDragRef.current = true;
+    container.scrollLeft = startScrollLeftRef.current - dx;
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    scrollContainerRef.current.style.cursor = 'grab';
+  const endPointerDrag = (e) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    isPointerDownRef.current = false;
+    container.style.cursor = 'grab';
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // no-op
+    }
+
+    // If scroll snap lands us on a clone, silently jump to the real card.
+    scheduleWrapIfNeeded();
   };
 
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-    scrollContainerRef.current.style.cursor = 'grab';
+  const safeNavigate = (destination) => {
+    if (didDragRef.current) return;
+    handleDestinationClick(destination);
   };
 
   useEffect(() => {
+    checkScrollPosition();
+    const handleResize = () => checkScrollPosition();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [checkScrollPosition]);
+
+  useEffect(() => {
     const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('mousedown', handleMouseDown);
-      container.addEventListener('mousemove', handleMouseMove);
-      container.addEventListener('mouseup', handleMouseUp);
-      container.addEventListener('mouseleave', handleMouseLeave);
-      container.addEventListener('scroll', checkScrollPosition);
+    if (!container) return;
 
-      // Initial check
+    // Use native scrollend when available; fallback is the debounced onScroll.
+    const handleScrollEnd = () => {
+      if (!isPointerDownRef.current) wrapIfOnClone();
       checkScrollPosition();
+    };
 
-      return () => {
-        container.removeEventListener('mousedown', handleMouseDown);
-        container.removeEventListener('mousemove', handleMouseMove);
-        container.removeEventListener('mouseup', handleMouseUp);
-        container.removeEventListener('mouseleave', handleMouseLeave);
-        container.removeEventListener('scroll', checkScrollPosition);
-      };
+    container.addEventListener('scrollend', handleScrollEnd);
+    return () => {
+      container.removeEventListener('scrollend', handleScrollEnd);
+    };
+  }, [checkScrollPosition, wrapIfOnClone]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Start on the first real card (index 1) so user can scroll both ways.
+    const raf = requestAnimationFrame(() => {
+      const cards = getCardElements();
+      if (cards.length >= 2) {
+        jumpScrollLeft(cards[1].offsetLeft);
+      }
+      checkScrollPosition();
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [checkScrollPosition, getCardElements, jumpScrollLeft]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollEndTimerRef.current) {
+        clearTimeout(scrollEndTimerRef.current);
+        scrollEndTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const destinations = [
+    {
+      destination: 'Tetouan',
+      image: 'https://ik.imagekit.io/szcfr7vth/tetouan.jpg',
+      kicker: null,
+      subtitle: 'White Dove • Andalusian Heritage',
+      note: 'Most popular: Compact Cars'
+    },
+    {
+      destination: 'Marrakech',
+      image: 'https://ik.imagekit.io/szcfr7vth/unnamed5.jpg',
+      kicker: 'Coming soon',
+      subtitle: 'Imperial City • Red City',
+      note: null
+    },
+    {
+      destination: 'Agadir',
+      image: 'https://ik.imagekit.io/szcfr7vth/agadir.jpg',
+      kicker: 'Coming soon',
+      subtitle: 'Beach Resort • Atlantic Coast',
+      note: null
+    },
+    {
+      destination: 'Tangier',
+      image: 'https://ik.imagekit.io/szcfr7vth/shutterstock2625490969.jpg',
+      kicker: 'Coming soon',
+      subtitle: 'Gateway to Africa • Mediterranean',
+      note: null
+    },
+    {
+      destination: 'Casablanca',
+      image: 'https://ik.imagekit.io/szcfr7vth/casablanca.jpg',
+      kicker: null,
+      subtitle: 'Economic Capital • Modern City',
+      note: 'Most popular: Business Class'
+    },
+    {
+      destination: 'Rabat',
+      image: 'https://ik.imagekit.io/szcfr7vth/rabat.jpg',
+      kicker: null,
+      subtitle: 'Royal Capital • UNESCO Heritage',
+      note: 'Most popular: Luxury & Economy'
     }
-  }, [isDragging, startX, scrollLeft]);
+  ];
+
+  const destinationsForLoop =
+    destinations.length > 1
+      ? [destinations[destinations.length - 1], ...destinations, destinations[0]]
+      : destinations;
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-gray-50">
+    <section className="py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Popular Destinations
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Discover Morocco's most beautiful cities and find the perfect rental car for your adventure
+
+        <div className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8">
+          <div>
+            <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">Destinations</p>
+            <h2 className="mt-3 text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
+              Popular destinations
+            </h2>
+          </div>
+          <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
+            Explore top cities. Drag to scroll or use the arrows.
           </p>
         </div>
 
         {/* City Cards Horizontal Scroll */}
         <div className="relative">
-          {/* Left Arrow */}
-          {showLeftArrow && (
-            <button
-              onClick={scrollToLeft}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-xl rounded-full p-4 transition-all duration-300 hover:scale-110 border border-gray-200"
-              aria-label="Scroll left"
-            >
-              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
-
-          {/* Right Arrow */}
-          {showRightArrow && (
-            <button
-              onClick={scrollToRight}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 z-20 bg-white/95 hover:bg-white shadow-xl rounded-full p-4 transition-all duration-300 hover:scale-110 border border-gray-200"
-              aria-label="Scroll right"
-            >
-              <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
-
           <div 
             ref={scrollContainerRef}
-            className="flex gap-8 overflow-x-auto scrollbar-hide cursor-grab select-none pb-6 px-4"
+            className="flex gap-6 md:gap-8 overflow-x-auto scrollbar-hide cursor-grab select-none pb-6 px-1 snap-x snap-mandatory scroll-smooth touch-pan-y"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            onScroll={() => {
+              checkScrollPosition();
+              scheduleWrapIfNeeded();
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={endPointerDrag}
+            onPointerCancel={endPointerDrag}
+            onPointerLeave={endPointerDrag}
           >
             <style jsx>{`
               .scrollbar-hide::-webkit-scrollbar {
                 display: none;
               }
             `}</style>
-          
-          {/* Marrakech Card */}
-          <div 
-            onClick={() => handleDestinationClick('Marrakech')}
-            className="flex-shrink-0 w-80 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg h-[600px] w-[350px]"
-          >
-            {/* Background image */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
-              style={{ 
-                backgroundImage: 'url(/cities/marrakesh.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-            
-            {/* Content */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-              <div className="mb-4">
-                <h3 className="text-3xl font-bold mb-2 group-hover:text-orange-300 transition-colors duration-300">Marrakech</h3>
-                <p className="text-sm font-medium opacity-90 mb-1">Imperial City • Red City</p>
-                <p className="text-xs opacity-75">Most popular: Economy Cars</p>
-              </div>
-              
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDestinationClick('Marrakech');
-                }}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl w-full"
-              >
-                Explore Cars
-              </button>
-            </div>
-            
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </div>
 
-          {/* Agadir Card */}
-          <div 
-            onClick={() => handleDestinationClick('Agadir')}
-            className="flex-shrink-0 w-80 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg w-[350px]"
-          >
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
-              style={{ 
-                backgroundImage: 'url(/cities/agadir.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-            
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-              <div className="mb-4">
-                <h3 className="text-3xl font-bold mb-2 group-hover:text-orange-300 transition-colors duration-300">Agadir</h3>
-                <p className="text-sm font-medium opacity-90 mb-1">Beach Resort • Atlantic Coast</p>
-                <p className="text-xs opacity-75">Most popular: SUV & Economy</p>
-              </div>
-              
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDestinationClick('Agadir');
-                }}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl w-full"
-              >
-                Explore Cars
-              </button>
-            </div>
-            
-            <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </div>
+            {destinationsForLoop.map((d, idx) => {
+              const isFeatured = Boolean(d.note);
+              return (
+                <div
+                  key={`${d.destination}-${idx}`}
+                  data-destination-card="true"
+                  onClick={() => safeNavigate(d.destination)}
+                  className={
+                    [
+                      'flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer border border-gray-200',
+                      'transition-all duration-300 hover:border-gray-400',
+                      'snap-start',
+                      'h-[420px] w-[260px] sm:h-[480px] sm:w-[300px] lg:h-[560px] lg:w-[340px]',
+                      isFeatured ? 'shadow-lg hover:shadow-2xl transform hover:-translate-y-1' : ''
+                    ].join(' ')
+                  }
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      safeNavigate(d.destination);
+                    }
+                  }}
+                  aria-label={`Explore cars in ${d.destination}`}
+                >
+                  <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
+                    style={{ backgroundImage: `url(${d.image})` }}
+                  ></div>
+                  <div
+                    className={
+                      isFeatured
+                        ? 'absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent'
+                        : 'absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent'
+                    }
+                  ></div>
 
-          {/* Tangier Card */}
-          <div 
-            onClick={() => handleDestinationClick('Tangier')}
-            className="flex-shrink-0 w-80 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg w-[350px]"
-          >
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
-              style={{ 
-                backgroundImage: 'url(/cities/tangier.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-            
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-              <div className="mb-4">
-                <h3 className="text-3xl font-bold mb-2 group-hover:text-orange-300 transition-colors duration-300">Tangier</h3>
-                <p className="text-sm font-medium opacity-90 mb-1">Gateway to Africa • Mediterranean</p>
-                <p className="text-xs opacity-75">Most popular: Compact Cars</p>
-              </div>
-              
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDestinationClick('Tangier');
-                }}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl w-full"
-              >
-                Explore Cars
-              </button>
-            </div>
-            
-            <div className="absolute inset-0 bg-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
+                    <div className="mb-4">
+                      {d.kicker && (
+                        <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mb-2">
+                          {d.kicker}
+                        </p>
+                      )}
+                      <h3
+                        className="text-3xl font-bold mb-2 group-hover:text-orange-500 transition-colors duration-300">
+                        {d.destination}
+                      </h3>
+                      <p className={isFeatured ? 'text-sm font-medium opacity-90 mb-1' : 'text-sm text-white/80 mt-2'}>
+                        {d.subtitle}
+                      </p>
+                      {d.note && <p className="text-xs opacity-75">{d.note}</p>}
+                    </div>
 
-          {/* Casablanca Card */}
-          <div 
-            onClick={() => handleDestinationClick('Casablanca')}
-            className="flex-shrink-0 w-80 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg w-[350px]"
-          >
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
-              style={{ 
-                backgroundImage: 'url(/cities/casablanca.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-            
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-              <div className="mb-4">
-                <h3 className="text-3xl font-bold mb-2 group-hover:text-orange-300 transition-colors duration-300">Casablanca</h3>
-                <p className="text-sm font-medium opacity-90 mb-1">Economic Capital • Modern City</p>
-                <p className="text-xs opacity-75">Most popular: Business Class</p>
-              </div>
-              
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDestinationClick('Casablanca');
-                }}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl w-full"
-              >
-                Explore Cars
-              </button>
-            </div>
-            
-            <div className="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        safeNavigate(d.destination);
+                      }}
+                      className="backdrop-blur-md bg-gery-700/20 hover:bg-white hover:text-black px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+                      Explore Cars
+                    </button>
+                  </div>
 
-          {/* Rabat Card */}
-          <div 
-            onClick={() => handleDestinationClick('Rabat')}
-            className="flex-shrink-0 w-80 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg w-[350px]"
-          >
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
-              style={{ 
-                backgroundImage: 'url(/cities/rabat.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-            
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-              <div className="mb-4">
-                <h3 className="text-3xl font-bold mb-2 group-hover:text-orange-300 transition-colors duration-300">Rabat</h3>
-                <p className="text-sm font-medium opacity-90 mb-1">Royal Capital • UNESCO Heritage</p>
-                <p className="text-xs opacity-75">Most popular: Luxury & Economy</p>
-              </div>
-              
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDestinationClick('Rabat');
-                }}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl w-full"
-              >
-                Explore Cars
-              </button>
-            </div>
-            
-            <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </div>
-
-          {/* Tetouan Card */}
-          <div 
-            onClick={() => handleDestinationClick('Tetouan')}
-            className="flex-shrink-0 w-80 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer transform transition-all duration-500 hover:scale-105 hover:shadow-2xl shadow-lg w-[350px]"
-          >
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
-              style={{ 
-                backgroundImage: 'url(/cities/tetouan.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-            
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-              <div className="mb-4">
-                <h3 className="text-3xl font-bold mb-2 group-hover:text-orange-300 transition-colors duration-300">Tetouan</h3>
-                <p className="text-sm font-medium opacity-90 mb-1">White Dove • Andalusian Heritage</p>
-                <p className="text-xs opacity-75">Most popular: Compact Cars</p>
-              </div>
-              
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDestinationClick('Tetouan');
-                }}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl w-full"
-              >
-                Explore Cars
-              </button>
-            </div>
-            
-            <div className="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </div>
+                  {isFeatured && (
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  )}
+                </div>
+              );
+            })}
 
           </div>
         </div>

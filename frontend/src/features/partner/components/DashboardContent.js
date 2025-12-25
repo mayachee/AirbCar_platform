@@ -102,6 +102,7 @@ export default function DashboardContent({
   vehicles,
   bookings,
   partnerData,
+  hasPartnerProfile = true,
   stats,
   earnings,
   analytics,
@@ -561,10 +562,15 @@ export default function DashboardContent({
         <ComponentLoader>
           <PartnerProfileSettings
             partnerData={partnerData}
+            hasPartnerProfile={hasPartnerProfile}
             onUpdate={async (profileData) => {
               try {
                 const { partnerService } = await import('@/features/partner/services/partnerService');
-                await partnerService.updatePartnerProfile(profileData);
+                if (hasPartnerProfile === false) {
+                  await partnerService.registerPartner(profileData);
+                } else {
+                  await partnerService.updatePartnerProfile(profileData);
+                }
                 refetch();
               } catch (error) {
                 console.error('Error updating profile:', error);

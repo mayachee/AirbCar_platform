@@ -240,29 +240,10 @@ We value your feedback and strive to provide excellent service. If you have conc
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Rental Policies & Terms</h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Manage your rental policies and terms for your customers
-            </p>
-          </div>
-          <button
-            onClick={handleSaveAll}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Save className="h-5 w-5" />
-            <span>Save All Policies</span>
-          </button>
-        </div>
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Navigation */}
         <div className="lg:w-1/4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sticky top-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:sticky lg:top-24">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Policy Sections</h3>
             <nav className="space-y-2">
               {sections.map((section) => {
@@ -331,142 +312,6 @@ We value your feedback and strive to provide excellent service. If you have conc
                 </div>
               </div>
             </div>
-
-            {/* Current Policies */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Your Policies
-              </h4>
-              <div className="grid gap-4">
-                {loading ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    Loading policies...
-                  </div>
-                ) : policies.filter(p => p.section === activeSection).length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/50 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
-                    <FileEdit className="h-12 w-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
-                    <p className="text-gray-600 dark:text-gray-400 mb-2 font-medium">No policies found for this section</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">Click the button below to add your first policy</p>
-                  </div>
-                ) : (
-                policies.filter(p => p.section === activeSection).map((policy) => (
-                  <div
-                    key={policy.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        {editingId === policy.id ? (
-                          <div className="space-y-3">
-                            <input
-                              type="text"
-                              value={policy.title}
-                              onChange={(e) => handleSaveEdit(policy.id, { title: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                              placeholder="Policy Title"
-                            />
-                            <textarea
-                              value={policy.description}
-                              onChange={(e) => handleSaveEdit(policy.id, { description: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                              placeholder="Policy Description"
-                              rows={3}
-                            />
-                          </div>
-                        ) : (
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {policy.title}
-                              </h3>
-                              {policy.isActive && (
-                                <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded-full flex items-center space-x-1">
-                                  <CheckCircle className="h-3 w-3" />
-                                  <span>Active</span>
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-gray-600 dark:text-gray-400 mt-2">
-                              {policy.description}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center space-x-2 ml-4">
-                        {!editingId && (
-                          <>
-                            <button
-                              onClick={() => handleEditPolicy(policy.id)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors"
-                            >
-                              <Edit2 className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={() => handleToggleActive(policy.id)}
-                              className={`p-2 rounded-lg transition-colors ${
-                                policy.isActive
-                                  ? 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900'
-                                  : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                              }`}
-                            >
-                              {policy.isActive ? (
-                                <CheckCircle className="h-5 w-5" />
-                              ) : (
-                                <CheckCircle className="h-5 w-5" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleDeletePolicy(policy.id)}
-                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-                )}
-              </div>
-            </div>
-
-            {/* Add New Policy - Collapsible */}
-            <details className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <summary className="px-6 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-                  <Plus className="h-5 w-5" />
-                  <span>Add New Policy to {sections.find(s => s.id === activeSection)?.title}</span>
-                </h3>
-                <span className="text-gray-400 dark:text-gray-500 text-sm">Click to expand</span>
-              </summary>
-              <div className="px-6 pb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={newPolicy.title}
-                    onChange={(e) => setNewPolicy({ ...newPolicy, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Policy Title"
-                  />
-                  <textarea
-                    value={newPolicy.description}
-                    onChange={(e) => setNewPolicy({ ...newPolicy, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="Policy Description"
-                    rows={3}
-                  />
-                  <button
-                    onClick={handleAddPolicy}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="h-5 w-5" />
-                    <span>Add Policy</span>
-                  </button>
-                </div>
-              </div>
-            </details>
           </div>
         </div>
       </div>

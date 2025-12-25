@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/contexts/ToastContext';
 import PartnerDetailsModal from './PartnerDetailsModal';
 import { adminService } from '@/features/admin/services/adminService';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function PartnersTable({ partners, loading, error, onApprove, onReject, onUnverify, onRefresh }) {
   const { addToast } = useToast();
@@ -264,15 +265,16 @@ export default function PartnersTable({ partners, loading, error, onApprove, onR
           
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-            <select
+            <SelectField
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-            >
-              <option value="all">All Partners</option>
-              <option value="verified">Verified</option>
-              <option value="pending">Pending</option>
-            </select>
+              options={[
+                { value: 'all', label: 'All Partners' },
+                { value: 'verified', label: 'Verified' },
+                { value: 'pending', label: 'Pending' },
+              ]}
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
           <button

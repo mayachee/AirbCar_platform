@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { SearchFilters, SearchResults, LoadingSkeleton, SearchForm, useSearch, useFavorites } from '@/features/search';
 import { Button } from '@/components/ui';
+import { SelectField } from '@/components/ui/select-field';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -264,16 +265,17 @@ function SearchContent() {
           {/* Sort Options */}
           <div className="flex items-center gap-2">
                 <label className="text-sm text-gray-600 font-semibold hidden sm:inline">Sort:</label>
-            <select
+            <SelectField
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-gray-900 font-medium shadow-sm"
-            >
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
-              <option value="newest">Newest First</option>
-            </select>
+              options={[
+                { value: 'price_low', label: 'Price: Low to High' },
+                { value: 'price_high', label: 'Price: High to Low' },
+                { value: 'rating', label: 'Highest Rated' },
+                { value: 'newest', label: 'Newest First' },
+              ]}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm"
+            />
               </div>
 
               {/* View Toggle */}

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { adminService } from '@/features/admin/services/adminService';
 import { useToast } from '@/contexts/ToastContext';
 import CarDetailsModal from './CarDetailsModal';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function CarsTable({ listings, loading, onRefresh }) {
   const { addToast } = useToast();
@@ -293,31 +294,31 @@ export default function CarsTable({ listings, loading, onRefresh }) {
           {/* Status Filter */}
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-            <select
+            <SelectField
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-            >
-              <option value="all">All Status</option>
-              <option value="available">Available</option>
-              <option value="unavailable">Unavailable</option>
-            </select>
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'available', label: 'Available' },
+                { value: 'unavailable', label: 'Unavailable' },
+              ]}
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
 
           {/* Make Filter */}
           {uniqueMakes.length > 0 && (
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-              <select
+              <SelectField
                 value={makeFilter}
                 onChange={(e) => setMakeFilter(e.target.value)}
-                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-              >
-                <option value="all">All Makes</option>
-                {uniqueMakes.map(make => (
-                  <option key={make} value={make}>{make}</option>
-                ))}
-              </select>
+                options={[
+                  { value: 'all', label: 'All Makes' },
+                  ...uniqueMakes.map((make) => ({ value: make, label: make })),
+                ]}
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           )}
 
@@ -325,16 +326,15 @@ export default function CarsTable({ listings, loading, onRefresh }) {
           {uniqueLocations.length > 0 && (
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-              <select
+              <SelectField
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
-                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-              >
-                <option value="all">All Locations</option>
-                {uniqueLocations.map(location => (
-                  <option key={location} value={location}>{location}</option>
-                ))}
-              </select>
+                options={[
+                  { value: 'all', label: 'All Locations' },
+                  ...uniqueLocations.map((location) => ({ value: location, label: location })),
+                ]}
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           )}
 
@@ -679,19 +679,20 @@ export default function CarsTable({ listings, loading, onRefresh }) {
             <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Items per page:</span>
-                <select
-                  value={itemsPerPage}
+                <SelectField
+                  value={String(itemsPerPage)}
                   onChange={(e) => {
                     setItemsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value={6}>6</option>
-                  <option value={12}>12</option>
-                  <option value={24}>24</option>
-                  <option value={48}>48</option>
-                </select>
+                  options={[
+                    { value: '6', label: '6' },
+                    { value: '12', label: '12' },
+                    { value: '24', label: '24' },
+                    { value: '48', label: '48' },
+                  ]}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
               <div className="flex items-center space-x-2">

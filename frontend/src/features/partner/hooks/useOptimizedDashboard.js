@@ -35,6 +35,8 @@ export function useOptimizedDashboard() {
     vehicles,
     bookings,
     partnerData,
+    hasPartnerProfile,
+    partnerError,
     stats,
     earnings,
     analytics,
@@ -162,6 +164,10 @@ export function useOptimizedDashboard() {
 
   // Data fetching functions
   const fetchPendingRequests = useCallback(async () => {
+    if (hasPartnerProfile === false) {
+      setPendingRequests([])
+      return
+    }
     try {
       const requests = await getPendingRequests();
       // Ensure requests is always an array
@@ -171,9 +177,13 @@ export function useOptimizedDashboard() {
       console.warn('Could not fetch pending requests, using mock data:', error);
       setPendingRequests([]);
     }
-  }, [getPendingRequests]);
+  }, [getPendingRequests, hasPartnerProfile]);
 
   const fetchUpcomingBookings = useCallback(async () => {
+    if (hasPartnerProfile === false) {
+      setUpcomingBookings([])
+      return
+    }
     try {
       const upcoming = await getUpcomingBookings();
       // Ensure upcoming is always an array
@@ -183,7 +193,7 @@ export function useOptimizedDashboard() {
       console.warn('Could not fetch upcoming bookings, using mock data:', error);
       setUpcomingBookings([]);
     }
-  }, [getUpcomingBookings]);
+  }, [getUpcomingBookings, hasPartnerProfile]);
 
   // Toast notification system
   const showToast = useCallback((message, type = 'info') => {
@@ -193,8 +203,13 @@ export function useOptimizedDashboard() {
 
   // Event handlers
   const handleAddVehicle = useCallback(() => {
+    if (hasPartnerProfile === false) {
+      showToast('Please complete your partner profile before adding vehicles.', 'warning')
+      setCurrentView('profile')
+      return
+    }
     setShowAddVehicleModal(true);
-  }, []);
+  }, [hasPartnerProfile, setCurrentView, showToast]);
 
   const handleEditVehicle = useCallback((vehicle) => {
     setSelectedVehicle(vehicle);
@@ -234,6 +249,14 @@ export function useOptimizedDashboard() {
 
   const handleVehicleSubmit = useCallback(async (vehicleData) => {
     try {
+      if (hasPartnerProfile === false) {
+        showToast('Please complete your partner profile before adding vehicles.', 'warning')
+        setShowAddVehicleModal(false)
+        setShowEditVehicleModal(false)
+        setSelectedVehicle(null)
+        setCurrentView('profile')
+        return
+      }
       if (selectedVehicle) {
         await updateVehicle(selectedVehicle.id, vehicleData);
         showToast('Vehicle updated successfully!', 'success');
@@ -260,7 +283,7 @@ export function useOptimizedDashboard() {
       const errorMessage = error?.data?.message || error?.message || 'Failed to save vehicle. Please try again.';
       showToast(errorMessage, 'error');
     }
-  }, [selectedVehicle, updateVehicle, addVehicle, refetch, showToast]);
+  }, [hasPartnerProfile, selectedVehicle, updateVehicle, addVehicle, refetch, setCurrentView, showToast]);
 
   const handleAcceptRequest = useCallback(async (bookingId) => {
     if (processingBooking === bookingId) return;
@@ -448,6 +471,8 @@ export function useOptimizedDashboard() {
     vehicles,
     bookings,
     partnerData,
+    hasPartnerProfile,
+    partnerError,
     stats,
     dataLoading,
     

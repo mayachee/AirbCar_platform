@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Car, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -56,10 +57,10 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
 
   const getAvailabilityColor = (status) => {
     switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'booked': return 'bg-red-100 text-red-800';
-      case 'maintenance': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'available': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case 'booked': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+      case 'maintenance': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -105,37 +106,40 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <Calendar className="h-6 w-6 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Vehicle Availability Calendar</h3>
+          <Calendar className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white leading-tight">
+            Vehicle Availability Calendar
+          </h3>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <select
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <SelectField
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="month">Month View</option>
-            <option value="week">Week View</option>
-            <option value="day">Day View</option>
-          </select>
+            options={[
+              { value: 'month', label: 'Month' },
+              { value: 'week', label: 'Week' },
+              { value: 'day', label: 'Day' },
+            ]}
+            className="w-60 sm:w-auto h-11 sm:h-auto px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
           
-          <div className="flex items-center space-x-2">
+          <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start sm:space-x-2 min-w-0">
             <button
               onClick={() => navigateMonth(-1)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-lg font-semibold text-gray-900 min-w-[150px] text-center">
+            <span className="flex-1 sm:flex-none min-w-0 text-base sm:text-lg font-semibold text-gray-900 dark:text-white text-center px-2 truncate">
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </span>
             <button
               onClick={() => navigateMonth(1)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -146,44 +150,48 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar */}
         <div className="lg:col-span-2">
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {dayNames.map((day) => (
-              <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
-                {day}
-              </div>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1">
-            {days.map((day, index) => (
-              <div
-                key={index}
-                className={`aspect-square p-2 border border-gray-200 ${
-                  day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
-                }`}
-              >
-                {day && (
-                  <div className="h-full flex flex-col">
-                    <span className="text-sm font-medium text-gray-900">
-                      {day.getDate()}
-                    </span>
-                    <div className="flex-1 flex items-center justify-center">
-                      {selectedVehicle && (
-                        <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getAvailabilityColor(getVehicleAvailability(selectedVehicle.id, day))}`}>
-                          {getAvailabilityIcon(getVehicleAvailability(selectedVehicle.id, day))}
-                        </div>
-                      )}
-                    </div>
+          <div className="overflow-x-auto -mx-2 px-2 pb-2">
+            <div className="min-w-[360px] sm:min-w-[420px]">
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {dayNames.map((day) => (
+                  <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {day}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
+              
+              <div className="grid grid-cols-7 gap-1">
+                {days.map((day, index) => (
+                  <div
+                    key={index}
+                    className={`aspect-square p-1 sm:p-2 border border-gray-200 dark:border-gray-700 ${
+                      day ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-50 dark:bg-gray-900'
+                    }`}
+                  >
+                    {day && (
+                      <div className="h-full flex flex-col">
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                          {day.getDate()}
+                        </span>
+                        <div className="flex-1 flex items-center justify-center">
+                          {selectedVehicle && (
+                            <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs ${getAvailabilityColor(getVehicleAvailability(selectedVehicle.id, day))}`}>
+                              {getAvailabilityIcon(getVehicleAvailability(selectedVehicle.id, day))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Vehicle List */}
         <div className="space-y-4">
-          <h4 className="text-md font-semibold text-gray-900">Select Vehicle</h4>
+          <h4 className="text-md font-semibold text-gray-900 dark:text-white">Select Vehicle</h4>
           
           <div className="space-y-3">
             {vehicles?.map((vehicle) => {
@@ -196,28 +204,28 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
                   onClick={() => setSelectedVehicle(vehicle)}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                     isSelected 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-blue-500 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/30' 
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <Car className="h-5 w-5 text-gray-600" />
+                    <Car className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     <div className="flex-1">
-                      <h5 className="text-sm font-medium text-gray-900">
+                      <h5 className="text-sm font-medium text-gray-900 dark:text-white">
                         {vehicle.make} {vehicle.model}
                       </h5>
-                      <p className="text-xs text-gray-500">{vehicle.year}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{vehicle.year}</p>
                     </div>
                   </div>
                   
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-gray-500">Bookings:</span>
-                      <span className="ml-1 font-medium">{stats.totalBookings}</span>
+                      <span className="text-gray-500 dark:text-gray-400">Bookings:</span>
+                      <span className="ml-1 font-medium text-gray-900 dark:text-white">{stats.totalBookings}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500">Utilization:</span>
-                      <span className="ml-1 font-medium">{stats.utilization.toFixed(1)}%</span>
+                      <span className="text-gray-500 dark:text-gray-400">Utilization:</span>
+                      <span className="ml-1 font-medium text-gray-900 dark:text-white">{stats.utilization.toFixed(1)}%</span>
                     </div>
                   </div>
                 </div>
@@ -226,26 +234,26 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
           </div>
 
           {/* Legend */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h5 className="text-sm font-medium text-gray-900 mb-3">Legend</h5>
+          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Legend</h5>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-2 w-2 text-green-600" />
+                <div className="w-3 h-3 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-2 w-2 text-green-600 dark:text-green-400" />
                 </div>
-                <span className="text-xs text-gray-600">Available</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">Available</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-red-100 rounded-full flex items-center justify-center">
-                  <XCircle className="h-2 w-2 text-red-600" />
+                <div className="w-3 h-3 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
+                  <XCircle className="h-2 w-2 text-red-600 dark:text-red-400" />
                 </div>
-                <span className="text-xs text-gray-600">Booked</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">Booked</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <Clock className="h-2 w-2 text-yellow-600" />
+                <div className="w-3 h-3 bg-yellow-100 dark:bg-yellow-900/50 rounded-full flex items-center justify-center">
+                  <Clock className="h-2 w-2 text-yellow-600 dark:text-yellow-400" />
                 </div>
-                <span className="text-xs text-gray-600">Maintenance</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">Maintenance</span>
               </div>
             </div>
           </div>

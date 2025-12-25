@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Calendar, X, Search, AlertCircle } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function SearchForm({ onSearch, initialValues = {} }) {
   // Get today's date for min date attribute
@@ -180,54 +181,49 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
               <MapPin className="h-5 w-5 text-gray-400" />
             </div>
-            <select
+            <SelectField
               id="location"
               value={location}
-              onChange={handleLocationChange}
-              onBlur={() => handleBlur('location')}
-              className={`block w-full pl-12 pr-10 py-3.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900 appearance-none bg-white cursor-pointer ${
+              onChange={(e) => handleLocationChange(e)}
+              placeholder="Select a location"
+              options={[
+                { value: 'Casablanca', label: 'Casablanca' },
+                { value: 'Rabat', label: 'Rabat' },
+                { value: 'Marrakech', label: 'Marrakech' },
+                { value: 'Fes', label: 'Fes' },
+                { value: 'Tangier', label: 'Tangier' },
+                { value: 'Tetouan', label: 'Tetouan' },
+                { value: 'Agadir', label: 'Agadir' },
+                { value: 'Oujda', label: 'Oujda' },
+                { value: 'Meknes', label: 'Meknes' },
+                { value: 'Kenitra', label: 'Kenitra' },
+                { value: 'El Jadida', label: 'El Jadida' },
+                { value: 'Safi', label: 'Safi' },
+                { value: 'Mohammedia', label: 'Mohammedia' },
+                { value: 'Nador', label: 'Nador' },
+                { value: 'Beni Mellal', label: 'Beni Mellal' },
+                { value: 'Taza', label: 'Taza' },
+                { value: 'Essaouira', label: 'Essaouira' },
+                { value: 'Larache', label: 'Larache' },
+                { value: 'Khouribga', label: 'Khouribga' },
+                { value: 'Settat', label: 'Settat' },
+                { value: 'Casablanca Airport', label: 'Casablanca Airport (CMN)' },
+                { value: 'Marrakech Airport', label: 'Marrakech Airport (RAK)' },
+                { value: 'Fes Airport', label: 'Fes Airport (FEZ)' },
+                { value: 'Tangier Airport', label: 'Tangier Airport (TNG)' },
+                { value: 'Agadir Airport', label: 'Agadir Airport (AGA)' },
+              ]}
+              className={`block w-full pl-12 pr-10 py-3.5 border rounded-xl transition-all text-gray-900 bg-white cursor-pointer ${
                 errors.location && touched.location
-                  ? 'border-red-300 bg-red-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-red-300 bg-red-50 focus:ring-red-500/30 focus:border-red-500'
+                  : 'border-gray-300 hover:border-gray-400 focus:ring-orange-500/30 focus:border-orange-500'
               } ${!location ? 'text-gray-500' : 'text-gray-900'}`}
-              aria-invalid={errors.location && touched.location}
-              aria-describedby={errors.location && touched.location ? 'location-error' : undefined}
-            >
-              <option value="" disabled>
-                Select a location
-              </option>
-              <option value="Casablanca">Casablanca</option>
-              <option value="Rabat">Rabat</option>
-              <option value="Marrakech">Marrakech</option>
-              <option value="Fes">Fes</option>
-              <option value="Tangier">Tangier</option>
-              <option value="Tetouan">Tetouan</option>
-              <option value="Agadir">Agadir</option>
-              <option value="Oujda">Oujda</option>
-              <option value="Meknes">Meknes</option>
-              <option value="Kenitra">Kenitra</option>
-              <option value="El Jadida">El Jadida</option>
-              <option value="Safi">Safi</option>
-              <option value="Mohammedia">Mohammedia</option>
-              <option value="Nador">Nador</option>
-              <option value="Beni Mellal">Beni Mellal</option>
-              <option value="Taza">Taza</option>
-              <option value="Essaouira">Essaouira</option>
-              <option value="Larache">Larache</option>
-              <option value="Khouribga">Khouribga</option>
-              <option value="Settat">Settat</option>
-              <option value="Casablanca Airport">Casablanca Airport (CMN)</option>
-              <option value="Marrakech Airport">Marrakech Airport (RAK)</option>
-              <option value="Fes Airport">Fes Airport (FEZ)</option>
-              <option value="Tangier Airport">Tangier Airport (TNG)</option>
-              <option value="Agadir Airport">Agadir Airport (AGA)</option>
-            </select>
-            {/* Custom dropdown arrow */}
-            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+              triggerProps={{
+                onBlur: () => handleBlur('location'),
+                'aria-invalid': Boolean(errors.location && touched.location),
+                'aria-describedby': errors.location && touched.location ? 'location-error' : undefined,
+              }}
+            />
             {location && (
               <button
                 type="button"

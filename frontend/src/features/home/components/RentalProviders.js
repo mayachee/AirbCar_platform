@@ -1,256 +1,322 @@
 'use client';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation'
+import { apiClient } from '@/lib/api/client'
 
 export default function RentalProviders() {
+  const router = useRouter()
   const scrollContainerRef = useRef(null);
+  const didInitLoopScrollRef = useRef(false)
+  const scrollRafRef = useRef(null)
+  const isProgrammaticScrollRef = useRef(false)
+  const lastAllowedScrollLeftRef = useRef(0)
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [providers, setProviders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
-  const checkScrollPosition = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      setShowLeftArrow(container.scrollLeft > 0);
-      setShowRightArrow(
-        container.scrollLeft < container.scrollWidth - container.clientWidth
-      );
-      
-      // Calculate active index based on scroll position
-      const cardWidth = 320; // 288px card + 32px gap
-      const currentIndex = Math.round(container.scrollLeft / cardWidth);
-      setActiveIndex(Math.min(currentIndex, providers.length - 1));
+  const shouldLoop = !isLoading && !loadError && providers.length > 0
+  const loopedProviders = shouldLoop ? [...providers, ...providers, ...providers] : providers
+
+  const getLoopMetrics = useCallback((container) => {
+    if (!container) return null
+    if (!shouldLoop) return null
+    if (providers.length <= 0) return null
+
+    const cards = container.querySelectorAll('[data-provider-card="true"]')
+    const startSecondIndex = providers.length
+    const startThirdIndex = providers.length * 2
+    if (!cards || cards.length <= startThirdIndex) return null
+
+    const first = cards[0]
+    const second = cards[startSecondIndex]
+    const third = cards[startThirdIndex]
+    if (!first || !second || !third) return null
+
+    const firstLeft = first.offsetLeft
+    const secondLeft = second.offsetLeft
+    const thirdLeft = third.offsetLeft
+    const singleWidth = secondLeft - firstLeft
+
+    if (!Number.isFinite(singleWidth) || singleWidth <= 0) return null
+    return { startMiddle: secondLeft, startThird: thirdLeft, singleWidth }
+  }, [providers.length, shouldLoop])
+
+  const formatPrice = (value) => {
+    const num = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(num)) return null;
+    return Math.round(num);
+  }
+
+  const toProvider = (partner) => {
+    const rawName = partner?.business_name || partner?.businessName || partner?.companyName || 'Partner'
+    const name = rawName.charAt(0).toUpperCase() + rawName.slice(1)
+    const rating = Number(partner?.rating) || 0
+    const reviewCount = Number(partner?.review_count) || 0
+    const price = formatPrice(partner?.min_price_per_day)
+    const city = partner?.city || partner?.user?.city || ''
+    const isVerified = Boolean(partner?.is_verified)
+    const businessType = partner?.business_type || ''
+
+    return {
+      id: partner?.id,
+      name,
+      rating: Math.max(0, Math.min(5, rating)),
+      reviews: reviewCount > 0 ? `${reviewCount} review${reviewCount === 1 ? '' : 's'}` : 'New',
+      logo: partner?.logo_url || null,
+      price,
+      city,
+      isVerified,
+      categories: [
+        { name: 'City', value: city || '—' },
+        { name: 'Type', value: businessType || '—' },
+        { name: 'Bookings', value: typeof partner?.total_bookings === 'number' ? String(partner.total_bookings) : '—' },
+      ]
     }
-  };
+  }
+
+  const getScrollStep = useCallback(() => {
+    const container = scrollContainerRef.current
+    if (!container) return 312
+
+    const firstCard = container.querySelector('[data-provider-card="true"]')
+    if (!firstCard) return 312
+
+    const cardWidth = firstCard.getBoundingClientRect().width
+    if (!Number.isFinite(cardWidth) || cardWidth <= 0) return 312
+
+    const styles = window.getComputedStyle(container)
+    const gap = Number.parseFloat(styles.columnGap || styles.gap || '0')
+    const gapValue = Number.isFinite(gap) ? gap : 0
+
+    return Math.round(cardWidth + gapValue)
+  }, [])
+
+  const checkScrollPosition = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return
+
+    // Infinite loop behavior: keep scroll position within the middle copy.
+    if (shouldLoop) {
+      const metrics = getLoopMetrics(container)
+      const left = container.scrollLeft
+      if (metrics) {
+        // Keep scrollLeft within the middle copy range by shifting exactly one copy width.
+        // This stays seamless because copy #1 and copy #2 are identical.
+        if (left < metrics.startMiddle - 1) {
+          container.scrollLeft = left + metrics.singleWidth
+        } else if (left >= metrics.startThird - 1) {
+          container.scrollLeft = left - metrics.singleWidth
+        }
+      }
+
+      // In loop mode there are no true edges, so keep arrows available.
+      setShowLeftArrow(true)
+      setShowRightArrow(true)
+      return
+    }
+
+    setShowLeftArrow(container.scrollLeft > 0);
+    setShowRightArrow(
+      container.scrollLeft < container.scrollWidth - container.clientWidth
+    );
+  }, [getLoopMetrics, shouldLoop])
 
   const scrollToLeft = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.scrollBy({
-        left: -320,
-        behavior: 'smooth'
-      });
-    }
+    scrollToSnap('left')
   };
 
   const scrollToRight = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.scrollBy({
-        left: 320,
-        behavior: 'smooth'
-      });
-    }
+    scrollToSnap('right')
   };
+
+  const setInstantScrollLeft = useCallback((container, left) => {
+    const prevBehavior = container.style.scrollBehavior
+    container.style.scrollBehavior = 'auto'
+    isProgrammaticScrollRef.current = true
+    container.scrollLeft = left
+    container.style.scrollBehavior = prevBehavior
+    window.setTimeout(() => {
+      isProgrammaticScrollRef.current = false
+    }, 0)
+  }, [])
+
+  const normalizeLoopScrollLeft = useCallback((container) => {
+    const metrics = getLoopMetrics(container)
+    if (!metrics) return null
+
+    const left = container.scrollLeft
+    if (left < metrics.startMiddle - 1) {
+      setInstantScrollLeft(container, left + metrics.singleWidth)
+    } else if (left >= metrics.startThird - 1) {
+      setInstantScrollLeft(container, left - metrics.singleWidth)
+    }
+
+    return metrics
+  }, [getLoopMetrics, setInstantScrollLeft])
+
+  const scrollToSnap = useCallback((direction) => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const allCards = Array.from(container.querySelectorAll('[data-provider-card="true"]'))
+    if (allCards.length === 0) {
+      container.scrollBy({
+        left: direction === 'right' ? getScrollStep() : -getScrollStep(),
+        behavior: 'smooth'
+      })
+      return
+    }
+
+    const epsilon = 2
+
+    // In loop mode, always navigate within the middle copy to prevent jumpy mid-animation recentering.
+    let cards = allCards
+    if (shouldLoop && providers.length > 0 && allCards.length >= providers.length * 3) {
+      normalizeLoopScrollLeft(container)
+      const start = providers.length
+      const end = providers.length * 2
+      cards = allCards.slice(start, end)
+    }
+
+    const offsets = cards.map((c) => c.offsetLeft).filter((n) => Number.isFinite(n))
+    if (offsets.length === 0) return
+
+    const left = container.scrollLeft
+    let target
+
+    if (direction === 'right') {
+      target = offsets.find((x) => x > left + epsilon)
+      if (target == null) target = offsets[0]
+    } else {
+      for (let i = offsets.length - 1; i >= 0; i -= 1) {
+        if (offsets[i] < left - epsilon) {
+          target = offsets[i]
+          break
+        }
+      }
+      if (target == null) target = offsets[offsets.length - 1]
+    }
+
+    isProgrammaticScrollRef.current = true
+    container.scrollTo({ left: target, behavior: 'smooth' })
+    window.setTimeout(() => {
+      isProgrammaticScrollRef.current = false
+    }, 900)
+  }, [getScrollStep, normalizeLoopScrollLeft, providers.length, shouldLoop])
+
+  useEffect(() => {
+    let isMounted = true
+    ;(async () => {
+      try {
+        setIsLoading(true)
+        setLoadError(null)
+
+        const response = await apiClient.get(
+          '/partners/',
+          { page: 1, page_size: 12, sort: '-rating' },
+          { skipAuth: true }
+        )
+
+        const partnerList = response?.data?.data
+        const rows = Array.isArray(partnerList) ? partnerList : []
+        const mapped = rows.map(toProvider).filter((p) => p?.id)
+
+        if (isMounted) setProviders(mapped)
+      } catch (err) {
+        const message = err?.friendlyMessage || err?.message || 'Failed to load rental providers.'
+        if (isMounted) setLoadError(message)
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    })()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', checkScrollPosition);
+      // Start in the middle copy so user can scroll both directions "forever".
+      if (shouldLoop && !didInitLoopScrollRef.current) {
+        const metrics = getLoopMetrics(container)
+        if (metrics) {
+          const prevBehavior = container.style.scrollBehavior
+          container.style.scrollBehavior = 'auto'
+          container.scrollLeft = metrics.startMiddle
+          container.style.scrollBehavior = prevBehavior
+          didInitLoopScrollRef.current = true;
+        }
+      }
+
+      const onScroll = () => {
+        if (scrollRafRef.current != null) return
+        scrollRafRef.current = window.requestAnimationFrame(() => {
+          scrollRafRef.current = null
+
+          // Disable user scrolling: if a scroll happens and it wasn't triggered by our code,
+          // snap back to the last allowed scrollLeft.
+          if (!isProgrammaticScrollRef.current) {
+            setInstantScrollLeft(container, lastAllowedScrollLeftRef.current)
+            return
+          }
+
+          checkScrollPosition()
+          lastAllowedScrollLeftRef.current = container.scrollLeft
+        })
+      }
+
+      container.addEventListener('scroll', onScroll, { passive: true });
       checkScrollPosition();
+      lastAllowedScrollLeftRef.current = container.scrollLeft
 
       return () => {
-        container.removeEventListener('scroll', checkScrollPosition);
+        container.removeEventListener('scroll', onScroll);
+        if (scrollRafRef.current != null) {
+          window.cancelAnimationFrame(scrollRafRef.current)
+          scrollRafRef.current = null
+        }
       };
     }
-  }, []);
+  }, [providers.length, shouldLoop, checkScrollPosition]);
 
-  const providers = [
-    {
-      name: "autoUnion",
-      rating: 4.9,
-      reviews: "Excellent",
-      reviewCount: null,
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 43,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" }, 
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Europcar",
-      rating: 4.8,
-      reviews: "Good",
-      reviewCount: "3 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 77,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Budget",
-      rating: 4.7,
-      reviews: "Good", 
-      reviewCount: "4 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 27,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Avis",
-      rating: 4.5,
-      reviews: "Good",
-      reviewCount: "12 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 68,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-   {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
-    },
-    {
-      name: "Hertz",
-      rating: 4.6,
-      reviews: "Good",
-      reviewCount: "7 reviews",
-      logo: "https://ik.imagekit.io/szcfr7vth/vector-illustration-car-rental-logo-600nw-2314365359.webp?updatedAt=1756818617536",
-      price: 52,
-      categories: [
-        { name: "Car condition", rating: "/5" },
-        { name: "Car cleanliness", rating: "/5" },
-        { name: "Customer service", rating: "/5" },
-        { name: "Easy collection", rating: "/5" }
-      ]
+  useEffect(() => {
+    if (!shouldLoop) return
+
+    const intervalId = window.setInterval(() => {
+      if (document.hidden) return
+      scrollToSnap('right')
+    }, 5_000)
+
+    return () => {
+      window.clearInterval(intervalId)
     }
-  ];
+  }, [shouldLoop, scrollToSnap])
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-12 sm:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Simple Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            Top car rental providers in Airbcar
-          </h2>
-          <p className="text-gray-600">
-            Compare trusted providers and find the best deals for your trip.
-          </p>
+        <div className="mb-12">
+          <div className="text-center md:text-left md:flex md:items-end md:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gray-500">
+                <span className="h-px w-8 bg-orange-500/70" aria-hidden="true" />
+                <span>Providers</span>
+              </div>
+              <h2 className="mt-3 text-3xl sm:text-4xl md:text-6xl font-black text-gray-900 leading-tight sm:leading-[0.95] tracking-tight">
+                Top Profile Providers
+              </h2>
+            </div>
+            <p className="mt-4 md:mt-0 text-sm sm:text-base text-gray-600 max-w-2xl md:max-w-md md:text-right">
+              Compare trusted providers and find the best deals for your trip.
+            </p>
+          </div>
+          <div className="mt-8 h-px bg-gray-100" aria-hidden="true" />
         </div>
 
         {/* Scroll Container with Navigation */}
@@ -260,98 +326,175 @@ export default function RentalProviders() {
             .scrollbar-hide {
               scrollbar-width: none;
               -ms-overflow-style: none;
+              -webkit-overflow-scrolling: touch;
             }
             .scrollbar-hide::-webkit-scrollbar {
               display: none;
             }
           `}</style>
           
-          <div 
+          <div
             ref={scrollContainerRef}
-            className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide px-2"
+            className="-mx-4 sm:mx-0 flex gap-4 sm:gap-6 overflow-x-auto py-8 scrollbar-hide px-4 sm:px-2 snap-x snap-mandatory scroll-smooth overscroll-x-contain select-none touch-pan-y cursor-default"
+            onWheel={(e) => {
+              // Block horizontal wheel/trackpad scrolling (including Shift+wheel),
+              // but allow vertical page scrolling.
+              if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+                e.preventDefault()
+              }
+            }}
           >
-            {providers.map((provider, index) => (
-              <div key={index} className="flex-shrink-0 w-72 bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-300">
-                
-                {/* Provider Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center mr-3">
-                      <img src={provider.logo} alt={provider.name} className="max-h-8 max-w-8 object-contain opacity-70" />
+            {isLoading && (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={`skeleton-${i}`}
+                  className="flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white rounded-2xl border border-gray-100 p-5 sm:p-7 animate-pulse shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center">
+                      <div className="w-11 h-11 bg-gray-100 rounded-xl mr-3" />
+                      <div className="h-4 w-28 bg-gray-100 rounded" />
                     </div>
-                    <h3 className="font-semibold text-gray-900">{provider.name}</h3>
+                    <div className="text-right">
+                      <div className="h-5 w-10 bg-gray-100 rounded ml-auto" />
+                      <div className="h-3 w-16 bg-gray-100 rounded mt-2 ml-auto" />
+                    </div>
                   </div>
-                  
-                  {/* Simple Rating */}
+                  <div className="space-y-3 mb-6">
+                    <div className="h-4 bg-gray-100 rounded" />
+                    <div className="h-4 bg-gray-100 rounded" />
+                    <div className="h-4 bg-gray-100 rounded" />
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <div>
+                      <div className="h-6 w-14 bg-gray-100 rounded" />
+                      <div className="h-3 w-16 bg-gray-100 rounded mt-2" />
+                    </div>
+                    <div className="h-9 w-24 bg-gray-100 rounded-lg" />
+                  </div>
+                </div>
+              ))
+            )}
+
+            {!isLoading && loadError && (
+              <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
+                <div className="font-semibold text-gray-900">Unable to load providers</div>
+                <div className="mt-1 text-sm text-gray-600">{loadError}</div>
+              </div>
+            )}
+
+            {!isLoading && !loadError && providers.length === 0 && (
+              <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
+                <div className="font-semibold text-gray-900">No providers yet</div>
+                <div className="mt-1 text-sm text-gray-600">Check back soon for verified partners.</div>
+              </div>
+            )}
+
+            {!isLoading && !loadError && loopedProviders.map((provider, idx) => (
+              <div
+                key={`${provider.id}-${idx}`}
+                className="group relative flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white p-5 sm:p-7 snap-start rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl"
+                data-provider-card="true"
+                style={{ scrollSnapStop: 'always' }}
+              >
+
+                {/* Provider Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center min-w-0">
+                    <div className="w-11 h-11 bg-white flex items-center justify-center mr-3 overflow-hidden rounded-xl border border-gray-50">
+                      {provider.logo ? (
+                        <img
+                          src={provider.logo}
+                          alt={provider.name}
+                          className="max-h-9 max-w-9 object-contain transition-opacity duration-300 group-hover:opacity-90"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-lg bg-gray-200" aria-hidden="true" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate tracking-tight text-lg">{provider.name}</h3>
+                      {provider.city ? (
+                        <div className="mt-0.5 text-xs text-gray-500 truncate flex items-center">
+                          <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          {provider.city}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Rating */}
                   <div className="text-right">
-                    <div className="text-lg font-bold text-gray-900">{provider.rating}</div>
-                    <div className="text-xs text-gray-500">{provider.reviews}</div>
+                    <div className="inline-flex items-center bg-gray-50/50 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-gray-100">
+                      <span className="text-sm font-bold text-gray-900">{provider.rating.toFixed(1)}</span>
+                      <span className="mx-1.5 h-3 w-px bg-gray-300" aria-hidden="true" />
+                      <span className="text-xs text-orange-500">★</span>
+                    </div>
+                    <div className="mt-1.5 text-xs text-gray-500 font-medium">{provider.reviews}</div>
                   </div>
                 </div>
 
-                {/* Simple Categories */}
-                <div className="space-y-3 mb-6">
-                  {provider.categories.slice(0, 3).map((category, catIndex) => (
-                    <div key={catIndex} className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">{category.name}</span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <span key={i} className="text-xs text-gray-300">★</span>
-                        ))}
-                      </div>
+                {provider.isVerified ? (
+                  <div className="mb-4">
+                    <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium text-emerald-700 bg-emerald-50/50 backdrop-blur-sm rounded-full border border-emerald-100">
+                      <svg className="mr-1 h-2.5 w-2.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      Verified partner
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* Provider Facts */}
+                <div className="space-y-2 mb-6 bg-gray-50/30 backdrop-blur-sm p-3 rounded-xl border border-gray-100/50">
+                  {provider.categories.slice(0, 3).map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-xs">
+                      <span className="text-gray-500 font-medium">{item.name}</span>
+                      <span className="text-gray-900 font-semibold truncate max-w-[9rem] sm:max-w-none">{item.value}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Simple Pricing */}
-                <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                {/* Pricing */}
+                <div className="flex justify-between items-center pt-2">
                   <div>
-                    <div className="text-xl font-bold text-gray-900">{provider.price} €</div>
-                    <div className="text-sm text-gray-500">per day</div>
+                    {provider.price != null ? (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Starting at</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl sm:text-2xl font-bold text-gray-900">{provider.price}€</span>
+                          <span className="text-xs sm:text-sm text-gray-500 font-medium">/day</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                         <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Price</span>
+                         <span className="text-lg font-bold text-gray-900">Varies</span>
+                      </div>
+                    )}
                   </div>
-                  <button className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-orange-600 transition-colors duration-200">
-                    View deals
+                  <button
+                    className="group/btn relative overflow-hidden bg-gray-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 hover:bg-orange-500 hover:shadow-lg hover:shadow-orange-500/30 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                    type="button"
+                    onClick={() => router.push(`/partner/${provider.id}`)}
+                  >
+                    <span className="relative z-10">View Profile</span>
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Bottom Navigation Controls */}
-          <div className="flex justify-end items-center mt-6 space-x-4">
-            {/* Left Scroll Button */}
-            <button
-              onClick={scrollToLeft}
-              disabled={!showLeftArrow}
-              className={`flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                showLeftArrow 
-                  ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-md hover:shadow-lg' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Previous
-            </button>
+          {/* Edge fade for a more premium look */}
+          <div 
+            className={`pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-20 bg-gradient-to-r from-white via-white/80 to-transparent backdrop-blur-[2px] transition-opacity duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} 
+            aria-hidden="true" 
+          />
+          <div 
+            className={`pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-20 bg-gradient-to-l from-white via-white/80 to-transparent backdrop-blur-[2px] transition-opacity duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} 
+            aria-hidden="true" 
+          />
 
 
-            {/* Right Scroll Button */}
-            <button
-              onClick={scrollToRight}
-              disabled={!showRightArrow}
-              className={`flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                showRightArrow 
-                  ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-md hover:shadow-lg' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Next
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
         </div>
       </div>
     </section>

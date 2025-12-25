@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { UserRound, Eye, Edit, Trash2 } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function UsersTable({ 
   users, 
@@ -233,19 +234,20 @@ export default function UsersTable({
             {showAll ? 'Show Paginated' : `Show All (${usersList.length})`}
           </button>
           {!showAll && (
-            <select
-              value={itemsPerPage}
+            <SelectField
+              value={String(itemsPerPage)}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
+              options={[
+                { value: '10', label: '10 per page' },
+                { value: '25', label: '25 per page' },
+                { value: '50', label: '50 per page' },
+                { value: '100', label: '100 per page' },
+              ]}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={10}>10 per page</option>
-              <option value={25}>25 per page</option>
-              <option value={50}>50 per page</option>
-              <option value={100}>100 per page</option>
-            </select>
+            />
           )}
         </div>
         

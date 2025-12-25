@@ -1,9 +1,9 @@
-import type { ApiResponse, ApiError, RequestConfig, PaginatedResponse } from './types';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ApiResponse, RequestConfig, PaginatedResponse } from './types';
 import { cacheManager } from './cache';
 
 // API Client for making HTTP requests to the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 
 export class ApiClient {
   private baseURL: string;
@@ -140,7 +140,7 @@ export class ApiClient {
             // Try to parse as JSON
             try {
               errorData = JSON.parse(errorText);
-              // Always log parsed error data if it's a valid object (even if empty)
+              // Log parsed error data only when helpful (avoid noisy expected 4xx in console)
               if (errorData && typeof errorData === 'object') {
                 // If errorData is empty, add default error message
                 if (Object.keys(errorData).length === 0) {
@@ -150,9 +150,9 @@ export class ApiClient {
                     status: response.status
                   };
                 }
-                // Only log if it has useful fields or if it's a meaningful error
-                const hasUsefulFields = (errorData as any).detail || (errorData as any).error || (errorData as any).message;
-                if (hasUsefulFields || response.status >= 400) {
+                const debugErrors = process.env.NEXT_PUBLIC_DEBUG_API_ERRORS === 'true';
+                const shouldLog = debugErrors || response.status >= 500;
+                if (shouldLog) {
                   console.error('Parsed error data:', errorData);
                 }
               }
@@ -182,8 +182,8 @@ export class ApiClient {
           };
         }
         
-        // Only log non-404 errors to reduce console noise
-        if (response.status !== 404) {
+        // Only log server-side failures by default (reduce console noise)
+        if (response.status >= 500 || process.env.NEXT_PUBLIC_DEBUG_API_ERRORS === 'true') {
           console.error(`HTTP ${response.status} Error Response:`, errorText?.substring(0, 200) || 'No response text');
         }
         
@@ -273,7 +273,7 @@ export class ApiClient {
               meta: data.meta
             };
             return result;
-          } catch (parseError) {
+          } catch {
             // If JSON parsing fails, return empty (DELETE usually returns empty on success)
             const result: ApiResponse<T> = {
               data: null as any,
@@ -282,7 +282,7 @@ export class ApiClient {
             };
             return result;
           }
-        } catch (readError) {
+        } catch {
           // If reading fails, return empty result for DELETE
           const result: ApiResponse<T> = {
             data: null as any,

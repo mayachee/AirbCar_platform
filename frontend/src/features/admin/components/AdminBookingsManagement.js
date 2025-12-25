@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { adminService } from '@/features/admin/services/adminService';
 import { useToast } from '@/contexts/ToastContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function AdminBookingsManagement() {
   const { addToast } = useToast();
@@ -575,49 +576,48 @@ export default function AdminBookingsManagement() {
         
         <div className="relative">
           <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-          <select
+          <SelectField
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-          >
-            <option value="all">All Dates</option>
-            <option value="today">Today</option>
-            <option value="this_week">This Week</option>
-            <option value="this_month">This Month</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="past">Past</option>
-          </select>
+            options={[
+              { value: 'all', label: 'All Dates' },
+              { value: 'today', label: 'Today' },
+              { value: 'this_week', label: 'This Week' },
+              { value: 'this_month', label: 'This Month' },
+              { value: 'upcoming', label: 'Upcoming' },
+              { value: 'past', label: 'Past' },
+            ]}
+            className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
 
         {uniqueCustomers.length > 0 && (
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-            <select
-              value={customerFilter}
+            <SelectField
+              value={String(customerFilter)}
               onChange={(e) => setCustomerFilter(e.target.value)}
-              className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-            >
-              <option value="all">All Customers</option>
-              {uniqueCustomers.map(customer => (
-                <option key={customer.id} value={customer.id}>{customer.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: 'all', label: 'All Customers' },
+                ...uniqueCustomers.map((customer) => ({ value: customer.id, label: customer.name })),
+              ]}
+              className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         )}
 
         {uniqueVehicles.length > 0 && (
           <div className="relative">
             <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
-            <select
-              value={vehicleFilter}
+            <SelectField
+              value={String(vehicleFilter)}
               onChange={(e) => setVehicleFilter(e.target.value)}
-              className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-            >
-              <option value="all">All Vehicles</option>
-              {uniqueVehicles.map(vehicle => (
-                <option key={vehicle.id} value={vehicle.id}>{vehicle.name}</option>
-              ))}
-            </select>
+              options={[
+                { value: 'all', label: 'All Vehicles' },
+                ...uniqueVehicles.map((vehicle) => ({ value: vehicle.id, label: vehicle.name })),
+              ]}
+              className="w-full pl-10 pr-8 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         )}
       </div>
@@ -795,19 +795,20 @@ export default function AdminBookingsManagement() {
             <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Items per page:</span>
-                <select
-                  value={itemsPerPage}
+                <SelectField
+                  value={String(itemsPerPage)}
                   onChange={(e) => {
                     setItemsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                </select>
+                  options={[
+                    { value: '5', label: '5' },
+                    { value: '10', label: '10' },
+                    { value: '25', label: '25' },
+                    { value: '50', label: '50' },
+                  ]}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
               <div className="flex items-center space-x-2">

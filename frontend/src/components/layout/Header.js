@@ -2,328 +2,313 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { Button } from '@/components/ui'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { APP_NAME } from '@/constants'
+import { SelectField } from '@/components/ui/select-field'
+
+// Navigation items
+const navigationItems = [
+  { label: 'Search', href: '/search' },
+  { label: 'Be Partner', href: '/partner' },
+  { label: 'Mission', href: '/mission' }
+]
 
 export default function Header() {
   const { user, loading, logout } = useAuth()
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isRegionalSettingsOpen, setIsRegionalSettingsOpen] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [regionalSettings, setRegionalSettings] = useState({
-    language: 'English',
-    country: 'Morocco',
-    currency: 'MAD - DH'
-  })
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [language, setLanguage] = useState('en')
+  const [currency, setCurrency] = useState('MAD')
+  const [isScrolled, setIsScrolled] = useState(false)
 
   const pathname = usePathname()
-  const router = useRouter()
 
-  // Language and Currency options
-  const languageOptions = [
-    { code: 'en', name: 'English'},
-    { code: 'ar', name: 'العربية'},
-    { code: 'fr', name: 'Français'}
-  ]
+  const isPartner = !!user && (user.is_partner === true || user.role === 'partner')
+  const isAdmin = !!user && (
+    user.email === 'admin@airbcar.com' ||
+    user.role === 'admin' ||
+    user.is_admin === true
+  )
 
-  const currencyOptions = [
-    { code: 'MAD', symbol: 'DH', name: 'Dirham' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'USD', symbol: '$', name: 'Dollar' }
-  ]
+  const menuButtonRef = useRef(null)
+  const menuPanelRef = useRef(null)
 
-  // Navigation items
-  const navigationItems = [
-    { label: 'Search', href: '/search' },
-    { label: 'Become a Partner', href: '/partner' },
-    { label: 'Mission', href: '/mission' },
-  ]
+  const closeMenu = useCallback(() => {
+    setIsMenuOpen(false)
+  }, [])
 
-  // Check if user is admin or partner
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen(prev => !prev)
+  }, [])
+
+  // Close menus on route change
   useEffect(() => {
-    if (user) {
-      setIsAdmin(
-        user.email === 'admin@airbcar.com' ||
-        user.role === 'admin' ||
-        user.is_admin === true
-      )
-    } else {
-      setIsAdmin(false)
-    }
-  }, [user])
+    closeMenu()
+  }, [pathname, closeMenu])
 
-  // Load regional settings from localStorage
+  // Glass effect when user scrolls
   useEffect(() => {
-    const storedLanguage = localStorage.getItem('selectedLanguage')
-    const storedCurrency = localStorage.getItem('selectedCurrency')
-    
-    if (storedLanguage) {
-      setRegionalSettings(prev => ({ ...prev, language: storedLanguage }))
-    }
-    if (storedCurrency) {
-      setRegionalSettings(prev => ({ ...prev, currency: storedCurrency }))
+    const onScroll = () => setIsScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Restore preferences
+  useEffect(() => {
+    try {
+      const storedLanguage = localStorage.getItem('airbcar_language')
+      const storedCurrency = localStorage.getItem('airbcar_currency')
+      if (storedLanguage) setLanguage(storedLanguage)
+      if (storedCurrency) setCurrency(storedCurrency)
+    } catch {
+      // ignore storage errors
     }
   }, [])
 
-  const handleLanguageChange = (language) => {
-    setRegionalSettings(prev => ({ ...prev, language: language.name }))
-    localStorage.setItem('selectedLanguage', language.name)
-    setIsRegionalSettingsOpen(false)
+  const handleLanguageChange = (event) => {
+    const value = event.target.value
+    setLanguage(value)
+    try {
+      localStorage.setItem('airbcar_language', value)
+    } catch {
+      // ignore storage errors
+    }
   }
 
-  const handleCurrencyChange = (currency) => {
-    const currencyString = `${currency.code} - ${currency.symbol}`
-    setRegionalSettings(prev => ({ ...prev, currency: currencyString }))
-    localStorage.setItem('selectedCurrency', currencyString)
-    setIsRegionalSettingsOpen(false)
+  const handleCurrencyChange = (event) => {
+    const value = event.target.value
+    setCurrency(value)
+    try {
+      localStorage.setItem('airbcar_currency', value)
+    } catch {
+      // ignore storage errors
+    }
   }
+
+  // Close menus on ESC
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeMenu()
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [closeMenu])
+
+  // Click outside overlay to close
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const onPointerDown = (event) => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+
+      const clickedPanel = menuPanelRef.current?.contains(target)
+      const clickedButton = menuButtonRef.current?.contains(target)
+      if (!clickedPanel && !clickedButton) closeMenu()
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [isMenuOpen, closeMenu])
 
   const handleSignOut = () => {
     localStorage.removeItem('isPartnerUser')
     logout()
-    setIsDropdownOpen(false)
+    closeMenu()
   }
 
-  // Check if user is a partner (strictly based on user data, not pathname)
-  const isPartner = user && (
-    user.is_partner === true || 
-    user.role === 'partner'
-  )
+  const overlayItems = useMemo(() => {
+    const items = [...navigationItems]
+
+    if (!loading) {
+      if (user) {
+        items.push(
+          { label: 'Account', href: '/account' },
+          { label: 'My Bookings', href: '/account?tab=bookings' }
+        )
+
+        if (isPartner) items.push({ label: 'Partner Dashboard', href: '/partner/dashboard' })
+        if (isAdmin) items.push({ label: 'Admin Dashboard', href: '/admin/dashboard' })
+      } else {
+        items.push(
+          { label: 'Sign In', href: '/auth?mode=signin' },
+          { label: 'Sign Up', href: '/auth?mode=signup' }
+        )
+      }
+    }
+
+    return items
+  }, [user, loading, isPartner, isAdmin])
+
+  const headerClassName = `fixed inset-x-0 top-0 z-40
+    transition-all duration-500 ease-in-out
+    ${isScrolled 
+      ? 'bg-[#0B0F19]/40 backdrop-blur-xl border-b border-white/5 py-2 shadow-lg shadow-black/10' 
+      : 'bg-transparent py-6'}`
+  
+  const navTextClassName = isScrolled ? 'text-white' : 'text-white drop-shadow-md'
+  
+  const buttonClassName = isScrolled 
+    ? 'bg-white/5 hover:bg-orange-600 text-white border-transparent shadow-sm' 
+    : 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-md border-white/10 shadow-lg shadow-black/5'
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">{APP_NAME}</span>
-            </Link>
-          </div>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {navigationItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-              return (
-              <Link
-                key={item.href}
-                href={item.href}
-                  className={`font-medium transition-colors ${
-                    isActive
-                      ? 'text-orange-600 border-b-2 border-orange-600 pb-1'
-                      : 'text-gray-700 hover:text-orange-600'
-                  }`}
-              >
-                {item.label}
-              </Link>
-              );
-            })}
-          </nav>
-
-          {/* Right side */}
-          <div className="flex items-center space-x-4">
-            {/* Regional Settings */}
-            <div className="relative">
+    <>
+      <header className={headerClassName}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-3 items-center h-16">
+            {/* Menu Button */}
+            <div className="flex items-center justify-start">
               <button
-                onClick={() => setIsRegionalSettingsOpen(!isRegionalSettingsOpen)}
-                className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                ref={menuButtonRef}
+                type="button"
+                aria-label="Open menu"
+                aria-expanded={isMenuOpen}
+                onClick={toggleMenu}
+                className={`group inline-flex items-center justify-center rounded-full px-3 sm:px-5 py-2.5 transition-all duration-300 border ${buttonClassName}`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
-                </svg>
-                <span>{regionalSettings.currency}</span>
-              </button>
-              
-              {isRegionalSettingsOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border py-1 z-50">
-                  <div className="px-4 py-2 border-b">
-                    <h3 className="font-medium text-gray-900">Language</h3>
-                    <div className="mt-2 space-y-1">
-                      {languageOptions.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => handleLanguageChange(lang)}
-                          className={`block w-full text-left px-2 py-1 text-sm rounded ${
-                            regionalSettings.language === lang.name
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          {lang.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="px-4 py-2">
-                    <h3 className="font-medium text-gray-900">Currency</h3>
-                    <div className="mt-2 space-y-1">
-                      {currencyOptions.map((currency) => (
-                        <button
-                          key={currency.code}
-                          onClick={() => handleCurrencyChange(currency)}
-                          className={`block w-full text-left px-2 py-1 text-sm rounded ${
-                            regionalSettings.currency.includes(currency.code)
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          {currency.name} ({currency.symbol})
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                <div className="flex flex-col space-y-1.5 sm:mr-3 group-hover:space-y-0 relative h-3 w-5 justify-center">
+                  <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:rotate-45 group-hover:absolute"></span>
+                  <span className="w-3 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:-rotate-45 group-hover:absolute"></span>
                 </div>
-              )}
+                <span className="hidden sm:inline text-sm font-bold tracking-wide uppercase">Menu</span>
+              </button>
             </div>
 
-            {/* User Menu */}
-            {loading ? (
-              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-            ) : user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
-                >
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-orange-600 font-medium">
-                      {user.first_name?.[0] || user.email?.[0] || 'U'}
-                    </span>
-                  </div>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+            {/* Logo */}
+            <div className="flex items-center justify-center">
+              <Link href="/" className="select-none group flex items-center space-x-3">
+                <span className={`text-3xl font-black tracking-tighter transition-all duration-300 ${navTextClassName} drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]`}>
+                  {APP_NAME}
+                </span>
+              </Link>
+            </div>
 
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
-                    <div className="px-4 py-2 border-b">
-                      <p className="font-medium text-gray-900">
-                        {user.first_name} {user.last_name}
-                      </p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                    </div>
-                    
-                    <Link
-                      href="/account"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Account Settings
-                    </Link>
-                    
-                    <Link
-                      href="/account?tab=bookings"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      My Bookings
-                    </Link>
+            {/* Right Side Actions */}
+            <div className="flex items-center justify-end space-x-3">
+              <Link
+                href="/search"
+                aria-label="Search"
+                className={`group inline-flex items-center justify-center rounded-full p-3 transition-all duration-300 border ${buttonClassName}`}
+              >
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </Link>
 
-                    {isPartner && (
-                      <Link
-                        href="/partner/dashboard"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        Partner Dashboard
-                      </Link>
-                    )}
-
-                    {isAdmin && (
-                      <Link
-                        href="/admin/dashboard"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setIsDropdownOpen(false)}
-                      >
-                        Admin Dashboard
-                      </Link>
-                    )}
-
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Link href="/auth?mode=signin">
-                  <Button variant="ghost" size="sm">
+              {!loading && !user && (
+                <>
+                  <Link
+                    href="/auth?mode=signin"
+                    className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 border ${buttonClassName}`}
+                  >
                     Sign In
-                  </Button>
-                </Link>
-                <Link href="/auth?mode=signin">
-                  <Button size="sm">
+                  </Link>
+                  <Link
+                    href="/auth?mode=signup"
+                    className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 bg-orange-600 text-white border border-transparent hover:bg-orange-700 shadow-lg shadow-orange-900/20`}
+                  >
                     Sign Up
-                  </Button>
-                </Link>
-              </div>
-            )}
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t py-4">
-            <nav className="space-y-2">
-              {navigationItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                    className={`block px-3 py-2 font-medium transition-colors ${
-                      isActive
-                        ? 'text-orange-600 bg-orange-50 border-l-4 border-orange-600'
-                        : 'text-gray-700 hover:text-orange-600 hover:bg-gray-50'
-                    }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-                );
-              })}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={closeMenu} />
+
+          <div
+            ref={menuPanelRef}
+            className="airbcar-menu-scroll relative h-full w-full sm:w-[480px] max-w-md bg-[#0B0F19] shadow-2xl px-6 sm:px-8 pt-8 pb-10 overflow-y-auto overscroll-contain
+              animate-in slide-in-from-left duration-300 border-r border-white/10 flex flex-col"
+          >
+            <div className="flex items-center justify-between mb-8">
+               <span className="text-sm font-medium text-white/40 uppercase tracking-widest">Menu</span>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={closeMenu}
+                className="group inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+              >
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <nav className="flex-1 flex flex-col justify-center -mt-10" aria-label="Site">
+                <div className="space-y-6">
+                  {overlayItems.map((item) => (
+                    <Link
+                      key={`${item.href}-${item.label}`}
+                      href={item.href}
+                      onClick={closeMenu}
+                      className="group flex items-center text-3xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300"
+                    >
+                      <span className="transition-transform duration-300 group-hover:translate-x-2">{item.label}</span>
+                    </Link>
+                  ))}
+
+                  {user && !loading && (
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="group flex items-center text-3xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300 text-left w-full"
+                    >
+                      <span className="transition-transform duration-300 group-hover:translate-x-2">Sign Out</span>
+                    </button>
+                  )}
+                </div>
             </nav>
-          </div>
-        )}
-      </div>
 
-      {/* Click outside handler */}
-      {(isDropdownOpen || isRegionalSettingsOpen) && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => {
-            setIsDropdownOpen(false)
-            setIsRegionalSettingsOpen(false)
-          }}
-        />
+            <div className="mt-auto pt-8 border-t border-white/10">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold tracking-wider text-white/40 mb-2">
+                      Language
+                    </label>
+                      <SelectField
+                        value={language}
+                        onChange={(e) => handleLanguageChange(e)}
+                        options={[
+                          { value: 'ar', label: 'Arabic' },
+                          { value: 'en', label: 'English' },
+                          { value: 'fr', label: 'French' },
+                        ]}
+                        className="w-full rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors"
+                      />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold tracking-wider text-white/40 mb-2">
+                      Currency
+                    </label>
+                      <SelectField
+                        value={currency}
+                        onChange={(e) => handleCurrencyChange(e)}
+                        options={[
+                          { value: 'USD', label: 'USD ($)' },
+                          { value: 'EUR', label: 'EUR (€)' },
+                          { value: 'MAD', label: 'MAD (DH)' },
+                        ]}
+                        className="w-full rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors"
+                      />
+                  </div>
+                </div>
+                
+                <div className="mt-8 text-center">
+                    <p className="text-xs text-white/20">© {new Date().getFullYear()} {APP_NAME}. All rights reserved.</p>
+                </div>
+            </div>
+          </div>
+        </div>
       )}
-    </header>
+    </>
   )
 }

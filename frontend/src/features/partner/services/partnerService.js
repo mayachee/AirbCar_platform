@@ -1,5 +1,4 @@
 import { apiClient } from '@/lib/api/client'
-import { API_ENDPOINTS } from '@/constants'
 
 /**
  * Partner Service - Complete API integration
@@ -7,27 +6,46 @@ import { API_ENDPOINTS } from '@/constants'
 export const partnerService = {
   // Partner Management
   async registerPartner(partnerData) {
-    return apiClient.post('/partners/', {
-      company_name: partnerData.businessName || partnerData.company_name,
-      tax_id: partnerData.licenseNumber || partnerData.tax_id,
-      agree_on_terms: partnerData.agree_on_terms !== undefined ? partnerData.agree_on_terms : true
-    })
+    const business_name =
+      partnerData.business_name ||
+      partnerData.businessName ||
+      partnerData.company_name ||
+      partnerData.companyName ||
+      partnerData.businessName ||
+      ''
+
+    const business_type =
+      partnerData.business_type ||
+      partnerData.businessType ||
+      ''
+
+    const payload = {
+      business_name,
+      business_type,
+      business_license:
+        partnerData.business_license ||
+        partnerData.businessLicense ||
+        partnerData.licenseNumber ||
+        undefined,
+      tax_id: partnerData.tax_id || partnerData.taxId || undefined,
+      bank_account: partnerData.bank_account || partnerData.bankAccount || undefined,
+      description: partnerData.description || undefined,
+      phone_number: partnerData.phone_number || partnerData.phone || undefined,
+      address: partnerData.address || undefined,
+      city: partnerData.city || undefined,
+      state: partnerData.state || undefined,
+      agree_on_terms:
+        partnerData.agree_on_terms !== undefined ? partnerData.agree_on_terms : true
+    }
+
+    // Remove undefined keys so DRF doesn't get noisy
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k])
+
+    return apiClient.post('/partners/', payload)
   },
 
   async getPartnerProfile() {
-    try {
-      return await apiClient.get('/partners/me/')
-    } catch (error) {
-      // If 404 and error message indicates missing profile, return a structured response
-      if (error?.status === 404 && error?.message?.includes('Partner profile not found')) {
-        return {
-          data: null,
-          has_partner_profile: false,
-          error: error.message
-        }
-      }
-      throw error
-    }
+    return apiClient.get('/partners/me/')
   },
 
   async getPartnerById(partnerId) {
@@ -124,84 +142,47 @@ export const partnerService = {
 
   // Dashboard & Analytics
   async getDashboardData() {
-    // Get all partner data in parallel
-    const [partnerResult, bookings, pendingRequests] = await Promise.allSettled([
-      this.getPartnerProfile(),
-      this.getBookings(),
-      this.getPendingRequests()
-    ])
-    
-    // Debug: Log the raw partner result
-    console.log('getDashboardData - partnerResult:', partnerResult);
-    console.log('getDashboardData - partnerResult.value:', partnerResult.status === 'fulfilled' ? partnerResult.value : 'rejected');
-    
-    // Handle partner profile result
-    // API client returns { data: {...}, success: true }
-    // Backend returns { data: {...} }, so API client wraps it: { data: { data: {...} }, success: true }
-    let partnerResponse = partnerResult.status === 'fulfilled' 
-      ? partnerResult.value 
-      : { data: null, has_partner_profile: false, error: partnerResult.reason?.message }
-    
-    // Extract partner data - handle nested data structure
-    // API client returns: { data: backendResponse, success: true }
-    // Backend returns: { data: {...} } for success or { error: '...', has_partner_profile: false } for 404
-    // So structure is: { data: { data: {...} }, success: true } OR { data: { error: '...', has_partner_profile: false }, success: true }
-    let partnerData = null;
-    if (partnerResponse && partnerResponse.data) {
-      const backendResponse = partnerResponse.data;
-      
-      // Check if backend returned an error (404 case)
-      if (backendResponse.has_partner_profile === false) {
-        console.log('getDashboardData - Backend says no partner profile');
-        partnerData = null;
-      } 
-      // Check if backend response has nested data
-      else if (backendResponse.data && typeof backendResponse.data === 'object') {
-        // Backend returned { data: {...} }, API client wrapped it: { data: { data: {...} } }
-        partnerData = backendResponse.data;
-        console.log('getDashboardData - Extracted nested data:', partnerData);
-      } 
-      // Backend might return data directly (shouldn't happen but handle it)
-      else if (typeof backendResponse === 'object' && backendResponse.business_name !== undefined) {
-        // Direct partner object
-        partnerData = backendResponse;
-        console.log('getDashboardData - Using direct data:', partnerData);
+    // Partner dashboard only makes sense if a partner profile exists.
+    // Fetch partner profile first so we can skip partner-only endpoints when missing.
+    let partnerResponse;
+    try {
+      partnerResponse = await this.getPartnerProfile();
+    } catch (error) {
+      if (error?.status === 404 && (error?.message || '').toLowerCase().includes('partner profile not found')) {
+        return {
+          partner: null,
+          vehicles: [],
+          bookings: [],
+          pendingRequests: [],
+          has_partner_profile: false,
+          error: error.message || 'Partner profile not found'
+        };
       }
-      // Check if it's already the partner object
-      else if (backendResponse.business_name || backendResponse.tax_id) {
-        partnerData = backendResponse;
-        console.log('getDashboardData - Using backendResponse as partnerData:', partnerData);
-      }
+      throw error;
     }
-    
-    // Final check - if still null, log what we have
-    if (!partnerData && partnerResponse) {
-      console.warn('getDashboardData - Could not extract partnerData. partnerResponse structure:', {
-        hasData: !!partnerResponse.data,
-        dataType: typeof partnerResponse.data,
-        dataKeys: partnerResponse.data ? Object.keys(partnerResponse.data) : [],
-        fullResponse: partnerResponse
-      });
-    }
-    
-    console.log('getDashboardData - Extracted partnerData:', partnerData);
-    console.log('getDashboardData - partnerData keys:', partnerData ? Object.keys(partnerData) : 'null');
-    
-    // If partner profile doesn't exist, return early with empty data
-    if (!partnerData && partnerResponse.has_partner_profile === false) {
+
+    // API client wraps backend JSON as: { data: backendResponse, success: true }
+    // Backend partner endpoint returns: { data: partner }
+    const partnerData = partnerResponse?.data?.data || null;
+    if (!partnerData) {
       return {
         partner: null,
         vehicles: [],
-        bookings: bookings.status === 'fulfilled' ? (bookings.value.data || []) : [],
-        pendingRequests: pendingRequests.status === 'fulfilled' ? (pendingRequests.value.data || []) : [],
+        bookings: [],
+        pendingRequests: [],
         has_partner_profile: false,
-        error: partnerResponse.error || 'Partner profile not found'
-      }
+        error: 'Partner profile not found'
+      };
     }
-    
-    // Extract data from fulfilled promises
-    const bookingsData = bookings.status === 'fulfilled' ? bookings.value : { data: [] }
-    const pendingData = pendingRequests.status === 'fulfilled' ? pendingRequests.value : { data: [] }
+
+    // Fetch partner-only data in parallel now that we have a valid partner.
+    const [bookingsResult, pendingRequestsResult] = await Promise.allSettled([
+      this.getBookings(),
+      this.getPendingRequests()
+    ]);
+
+    const bookingsData = bookingsResult.status === 'fulfilled' ? bookingsResult.value : null;
+    const pendingData = pendingRequestsResult.status === 'fulfilled' ? pendingRequestsResult.value : null;
 
     // Fetch full vehicle details - get listings from the listings endpoint filtered by partner
     let vehiclesData = [];
@@ -209,7 +190,6 @@ export const partnerService = {
       const partnerId = partnerData?.id;
       if (partnerId) {
         const vehiclesResponse = await this.getVehiclesByPartnerId(partnerId);
-        console.log('getDashboardData - vehiclesResponse:', vehiclesResponse);
         // API client wraps: { data: backendResponse, success: true }
         // Backend returns: { data: [...], count: N, message: '...' }
         // So we need: vehiclesResponse.data.data
@@ -228,7 +208,6 @@ export const partnerService = {
             vehiclesData = vehiclesResponse.data.listings;
           }
         }
-        console.log('getDashboardData - Extracted vehiclesData:', vehiclesData.length, vehiclesData);
       }
     } catch (error) {
       console.error('Error fetching full vehicle details:', error);
@@ -241,18 +220,14 @@ export const partnerService = {
       vehiclesData = partnerData?.listings || [];
     }
 
-    console.log('getDashboardData - Returning partner data:', {
-      partner: partnerData,
-      partnerKeys: partnerData ? Object.keys(partnerData) : [],
-      hasBusinessName: !!partnerData?.business_name,
-      hasTaxId: !!partnerData?.tax_id
-    });
+    const bookingsList = bookingsData?.data?.data || bookingsData?.data || [];
+    const pendingList = pendingData?.data?.data || pendingData?.data || [];
 
     return {
       partner: partnerData,
       vehicles: vehiclesData, // Full vehicle details
-      bookings: bookingsData.data || [],
-      pendingRequests: pendingData.data || [],
+      bookings: Array.isArray(bookingsList) ? bookingsList : [],
+      pendingRequests: Array.isArray(pendingList) ? pendingList : [],
       has_partner_profile: true
     }
   },
@@ -266,8 +241,8 @@ export const partnerService = {
       ])
 
       // Ensure vehiclesData is always an array
-      const vehiclesData = Array.isArray(partner?.data?.listings) 
-        ? partner.data.listings 
+      const vehiclesData = Array.isArray(partner?.data?.data?.listings)
+        ? partner.data.data.listings
         : []
 
       // Ensure bookingsData is always an array - handle different response structures

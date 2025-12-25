@@ -1,6 +1,7 @@
 'use client';
 
 import { Search } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function BookingFilters({ searchTerm, statusFilter, sortBy, onSearchChange, onStatusChange, onSortChange }) {
   return (
@@ -15,28 +16,30 @@ export default function BookingFilters({ searchTerm, statusFilter, sortBy, onSea
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
       </div>
-      <select
+      <SelectField
         value={statusFilter}
         onChange={(e) => onStatusChange(e.target.value)}
-        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-      >
-        <option value="all">All Status</option>
-        <option value="pending">Pending</option>
-        <option value="accepted">Accepted</option>
-        <option value="confirmed">Confirmed</option>
-        <option value="completed">Completed</option>
-        <option value="cancelled">Cancelled</option>
-        <option value="rejected">Rejected</option>
-      </select>
-      <select
+        options={[
+          { value: 'all', label: 'All Status' },
+          { value: 'pending', label: 'Pending' },
+          { value: 'accepted', label: 'Accepted' },
+          { value: 'confirmed', label: 'Confirmed' },
+          { value: 'completed', label: 'Completed' },
+          { value: 'cancelled', label: 'Cancelled' },
+          { value: 'rejected', label: 'Rejected' },
+        ]}
+        className="px-4 py-2 rounded-lg"
+      />
+      <SelectField
         value={sortBy}
         onChange={(e) => onSortChange(e.target.value)}
-        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-      >
-        <option value="date">Sort by Date</option>
-        <option value="price">Sort by Price</option>
-        <option value="status">Sort by Status</option>
-      </select>
+        options={[
+          { value: 'date', label: 'Sort by Date' },
+          { value: 'price', label: 'Sort by Price' },
+          { value: 'status', label: 'Sort by Status' },
+        ]}
+        className="px-4 py-2 rounded-lg"
+      />
     </div>
   );
 }

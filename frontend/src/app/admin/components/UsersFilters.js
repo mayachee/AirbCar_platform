@@ -1,6 +1,7 @@
 'use client';
 
 import { Search, Filter } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function UsersFilters({ searchTerm, setSearchTerm, statusFilter, setStatusFilter }) {
   return (
@@ -23,15 +24,16 @@ export default function UsersFilters({ searchTerm, setSearchTerm, statusFilter, 
         {/* Status Filter */}
         <div className="flex items-center space-x-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <select
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          <SelectField
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All Users</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
+            options={[
+              { value: 'all', label: 'All Users' },
+              { value: 'active', label: 'Active Only' },
+              { value: 'inactive', label: 'Inactive Only' },
+            ]}
+            className="px-3 py-2 rounded-lg focus:ring-blue-500/20 focus:border-blue-500"
+          />
         </div>
       </div>
     </div>

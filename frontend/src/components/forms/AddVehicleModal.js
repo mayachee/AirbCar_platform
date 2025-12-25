@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Car, Upload, Save } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 // Car makes options
 const CAR_MAKES = [
@@ -776,18 +777,18 @@ export default function AddVehicleModal({
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-transparent dark:border-gray-800">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center space-x-3">
-            <Car className="h-6 w-6 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <Car className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {Object.keys(vehicleData).length > 0 ? 'Edit Vehicle' : 'Add New Vehicle'}
             </h3>
           </div>
           <button
             onClick={() => setShowModal(false)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -797,7 +798,7 @@ export default function AddVehicleModal({
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Make *
               </label>
               <div className="relative">
@@ -810,8 +811,8 @@ export default function AddVehicleModal({
                   placeholder="Type or select a make"
                   autoComplete="off"
                   required
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    errors.make ? 'border-red-500' : 'border-gray-300'
+                  className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${
+                    errors.make ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                   }`}
                 />
                 <datalist id="make-list">
@@ -825,14 +826,14 @@ export default function AddVehicleModal({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {formData.make ? `${CAR_MAKES.filter(m => m.toLowerCase().includes(formData.make.toLowerCase())).length} suggestion(s)` : 'Type to see suggestions or select from list'}
               </p>
               {errors.make && <p className="text-red-500 text-xs mt-1">{errors.make}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Model *
               </label>
               <div className="relative">
@@ -845,8 +846,8 @@ export default function AddVehicleModal({
                   placeholder="Type or select a model"
                   autoComplete="off"
                   required
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    errors.model ? 'border-red-500' : 'border-gray-300'
+                  className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${
+                    errors.model ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                   }`}
                 />
                 <datalist id="model-list">
@@ -860,30 +861,29 @@ export default function AddVehicleModal({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {formData.model ? `${UNIQUE_CAR_MODELS.filter(m => m.toLowerCase().includes(formData.model.toLowerCase())).length} suggestion(s)` : 'Type to see suggestions or select from list'}
               </p>
               {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Year *
               </label>
-              <select
+              <SelectField
                 name="year"
                 value={formData.year}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.year ? 'border-red-500' : 'border-gray-300'
+                placeholder="Select Year"
+                showPlaceholderOption
+                options={generateYears().map((year) => ({ value: year, label: String(year) }))}
+                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                  errors.year ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="">Select Year</option>
-                {generateYears().map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+              />
+              
               {errors.year && <p className="text-red-500 text-xs mt-1">{errors.year}</p>}
             </div>
           </div>
@@ -891,7 +891,7 @@ export default function AddVehicleModal({
           {/* Pricing & Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Daily Rate ($) *
               </label>
               <input
@@ -901,8 +901,8 @@ export default function AddVehicleModal({
                 onChange={handleInputChange}
                 min="1"
                 step="0.01"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.price_per_day ? 'border-red-500' : 'border-gray-300'
+                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${
+                  errors.price_per_day ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
                 placeholder="e.g., 50"
               />
@@ -910,23 +910,21 @@ export default function AddVehicleModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Location *
               </label>
-              <select
+              <SelectField
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.location ? 'border-red-500' : 'border-gray-300'
+                placeholder="Select Location"
+                showPlaceholderOption
+                options={LOCATIONS.map((location) => ({ value: location, label: location }))}
+                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                  errors.location ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="">Select Location</option>
-                {LOCATIONS.map(location => (
-                  <option key={location} value={location}>{location}</option>
-                ))}
-              </select>
+              />
               {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
             </div>
           </div>
@@ -934,85 +932,87 @@ export default function AddVehicleModal({
           {/* Vehicle Details */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Fuel Type
               </label>
-              <select
+              <SelectField
                 name="fuel_type"
                 value={formData.fuel_type}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="gasoline">Gasoline</option>
-                <option value="diesel">Diesel</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="electric">Electric</option>
-              </select>
+                options={[
+                  { value: 'gasoline', label: 'Gasoline' },
+                  { value: 'diesel', label: 'Diesel' },
+                  { value: 'hybrid', label: 'Hybrid' },
+                  { value: 'electric', label: 'Electric' },
+                ]}
+                className="w-60 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Transmission
               </label>
-              <select
+              <SelectField
                 name="transmission"
                 value={formData.transmission}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="automatic">Automatic</option>
-                <option value="manual">Manual</option>
-              </select>
+                options={[
+                  { value: 'automatic', label: 'Automatic' },
+                  { value: 'manual', label: 'Manual' },
+                ]}
+                className="w-60 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Seating Capacity *
               </label>
-              <select
+              <SelectField
                 name="seating_capacity"
                 value={formData.seating_capacity}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.seating_capacity ? 'border-red-500' : 'border-gray-300'
+                placeholder="Select Seating Capacity"
+                showPlaceholderOption
+                options={[2, 3, 4, 5, 6, 7, 8].map((seats) => ({
+                  value: seats,
+                  label: `${seats} ${seats === 1 ? 'Seat' : 'Seats'}`,
+                }))}
+                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                  errors.seating_capacity ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="">Select Seating Capacity</option>
-                {[2, 3, 4, 5, 6, 7, 8].map(seats => (
-                  <option key={seats} value={seats}>
-                    {seats} {seats === 1 ? 'Seat' : 'Seats'}
-                  </option>
-                ))}
-              </select>
+              />
               {errors.seating_capacity && <p className="text-red-500 text-xs mt-1">{errors.seating_capacity}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Vehicle Condition *
               </label>
-              <select
+              <SelectField
                 name="vehicle_condition"
                 value={formData.vehicle_condition}
                 onChange={handleInputChange}
                 required
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.vehicle_condition ? 'border-red-500' : 'border-gray-300'
+                options={[
+                  { value: 'excellent', label: 'Excellent' },
+                  { value: 'good', label: 'Good' },
+                  { value: 'fair', label: 'Fair' },
+                  { value: 'poor', label: 'Poor' },
+                ]}
+                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                  errors.vehicle_condition ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
-              >
-                <option value="excellent">Excellent</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-                <option value="poor">Poor</option>
-              </select>
+              />
               {errors.vehicle_condition && <p className="text-red-500 text-xs mt-1">{errors.vehicle_condition}</p>}
             </div>
           </div>
 
           {/* Features */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Features
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -1022,9 +1022,9 @@ export default function AddVehicleModal({
                     type="checkbox"
                     checked={formData.features.includes(feature)}
                     onChange={() => handleFeatureToggle(feature)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 dark:border-gray-700 text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700">{feature}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-200">{feature}</span>
                 </label>
               ))}
             </div>
@@ -1032,7 +1032,7 @@ export default function AddVehicleModal({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Description
             </label>
             <textarea
@@ -1041,27 +1041,27 @@ export default function AddVehicleModal({
               onChange={handleInputChange}
               rows={3}
               maxLength={500}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Describe your vehicle..."
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {formData.description?.length || 0}/500 characters
             </p>
           </div>
 
           {/* Photos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
               Photos {formData.pictures.filter(p => p instanceof File).length > 0 && (
-                <span className="text-xs text-gray-500 font-normal">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">
                   ({formData.pictures.filter(p => p instanceof File).length} new, max {MAX_IMAGES})
                 </span>
               )}
             </label>
             <div className={`border-2 border-dashed rounded-lg p-4 transition-colors ${
               errors.pictures 
-                ? 'border-red-300 bg-red-50' 
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-700/60' 
+                : 'border-gray-300 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-600'
             }`}>
               <input
                 type="file"
@@ -1080,19 +1080,19 @@ export default function AddVehicleModal({
                     : ''
                 }`}
               >
-                <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-600 text-center">
+                <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500 mb-2" />
+                <span className="text-sm text-gray-600 dark:text-gray-300 text-center">
                   {formData.pictures.filter(p => p instanceof File).length >= MAX_IMAGES
                     ? `Maximum ${MAX_IMAGES} images reached`
                     : 'Click to upload photos'}
                 </span>
-                <span className="text-xs text-gray-500 mt-1">
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   JPEG, PNG, GIF, WebP (max {(MAX_FILE_SIZE / (1024 * 1024)).toFixed(1)}MB each)
                 </span>
               </label>
             </div>
             {errors.pictures && (
-              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-700/60 rounded text-sm text-red-600 dark:text-red-200">
                 {errors.pictures.split('; ').map((error, idx) => (
                   <div key={idx} className="flex items-start">
                     <span className="mr-1">⚠️</span>
@@ -1104,7 +1104,7 @@ export default function AddVehicleModal({
             
             {formData.pictures.length > 0 && (
               <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                   {formData.pictures.filter(p => p instanceof File).length > 0 && 
                    formData.pictures.filter(p => typeof p === 'string').length > 0
                     ? 'Existing images and new uploads:'
@@ -1125,7 +1125,7 @@ export default function AddVehicleModal({
                         <img
                           src={imageSrc}
                           alt={`Vehicle ${index + 1}`}
-                          className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                          className="w-full h-20 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                           onError={(e) => {
                             // Fallback if image fails to load
                             e.target.src = '/default-avatar.svg';
@@ -1159,15 +1159,15 @@ export default function AddVehicleModal({
 
           {/* Error Display */}
           {errors.submit && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-700">{errors.submit}</p>
+            <div className="bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-700/60 rounded-lg p-3">
+              <p className="text-sm text-red-700 dark:text-red-200">{errors.submit}</p>
             </div>
           )}
 
           {/* Bulk Create Options */}
           {Object.keys(vehicleData).length === 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm font-medium text-blue-900 mb-3">Quick Create Multiple Vehicles</p>
+            <div className="bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700/50 rounded-lg p-4">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-3">Quick Create Multiple Vehicles</p>
               <div className="flex space-x-2">
                 <button
                   type="button"
@@ -1177,7 +1177,7 @@ export default function AddVehicleModal({
                     await handleBulkCreate(3);
                   }}
                   disabled={loading}
-                  className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                  className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-200 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                 >
                   {loading && bulkCount === 3 ? 'Creating...' : 'Create 3 Vehicles'}
                 </button>
@@ -1189,23 +1189,23 @@ export default function AddVehicleModal({
                     await handleBulkCreate(5);
                   }}
                   disabled={loading}
-                  className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors"
+                  className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-200 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                 >
                   {loading && bulkCount === 5 ? 'Creating...' : 'Create 5 Vehicles'}
                 </button>
               </div>
-              <p className="text-xs text-blue-600 mt-2">
+              <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
                 Uses current form data as template for all vehicles
               </p>
             </div>
           )}
 
           {/* Submit Button */}
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-800">
             <button
               type="button"
               onClick={() => setShowModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               Cancel
             </button>

@@ -368,6 +368,7 @@ class PartnerSerializer(serializers.ModelSerializer):
     """Partner serializer."""
     user = UserSerializer(read_only=True)
     logo_url = serializers.SerializerMethodField()
+    min_price_per_day = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, allow_null=True)
     companyName = serializers.CharField(source='business_name', read_only=True)
     businessName = serializers.CharField(source='business_name', read_only=True)
     
@@ -395,7 +396,7 @@ class PartnerSerializer(serializers.ModelSerializer):
         model = Partner
         fields = ['id', 'user', 'business_name', 'business_type', 'business_license',
                   'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
-                  'total_bookings', 'total_earnings', 'created_at', 'companyName', 'businessName',
+                  'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
                   'address', 'city', 'state']
         read_only_fields = ['id', 'created_at', 'logo_url']
     

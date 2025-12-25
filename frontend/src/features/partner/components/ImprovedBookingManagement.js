@@ -13,7 +13,8 @@ export default function ImprovedBookingManagement({
   onBookingUpdate,
   acceptBooking,
   rejectBooking,
-  cancelBooking 
+  cancelBooking,
+  hasPartnerProfile = true
 }) {
   const { user: currentUser } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -35,7 +36,9 @@ export default function ImprovedBookingManagement({
       
       // Fetch bookings from backend
       const allBookingsResponse = await bookingService.getBookings();
-      const pendingRequestsResponse = await bookingService.getPendingRequests().catch(() => ({ data: [] }));
+      const pendingRequestsResponse = hasPartnerProfile
+        ? await bookingService.getPendingRequests().catch(() => ({ data: [] }))
+        : { data: [] };
       
       // Handle different response structures from backend
       let all = [];

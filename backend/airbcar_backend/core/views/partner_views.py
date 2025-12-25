@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg, Sum, Count
+from django.db.models import Q, F, DecimalField, Avg, Sum, Count, Min
 from django.utils import timezone
 from django.db import transaction, OperationalError
 from datetime import datetime, timedelta
@@ -22,11 +22,26 @@ from ..serializers import (
 class PartnerListView(APIView):
     """List all partners."""
     permission_classes = [AllowAny]
+
+    def get_permissions(self):
+        """Allow public reads, require auth for creation."""
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return [AllowAny()]
     
     def get(self, request):
         """List all partners."""
         try:
-            partners = Partner.objects.filter(is_verified=True).select_related('user')
+            partners = (
+                Partner.objects.filter(is_verified=True)
+                .select_related('user')
+                .annotate(
+                    min_price_per_day=Min(
+                        'listings__price_per_day',
+                        filter=Q(listings__is_available=True, listings__is_verified=True),
+                    )
+                )
+            )
             
             # Filter by rating if provided
             min_rating = request.query_params.get('min_rating')
@@ -68,6 +83,61 @@ class PartnerListView(APIView):
             error_msg = str(e)
             if settings.DEBUG:
                 print(f"Error in PartnerListView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        """Create the current user's partner profile."""
+        try:
+            if Partner.objects.filter(user=request.user).exists():
+                return Response({
+                    'error': 'Partner profile already exists'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = PartnerSerializer(data=request.data, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+
+            validated = dict(serializer.validated_data)
+
+            # Address fields belong to the related User, not Partner
+            address = validated.pop('address', None)
+            city = validated.pop('city', None)
+            state = validated.pop('state', None)
+
+            partner = Partner.objects.create(user=request.user, **validated)
+
+            # Promote role to partner
+            user_updated = False
+            if getattr(request.user, 'role', None) != 'partner':
+                request.user.role = 'partner'
+                user_updated = True
+
+            if address is not None:
+                request.user.address = address.strip() if address and address.strip() else None
+                user_updated = True
+            if city is not None:
+                request.user.city = city.strip() if city and city.strip() else None
+                user_updated = True
+            if state is not None:
+                # state maps to country
+                request.user.country = state.strip() if state and state.strip() else None
+                user_updated = True
+
+            if user_updated:
+                request.user.save(update_fields=['role', 'address', 'city', 'country'])
+
+            out = PartnerSerializer(partner, context={'request': request})
+            return Response({
+                'data': out.data
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in PartnerListView.post: {error_msg}")
+                traceback.print_exc()
             return Response({
                 'error': 'An error occurred',
                 'message': error_msg if settings.DEBUG else None

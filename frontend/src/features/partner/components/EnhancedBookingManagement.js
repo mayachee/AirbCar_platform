@@ -11,6 +11,7 @@ import { bookingService } from '@/features/booking/services/bookingService';
 import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
 import CustomerDocuments from '@/features/partner/components/CustomerDocuments';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function EnhancedBookingManagement({ 
   bookings: propBookings = [], 
@@ -18,7 +19,8 @@ export default function EnhancedBookingManagement({
   onBookingUpdate,
   acceptBooking,
   rejectBooking,
-  cancelBooking 
+  cancelBooking,
+  hasPartnerProfile = true
 }) {
   const { user: currentUser } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -57,7 +59,9 @@ export default function EnhancedBookingManagement({
       console.log('🔍 Loading bookings...');
       
       const allBookingsResponse = await bookingService.getBookings();
-      const pendingRequestsResponse = await bookingService.getPendingRequests().catch(() => ({ data: [] }));
+      const pendingRequestsResponse = hasPartnerProfile
+        ? await bookingService.getPendingRequests().catch(() => ({ data: [] }))
+        : { data: [] };
       
       console.log('📦 Raw bookings response:', allBookingsResponse);
       console.log('📦 Raw pending response:', pendingRequestsResponse);
@@ -423,17 +427,17 @@ export default function EnhancedBookingManagement({
   return (
     <div className="space-y-6">
       {/* Header with Stats */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl shadow-sm border-2 border-orange-200 p-6">
+      <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl shadow-sm border-2 border-orange-200 dark:border-orange-800 p-4 sm:p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900">Booking Management</h2>
-            <p className="text-sm text-gray-600 mt-1">Manage all your vehicle bookings</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Booking Management</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage all your vehicle bookings</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <button
               onClick={loadBookings}
               disabled={loading}
-              className="px-4 py-2 bg-white border-2 border-orange-300 rounded-lg text-orange-700 font-medium hover:bg-orange-50 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              className="w-full sm:w-auto px-4 py-2 bg-white dark:bg-gray-800 border-2 border-orange-300 dark:border-orange-700 rounded-lg text-orange-700 dark:text-orange-300 font-medium hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
@@ -441,7 +445,7 @@ export default function EnhancedBookingManagement({
             <button
               onClick={exportBookings}
               disabled={filteredBookings.length === 0}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+              className="w-full sm:w-auto px-4 py-2 bg-orange-600 dark:bg-orange-700 text-white rounded-lg font-medium hover:bg-orange-700 dark:hover:bg-orange-800 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
             >
               <Download className="h-4 w-4" />
               <span>Export CSV</span>
@@ -450,97 +454,100 @@ export default function EnhancedBookingManagement({
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <div className="bg-white rounded-lg p-4 border border-orange-200">
-            <p className="text-xs text-gray-600 mb-1">Total Bookings</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-orange-200 dark:border-orange-800">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total Bookings</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
           </div>
-          <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-300">
-            <p className="text-xs text-yellow-700 mb-1">Pending</p>
-            <p className="text-2xl font-bold text-yellow-800">{stats.pending}</p>
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 sm:p-4 border-2 border-yellow-300 dark:border-yellow-700">
+            <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-1">Pending</p>
+            <p className="text-xl sm:text-2xl font-bold text-yellow-800 dark:text-yellow-200">{stats.pending}</p>
           </div>
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-            <p className="text-xs text-gray-600 mb-1">Confirmed</p>
-            <p className="text-2xl font-bold text-green-700">{stats.confirmed}</p>
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 sm:p-4 border border-green-200 dark:border-green-800">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Confirmed</p>
+            <p className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400">{stats.confirmed}</p>
           </div>
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <p className="text-xs text-gray-600 mb-1">Completed</p>
-            <p className="text-2xl font-bold text-blue-700">{stats.completed}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Completed</p>
+            <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">{stats.completed}</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <p className="text-xs text-gray-600 mb-1">Cancelled</p>
-            <p className="text-2xl font-bold text-gray-700">{stats.cancelled}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-600">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Cancelled</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-700 dark:text-gray-300">{stats.cancelled}</p>
           </div>
-          <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
-            <p className="text-xs text-gray-600 mb-1 flex items-center space-x-1">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 sm:p-4 border border-emerald-200 dark:border-emerald-800">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 flex items-center space-x-1">
               <TrendingUp className="h-3 w-3" />
               <span>Total Revenue</span>
             </p>
-            <p className="text-xl font-bold text-emerald-700">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-lg sm:text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.totalRevenue)}</p>
           </div>
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-            <p className="text-xs text-gray-600 mb-1">Pending Revenue</p>
-            <p className="text-xl font-bold text-amber-700">{formatCurrency(stats.pendingRevenue)}</p>
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 sm:p-4 border border-amber-200 dark:border-amber-800">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Pending Revenue</p>
+            <p className="text-lg sm:text-xl font-bold text-amber-700 dark:text-amber-400">{formatCurrency(stats.pendingRevenue)}</p>
           </div>
         </div>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search bookings..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
           
-          <select
+          <SelectField
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setShowPendingOnly(false);
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+            options={[
+              { value: 'all', label: 'All Status' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'confirmed', label: 'Confirmed' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ]}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
 
-          <select
+          <SelectField
             value={paymentFilter}
             onChange={(e) => setPaymentFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value="all">All Payments</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending Payment</option>
-            <option value="refunded">Refunded</option>
-          </select>
+            options={[
+              { value: 'all', label: 'All Payments' },
+              { value: 'paid', label: 'Paid' },
+              { value: 'pending', label: 'Pending Payment' },
+              { value: 'refunded', label: 'Refunded' },
+            ]}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
 
-          <select
+          <SelectField
             value={`${sortBy}-${sortOrder}`}
             onChange={(e) => {
               const [field, order] = e.target.value.split('-');
               setSortBy(field);
               setSortOrder(order);
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value="date-desc">Sort: Date (Newest)</option>
-            <option value="date-asc">Sort: Date (Oldest)</option>
-            <option value="price-desc">Sort: Price (High)</option>
-            <option value="price-asc">Sort: Price (Low)</option>
-            <option value="customer-asc">Sort: Customer (A-Z)</option>
-            <option value="status-asc">Sort: Status</option>
-          </select>
+            options={[
+              { value: 'date-desc', label: 'Sort: Date (Newest)' },
+              { value: 'date-asc', label: 'Sort: Date (Oldest)' },
+              { value: 'price-desc', label: 'Sort: Price (High)' },
+              { value: 'price-asc', label: 'Sort: Price (Low)' },
+              { value: 'customer-asc', label: 'Sort: Customer (A-Z)' },
+              { value: 'status-asc', label: 'Sort: Status' },
+            ]}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
 
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
@@ -550,37 +557,37 @@ export default function EnhancedBookingManagement({
                 setShowPendingOnly(e.target.checked);
                 if (e.target.checked) setStatusFilter('all');
               }}
-              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+              className="rounded border-gray-300 dark:border-gray-600 text-orange-600 dark:text-orange-500 focus:ring-orange-500 bg-white dark:bg-gray-700"
             />
-            <span className="text-sm text-gray-700">Pending only</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Pending only</span>
           </label>
         </div>
 
         {/* Date Range Filter */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
             <input
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
             <input
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
         </div>
       </div>
 
       {/* Results Count */}
-      <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
         <span>Showing {filteredBookings.length} of {bookings.length} bookings</span>
         {(dateRange.start || dateRange.end || searchTerm || statusFilter !== 'all' || paymentFilter !== 'all') && (
           <button
@@ -591,7 +598,7 @@ export default function EnhancedBookingManagement({
               setPaymentFilter('all');
               setShowPendingOnly(false);
             }}
-            className="text-orange-600 hover:text-orange-700 font-medium"
+            className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium"
           >
             Clear Filters
           </button>
@@ -600,10 +607,10 @@ export default function EnhancedBookingManagement({
 
       {/* Bookings List */}
       {filteredBookings.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">No bookings found</p>
-          <p className="text-gray-400 text-sm mt-2">Try adjusting your filters</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+          <Calendar className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 text-lg">No bookings found</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Try adjusting your filters</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -619,31 +626,31 @@ export default function EnhancedBookingManagement({
             return (
               <div
                 key={booking.id}
-                className={`bg-white rounded-xl shadow-sm border-2 overflow-hidden transition-all ${
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border-2 overflow-hidden transition-all ${
                   isPending 
-                    ? 'border-yellow-300 bg-yellow-50/30 hover:shadow-lg' 
-                    : 'border-gray-200 hover:shadow-md'
+                    ? 'border-yellow-300 dark:border-yellow-700 bg-yellow-50/30 dark:bg-yellow-900/20 hover:shadow-lg' 
+                    : 'border-gray-200 dark:border-gray-700 hover:shadow-md'
                 }`}
               >
                 <div className="p-6">
-                  <div className="flex items-start justify-between">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                     <div className="flex-1">
                       {/* Header Row */}
-                      <div className="flex items-center space-x-3 mb-4">
+                      <div className="flex flex-wrap items-center gap-2 mb-4">
                         <span className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 ${getStatusColor(booking.status)}`}>
                           {booking.status?.toUpperCase()}
                         </span>
-                        <span className="text-sm font-semibold text-gray-700">#{booking.id}</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">#{booking.id}</span>
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getPaymentStatusColor(booking.payment_status)}`}>
                           {booking.payment_status?.toUpperCase()}
                         </span>
                         {booking.payment_method && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             ({booking.payment_method})
                           </span>
                         )}
                         {booking.created_at && (
-                          <span className="text-xs text-gray-500 flex items-center space-x-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center space-x-1">
                             <Clock className="h-3 w-3" />
                             <span>Created {formatDate(booking.created_at)}</span>
                           </span>
@@ -653,44 +660,44 @@ export default function EnhancedBookingManagement({
                       {/* Main Content Grid */}
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
                         {/* Vehicle Info */}
-                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                           <div className="flex items-center space-x-2 mb-2">
-                            <Car className="h-5 w-5 text-blue-600" />
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                               {listing.make && listing.model ? `${listing.make} ${listing.model}` : 'Unknown Vehicle'}
                               {listing.year && ` (${listing.year})`}
                             </h3>
                           </div>
                           {listing.location && (
-                            <p className="text-sm text-gray-600 flex items-center space-x-1">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-1">
                               <MapPin className="h-4 w-4" />
                               <span>{listing.location}</span>
                             </p>
                           )}
                           {listing.price_per_day && (
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                               {formatCurrency(listing.price_per_day)}/day
                             </p>
                           )}
                         </div>
                         
                         {/* Customer Info */}
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                           <div className="flex items-center space-x-2 mb-2">
-                            <User className="h-5 w-5 text-green-600" />
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <User className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                               {customer.first_name} {customer.last_name}
                             </h3>
                           </div>
                           <div className="space-y-1">
                             {customer.email && (
-                              <p className="text-sm text-gray-600 flex items-center space-x-1">
+                              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-1">
                                 <Mail className="h-4 w-4" />
                                 <span>{customer.email}</span>
                               </p>
                             )}
                             {customer.phone_number && (
-                              <p className="text-sm text-gray-600 flex items-center space-x-1">
+                              <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-1">
                                 <Phone className="h-4 w-4" />
                                 <span>{customer.phone_number}</span>
                               </p>
@@ -699,25 +706,25 @@ export default function EnhancedBookingManagement({
                         </div>
                         
                         {/* Booking Dates & Price */}
-                        <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200">
+                        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
                           <div className="space-y-3">
                             <div>
-                              <p className="text-xs text-gray-600 mb-1">Pickup</p>
-                              <p className="text-sm font-semibold text-gray-900 flex items-center space-x-1">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Pickup</p>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
                                 <span>{formatDateTime(booking.start_time || booking.start_date || booking.pickup_date)}</span>
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-600 mb-1">Return</p>
-                              <p className="text-sm font-semibold text-gray-900 flex items-center space-x-1">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Return</p>
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
                                 <span>{formatDateTime(booking.end_time || booking.end_date || booking.return_date)}</span>
                               </p>
                             </div>
-                            <div className="pt-2 border-t border-orange-200">
-                              <p className="text-xs text-gray-600 mb-1">Duration: {days} day{days !== 1 ? 's' : ''}</p>
-                              <p className="text-2xl font-bold text-orange-600">
+                            <div className="pt-2 border-t border-orange-200 dark:border-orange-800">
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Duration: {days} day{days !== 1 ? 's' : ''}</p>
+                              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                 {formatCurrency(booking.price || booking.total_price || booking.total_amount || 0)}
                               </p>
                             </div>
@@ -727,31 +734,31 @@ export default function EnhancedBookingManagement({
 
                       {/* Expandable Details */}
                       {isExpanded && (
-                        <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
                           {booking.special_requests && (
                             <div>
-                              <p className="text-sm font-medium text-gray-700 mb-1 flex items-center space-x-1">
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center space-x-1">
                                 <MessageSquare className="h-4 w-4" />
                                 <span>Special Requests</span>
                               </p>
-                              <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">{booking.special_requests}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg p-3">{booking.special_requests}</p>
                             </div>
                           )}
                           
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <p className="text-xs text-gray-600 mb-1">Pickup Location</p>
-                              <p className="text-sm font-medium text-gray-900">{booking.pickup_location || listing.location || 'N/A'}</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Pickup Location</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{booking.pickup_location || listing.location || 'N/A'}</p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-600 mb-1">Return Location</p>
-                              <p className="text-sm font-medium text-gray-900">{booking.return_location || listing.location || 'N/A'}</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Return Location</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{booking.return_location || listing.location || 'N/A'}</p>
                             </div>
                           </div>
 
                           {customer && (
                             <div>
-                              <p className="text-sm font-medium text-gray-700 mb-2">Customer Documents</p>
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Customer Documents</p>
                               <CustomerDocuments customer={customer} />
                             </div>
                           )}
@@ -760,13 +767,13 @@ export default function EnhancedBookingManagement({
                     </div>
                     
                     {/* Action Buttons */}
-                    <div className="ml-6 flex flex-col space-y-3 min-w-[160px]">
+                    <div className="w-full lg:w-auto lg:ml-6 flex flex-col gap-3">
                       <button
                         onClick={() => {
                           setSelectedBooking(booking);
                           setShowDetails(true);
                         }}
-                        className="px-4 py-2.5 text-sm font-semibold text-blue-700 bg-blue-50 border-2 border-blue-200 rounded-xl hover:bg-blue-100 transition-all flex items-center justify-center space-x-2"
+                        className="w-full lg:w-auto px-4 py-2.5 text-sm font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all flex items-center justify-center space-x-2"
                       >
                         <Eye className="h-4 w-4" />
                         <span>Details</span>
@@ -774,7 +781,7 @@ export default function EnhancedBookingManagement({
                       
                       <button
                         onClick={() => toggleExpand(booking.id)}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center space-x-2"
+                        className="w-full lg:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all flex items-center justify-center space-x-2"
                       >
                         {isExpanded ? (
                           <>
@@ -790,11 +797,11 @@ export default function EnhancedBookingManagement({
                       </button>
                       
                       {isPending && (
-                        <div className="flex flex-col space-y-2.5 pt-2 border-t border-gray-200">
+                        <div className="flex flex-col gap-2.5 pt-2 border-t border-gray-200 dark:border-gray-700">
                           <button
                             onClick={() => handleAction('accept', booking.id)}
                             disabled={isLoading}
-                            className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                            className="w-full lg:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 rounded-xl hover:from-green-700 hover:to-green-800 dark:hover:from-green-800 dark:hover:to-green-900 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl space-x-2"
                           >
                             {isLoading ? (
                               <>
@@ -811,7 +818,7 @@ export default function EnhancedBookingManagement({
                           <button
                             onClick={() => handleAction('reject', booking.id)}
                             disabled={isLoading}
-                            className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-700 hover:to-red-800 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                            className="w-full lg:w-auto px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 rounded-xl hover:from-red-700 hover:to-red-800 dark:hover:from-red-800 dark:hover:to-red-900 transition-all disabled:opacity-60 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
                           >
                             {isLoading ? (
                               <>

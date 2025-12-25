@@ -22,7 +22,6 @@ export default function Footer() {
         { label: 'About Us', href: '/about', prefetch: false },
         { label: 'Mission', href: '/mission', prefetch: true },
         { label: 'Careers', href: '/careers', prefetch: false },
-        { label: 'Press', href: '/press', prefetch: false },
       ]
     },
     {
@@ -30,7 +29,6 @@ export default function Footer() {
       links: [
         { label: 'Car Rental', href: '/search', prefetch: true },
         { label: 'Partner Program', href: '/partner', prefetch: true },
-        { label: 'Gift Cards', href: '/gift-cards', prefetch: false },
       ]
     },
     {
@@ -39,7 +37,6 @@ export default function Footer() {
         { label: 'Help Center', href: '/help', prefetch: false },
         { label: 'Contact Us', href: '/contact', prefetch: false },
         { label: 'Safety', href: '/safety', prefetch: false },
-        { label: 'Insurance', href: '/insurance', prefetch: false },
       ]
     },
     {
@@ -139,29 +136,34 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          {/* Brand Section */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
-              <span className="text-xl font-bold">{APP_NAME}</span>
+    <footer className="relative bg-[#0B0F19] text-white overflow-hidden">
+      {/* Decorative top border */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-orange-600 to-transparent opacity-50" />
+      
+      {/* Background decorative elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
+          {/* Brand Section - Spans 4 columns */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl font-bold tracking-tight">{APP_NAME}</span>
             </div>
-            <p className="text-gray-400 text-sm mb-6 max-w-md">
+            <p className="text-gray-400 leading-relaxed max-w-sm">
               Premium car rental platform connecting travelers with trusted local partners across Morocco.
             </p>
             
             {/* Social Links */}
-            <div className="flex space-x-4">
+            <div className="flex items-center space-x-4 pt-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="w-10 h-10 rounded-full bg-gray-800/50 flex items-center justify-center text-gray-400 hover:bg-orange-600 hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-orange-600/20"
                   aria-label={social.name}
                 >
                   {social.icon}
@@ -170,96 +172,104 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Footer Sections */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-sm font-medium text-white uppercase tracking-wide mb-4">
-                {section.title}
-              </h3>
-              <ul className="space-y-3">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      prefetch={link.prefetch !== undefined ? link.prefetch : existingPages.includes(link.href)}
-                      className="text-gray-400 hover:text-white text-sm transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+          {/* Links Sections - Spans 5 columns */}
+          <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 gap-8">
+            {footerSections.map((section) => (
+              <div key={section.title}>
+                <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-6">
+                  {section.title}
+                </h3>
+                <ul className="space-y-4">
+                  {section.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        prefetch={link.prefetch !== undefined ? link.prefetch : existingPages.includes(link.href)}
+                        className="group flex items-center text-gray-400 hover:text-orange-500 transition-colors text-sm"
+                      >
+                        <span className="w-0 group-hover:w-2 h-px bg-orange-500 mr-0 group-hover:mr-2 transition-all duration-300" />
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
 
-        {/* Newsletter Signup */}
-        <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="max-w-md">
-            <h3 className="text-lg font-medium text-white mb-4">
-              Stay updated with the latest deals
-            </h3>
-            <form onSubmit={handleNewsletterSubmit}>
-              <div className="flex space-x-3">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    setError('')
-                    setSuccess(false)
-                  }}
-                  placeholder="Enter your email"
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                  required
-                />
+          {/* Newsletter - Spans 3 columns */}
+          <div className="lg:col-span-3">
+            <div className="bg-gray-800/30 rounded-2xl p-6 border border-gray-700/50 backdrop-blur-sm">
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Join our newsletter
+              </h3>
+              <p className="text-sm text-gray-400 mb-6">
+                Get exclusive offers and travel inspiration directly in your inbox.
+              </p>
+              <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      setError('')
+                      setSuccess(false)
+                    }}
+                    placeholder="Enter your email"
+                    disabled={isLoading}
+                    className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all disabled:opacity-50"
+                    required
+                  />
+                </div>
                 <button 
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="w-full px-4 py-3 bg-orange-500 backdrop-blur-xl border border-white/10 text-white hover:from-orange-500 hover:to-orange-500 rounded-xl transition-all duration-300 font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  {isLoading ? 'Subscribing...' : 'Subscribe'}
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Subscribing...
+                    </span>
+                  ) : 'Subscribe Now'}
                 </button>
-              </div>
-              {error && (
-                <p className="text-sm text-red-400 mt-2">
-                  {error}
-                </p>
-              )}
-              {success && (
-                <p className="text-sm text-green-400 mt-2">
-                  ✓ Successfully subscribed! Check your email for confirmation.
-                </p>
-              )}
-              <p className="text-xs text-gray-400 mt-2">
-                We respect your privacy. Unsubscribe at any time.
-              </p>
-            </form>
+                {error && (
+                  <p className="text-xs text-red-400 mt-2 bg-red-900/20 p-2 rounded-lg border border-red-900/50">
+                    {error}
+                  </p>
+                )}
+                {success && (
+                  <p className="text-xs text-green-400 mt-2 bg-green-900/20 p-2 rounded-lg border border-green-900/50">
+                    ✓ Subscribed successfully!
+                  </p>
+                )}
+              </form>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Section */}
-        <div className="border-t border-gray-800 mt-8 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
-              <p className="text-sm text-gray-400">
-                © {currentYear} {APP_NAME}. All rights reserved.
-              </p>
-              <div className="flex items-center space-x-4 text-sm text-gray-400">
-                <span>🇲🇦 Made in Morocco</span>
-                <span>•</span>
-                <span>Available 24/7</span>
-              </div>
-            </div>
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-800 pt-8 mt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-500">
+              © {currentYear} {APP_NAME}. All rights reserved.
+            </p>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            <div className="flex items-center space-x-6 text-sm text-gray-500">
+              <span className="flex items-center hover:text-gray-300 transition-colors">
+                <span className="mr-2">🇲🇦</span> Made in Morocco
+              </span>
+              <span className="w-1 h-1 bg-gray-700 rounded-full" />
+              <span className="flex items-center hover:text-gray-300 transition-colors">
+                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                <span>Secure & Trusted</span>
-              </div>
+                Secure & Trusted
+              </span>
             </div>
           </div>
         </div>

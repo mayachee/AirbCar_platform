@@ -24,12 +24,12 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
 
   const getNotificationColor = (type) => {
     switch (type) {
-      case 'new_booking': return 'border-l-blue-500 bg-blue-50';
-      case 'booking_accepted': return 'border-l-green-500 bg-green-50';
-      case 'booking_rejected': return 'border-l-red-500 bg-red-50';
-      case 'payment_received': return 'border-l-green-500 bg-green-50';
-      case 'vehicle_issue': return 'border-l-orange-500 bg-orange-50';
-      default: return 'border-l-gray-500 bg-gray-50';
+      case 'new_booking': return 'border-l-blue-500 bg-blue-50 dark:bg-blue-900/20';
+      case 'booking_accepted': return 'border-l-green-500 bg-green-50 dark:bg-green-900/20';
+      case 'booking_rejected': return 'border-l-red-500 bg-red-50 dark:bg-red-900/20';
+      case 'payment_received': return 'border-l-green-500 bg-green-50 dark:bg-green-900/20';
+      case 'vehicle_issue': return 'border-l-orange-500 bg-orange-50 dark:bg-orange-900/20';
+      default: return 'border-l-gray-500 bg-gray-50 dark:bg-gray-700/40';
     }
   };
 
@@ -61,28 +61,28 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-12 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          <div className="p-4 border-b border-gray-200">
+        <div className="fixed left-4 right-4 top-16 z-50 max-h-[70vh] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-96 sm:max-h-96">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
               <div className="flex space-x-2">
                 {unreadCount > 0 && (
                   <button
                     onClick={onMarkAsRead}
-                    className="text-sm text-blue-600 hover:text-blue-800"
+                    className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     Mark all read
                   </button>
                 )}
                 <button
                   onClick={onClearAll}
-                  className="text-sm text-gray-600 hover:text-gray-800"
+                  className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
                 >
                   Clear all
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -90,14 +90,14 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
             </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>No notifications yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
@@ -110,13 +110,13 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
                           {notification.title}
                         </p>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           {formatTimeAgo(notification.timestamp)}
                         </p>
                       </div>
@@ -133,8 +133,8 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
           </div>
 
           {notifications.length > 0 && (
-            <div className="p-4 border-t border-gray-200">
-              <button className="w-full text-center text-sm text-blue-600 hover:text-blue-800">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <button className="w-full text-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
                 View all notifications
               </button>
             </div>

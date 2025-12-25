@@ -53,6 +53,8 @@ export default function PartnerDashboard() {
     vehicles,
     bookings,
     partnerData,
+    hasPartnerProfile,
+    partnerError,
     stats,
     loading: dataLoading,
     addVehicle,
@@ -80,11 +82,11 @@ export default function PartnerDashboard() {
 
   // Fetch additional data when partner status is confirmed
   useEffect(() => {
-    if (isPartner && !dataLoading) {
+    if (isPartner && hasPartnerProfile && !dataLoading) {
       fetchPendingRequests();
       fetchUpcomingBookings();
     }
-  }, [isPartner, dataLoading]);
+  }, [isPartner, hasPartnerProfile, dataLoading]);
 
   const checkPartnerStatus = async () => {
     try {
@@ -106,9 +108,7 @@ export default function PartnerDashboard() {
 
       if (response.ok) {
         const userData = await response.json();
-        const isUserPartner = userData.is_partner === true || 
-                             userData.role === 'partner' || 
-                             userData.email?.includes('partner');
+        const isUserPartner = userData.is_partner === true || userData.role === 'partner';
         
         setIsPartner(isUserPartner);
         
@@ -201,7 +201,11 @@ export default function PartnerDashboard() {
     try {
       // Import partnerService to update profile
       const { partnerService } = await import('@/features/partner/services/partnerService');
-      await partnerService.updatePartnerProfile(profileData);
+      if (hasPartnerProfile === false) {
+        await partnerService.registerPartner(profileData);
+      } else {
+        await partnerService.updatePartnerProfile(profileData);
+      }
       refetch();
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -211,6 +215,10 @@ export default function PartnerDashboard() {
 
   const fetchPendingRequests = async () => {
     try {
+      if (!hasPartnerProfile) {
+        setPendingRequests([]);
+        return;
+      }
       setLoadingPendingRequests(true);
       const requests = await getPendingRequests();
       setPendingRequests(requests);
@@ -223,6 +231,10 @@ export default function PartnerDashboard() {
 
   const fetchUpcomingBookings = async () => {
     try {
+      if (!hasPartnerProfile) {
+        setUpcomingBookings([]);
+        return;
+      }
       setLoadingUpcomingBookings(true);
       const upcoming = await getUpcomingBookings();
       setUpcomingBookings(upcoming);
@@ -264,6 +276,27 @@ export default function PartnerDashboard() {
 
   if (!isPartner) {
     return null;
+  }
+
+  if (hasPartnerProfile === false) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <h1 className="text-2xl font-bold text-gray-900">Partner profile required</h1>
+          <p className="mt-2 text-gray-600">
+            {partnerError || 'Your account does not have a partner profile yet. Please complete your partner profile to access the dashboard.'}
+          </p>
+          <button
+            onClick={() => setCurrentView('profile')}
+            className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            Complete profile
+          </button>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   return (
@@ -457,6 +490,7 @@ export default function PartnerDashboard() {
             acceptBooking={acceptBooking}
             rejectBooking={rejectBooking}
             cancelBooking={cancelBooking}
+            hasPartnerProfile={hasPartnerProfile}
           />
         )}
 
@@ -478,6 +512,7 @@ export default function PartnerDashboard() {
         {currentView === 'profile' && (
           <PartnerProfileSettings
             partnerData={partnerData}
+            hasPartnerProfile={hasPartnerProfile}
             onUpdate={handleProfileUpdate}
             loading={dataLoading}
           />

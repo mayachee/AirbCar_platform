@@ -49,6 +49,7 @@ export default function OptimizedPartnerDashboard() {
     vehicles,
     bookings,
     partnerData,
+    hasPartnerProfile,
     stats,
     earnings,
     analytics,
@@ -229,6 +230,7 @@ export default function OptimizedPartnerDashboard() {
               vehicles={vehicles}
               bookings={bookings}
               partnerData={partnerData}
+              hasPartnerProfile={hasPartnerProfile}
               stats={stats}
               earnings={earnings}
               analytics={analytics}

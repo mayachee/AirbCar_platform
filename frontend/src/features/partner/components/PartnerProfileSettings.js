@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { Save, Upload, Building2, FileText, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MOROCCAN_CITIES } from '@/constants';
+import { SelectField } from '@/components/ui/select-field';
 
-export default function PartnerProfileSettings({ partnerData, onUpdate, loading }) {
+export default function PartnerProfileSettings({ partnerData, hasPartnerProfile = true, onUpdate, loading }) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     company_name: '',
@@ -33,6 +34,9 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
   // Fetch partner data if not provided
   useEffect(() => {
     const fetchPartnerData = async () => {
+      if (hasPartnerProfile === false) {
+        return;
+      }
       if (!partnerData && !fetchingData) {
         setFetchingData(true);
         try {
@@ -62,6 +66,10 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
             // The parent component should handle this, but we'll process it here as fallback
           }
         } catch (error) {
+          // Expected when user hasn't created a partner profile yet
+          if (error?.status === 404 && (error?.message || '').toLowerCase().includes('partner profile not found')) {
+            return;
+          }
           console.error('PartnerProfileSettings - Error fetching partner data:', error);
         } finally {
           setFetchingData(false);
@@ -70,7 +78,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
     };
     
     fetchPartnerData();
-  }, [partnerData, fetchingData]);
+  }, [partnerData, fetchingData, hasPartnerProfile]);
 
   // Fetch email from API (partnerData.user.email from API response or user context)
   useEffect(() => {
@@ -414,11 +422,11 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <Building2 className="h-6 w-6 text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Business Profile</h3>
+          <Building2 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Business Profile</h3>
         </div>
         <div className="flex items-center space-x-2">
           <div className={`flex items-center space-x-1 ${verificationStatus.color}`}>
@@ -428,7 +436,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
             >
               Edit Profile
             </button>
@@ -446,14 +454,14 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
                   setLogoRemoved(false);
                   setIsEditing(false);
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 transition-colors"
               >
                 <Save className="h-4 w-4" />
                 <span>{saving ? 'Saving...' : 'Save Changes'}</span>
@@ -466,11 +474,11 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Basic Information */}
         <div className="space-y-4">
-          <h4 className="text-md font-medium text-gray-900">Basic Information</h4>
+          <h4 className="text-md font-medium text-gray-900 dark:text-white">Basic Information</h4>
           
           {/* Logo Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Company Logo
             </label>
             <div className="flex items-center space-x-4">
@@ -479,13 +487,13 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
                   <img
                     src={logoPreview}
                     alt="Company logo"
-                    className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200"
+                    className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700"
                   />
                   {isEditing && (
                     <button
                       type="button"
                       onClick={handleRemoveLogo}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 dark:bg-red-600 text-white rounded-full hover:bg-red-600 dark:hover:bg-red-700 transition-colors"
                       title="Remove logo"
                     >
                       <X className="h-4 w-4" />
@@ -493,13 +501,13 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
                   )}
                 </div>
               ) : (
-                <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                  <ImageIcon className="h-8 w-8 text-gray-400" />
+                <div className="w-24 h-24 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                  <ImageIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
                 </div>
               )}
               {isEditing && (
                 <div>
-                  <label className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors">
+                  <label className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer transition-colors">
                     <Upload className="h-4 w-4" />
                     <span>{logoPreview ? 'Change Logo' : 'Upload Logo'}</span>
                     <input
@@ -509,7 +517,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
                       className="hidden"
                     />
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     PNG, JPG up to 5MB
                   </p>
                 </div>
@@ -518,7 +526,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Company Name *
             </label>
             <input
@@ -527,16 +535,16 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
               value={formData.company_name || ''}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               placeholder={formData.company_name ? formData.company_name : "Enter company name"}
             />
             {!isEditing && !formData.company_name && (
-              <p className="mt-1 text-xs text-gray-400 italic">Not set</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">Not set</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Tax ID / License Number *
             </label>
             <input
@@ -545,41 +553,43 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
               value={formData.tax_id || ''}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               placeholder={formData.tax_id ? formData.tax_id : "Enter tax ID or license number"}
             />
             {!isEditing && !formData.tax_id && (
-              <p className="mt-1 text-xs text-gray-400 italic">Not set</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">Not set</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Business Type
             </label>
-            <select
+            <SelectField
               name="business_type"
-              value={formData.business_type}
+              value={formData.business_type ?? ''}
+              placeholder="Select business type"
+              showPlaceholderOption
               onChange={handleInputChange}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-            >
-              <option value="">Select business type</option>
-              <option value="individual">Individual</option>
-              <option value="company">Company</option>
-              <option value="fleet">Fleet Operator</option>
-              <option value="dealership">Dealership</option>
-            </select>
+              options={[
+                { value: 'individual', label: 'Individual' },
+                { value: 'company', label: 'Company' },
+                { value: 'fleet', label: 'Fleet Operator' },
+                { value: 'dealership', label: 'Dealership' },
+              ]}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
           </div>
         </div>
 
         {/* Contact Information */}
         <div className="space-y-4">
-          <h4 className="text-md font-medium text-gray-900">Contact Information</h4>
+          <h4 className="text-md font-medium text-gray-900 dark:text-white">Contact Information</h4>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Phone Number <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               type="tel"
@@ -588,22 +598,22 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
               onChange={handleInputChange}
               disabled={!isEditing}
               required
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 ${
-                phoneError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
+                phoneError ? 'border-red-500 dark:border-red-600 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="+212 6XX-XXXXXX or 0X-XXXXXXX"
             />
             {phoneError && isEditing && (
-              <p className="mt-1 text-sm text-red-500">{phoneError}</p>
+              <p className="mt-1 text-sm text-red-500 dark:text-red-400">{phoneError}</p>
             )}
             {!phoneError && formData.phone_number && isEditing && (
-              <p className="mt-1 text-xs text-green-600">✓ Valid phone number</p>
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">✓ Valid phone number</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email <span className="text-xs text-gray-500">(from account)</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email <span className="text-xs text-gray-500 dark:text-gray-400">(from account)</span>
             </label>
             <input
               type="email"
@@ -611,16 +621,16 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
               value={email}
               readOnly
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 cursor-not-allowed"
               placeholder="Loading email..."
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Email cannot be changed here. Contact support to update your email address.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Address
             </label>
             <input
@@ -629,34 +639,30 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
               value={formData.address}
               onChange={handleInputChange}
               disabled={!isEditing}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               placeholder="Enter business address"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                City <span className="text-red-500 dark:text-red-400">*</span>
               </label>
-              <select
+              <SelectField
                 name="city"
-                value={formData.city}
+                value={formData.city ?? ''}
+                placeholder="Select a city"
+                showPlaceholderOption
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
-              >
-                <option value="">Select a city</option>
-                {MOROCCAN_CITIES.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+                options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 State
               </label>
               <input
@@ -665,7 +671,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
                 value={formData.state}
                 onChange={handleInputChange}
                 disabled={!isEditing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder="State"
               />
             </div>
@@ -675,7 +681,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
 
       {/* Description */}
       <div className="mt-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Business Description
         </label>
         <textarea
@@ -684,7 +690,7 @@ export default function PartnerProfileSettings({ partnerData, onUpdate, loading 
           onChange={handleInputChange}
           disabled={!isEditing}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
           placeholder="Describe your business and services..."
         />
       </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api/client';
 import { FavoritesGrid } from '@/features/user';
 import { Search, RefreshCw, Heart, X, AlertCircle, CheckCircle, Loader2, Filter, Grid, List as ListIcon } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function FavoritesTab({ favorites: propFavorites, loading: propLoading, onRemoveFavorite, onBookNow, onViewDetails }) {
   const router = useRouter();
@@ -398,16 +399,17 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
-          <select
+          <SelectField
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-          >
-            <option value="recent">Recently Added</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-            <option value="name">Name: A to Z</option>
-          </select>
+            options={[
+              { value: 'recent', label: 'Recently Added' },
+              { value: 'price-low', label: 'Price: Low to High' },
+              { value: 'price-high', label: 'Price: High to Low' },
+              { value: 'name', label: 'Name: A to Z' },
+            ]}
+            className="px-4 py-2 rounded-lg"
+          />
           <div className="flex border border-gray-300 rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode('grid')}

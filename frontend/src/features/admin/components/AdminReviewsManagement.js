@@ -7,6 +7,7 @@ import { Star, Loader2, AlertTriangle, CheckCircle, XCircle, Search, Filter, Tre
 import { motion } from 'framer-motion';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { SelectField } from '@/components/ui/select-field';
 
 export default function AdminReviewsManagement() {
   const { user } = useAuth();
@@ -213,28 +214,30 @@ export default function AdminReviewsManagement() {
           </div>
           
           <div className="flex gap-3">
-            <select
+            <SelectField
               value={filterRating}
               onChange={(e) => setFilterRating(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Ratings</option>
-              <option value="5">5 Stars</option>
-              <option value="4">4 Stars</option>
-              <option value="3">3 Stars</option>
-              <option value="2">2 Stars</option>
-              <option value="1">1 Star</option>
-            </select>
+              options={[
+                { value: 'all', label: 'All Ratings' },
+                { value: '5', label: '5 Stars' },
+                { value: '4', label: '4 Stars' },
+                { value: '3', label: '3 Stars' },
+                { value: '2', label: '2 Stars' },
+                { value: '1', label: '1 Star' },
+              ]}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+            />
 
-            <select
+            <SelectField
               value={filterPublished}
               onChange={(e) => setFilterPublished(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Reviews</option>
-              <option value="published">Published</option>
-              <option value="unpublished">Unpublished</option>
-            </select>
+              options={[
+                { value: 'all', label: 'All Reviews' },
+                { value: 'published', label: 'Published' },
+                { value: 'unpublished', label: 'Unpublished' },
+              ]}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       </div>
