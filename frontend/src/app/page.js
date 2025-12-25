@@ -36,9 +36,9 @@ function HomeContent() {
       <Hero />
       <PopularDestinations />
       <CarTypes />
+      <InfoSection />
       <RentalProviders />
       <HowItWorks />
-      <InfoSection />
       <Footer />
     </div>
   );

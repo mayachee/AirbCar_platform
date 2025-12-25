@@ -50,7 +50,8 @@ export default function RentalProviders() {
   }
 
   const toProvider = (partner) => {
-    const name = partner?.business_name || partner?.businessName || partner?.companyName || 'Partner'
+    const rawName = partner?.business_name || partner?.businessName || partner?.companyName || 'Partner'
+    const name = rawName.charAt(0).toUpperCase() + rawName.slice(1)
     const rating = Number(partner?.rating) || 0
     const reviewCount = Number(partner?.review_count) || 0
     const price = formatPrice(partner?.min_price_per_day)
@@ -334,7 +335,7 @@ export default function RentalProviders() {
           
           <div
             ref={scrollContainerRef}
-            className="-mx-4 sm:mx-0 flex gap-4 sm:gap-6 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-2 snap-x snap-mandatory scroll-smooth overscroll-x-contain select-none touch-pan-y cursor-default"
+            className="-mx-4 sm:mx-0 flex gap-4 sm:gap-6 overflow-x-auto py-8 scrollbar-hide px-4 sm:px-2 snap-x snap-mandatory scroll-smooth overscroll-x-contain select-none touch-pan-y cursor-default"
             onWheel={(e) => {
               // Block horizontal wheel/trackpad scrolling (including Shift+wheel),
               // but allow vertical page scrolling.
@@ -347,7 +348,7 @@ export default function RentalProviders() {
               Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={`skeleton-${i}`}
-                  className="flex-shrink-0 w-72 sm:w-80 md:w-[26rem] bg-white rounded-2xl p-6 sm:p-7 animate-pulse shadow-sm"
+                  className="flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white rounded-2xl border border-gray-100 p-5 sm:p-7 animate-pulse shadow-sm"
                 >
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center">
@@ -376,14 +377,14 @@ export default function RentalProviders() {
             )}
 
             {!isLoading && loadError && (
-              <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm">
+              <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
                 <div className="font-semibold text-gray-900">Unable to load providers</div>
                 <div className="mt-1 text-sm text-gray-600">{loadError}</div>
               </div>
             )}
 
             {!isLoading && !loadError && providers.length === 0 && (
-              <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm">
+              <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
                 <div className="font-semibold text-gray-900">No providers yet</div>
                 <div className="mt-1 text-sm text-gray-600">Check back soon for verified partners.</div>
               </div>
@@ -392,15 +393,15 @@ export default function RentalProviders() {
             {!isLoading && !loadError && loopedProviders.map((provider, idx) => (
               <div
                 key={`${provider.id}-${idx}`}
-                className="group relative flex-shrink-0 w-72 sm:w-80 md:w-[26rem] bg-white p-6 sm:p-7 snap-start shadow-sm transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg"
+                className="group relative flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white p-5 sm:p-7 snap-start rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl"
                 data-provider-card="true"
                 style={{ scrollSnapStop: 'always' }}
               >
 
                 {/* Provider Header */}
-                <div className="flex items-start justify-between mb-5">
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center min-w-0">
-                    <div className="w-11 h-11 bg-white flex items-center justify-center mr-3 overflow-hidden">
+                    <div className="w-11 h-11 bg-white flex items-center justify-center mr-3 overflow-hidden rounded-xl border border-gray-50">
                       {provider.logo ? (
                         <img
                           src={provider.logo}
@@ -413,74 +414,70 @@ export default function RentalProviders() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate tracking-tight">{provider.name}</h3>
+                      <h3 className="font-semibold text-gray-900 truncate tracking-tight text-lg">{provider.name}</h3>
                       {provider.city ? (
-                        <div className="mt-0.5 text-xs text-gray-500 truncate">{provider.city}</div>
+                        <div className="mt-0.5 text-xs text-gray-500 truncate flex items-center">
+                          <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          {provider.city}
+                        </div>
                       ) : null}
                     </div>
                   </div>
 
                   {/* Rating */}
                   <div className="text-right">
-                    <div className="inline-flex items-center bg-white px-2.5 py-1">
-                      <span className="text-sm font-semibold text-gray-900">{provider.rating.toFixed(1)}</span>
-                      <span className="sr-only">Rating {provider.rating.toFixed(1)} out of 5</span>
-                      <span className="mx-2 h-4 w-px bg-gray-200 hidden sm:block" aria-hidden="true" />
-                      <div className="hidden sm:flex items-center" aria-hidden="true">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span
-                            key={i}
-                            className={`text-xs ${provider.rating >= i + 1 ? 'text-orange-500' : 'text-gray-200'}`}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
+                    <div className="inline-flex items-center bg-gray-50/50 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-gray-100">
+                      <span className="text-sm font-bold text-gray-900">{provider.rating.toFixed(1)}</span>
+                      <span className="mx-1.5 h-3 w-px bg-gray-300" aria-hidden="true" />
+                      <span className="text-xs text-orange-500">★</span>
                     </div>
-                    <div className="mt-2 text-xs text-gray-500">{provider.reviews}</div>
+                    <div className="mt-1.5 text-xs text-gray-500 font-medium">{provider.reviews}</div>
                   </div>
                 </div>
 
                 {provider.isVerified ? (
-                  <div className="mb-5">
-                    <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-gray-700">
-                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-orange-500" aria-hidden="true" />
+                  <div className="mb-4">
+                    <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium text-emerald-700 bg-emerald-50/50 backdrop-blur-sm rounded-full border border-emerald-100">
+                      <svg className="mr-1 h-2.5 w-2.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                       Verified partner
                     </span>
                   </div>
                 ) : null}
 
                 {/* Provider Facts */}
-                <div className="space-y-2 sm:space-y-3 mb-6">
+                <div className="space-y-2 mb-6 bg-gray-50/30 backdrop-blur-sm p-3 rounded-xl border border-gray-100/50">
                   {provider.categories.slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs sm:text-sm">
-                      <span className="text-gray-600">{item.name}</span>
-                      <span className="text-gray-900 font-medium truncate max-w-[9rem] sm:max-w-none">{item.value}</span>
+                    <div key={idx} className="flex justify-between items-center text-xs">
+                      <span className="text-gray-500 font-medium">{item.name}</span>
+                      <span className="text-gray-900 font-semibold truncate max-w-[9rem] sm:max-w-none">{item.value}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Pricing */}
-                <div className="flex justify-between items-end pt-4 border-t border-gray-100">
+                <div className="flex justify-between items-center pt-2">
                   <div>
                     {provider.price != null ? (
-                      <>
-                        <div className="text-lg sm:text-xl font-bold text-gray-900">{provider.price} €</div>
-                        <div className="text-xs sm:text-sm text-gray-500">from / day</div>
-                      </>
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Starting at</span>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-xl sm:text-2xl font-bold text-gray-900">{provider.price}€</span>
+                          <span className="text-xs sm:text-sm text-gray-500 font-medium">/day</span>
+                        </div>
+                      </div>
                     ) : (
-                      <>
-                        <div className="text-lg sm:text-xl font-bold text-gray-900">—</div>
-                        <div className="text-xs sm:text-sm text-gray-500">price varies</div>
-                      </>
+                      <div className="flex flex-col">
+                         <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Price</span>
+                         <span className="text-lg font-bold text-gray-900">Varies</span>
+                      </div>
                     )}
                   </div>
                   <button
-                    className="bg-orange-500 text-white px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap hover:bg-orange-600 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+                    className="group/btn relative overflow-hidden bg-gray-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 hover:bg-orange-500 hover:shadow-lg hover:shadow-orange-500/30 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
                     type="button"
                     onClick={() => router.push(`/partner/${provider.id}`)}
                   >
-                    View Profile
+                    <span className="relative z-10">View Profile</span>
                   </button>
                 </div>
               </div>
@@ -488,8 +485,14 @@ export default function RentalProviders() {
           </div>
 
           {/* Edge fade for a more premium look */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-6 sm:w-10 bg-gradient-to-r from-white to-transparent" aria-hidden="true" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-6 sm:w-10 bg-gradient-to-l from-white to-transparent" aria-hidden="true" />
+          <div 
+            className={`pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-20 bg-gradient-to-r from-white via-white/80 to-transparent backdrop-blur-[2px] transition-opacity duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} 
+            aria-hidden="true" 
+          />
+          <div 
+            className={`pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-20 bg-gradient-to-l from-white via-white/80 to-transparent backdrop-blur-[2px] transition-opacity duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} 
+            aria-hidden="true" 
+          />
 
 
         </div>
