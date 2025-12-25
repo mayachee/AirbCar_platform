@@ -6,10 +6,10 @@ import { motion, useInView } from 'framer-motion';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function Hero() {
-  // Get current date and tomorrow's date
+  // Get current date and default drop-off date (2 days later)
   const today = new Date();
   const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+  tomorrow.setDate(today.getDate() + 2);
 
   const pad2 = (n) => String(n).padStart(2, '0');
   const dateToYmd = (date) =>
@@ -70,7 +70,7 @@ export default function Hero() {
     'supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150';
   
   const [searchForm, setSearchForm] = useState({
-    location: '',
+    location: 'Tetouan',
     pickupDate: todayStr,
     dropoffDate: tomorrowStr,
   });
@@ -132,7 +132,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-black/30" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
 
-      <div className="relative max-w-7xl mx-auto h-full flex md:items-end px-4 pb-12 md:pb-16">
+      <div className="relative max-w-7xl mx-auto h-full flex md:items-end px-4 pt-40 md:pt-0 pb-12 md:pb-16">
         <div className="w-full">
           {/* Headline */}
           <motion.div
@@ -218,7 +218,7 @@ export default function Hero() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full py-4 px-6 rounded-xl font-bold text-lg text-white border border-orange/20 bg-orange-700/[0.55] shadow-lg hover:shadow-xl hover:bg-orange-700/[0.65] focus:outline-none focus:ring-4 focus:ring-orange-500/40 backdrop-blur-2xl backdrop-saturate-150 transition-colors"
+                className="w-full py-4 px-6 rounded-xl font-bold text-lg text-white border border-orange/20 bg-orange-500 shadow-lg hover:shadow-xl hover:bg-orange-700/[0.65] focus:outline-none focus:ring-4 focus:ring-orange-500/40 backdrop-blur-2xl backdrop-saturate-150 transition-colors"
               >
                 Search Cars
               </motion.button>

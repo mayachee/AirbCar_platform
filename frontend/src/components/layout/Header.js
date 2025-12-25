@@ -167,22 +167,19 @@ export default function Header() {
                 aria-label="Open menu"
                 aria-expanded={isMenuOpen}
                 onClick={toggleMenu}
-                className={`group inline-flex items-center justify-center rounded-full px-5 py-2.5 transition-all duration-300 border ${buttonClassName}`}
+                className={`group inline-flex items-center justify-center rounded-full px-3 sm:px-5 py-2.5 transition-all duration-300 border ${buttonClassName}`}
               >
-                <div className="flex flex-col space-y-1.5 mr-3 group-hover:space-y-0 relative h-3 w-5 justify-center">
+                <div className="flex flex-col space-y-1.5 sm:mr-3 group-hover:space-y-0 relative h-3 w-5 justify-center">
                   <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:rotate-45 group-hover:absolute"></span>
                   <span className="w-3 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:w-5 group-hover:-rotate-45 group-hover:absolute"></span>
                 </div>
-                <span className="text-sm font-bold tracking-wide uppercase">Menu</span>
+                <span className="hidden sm:inline text-sm font-bold tracking-wide uppercase">Menu</span>
               </button>
             </div>
 
             {/* Logo */}
             <div className="flex items-center justify-center">
               <Link href="/" className="select-none group flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg ${isScrolled ? 'bg-orange-600 shadow-orange-900/20' : 'bg-white text-black shadow-black/20'}`}>
-                  <span className={`font-bold text-xl ${isScrolled ? 'text-white' : 'text-black'}`}>A</span>
-                </div>
                 <span className={`text-2xl font-bold tracking-tight transition-colors duration-300 ${navTextClassName}`}>
                   {APP_NAME}
                 </span>
@@ -228,7 +225,7 @@ export default function Header() {
 
           <div
             ref={menuPanelRef}
-            className="airbcar-menu-scroll relative h-full w-full sm:w-[480px] max-w-md bg-[#0B0F19] shadow-2xl px-8 pt-8 pb-10 overflow-y-auto overscroll-contain
+            className="airbcar-menu-scroll relative h-full w-full sm:w-[480px] max-w-md bg-[#0B0F19] shadow-2xl px-6 sm:px-8 pt-8 pb-10 overflow-y-auto overscroll-contain
               animate-in slide-in-from-left duration-300 border-r border-white/10 flex flex-col"
           >
             <div className="flex items-center justify-between mb-8">
@@ -252,7 +249,7 @@ export default function Header() {
                       key={`${item.href}-${item.label}`}
                       href={item.href}
                       onClick={closeMenu}
-                      className="group flex items-center text-4xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300"
+                      className="group flex items-center text-3xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300"
                     >
                       <span className="transition-transform duration-300 group-hover:translate-x-2">{item.label}</span>
                     </Link>
@@ -262,7 +259,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={handleSignOut}
-                      className="group flex items-center text-4xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300 text-left w-full"
+                      className="group flex items-center text-3xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300 text-left w-full"
                     >
                       <span className="transition-transform duration-300 group-hover:translate-x-2">Sign Out</span>
                     </button>
