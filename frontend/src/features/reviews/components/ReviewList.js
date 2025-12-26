@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReviewCard from './ReviewCard';
 import ReviewForm from './ReviewForm';
 import { reviewService } from '../services/reviewService';
-import { Star, Loader2, Filter, SortAsc, ChevronDown } from 'lucide-react';
+import { Star, Loader2, Filter, SortAsc, ChevronDown, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { SelectField } from '@/components/ui/select-field';
@@ -27,6 +27,7 @@ export default function ReviewList({
   const [filterRating, setFilterRating] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+  const [isAddingReview, setIsAddingReview] = useState(false);
   const [stats, setStats] = useState({
     averageRating: 0,
     totalReviews: 0,
@@ -229,6 +230,20 @@ export default function ReviewList({
     }
   };
 
+  const handleAddReview = async (reviewData) => {
+    try {
+      await reviewService.createReview(reviewData);
+      addToast('Review added successfully!', 'success');
+      setIsAddingReview(false);
+      await loadReviews();
+      await loadStats();
+      if (onReviewAdded) onReviewAdded();
+    } catch (err) {
+      console.error('Error adding review:', err);
+      addToast(err.message || 'Failed to add review', 'error');
+    }
+  };
+
   const handleVote = () => {
     // Refresh reviews to update vote counts (no need to reload stats)
     loadReviews();
@@ -236,8 +251,37 @@ export default function ReviewList({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="space-y-6">
+        {/* Stats Skeleton */}
+        <div className="bg-white dark:bg-white/5 rounded-xl p-6 border border-gray-200 dark:border-white/10 animate-pulse">
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center space-x-2">
+                <div className="w-8 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div className="w-12 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Reviews Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-white dark:bg-white/5 rounded-xl p-5 border border-gray-200 dark:border-white/10 animate-pulse">
+              <div className="flex items-start space-x-3 mb-3">
+                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                </div>
+              </div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -257,60 +301,63 @@ export default function ReviewList({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800"
+          className="bg-white dark:bg-white/5 rounded-xl p-6 border border-gray-200 dark:border-white/10 shadow-sm backdrop-blur-sm"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                Customer Reviews
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {stats.totalReviews} {stats.totalReviews === 1 ? 'review' : 'reviews'}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            {/* Overall Rating */}
+            <div className="text-center md:text-left md:border-r border-gray-200 dark:border-white/10 pr-0 md:pr-8">
+              <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
+                <span className="text-5xl font-bold text-gray-900 dark:text-white">
+                  {stats.averageRating}
+                </span>
+                <Star className="h-8 w-8 fill-yellow-400 text-yellow-400" />
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Based on {stats.totalReviews} {stats.totalReviews === 1 ? 'review' : 'reviews'}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stats.averageRating}
-              </span>
-            </div>
-          </div>
-          
-          {/* Rating Distribution */}
-          <div className="space-y-2">
-            {[5, 4, 3, 2, 1].map(rating => {
-              const count = stats.ratingDistribution[rating] || 0;
-              const percentage = stats.totalReviews > 0 
-                ? (count / stats.totalReviews) * 100 
-                : 0;
-              
-              return (
-                <div key={rating} className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-8">
-                    {rating}
-                  </span>
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percentage}%` }}
-                      transition={{ duration: 0.5 }}
-                      className="h-full bg-yellow-400"
-                    />
+            
+            {/* Rating Distribution */}
+            <div className="col-span-2 space-y-2">
+              {[5, 4, 3, 2, 1].map(rating => {
+                const count = stats.ratingDistribution[rating] || 0;
+                const percentage = stats.totalReviews > 0 
+                  ? (count / stats.totalReviews) * 100 
+                  : 0;
+                
+                return (
+                  <div key={rating} className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-1 w-12">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {rating}
+                      </span>
+                      <Star className="h-3 w-3 text-gray-400" />
+                    </div>
+                    <div className="flex-1 h-2.5 bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className={`h-full rounded-full ${
+                          rating >= 4 ? 'bg-green-500' : 
+                          rating === 3 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">
+                      {percentage > 0 ? `${Math.round(percentage)}%` : '0%'}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-600 dark:text-gray-400 w-12 text-right">
-                    {count}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </motion.div>
       )}
 
       {/* Sorting and Filtering Controls */}
       {stats.totalReviews > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-4 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-4 flex-1">
               {/* Sort Dropdown */}
@@ -325,7 +372,7 @@ export default function ReviewList({
                     { value: 'rating_low', label: 'Lowest Rating' },
                     { value: 'helpful', label: 'Most Helpful' },
                   ]}
-                  className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                  className="appearance-none bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
                 />
               </div>
 
@@ -336,7 +383,7 @@ export default function ReviewList({
                   className={`flex items-center space-x-2 px-4 py-2 border rounded-lg text-sm transition-colors ${
                     filterRating
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <Filter className="h-4 w-4" />
@@ -396,6 +443,38 @@ export default function ReviewList({
         </div>
       )}
 
+      {/* Add Review Button */}
+      {!isAddingReview && !editingReview && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsAddingReview(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>Write a Review</span>
+          </button>
+        </div>
+      )}
+
+      {/* Add Review Form */}
+      <AnimatePresence>
+        {isAddingReview && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <ReviewForm
+              listingId={listingId}
+              onSubmit={handleAddReview}
+              onCancel={() => setIsAddingReview(false)}
+              loading={false}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Edit Form */}
       {editingReview && (
         <motion.div
@@ -415,13 +494,21 @@ export default function ReviewList({
 
       {/* Reviews List */}
       {reviews.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <Star className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 dark:text-gray-400">No reviews yet</p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-            Be the first to review this vehicle
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center py-16 bg-white dark:bg-white/5 rounded-xl border border-dashed border-gray-300 dark:border-white/20"
+        >
+          <div className="w-16 h-16 bg-gray-100 dark:bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MessageSquare className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            No reviews yet
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+            This vehicle hasn't received any reviews yet. Be the first to share your experience!
           </p>
-        </div>
+        </motion.div>
       ) : (
         <div className="space-y-4">
           {reviews.map((review) => (

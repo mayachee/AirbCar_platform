@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import * as Tooltip from '@radix-ui/react-tooltip'
+import { calculateTotalPrice, formatPrice } from '../utils/pricing'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -37,7 +38,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
   // Safely get price with fallback
   const price = vehicle.price || vehicle.price_per_day || vehicle.dailyRate || 0
   const duration = searchDetails?.duration || 1
-  const totalPrice = (price * duration).toLocaleString()
+  const { basePrice, serviceFee, total } = calculateTotalPrice(price, duration)
   
   // Safely get insurance info
   const insurance = vehicle.insurance || {}
@@ -63,7 +64,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
         transition={{ duration: 0.5, delay: 0.4 }}
       >
         <motion.div
-          className="bg-white rounded-xl border shadow-lg p-6"
+          className="bg-white/5 rounded-xl border border-white/10 shadow-lg p-6 backdrop-blur-sm"
           variants={cardVariants}
           initial="hidden"
           animate="visible"
@@ -75,7 +76,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             variants={itemVariants}
           >
             <motion.div
-              className="text-3xl font-bold text-gray-900"
+              className="text-3xl font-bold text-white"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{
@@ -88,7 +89,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
               {price} MAD
             </motion.div>
             <motion.div
-              className="text-gray-600"
+              className="text-gray-400"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -99,7 +100,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
           {/* Date Picker */}
           <motion.div
-            className="bg-gray-50 rounded-lg p-4 mb-6"
+            className="bg-white/5 rounded-lg p-4 mb-6 border border-white/10"
             variants={itemVariants}
           >
             <div className="grid grid-cols-2 gap-4">
@@ -108,22 +109,22 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <label className="block text-xs font-medium text-gray-700 mb-1">Pickup</label>
-                <div className="text-sm font-medium">{selectedDates.pickup}</div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">Pickup</label>
+                <div className="text-sm font-medium text-white">{selectedDates.pickup}</div>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.45 }}
               >
-                <label className="block text-xs font-medium text-gray-700 mb-1">Return</label>
-                <div className="text-sm font-medium">{selectedDates.return}</div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">Return</label>
+                <div className="text-sm font-medium text-white">{selectedDates.return}</div>
               </motion.div>
             </div>
             <motion.button
               onClick={onChangeDates}
-              className="w-full mt-3 py-2 text-sm text-orange-600 font-medium border border-orange-600 rounded-lg hover:bg-orange-50 transition-colors"
-              whileHover={{ scale: 1.02, backgroundColor: '#fff7ed' }}
+              className="w-full mt-3 py-2 text-sm text-orange-400 font-medium border border-orange-500/30 rounded-lg hover:bg-orange-500/10 transition-colors"
+              whileHover={{ scale: 1.02, backgroundColor: 'rgba(249, 115, 22, 0.1)' }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
@@ -133,16 +134,20 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
           {/* Trip Summary */}
           <motion.div
-            className="border-t border-b border-gray-200 py-4 mb-6"
+            className="border-t border-b border-white/10 py-4 mb-6"
             variants={itemVariants}
           >
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">{duration} {duration === 1 ? 'day' : 'days'} rental</span>
-              <span className="font-medium">{(price * duration).toLocaleString()} MAD</span>
+            <div className="flex justify-between items-center mb-2 text-sm">
+              <span className="text-gray-400">{duration} {duration === 1 ? 'day' : 'days'} rental</span>
+              <span className="font-medium text-white">{formatPrice(basePrice)}</span>
             </div>
-            <div className="flex justify-between items-center font-semibold text-lg">
+            <div className="flex justify-between items-center mb-2 text-sm">
+              <span className="text-gray-400">Service fee</span>
+              <span className="font-medium text-white">{formatPrice(serviceFee)}</span>
+            </div>
+            <div className="flex justify-between items-center font-semibold text-lg pt-2 border-t border-white/10 mt-2 text-white">
               <span>Total</span>
-              <span>{(price * duration).toLocaleString()} MAD</span>
+              <span>{formatPrice(total)}</span>
             </div>
           </motion.div>
 
@@ -164,14 +169,14 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
           {/* Insurance Info */}
           <motion.div
-            className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4"
+            className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-4"
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             transition={{ type: 'spring', stiffness: 300 }}
           >
             <div className="flex items-start space-x-2">
               <motion.svg
-                className="w-5 h-5 text-green-600 mt-0.5"
+                className="w-5 h-5 text-green-400 mt-0.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -181,9 +186,9 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </motion.svg>
               <div>
-                <div className="font-medium text-green-800">Protected by insurance</div>
-                <div className="text-sm text-green-700">{insuranceCoverage}</div>
-                <div className="text-xs text-green-600 mt-1">Deductible: {insuranceDeductible}</div>
+                <div className="font-medium text-green-400">Protected by insurance</div>
+                <div className="text-sm text-green-300">{insuranceCoverage}</div>
+                <div className="text-xs text-green-400/80 mt-1">Deductible: {insuranceDeductible}</div>
               </div>
             </div>
           </motion.div>
@@ -193,44 +198,32 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             className="space-y-3"
             variants={itemVariants}
           >
-            <h4 className="font-medium text-gray-900">What's included</h4>
+            <h4 className="font-medium text-white">What's included</h4>
             <div className="space-y-2">
-              <div className="flex items-center text-sm">
-                <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center text-sm text-gray-300">
+                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span>{mileageIncluded} km included</span>
               </div>
-              <div className="flex items-center text-sm">
-                <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center text-sm text-gray-300">
+                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span>Comprehensive insurance</span>
               </div>
-              <div className="flex items-center text-sm">
-                <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center text-sm text-gray-300">
+                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span>24/7 roadside assistance</span>
               </div>
-              <div className="flex items-center text-sm">
-                <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center text-sm text-gray-300">
+                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span>Free cancellation (48h)</span>
               </div>
-            </div>
-          </motion.div>
-
-          {/* Additional Info */}
-          <motion.div
-            className="mt-6 pt-6 border-t border-gray-200"
-            variants={itemVariants}
-          >
-            <div className="text-xs text-gray-500 space-y-1">
-              <div>Extra km: {mileageOverage}</div>
-              <div>Advance notice: {advanceNotice}</div>
-              <div>Min trip: {minTripLength}</div>
             </div>
           </motion.div>
         </motion.div>

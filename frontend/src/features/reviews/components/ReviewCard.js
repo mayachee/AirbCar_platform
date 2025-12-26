@@ -82,7 +82,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-all duration-200"
+      className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-5 hover:shadow-lg transition-all duration-200 backdrop-blur-sm"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start space-x-3 flex-1">

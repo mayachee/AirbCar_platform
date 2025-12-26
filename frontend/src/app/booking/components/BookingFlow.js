@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { SelectField } from '@/components/ui/select-field'
 import React from 'react'
 import { 
   Calendar, 
@@ -49,6 +50,101 @@ export default function BookingFlow({
     agreedToTerms: false
   })
   const [formReady, setFormReady] = useState(false)
+
+  // Style constants for glassmorphism
+  const heroBlurFieldClass =
+    'bg-white/10 hover:bg-white/15 ' +
+    'dark:bg-white/10 dark:hover:bg-white/15 ' +
+    'border border-white/25 hover:border-white/35 ' +
+    'dark:border-white/25 dark:hover:border-white/35 ' +
+    'text-white ' +
+    'backdrop-blur-xl backdrop-saturate-150 ' +
+    'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:backdrop-saturate-150 ' +
+    'focus:ring-orange-500/30 focus:border-orange-400 placeholder:text-white/50';
+
+  const glassCardClass = 
+    'bg-white/5 border border-white/10 backdrop-blur-md shadow-xl rounded-xl overflow-hidden';
+    
+  const glassContentClass = 
+    'bg-white/5 border border-white/10 rounded-lg';
+
+  // Helper functions for dates (adapted from SearchForm)
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const dateToYmd = (date) =>
+    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+
+  const ymdToLocalDate = (dateStr) => {
+    if (!dateStr) return null;
+    const parts = String(dateStr).split('-');
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts.map((p) => Number(p));
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+
+  const formatDateLabel = (dateStr) => {
+    const date = ymdToLocalDate(dateStr);
+    if (!date || Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const buildDateOptions = (startDateStr, days) => {
+    const start = ymdToLocalDate(startDateStr);
+    if (!start || Number.isNaN(start.getTime())) return [];
+
+    const options = [];
+    const seen = new Set();
+    for (let i = 0; i <= days; i += 1) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const value = dateToYmd(d);
+      if (seen.has(value)) continue;
+      seen.add(value);
+      options.push({ value, label: formatDateLabel(value) });
+    }
+    return options;
+  };
+
+  const buildTimeOptions = () => {
+    const options = [];
+    for (let i = 0; i < 24; i++) {
+      for (let j = 0; j < 60; j += 30) {
+        const hour = pad2(i);
+        const minute = pad2(j);
+        const time = `${hour}:${minute}`;
+        
+        const period = i >= 12 ? 'PM' : 'AM';
+        const displayHour = i % 12 || 12;
+        const label = `${displayHour}:${minute} ${period}`;
+        
+        options.push({ value: time, label: label });
+      }
+    }
+    return options;
+  };
+
+  const formatTimeDisplay = (timeStr) => {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const h = parseInt(hours, 10);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayHour = h % 12 || 12;
+    return `${displayHour}:${minutes} ${period}`;
+  };
+
+  const timeOptions = buildTimeOptions();
+  const today = new Date();
+  const todayStr = dateToYmd(today);
+
+  const heroBlurContentClass =
+    'border border-white/20 bg-white/10 text-white ' +
+    'dark:border-white/20 dark:bg-white/10 dark:text-white ' +
+    'backdrop-blur-2xl backdrop-saturate-150 ' +
+    'supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150';
 
   // Validate dates on step 1
   const validateStep1 = () => {
@@ -169,426 +265,443 @@ export default function BookingFlow({
   }
 
   return (
-    <div className="w-full">
-      {/* Progress Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {STEPS.map((step, index) => {
-            const status = getStepStatus(step.id)
-            const StepIcon = step.icon
-            const isLast = index === STEPS.length - 1
-            
-            return (
-              <div key={step.id} className="flex items-center flex-1">
-                {/* Step Circle */}
-                <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`
-                      relative flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300
-                      ${status === 'completed' 
-                        ? 'bg-orange-500 border-orange-500 text-white' 
-                        : status === 'active'
-                        ? 'bg-orange-100 border-orange-500 text-orange-600'
-                        : 'bg-white border-gray-300 text-gray-400'
-                      }
-                    `}
-                  >
-                    {status === 'completed' ? (
-                      <CheckCircle2 className="w-6 h-6" />
-                    ) : (
-                      <StepIcon className="w-6 h-6" />
-                    )}
-                    {status === 'active' && (
-                      <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-20" />
-                    )}
-                  </div>
-                  <div className="mt-3 text-center">
-                    <p className={`text-sm font-semibold ${
-                      status === 'active' ? 'text-orange-600' : 
-                      status === 'completed' ? 'text-gray-900' : 
-                      'text-gray-500'
-                    }`}>
-                      {step.name}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">{step.description}</p>
-                  </div>
-                </div>
-                
-                {/* Connector Line */}
-                {!isLast && (
-                  <div className={`
-                    flex-1 h-0.5 mx-4 transition-all duration-300
-                    ${currentStep > step.id ? 'bg-orange-500' : 'bg-gray-300'}
-                  `} />
-                )}
-              </div>
-            )
-          })}
-        </div>
+    <div className="w-full relative">
+
+      {/* Abstract Background Pattern - Only visible if parent doesn't provide it */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 rounded-3xl">
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
       </div>
 
-      {/* Step Content */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-        {/* Step Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-              {(() => {
-                const StepIcon = STEPS[currentStep - 1].icon
-                return <StepIcon className="w-6 h-6 text-white" />
-              })()}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">
-                {STEPS[currentStep - 1].name}
-              </h2>
-              <p className="text-sm text-orange-100">
-                Step {currentStep} of {STEPS.length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Step Body */}
-        <div className="p-6">
-          {/* Step 1: Dates & Time */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Select Your Rental Dates
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Choose when you'd like to pick up and return the vehicle
-                </p>
-              </div>
-
-              {/* Date Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Pickup Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-orange-600" />
-                    Pickup Date
-                  </label>
-                  <input
-                    type="date"
-                    value={pickupDate || ''}
-                    onChange={(e) => onDatesChange?.('pickup', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className={`
-                      w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all
-                      ${validationErrors.pickupDate ? 'border-red-300 bg-red-50' : 'border-gray-300'}
-                    `}
-                  />
-                  {validationErrors.pickupDate && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {validationErrors.pickupDate}
-                    </p>
-                  )}
-                  
-                  {/* Pickup Time */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-orange-600" />
-                      Pickup Time
-                    </label>
-                    <input
-                      type="time"
-                      value={pickupTime}
-                      onChange={(e) => handleTimeChange('pickup', e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Return Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-orange-600" />
-                    Return Date
-                  </label>
-                  <input
-                    type="date"
-                    value={returnDate || ''}
-                    onChange={(e) => onDatesChange?.('return', e.target.value)}
-                    min={pickupDate || new Date().toISOString().split('T')[0]}
-                    className={`
-                      w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all
-                      ${validationErrors.returnDate ? 'border-red-300 bg-red-50' : 'border-gray-300'}
-                    `}
-                  />
-                  {validationErrors.returnDate && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {validationErrors.returnDate}
-                    </p>
-                  )}
-                  
-                  {/* Return Time */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-orange-600" />
-                      Return Time
-                    </label>
-                    <input
-                      type="time"
-                      value={returnTime}
-                      onChange={(e) => handleTimeChange('return', e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Rental Summary */}
-              {pickupDate && returnDate && (
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Rental Duration</p>
-                      <p className="text-lg font-bold text-gray-900">
-                        {duration} {duration === '1' ? 'day' : 'days'}
-                      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Main Booking Flow */}
+        <div className="lg:col-span-2 space-y-8 order-2 lg:order-1">
+          {/* Progress Indicator */}
+          <div className="mb-6 md:mb-8">
+            <div className="flex items-center justify-between">
+              {STEPS.map((step, index) => {
+                const status = getStepStatus(step.id)
+                const StepIcon = step.icon
+                const isLast = index === STEPS.length - 1
+                
+                return (
+                  <div key={step.id} className="flex items-center flex-1">
+                    {/* Step Circle */}
+                    <div className="flex flex-col items-center flex-1">
+                      <div
+                        className={`
+                          relative flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full border-2 transition-all duration-300
+                          ${status === 'completed' 
+                            ? 'bg-orange-500 border-orange-500 text-white' 
+                            : status === 'active'
+                            ? 'bg-orange-500/20 border-orange-500 text-orange-500'
+                            : 'bg-orange-500/10 border-white/10 text-white/40'
+                          }
+                        `}
+                      >
+                        {status === 'completed' ? (
+                          <CheckCircle2 className="w-4 h-4 md:w-6 md:h-6" />
+                        ) : (
+                          <StepIcon className="w-4 h-4 md:w-6 md:h-6" />
+                        )}
+                        {status === 'active' && (
+                          <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-20" />
+                        )}
+                      </div>
+                      <div className="mt-2 md:mt-3 text-center">
+                        <p className={`text-xs md:text-sm font-semibold ${
+                          status === 'active' ? 'text-orange-500' : 
+                          status === 'completed' ? 'text-white' : 
+                          'text-white/40'
+                        }`}>
+                          {step.name}
+                        </p>
+                        <p className="text-xs text-white/40 mt-1 hidden md:block">{step.description}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-600">Total Price</p>
-                      <p className="text-2xl font-bold text-orange-600">
-                        {totalPrice} MAD
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 2: Documents - Render children (BookingForm) */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Upload Your Documents
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Please provide your driver's license for verification
-                </p>
-              </div>
-              {validationErrors.license && (
-                <div className="bg-red-50 border-l-4 border-red-400 rounded-md p-4">
-                  <p className="text-sm text-red-700">{validationErrors.license}</p>
-                </div>
-              )}
-              {validationErrors.terms && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-md p-4">
-                  <p className="text-sm text-yellow-800">{validationErrors.terms}</p>
-                </div>
-              )}
-              {/* Render children with form data callback */}
-              {React.isValidElement(children)
-                ? React.cloneElement(children, { 
-                    onFormDataUpdate: handleFormDataUpdate,
-                    hideButtons: true 
-                  })
-                : children
-              }
-            </div>
-          )}
-
-          {/* Step 3: Review */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Review Your Booking
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Please review all details before confirming
-                </p>
-              </div>
-
-              {/* Vehicle Summary */}
-              {vehicle && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-4">
-                    {vehicle.pictures && vehicle.pictures.length > 0 && (
-                      <img
-                        src={vehicle.pictures[0]}
-                        alt={`${vehicle.make} ${vehicle.model}`}
-                        className="w-20 h-20 object-cover rounded-lg"
-                      />
+                    
+                    {/* Connector Line */}
+                    {!isLast && (
+                      <div className={`
+                        flex-1 h-0.5 mx-4 transition-all duration-300
+                        ${currentStep > step.id ? 'bg-orange-500' : 'bg-white/10'}
+                      `} />
                     )}
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">
-                        {vehicle.make} {vehicle.model}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {vehicle.year} • {vehicle.transmission} • {vehicle.fuel_type}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        <MapPin className="w-3 h-3 inline mr-1" />
-                        {vehicle.location}
-                      </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Step Content */}
+          <div className={`${glassCardClass}`}>
+
+            {/* Step Body */}
+            <div className="p-6">
+              {/* Step 1: Dates & Time */}
+              {currentStep === 1 && (
+                <div className="space-y-6">
+                  <div className="text-left mb-6">
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Select Your Rental Dates
+                    </h3>
+                    <p className="text-sm text-white/60">
+                      Choose when you'd like to pick up and return the vehicle
+                    </p>
+                  </div>
+
+                  {/* Date Selection */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Pickup Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-white/90 mb-2">
+                        Pickup Date
+                      </label>
+                      <SelectField
+                        id="pickupDate"
+                        value={pickupDate || ''}
+                        onChange={(e) => onDatesChange?.('pickup', e.target.value)}
+                        options={buildDateOptions(todayStr, 180)}
+                        placeholder="Select pickup date"
+                        contentProps={{ className: heroBlurContentClass }}
+                        className={`${heroBlurFieldClass} ${validationErrors.pickupDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+                      />
+                      {validationErrors.pickupDate && (
+                        <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          {validationErrors.pickupDate}
+                        </p>
+                      )}
+                      
+                      {/* Pickup Time */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-white/90 mb-2">
+                          Pickup Time
+                        </label>
+                        <SelectField
+                          id="pickupTime"
+                          value={pickupTime || ''}
+                          onChange={(e) => handleTimeChange('pickup', e.target.value)}
+                          options={timeOptions}
+                          placeholder="Select pickup time"
+                          contentProps={{ className: heroBlurContentClass }}
+                          className={`${heroBlurFieldClass}`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Return Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-white/90 mb-2">
+                        Return Date
+                      </label>
+                      <SelectField
+                        id="returnDate"
+                        value={returnDate || ''}
+                        onChange={(e) => onDatesChange?.('return', e.target.value)}
+                        options={buildDateOptions(pickupDate || todayStr, 180)}
+                        placeholder="Select return date"
+                        contentProps={{ className: heroBlurContentClass }}
+                        className={`${heroBlurFieldClass} ${validationErrors.returnDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+                      />
+                      {validationErrors.returnDate && (
+                        <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          {validationErrors.returnDate}
+                        </p>
+                      )}
+                      
+                      {/* Return Time */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-white/90 mb-2">
+                          Return Time
+                        </label>
+                        <SelectField
+                          id="returnTime"
+                          value={returnTime || ''}
+                          onChange={(e) => handleTimeChange('return', e.target.value)}
+                          options={timeOptions}
+                          placeholder="Select return time"
+                          contentProps={{ className: heroBlurContentClass }}
+                          className={`${heroBlurFieldClass}`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Booking Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Pickup</p>
-                  <p className="font-semibold text-gray-900">
-                    {pickupDate ? new Date(pickupDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    }) : 'Not selected'}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    {pickupTime}
-                  </p>
-                </div>
-                <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                  <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Return</p>
-                  <p className="font-semibold text-gray-900">
-                    {returnDate ? new Date(returnDate).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    }) : 'Not selected'}
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    {returnTime}
-                  </p>
-                </div>
-              </div>
-
-              {/* Pricing Summary */}
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-gray-900">Total Amount</h4>
-                  <p className="text-3xl font-bold text-orange-600">
-                    {totalPrice} MAD
-                  </p>
-                </div>
-                <div className="pt-4 border-t border-orange-200">
-                  <p className="text-xs text-gray-600 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-green-600" />
-                    Free cancellation up to 24 hours before pickup
-                  </p>
-                </div>
-              </div>
-
-              {/* User Info */}
-              {user && (
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-3 mb-3">
-                    <User className="w-5 h-5 text-gray-600" />
-                    <h4 className="font-semibold text-gray-900">Booking For</h4>
+              {/* Step 2: Documents - Render children (BookingForm) */}
+              {currentStep === 2 && (
+                <div className="space-y-6">
+                  <div className="text-left mb-6">
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Upload Your Documents
+                    </h3>
+                    <p className="text-sm text-white/60">
+                      Please provide your driver's license for verification
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-700">
-                    {user.first_name} {user.last_name}
-                  </p>
-                  <p className="text-sm text-gray-600">{user.email}</p>
-                  {user.phone_number && (
-                    <p className="text-sm text-gray-600">{user.phone_number}</p>
+                  {validationErrors.license && (
+                    <div className="bg-red-500/10 border-l-4 border-red-500 rounded-md p-4">
+                      <p className="text-sm text-red-200">{validationErrors.license}</p>
+                    </div>
                   )}
+                  {validationErrors.terms && (
+                    <div className="bg-yellow-500/10 border-l-4 border-yellow-500 rounded-md p-4">
+                      <p className="text-sm text-yellow-200">{validationErrors.terms}</p>
+                    </div>
+                  )}
+                  {/* Render children with form data callback */}
+                  {React.isValidElement(children)
+                    ? React.cloneElement(children, { 
+                        onFormDataUpdate: handleFormDataUpdate,
+                        hideButtons: true 
+                      })
+                    : children
+                  }
+                </div>
+              )}
+
+              {/* Step 3: Review */}
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Review Your Booking
+                    </h3>
+                    <p className="text-sm text-white/60">
+                      Please review all details before confirming
+                    </p>
+                  </div>
+
+                  {/* Booking Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className={`${glassContentClass} p-4`}>
+                      <p className="text-xs text-white/60 uppercase tracking-wide mb-1">Pickup</p>
+                      <p className="font-semibold text-white">
+                        {pickupDate ? new Date(pickupDate).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'Not selected'}
+                      </p>
+                      <p className="text-sm text-white/60 mt-1">
+                        <Clock className="w-3 h-3 inline mr-1" />
+                        {formatTimeDisplay(pickupTime)}
+                      </p>
+                    </div>
+                    <div className={`${glassContentClass} p-4`}>
+                      <p className="text-xs text-white/60 uppercase tracking-wide mb-1">Return</p>
+                      <p className="font-semibold text-white">
+                        {returnDate ? new Date(returnDate).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 'Not selected'}
+                      </p>
+                      <p className="text-sm text-white/60 mt-1">
+                        <Clock className="w-3 h-3 inline mr-1" />
+                        {formatTimeDisplay(returnTime)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* User Info */}
+                  {user && (
+                    <div className={`${glassContentClass} p-4`}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <User className="w-5 h-5 text-white/60" />
+                        <h4 className="font-semibold text-white">Booking For</h4>
+                      </div>
+                      <p className="text-sm text-white">
+                        {user.first_name} {user.last_name}
+                      </p>
+                      <p className="text-sm text-white/60">{user.email}</p>
+                      {user.phone_number && (
+                        <p className="text-sm text-white/60">{user.phone_number}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Driver's License Images */}
+                  <div className={`${glassContentClass} p-4`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Shield className="w-5 h-5 text-white/60" />
+                      <h4 className="font-semibold text-white">Driver's License</h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Front Image */}
+                      <div>
+                        <p className="text-xs text-white/60 mb-2">Front</p>
+                        <div className="relative aspect-video rounded-lg overflow-hidden bg-black/20 border border-white/10">
+                          {(formData.licenseFiles?.front || user?.license_front_document_url || user?.licenseFrontDocumentUrl) ? (
+                            <img 
+                              src={formData.licenseFiles?.front instanceof File ? URL.createObjectURL(formData.licenseFiles.front) : (user?.license_front_document_url || user?.licenseFrontDocumentUrl)} 
+                              alt="License Front" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-white/40 text-xs">
+                              No image
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {/* Back Image */}
+                      <div>
+                        <p className="text-xs text-white/60 mb-2">Back</p>
+                        <div className="relative aspect-video rounded-lg overflow-hidden bg-black/20 border border-white/10">
+                          {(formData.licenseFiles?.back || user?.license_back_document_url || user?.licenseBackDocumentUrl) ? (
+                            <img 
+                              src={formData.licenseFiles?.back instanceof File ? URL.createObjectURL(formData.licenseFiles.back) : (user?.license_back_document_url || user?.licenseBackDocumentUrl)} 
+                              alt="License Back" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-white/40 text-xs">
+                              No image
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {error && (
+                <div className="mt-6 bg-red-500/10 border-l-4 border-red-500 rounded-md p-4">
+                  <div className="flex items-start">
+                    <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-red-200">Error</h3>
+                      <p className="mt-1 text-sm text-red-300">{error}</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="mt-6 bg-red-50 border-l-4 border-red-400 rounded-md p-4">
-              <div className="flex items-start">
-                <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-red-800">Error</h3>
-                  <p className="mt-1 text-sm text-red-700">{error}</p>
-                </div>
+            {/* Step Footer - Navigation */}
+            <div className="bg-white/5 px-6 py-4 border-t border-white/10 flex items-center justify-between backdrop-blur-sm">
+              <button
+                onClick={handleBack}
+                disabled={currentStep === 1 || loading}
+                className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 text-sm md:text-base text-white/70 font-medium rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+                Back
+              </button>
+
+              <div className="flex items-center gap-2">
+                {STEPS.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index + 1 === currentStep
+                        ? 'bg-orange-500 w-8'
+                        : index + 1 < currentStep
+                        ? 'bg-orange-500/50'
+                        : 'bg-white/20'
+                    }`}
+                  />
+                ))}
               </div>
+
+              {currentStep < STEPS.length ? (
+                <button
+                  onClick={handleNext}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2 text-sm md:text-base bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    // In step 3, trigger the actual booking with collected form data
+                    if (typeof onConfirm === 'function') {
+                      // Ensure we have the latest form data
+                      const licenseFiles = formData.licenseFiles || {
+                        front: null,
+                        back: null
+                      }
+                      
+                      onConfirm(
+                        formData.specialRequest || '',
+                        licenseFiles,
+                        formData.paymentMethod || 'online'
+                      )
+                    }
+                  }}
+                  disabled={loading || !formData.agreedToTerms || !formReady}
+                  className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2 text-sm md:text-base bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>Confirm Booking
+                    </>
+                  )}
+                </button>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Step Footer - Navigation */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <button
-            onClick={handleBack}
-            disabled={currentStep === 1 || loading}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Back
-          </button>
+        {/* Right Column - Vehicle Summary */}
+        <div className="lg:col-span-1 order-1 lg:order-2">
+          {vehicle && (
+            <div className={`${glassCardClass} p-4 md:p-6 sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto`}>
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">
+                {vehicle.make} {vehicle.model}
+              </h3>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs text-white/80">
+                  {vehicle.year}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs text-white/80">
+                  {vehicle.transmission}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs text-white/80">
+                  {vehicle.fuel_type}
+                </span>
+              </div>
 
-          <div className="flex items-center gap-2">
-            {STEPS.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index + 1 === currentStep
-                    ? 'bg-orange-500 w-8'
-                    : index + 1 < currentStep
-                    ? 'bg-orange-300'
-                    : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
+              <div className="mb-6">
+                <p className="text-sm text-white/60 mb-1">
+                  {vehicle.location}
+                </p>
+              </div>
 
-          {currentStep < STEPS.length ? (
-            <button
-              onClick={handleNext}
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                // In step 3, trigger the actual booking with collected form data
-                if (typeof onConfirm === 'function') {
-                  // Ensure we have the latest form data
-                  const licenseFiles = formData.licenseFiles || {
-                    front: null,
-                    back: null
-                  }
-                  
-                  onConfirm(
-                    formData.specialRequest || '',
-                    licenseFiles,
-                    formData.paymentMethod || 'online'
-                  )
-                }
-              }}
-              disabled={loading || !formData.agreedToTerms || !formReady}
-              className="flex items-center gap-2 px-6 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-5 h-5" />
-                  Confirm Booking
-                </>
-              )}
-            </button>
+              <div className="pt-4 md:pt-6 border-t border-white/10 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-white/60">Total Price</p>
+                  {duration && duration !== '0' && (
+                    <p className="text-xs text-white/40 mt-1">
+                      for {duration} {duration === '1' ? 'day' : 'days'}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="block text-2xl md:text-3xl font-bold text-orange-500">
+                    {totalPrice} <span className="text-sm font-medium text-orange-500/70">MAD</span>
+                  </span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>
