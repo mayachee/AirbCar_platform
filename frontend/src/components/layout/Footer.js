@@ -261,7 +261,7 @@ export default function Footer() {
             
             <div className="flex items-center space-x-6 text-sm text-gray-500">
               <span className="flex items-center hover:text-gray-300 transition-colors">
-                <span className="mr-2">🇲🇦</span> Made in Morocco
+                Made in Morocco
               </span>
               <span className="w-1 h-1 bg-gray-700 rounded-full" />
               <span className="flex items-center hover:text-gray-300 transition-colors">

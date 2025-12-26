@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api/client'
+import { motion } from 'framer-motion';
 
 export default function RentalProviders() {
   const router = useRouter()
@@ -10,6 +11,13 @@ export default function RentalProviders() {
   const scrollRafRef = useRef(null)
   const isProgrammaticScrollRef = useRef(false)
   const lastAllowedScrollLeftRef = useRef(0)
+  
+  // Drag-to-scroll refs
+  const isPointerDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const startScrollLeftRef = useRef(0);
+  const didDragRef = useRef(false);
+
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [providers, setProviders] = useState([]);
@@ -99,6 +107,13 @@ export default function RentalProviders() {
 
     // Infinite loop behavior: keep scroll position within the middle copy.
     if (shouldLoop) {
+      // In loop mode there are no true edges, so keep arrows available.
+      setShowLeftArrow(true)
+      setShowRightArrow(true)
+
+      // Don't wrap while user is dragging, to avoid fighting with the drag logic
+      if (isPointerDownRef.current) return;
+
       const metrics = getLoopMetrics(container)
       const left = container.scrollLeft
       if (metrics) {
@@ -110,10 +125,6 @@ export default function RentalProviders() {
           container.scrollLeft = left - metrics.singleWidth
         }
       }
-
-      // In loop mode there are no true edges, so keep arrows available.
-      setShowLeftArrow(true)
-      setShowRightArrow(true)
       return
     }
 
@@ -122,6 +133,59 @@ export default function RentalProviders() {
       container.scrollLeft < container.scrollWidth - container.clientWidth
     );
   }, [getLoopMetrics, shouldLoop])
+
+  const handlePointerDown = (e) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    // Ignore touch events to allow native scrolling
+    if (e.pointerType === 'touch') return;
+
+    isPointerDownRef.current = true;
+    didDragRef.current = false;
+    startXRef.current = e.clientX;
+    startScrollLeftRef.current = container.scrollLeft;
+
+    container.style.cursor = 'grabbing';
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // no-op
+    }
+  };
+
+  const handlePointerMove = (e) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    if (!isPointerDownRef.current) return;
+
+    const dx = e.clientX - startXRef.current;
+    if (Math.abs(dx) > 6) didDragRef.current = true;
+    
+    container.scrollLeft = startScrollLeftRef.current - dx;
+  };
+
+  const endPointerDrag = (e) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    isPointerDownRef.current = false;
+    container.style.cursor = 'grab';
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // no-op
+    }
+    
+    // Force check/wrap now that drag is done
+    checkScrollPosition();
+  };
+
+  const safeNavigate = (id) => {
+    if (didDragRef.current) return;
+    router.push(`/partner/${id}`);
+  };
 
   const scrollToLeft = () => {
     scrollToSnap('left')
@@ -256,14 +320,6 @@ export default function RentalProviders() {
         if (scrollRafRef.current != null) return
         scrollRafRef.current = window.requestAnimationFrame(() => {
           scrollRafRef.current = null
-
-          // Disable user scrolling: if a scroll happens and it wasn't triggered by our code,
-          // snap back to the last allowed scrollLeft.
-          if (!isProgrammaticScrollRef.current) {
-            setInstantScrollLeft(container, lastAllowedScrollLeftRef.current)
-            return
-          }
-
           checkScrollPosition()
           lastAllowedScrollLeftRef.current = container.scrollLeft
         })
@@ -297,11 +353,17 @@ export default function RentalProviders() {
   }, [shouldLoop, scrollToSnap])
 
   return (
-    <section className="py-12 sm:py-16 bg-white">
+    <section className="py-12 sm:py-16 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Simple Header */}
-        <div className="mb-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mb-12"
+        >
           <div className="text-center md:text-left md:flex md:items-end md:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gray-500">
@@ -317,7 +379,7 @@ export default function RentalProviders() {
             </p>
           </div>
           <div className="mt-8 h-px bg-gray-100" aria-hidden="true" />
-        </div>
+        </motion.div>
 
         {/* Scroll Container with Navigation */}
         <div className="relative">
@@ -335,7 +397,12 @@ export default function RentalProviders() {
           
           <div
             ref={scrollContainerRef}
-            className="-mx-4 sm:mx-0 flex gap-4 sm:gap-6 overflow-x-auto py-8 scrollbar-hide px-4 sm:px-2 snap-x snap-mandatory scroll-smooth overscroll-x-contain select-none touch-pan-y cursor-default"
+            className="-mx-4 sm:mx-0 flex gap-4 sm:gap-6 overflow-x-auto py-8 scrollbar-hide px-4 sm:px-2 snap-x snap-mandatory scroll-smooth overscroll-x-contain select-none cursor-grab"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={endPointerDrag}
+            onPointerCancel={endPointerDrag}
+            onPointerLeave={endPointerDrag}
             onWheel={(e) => {
               // Block horizontal wheel/trackpad scrolling (including Shift+wheel),
               // but allow vertical page scrolling.
@@ -391,9 +458,14 @@ export default function RentalProviders() {
             )}
 
             {!isLoading && !loadError && loopedProviders.map((provider, idx) => (
-              <div
+              <motion.div
                 key={`${provider.id}-${idx}`}
-                className="group relative flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white p-5 sm:p-7 snap-start rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl"
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, margin: "-10%" }}
+                transition={{ duration: 0.5 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="group relative flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white p-5 sm:p-7 snap-start rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 ease-out hover:shadow-xl"
                 data-provider-card="true"
                 style={{ scrollSnapStop: 'always' }}
               >
@@ -475,12 +547,12 @@ export default function RentalProviders() {
                   <button
                     className="group/btn relative overflow-hidden bg-gray-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 hover:bg-orange-500 hover:shadow-lg hover:shadow-orange-500/30 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
                     type="button"
-                    onClick={() => router.push(`/partner/${provider.id}`)}
+                    onClick={() => safeNavigate(provider.id)}
                   >
                     <span className="relative z-10">View Profile</span>
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function HowItWorks() {
   const steps = [
@@ -29,9 +30,15 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 md:mb-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="mb-10 md:mb-16"
+        >
           <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">How It Works</p>
           <div className="mt-4 flex items-end justify-between gap-8">
             <h2 className="text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
@@ -41,15 +48,19 @@ export default function HowItWorks() {
               Search, compare, then book. Fast and transparent.
             </p>
           </div>
-        </div>
+        </motion.div>
 
         <div className="space-y-20 md:space-y-32">
           {steps.map((step, index) => {
             const reverseOnDesktop = index % 2 === 1;
 
             return (
-              <article
+              <motion.article
                 key={step.number}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-10%" }}
+                transition={{ duration: 0.7, delay: index * 0.1 }}
                 className="group grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center"
               >
                 <div className={reverseOnDesktop ? 'lg:order-2' : ''}>
@@ -101,7 +112,7 @@ export default function HowItWorks() {
                     </Link>
                   </div>
                 </div>
-              </article>
+              </motion.article>
             );
           })}
         </div>

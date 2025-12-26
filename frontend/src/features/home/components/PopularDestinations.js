@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function PopularDestinations() {
   const scrollContainerRef = useRef(null);
@@ -123,6 +124,8 @@ export default function PopularDestinations() {
     const container = scrollContainerRef.current;
     if (!container) return;
     if (e.button !== undefined && e.button !== 0) return;
+    // Ignore touch events to allow native scrolling
+    if (e.pointerType === 'touch') return;
 
     isPointerDownRef.current = true;
     didDragRef.current = false;
@@ -268,10 +271,16 @@ export default function PopularDestinations() {
       : destinations;
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8"
+        >
           <div>
             <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">Destinations</p>
             <h2 className="mt-3 text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
@@ -281,13 +290,13 @@ export default function PopularDestinations() {
           <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
             Explore top cities. Drag to scroll or use the arrows.
           </p>
-        </div>
+        </motion.div>
 
         {/* City Cards Horizontal Scroll */}
         <div className="relative">
           <div 
             ref={scrollContainerRef}
-            className="flex gap-6 md:gap-8 overflow-x-auto scrollbar-hide cursor-grab select-none pb-6 px-1 snap-x snap-mandatory scroll-smooth touch-pan-y"
+            className="flex gap-6 md:gap-8 overflow-x-auto scrollbar-hide cursor-grab select-none pb-6 px-1 snap-x snap-mandatory scroll-smooth"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             onScroll={() => {
               checkScrollPosition();
@@ -308,17 +317,23 @@ export default function PopularDestinations() {
             {destinationsForLoop.map((d, idx) => {
               const isFeatured = Boolean(d.note);
               return (
-                <div
+                <motion.div
                   key={`${d.destination}-${idx}`}
                   data-destination-card="true"
                   onClick={() => safeNavigate(d.destination)}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: "-10%" }}
+                  transition={{ duration: 0.5 }}
+                  whileHover={{ scale: 1.02, y: -10, transition: { duration: 0.3 } }}
+                  whileTap={{ scale: 0.98 }}
                   className={
                     [
                       'flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer border border-gray-200',
-                      'transition-all duration-300 hover:border-gray-400',
+                      'transition-colors duration-300 hover:border-gray-400',
                       'snap-start',
                       'h-[420px] w-[260px] sm:h-[480px] sm:w-[300px] lg:h-[560px] lg:w-[340px]',
-                      isFeatured ? 'shadow-lg hover:shadow-2xl transform hover:-translate-y-1' : ''
+                      isFeatured ? 'shadow-lg hover:shadow-2xl' : ''
                     ].join(' ')
                   }
                   role="button"
@@ -374,7 +389,16 @@ export default function PopularDestinations() {
                   {isFeatured && (
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   )}
-                </div>
+                  
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+                    <motion.div
+                        className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                        initial={{ x: '-150%' }}
+                        whileHover={{ x: '150%' }}
+                        transition={{ duration: 0.8, ease: "easeInOut" }}
+                    />
+                  </div>
+                </motion.div>
               );
             })}
 
