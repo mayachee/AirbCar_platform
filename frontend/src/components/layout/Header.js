@@ -145,13 +145,13 @@ export default function Header() {
   const headerClassName = `fixed inset-x-0 top-0 z-40
     transition-all duration-500 ease-in-out
     ${isScrolled 
-      ? 'bg-[#0B0F19]/40 backdrop-blur-xl border-b border-white/5 py-2 shadow-lg shadow-black/10' 
+      ? 'py-2 shadow-lg shadow-black/0' 
       : 'bg-transparent py-6'}`
   
   const navTextClassName = isScrolled ? 'text-white' : 'text-white drop-shadow-md'
   
   const buttonClassName = isScrolled 
-    ? 'bg-white/5 hover:bg-orange-600 text-white border-transparent shadow-sm' 
+    ? 'bg-[#0B0F19]/80 text-white border-transparent shadow-sm' 
     : 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-md border-white/10 shadow-lg shadow-black/5'
 
   return (
@@ -180,7 +180,7 @@ export default function Header() {
             {/* Logo */}
             <div className="flex items-center justify-center">
               <Link href="/" className="select-none group flex items-center space-x-3">
-                <span className={`text-3xl font-black tracking-tighter transition-all duration-300 ${navTextClassName} drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]`}>
+                <span className={`text-3xl font-black text-orange-600 tracking-tighter transition-all duration-300 ${navTextClassName} drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]`}>
                   {APP_NAME}
                 </span>
               </Link>
@@ -191,7 +191,7 @@ export default function Header() {
               <Link
                 href="/search"
                 aria-label="Search"
-                className={`group inline-flex items-center justify-center rounded-full p-3 transition-all duration-300 border ${buttonClassName}`}
+                className={`group ${(!loading && !user) ? 'hidden md:inline-flex' : 'inline-flex'} items-center justify-center rounded-full p-3 transition-all duration-300 border ${buttonClassName}`}
               >
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -200,6 +200,15 @@ export default function Header() {
 
               {!loading && !user && (
                 <>
+                  <Link
+                    href="/auth?mode=signin"
+                    aria-label="Sign In"
+                    className={`md:hidden group inline-flex items-center justify-center rounded-full p-3 transition-all duration-300 border ${buttonClassName}`}
+                  >
+                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </Link>
                   <Link
                     href="/auth?mode=signin"
                     className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 border ${buttonClassName}`}
