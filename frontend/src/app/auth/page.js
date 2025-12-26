@@ -485,171 +485,75 @@ function AuthForm() {
 
   if (success && activeTab === 'signup') {
     return (
-      <div className="min-h-screen flex">
-        {/* Left side - Success message */}
-        <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-gradient-to-br from-white via-green-50/20 to-white relative overflow-hidden">
-          {/* Subtle background pattern */}
-          <div className="absolute inset-0 opacity-[0.02]">
-            <div 
-              className="absolute inset-0" 
-              style={{
-                backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px)`,
-                backgroundSize: '24px 24px',
-              }}
-            />
-          </div>
-          
-          <div className="mx-auto w-full max-w-sm lg:w-96 relative z-10">
-            {/* Logo */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="mb-10"
-            >
-              <h1 className="text-3xl font-bold text-orange-500">
-                Airbcar
-              </h1>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, type: "spring" }}
-              className="text-center"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-6"
-              >
-                <motion.svg
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  className="h-8 w-8 text-green-600"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </motion.svg>
-              </motion.div>
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4"
-              >
-                Account created successfully!
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-base text-gray-600"
-              >
-                {redirectMessage || "You're now signed in. Redirecting..."}
-              </motion.p>
-            </motion.div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: "url('/pictures_car_example/bg_search.jpg')",
+            }}
+          />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
         </div>
 
-        {/* Right side - Branded Content */}
-        <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 overflow-hidden">
-          {/* Animated background elements */}
-          <div className="absolute inset-0">
-            <motion.div
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.5, 0.3],
-                x: [0, 50, 0],
-                y: [0, -30, 0],
-              }}
-              transition={{
-                duration: 10,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute top-20 right-20 w-96 h-96 bg-white/20 rounded-full blur-3xl"
-            />
-            <motion.div
-              animate={{
-                scale: [1, 1.3, 1],
-                opacity: [0.2, 0.4, 0.2],
-                x: [0, -40, 0],
-                y: [0, 40, 0],
-              }}
-              transition={{
-                duration: 12,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: 2,
-              }}
-              className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-white/15 rounded-full blur-3xl"
-            />
-          </div>
-
-          {/* Content - Quote Section matching Figma design */}
-          <div className="relative h-full flex flex-col justify-center items-center px-16 text-white">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="relative flex flex-col gap-8 items-start min-w-[600px] max-w-[700px] z-[3]"
-            >
-              {/* Large Quote Mark - positioned absolutely on the left */}
+        <div className="w-full max-w-md mx-4 relative z-10">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="p-8">
+              {/* Logo */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-                className="absolute flex flex-col h-[200px] justify-center leading-[0] left-[-60px] text-[200px] text-white/35 top-[40px] translate-y-[-50%] w-[80px] z-[2] pointer-events-none"
-              >
-                <p className="leading-[200px] whitespace-pre-wrap font-normal">&ldquo;</p>
-              </motion.div>
-
-              {/* Quote Text Block */}
-              <motion.blockquote
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                className="flex flex-col items-start max-w-[700px] relative shrink-0 w-full z-[3]"
+                transition={{ duration: 0.5 }}
+                className="mb-10 text-center"
               >
-                <div className="flex flex-col font-normal justify-center leading-[44px] not-italic relative shrink-0 text-[36px] text-white whitespace-pre-line">
-                  <p className="mb-0">We&apos;re making cities for people,</p>
-                  <p className="mb-0">offering better alternatives for</p>
-                  <p className="mb-0">every purpose a private car serves.</p>
-                  <p className="mb-0">Including ride-hailing, shared cars,</p>
-                  <p className="mb-0">scooters, and food delivery.</p>
-                  <p className="mb-0">Building sustainable mobility ✌🏼</p>
-                </div>
-              </motion.blockquote>
-
-              {/* Author Section */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                className="flex gap-5 items-center relative shrink-0 w-full z-[1] mt-2"
-              >
-                {/* Avatar */}
-                <div className="max-w-[512px] relative rounded-full shrink-0 size-[56px] overflow-hidden bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md">
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">A</span>
-                  </div>
-                </div>
-                
-                {/* Author Name */}
-                <div className="flex flex-col items-start relative shrink-0">
-                  <div className="flex flex-col items-start relative shrink-0 w-full">
-                    <div className="flex flex-col font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#b4b4b4] text-[18px] whitespace-nowrap">
-                      <p className="leading-[28px] text-white/75">Airbcar Team</p>
-                    </div>
-                  </div>
-                </div>
+                <h1 className="text-3xl font-bold text-white">
+                  Airbcar
+                </h1>
               </motion.div>
-            </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, type: "spring" }}
+                className="text-center"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className="mx-auto h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30"
+                >
+                  <motion.svg
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    className="h-8 w-8 text-green-400"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </motion.svg>
+                </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-3xl font-bold text-white mb-4"
+                >
+                  Account created successfully!
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-base text-white/80"
+                >
+                  {redirectMessage || "You're now signed in. Redirecting..."}
+                </motion.p>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -657,21 +561,22 @@ function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Form */}
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-gradient-to-br from-white via-gray-50/30 to-white relative overflow-hidden">
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div 
-            className="absolute inset-0" 
-            style={{
-              backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px)`,
-              backgroundSize: '24px 24px',
-            }}
-          />
-        </div>
-        
-        <div className="mx-auto w-full max-w-sm lg:w-96 relative z-10">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-900">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/pictures_car_example/bg_search.jpg')",
+          }}
+        />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md mx-4">
+        <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+          <div className="py-10 px-6 sm:px-10">
           {/* Logo with enhanced styling */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -679,14 +584,14 @@ function AuthForm() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <h1 className="text-3xl font-bold text-orange-500">
+            <h1 className="text-3xl font-bold text-white">
               Airbcar
             </h1>
           </motion.div>
 
           {/* Enhanced Tab Navigation */}
           <div className="mb-10">
-            <div className="relative flex space-x-1 bg-gray-100 p-1.5 rounded-xl shadow-inner">
+            <div className="relative flex space-x-1 bg-white/10 p-1.5 rounded-xl border border-white/10">
               <motion.button
                 type="button"
                 onClick={() => {
@@ -695,8 +600,8 @@ function AuthForm() {
                 }}
                 className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 z-10 ${
                   activeTab === 'signin'
-                    ? 'text-orange-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-white'
+                    : 'text-white/60 hover:text-white'
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -704,7 +609,7 @@ function AuthForm() {
                 {activeTab === 'signin' && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className="absolute inset-0 bg-white rounded-lg shadow-md"
+                    className="absolute inset-0 bg-orange-500 rounded-lg shadow-lg"
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -718,8 +623,8 @@ function AuthForm() {
                 }}
                 className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 z-10 ${
                   activeTab === 'signup'
-                    ? 'text-orange-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-white'
+                    : 'text-white/60 hover:text-white'
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -727,7 +632,7 @@ function AuthForm() {
                 {activeTab === 'signup' && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className="absolute inset-0 bg-white rounded-lg shadow-md"
+                    className="absolute inset-0 bg-orange-500 rounded-lg shadow-lg"
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -744,7 +649,7 @@ function AuthForm() {
             transition={{ duration: 0.4 }}
             className="mb-8"
           >
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+            <h2 className="text-3xl font-bold text-white">
               {activeTab === 'signin' ? 'Sign in to your account' : 'Create your account'}
             </h2>
           </motion.div>
@@ -764,12 +669,12 @@ function AuthForm() {
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="signin-email" className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label htmlFor="signin-email" className="block text-sm font-semibold text-white/90 mb-2">
                     Email
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                       </svg>
                     </div>
@@ -778,22 +683,22 @@ function AuthForm() {
                     id="signin-email"
                     type="email"
                     autoComplete="email"
-                    className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                    className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                     placeholder="Enter your email"
                   />
                   </div>
                   {signInErrors.email && (
-                    <p className="mt-1 text-sm text-red-600">{signInErrors.email.message}</p>
+                    <p className="mt-1 text-sm text-red-400">{signInErrors.email.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="signin-password" className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label htmlFor="signin-password" className="block text-sm font-semibold text-white/90 mb-2">
                     Password
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                     </div>
@@ -802,12 +707,12 @@ function AuthForm() {
                       id="signin-password"
                       type="password"
                       autoComplete="current-password"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder="Enter your password"
                     />
                   </div>
                   {signInErrors.password && (
-                    <p className="mt-1 text-sm text-red-600">{signInErrors.password.message}</p>
+                    <p className="mt-1 text-sm text-red-400">{signInErrors.password.message}</p>
                   )}
                 </div>
               </div>
@@ -864,13 +769,10 @@ function AuthForm() {
                   </span>
                 </motion.button>
 
-                <div className="relative py-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-500 font-medium">Or continue with</span>
-                  </div>
+                <div className="relative py-2 flex items-center gap-4">
+                  <div className="flex-1 border-t border-white/20" />
+                  <span className="text-sm text-white/60 font-medium">Or continue with</span>
+                  <div className="flex-1 border-t border-white/20" />
                 </div>
 
                 <div 
@@ -879,9 +781,9 @@ function AuthForm() {
                   style={{ minHeight: '44px' }}
                 >
                   {!googleReady && (
-                    <div className="w-full flex justify-center items-center py-3.5 px-4 border-2 border-gray-200 rounded-xl bg-white">
-                      <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2" />
-                      <span className="text-sm text-gray-600">Loading Google sign-in...</span>
+                    <div className="w-full flex justify-center items-center py-3.5 px-4 border border-white/20 rounded-xl bg-white/10">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      <span className="text-sm text-white/80">Loading Google sign-in...</span>
                     </div>
                   )}
                 </div>
@@ -917,12 +819,12 @@ function AuthForm() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="signup-firstName" className="block text-sm font-semibold text-gray-800 mb-2">
+                    <label htmlFor="signup-firstName" className="block text-sm font-semibold text-white/90 mb-2">
                       First Name
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
@@ -931,22 +833,22 @@ function AuthForm() {
                         id="signup-firstName"
                         type="text"
                         autoComplete="given-name"
-                        className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                        className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                         placeholder="First name"
                       />
                     </div>
                     {signUpErrors.firstName && (
-                      <p className="mt-1 text-sm text-red-600">{signUpErrors.firstName.message}</p>
+                      <p className="mt-1 text-sm text-red-400">{signUpErrors.firstName.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="signup-lastName" className="block text-sm font-semibold text-gray-800 mb-2">
+                    <label htmlFor="signup-lastName" className="block text-sm font-semibold text-white/90 mb-2">
                       Last Name
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
@@ -955,23 +857,23 @@ function AuthForm() {
                         id="signup-lastName"
                         type="text"
                         autoComplete="family-name"
-                        className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                        className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                         placeholder="Last name"
                       />
                     </div>
                     {signUpErrors.lastName && (
-                      <p className="mt-1 text-sm text-red-600">{signUpErrors.lastName.message}</p>
+                      <p className="mt-1 text-sm text-red-400">{signUpErrors.lastName.message}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="signup-email" className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label htmlFor="signup-email" className="block text-sm font-semibold text-white/90 mb-2">
                     Email
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                       </svg>
                     </div>
@@ -980,22 +882,22 @@ function AuthForm() {
                       id="signup-email"
                       type="email"
                       autoComplete="email"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder="Enter your email"
                     />
                   </div>
                   {signUpErrors.email && (
-                    <p className="mt-1 text-sm text-red-600">{signUpErrors.email.message}</p>
+                    <p className="mt-1 text-sm text-red-400">{signUpErrors.email.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="signup-phoneNumber" className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label htmlFor="signup-phoneNumber" className="block text-sm font-semibold text-white/90 mb-2">
                     Phone Number
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                     </div>
@@ -1004,22 +906,22 @@ function AuthForm() {
                       id="signup-phoneNumber"
                       type="tel"
                       autoComplete="tel"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder="+212 6XX-XXXXXX"
                     />
                   </div>
                   {signUpErrors.phoneNumber && (
-                    <p className="mt-1 text-sm text-red-600">{signUpErrors.phoneNumber.message}</p>
+                    <p className="mt-1 text-sm text-red-400">{signUpErrors.phoneNumber.message}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="signup-password" className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label htmlFor="signup-password" className="block text-sm font-semibold text-white/90 mb-2">
                     Password
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                     </div>
@@ -1028,35 +930,35 @@ function AuthForm() {
                       id="signup-password"
                       type="password"
                       autoComplete="new-password"
-                      className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder="Create a password"
                     />
                   </div>
                   {signUpErrors.password && (
-                    <p className="mt-1 text-sm text-red-600">{signUpErrors.password.message}</p>
+                    <p className="mt-1 text-sm text-red-400">{signUpErrors.password.message}</p>
                   )}
                 </div>
 
                 <div>
                   {signUpErrors.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-600">{signUpErrors.confirmPassword.message}</p>
+                    <p className="mt-1 text-sm text-red-400">{signUpErrors.confirmPassword.message}</p>
                   )}
                 </div>
 
                 {/* Partner Signup Toggle */}
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-white/20">
                   <div className="flex items-center">
                     <input
                       {...registerSignUp('isPartner')}
                       id="signup-isPartner"
                       type="checkbox"
-                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-white/30 bg-white/10 rounded"
                     />
-                    <label htmlFor="signup-isPartner" className="ml-2 block text-sm font-semibold text-gray-800">
+                    <label htmlFor="signup-isPartner" className="ml-2 block text-sm font-semibold text-white/90">
                       Sign up as a partner (rent out your car)
                     </label>
                   </div>
-                  <p className="mt-1 ml-6 text-xs text-gray-500">
+                  <p className="mt-1 ml-6 text-xs text-white/60">
                     Partners can list and rent out their vehicles on Airbcar
                   </p>
                 </div>
@@ -1068,15 +970,15 @@ function AuthForm() {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-4 pt-4 border-t border-gray-200"
+                    className="space-y-4 pt-4 border-t border-white/20"
                   >
                     <div>
-                      <label htmlFor="signup-businessName" className="block text-sm font-semibold text-gray-800 mb-2">
-                        Business Name <span className="text-red-500">*</span>
+                      <label htmlFor="signup-businessName" className="block text-sm font-semibold text-white/90 mb-2">
+                        Business Name <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
                         </div>
@@ -1084,22 +986,22 @@ function AuthForm() {
                           {...registerSignUp('businessName')}
                           id="signup-businessName"
                           type="text"
-                          className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                          className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                           placeholder="Enter your business name"
                         />
                       </div>
                       {signUpErrors.businessName && (
-                        <p className="mt-1 text-sm text-red-600">{signUpErrors.businessName.message}</p>
+                        <p className="mt-1 text-sm text-red-400">{signUpErrors.businessName.message}</p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="signup-taxId" className="block text-sm font-semibold text-gray-800 mb-2">
-                        Tax ID / Registration Number <span className="text-red-500">*</span>
+                      <label htmlFor="signup-taxId" className="block text-sm font-semibold text-white/90 mb-2">
+                        Tax ID / Registration Number <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </div>
@@ -1107,12 +1009,12 @@ function AuthForm() {
                           {...registerSignUp('taxId')}
                           id="signup-taxId"
                           type="text"
-                          className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-400 transition-all bg-white hover:border-gray-300"
+                          className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                           placeholder="Enter your tax ID or registration number"
                         />
                       </div>
                       {signUpErrors.taxId && (
-                        <p className="mt-1 text-sm text-red-600">{signUpErrors.taxId.message}</p>
+                        <p className="mt-1 text-sm text-red-400">{signUpErrors.taxId.message}</p>
                       )}
                     </div>
 
@@ -1159,13 +1061,10 @@ function AuthForm() {
                   </span>
                 </motion.button>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-700">Or continue with</span>
-                  </div>
+                <div className="relative py-2 flex items-center gap-4">
+                  <div className="flex-1 border-t border-white/20" />
+                  <span className="text-sm text-white/60 font-medium">Or continue with</span>
+                  <div className="flex-1 border-t border-white/20" />
                 </div>
 
                 <div 
@@ -1174,121 +1073,16 @@ function AuthForm() {
                   style={{ minHeight: '44px' }}
                 >
                   {!googleReady && (
-                    <div className="w-full flex justify-center items-center py-3.5 px-4 border-2 border-gray-200 rounded-xl bg-white">
-                      <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2" />
-                      <span className="text-sm text-gray-600">Loading Google sign-in...</span>
+                    <div className="w-full flex justify-center items-center py-3.5 px-4 border border-white/20 rounded-xl bg-white/10">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      <span className="text-sm text-white/80">Loading Google sign-in...</span>
                     </div>
                   )}
                 </div>
               </div>
             </form>
           )}
-        </div>
-      </div>
-
-      {/* Right side - Branded Content */}
-      <div className="hidden lg:block relative w-0 flex-1 bg-gray-900 overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-              x: [0, 50, 0],
-              y: [0, -30, 0],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="absolute top-20 right-20 w-96 h-96 bg-orange-500 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1, 1.3, 1],
-              opacity: [0.2, 0.4, 0.2],
-              x: [0, -40, 0],
-              y: [0, 40, 0],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 2,
-            }}
-            className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-orange-500 rounded-full blur-3xl"
-          />
-        </div>
-
-          {/* Content - Quote Section matching Figma design */}
-          <div className="relative h-full flex flex-col justify-center items-center px-16 text-white">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="relative flex flex-col gap-8 items-start min-w-[600px] max-w-[700px] z-[3]"
-            >
-              {/* Large Quote Mark - positioned absolutely on the left */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-                className="absolute flex flex-col h-[200px] justify-center leading-[0] left-[-60px] text-[200px] text-white/35 top-[40px] translate-y-[-50%] w-[80px] z-[2] pointer-events-none"
-              >
-                <p className="leading-[200px] whitespace-pre-wrap font-normal">&ldquo;</p>
-              </motion.div>
-
-              {/* Quote Text Block */}
-              <motion.blockquote
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                className="flex flex-col items-start max-w-[700px] relative shrink-0 w-full z-[3]"
-              >
-                <div className="flex flex-col font-normal justify-center leading-[44px] not-italic relative shrink-0 text-[36px] text-white whitespace-pre-line">
-                  <p className="mb-0">We&apos;re making cities for people,</p>
-                  <p className="mb-0">offering better alternatives for</p>
-                  <p className="mb-0">every purpose a private car serves.</p>
-                  <p className="mb-0">Including ride-hailing, shared cars,</p>
-                  <p className="mb-0">scooters, and food delivery.</p>
-                  <p className="mb-0">Building sustainable mobility ✌🏼</p>
-                </div>
-              </motion.blockquote>
-
-            {/* Author Section */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="flex gap-4 items-center relative shrink-0 w-full z-[1]"
-            >
-              {/* Avatar */}
-              <div className="max-w-[512px] relative rounded-full shrink-0 size-[48px] overflow-hidden">
-                <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-full">
-                  <img 
-                    alt="Author" 
-                    className="absolute left-0 max-w-none size-full top-0 object-cover" 
-                    src="https://www.figma.com/api/mcp/asset/15301c07-3efb-4e19-a409-153026a04c2e"
-                    onError={(e) => {
-                      // Fallback to a gradient background if image fails to load
-                      e.target.style.display = 'none';
-                      e.target.parentElement.parentElement.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))';
-                    }}
-                  />
-                </div>
-              </div>
-              
-              {/* Author Name */}
-              <div className="flex flex-col items-start relative shrink-0">
-                <div className="flex flex-col items-start relative shrink-0 w-full">
-                  <div className="flex flex-col font-medium justify-center leading-[0] not-italic relative shrink-0 text-[#b4b4b4] text-[15.1px] whitespace-nowrap">
-                    <p className="leading-[24px] text-white/70">Airbcar Team</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>
@@ -1298,10 +1092,21 @@ function AuthForm() {
 // Loading component for Suspense fallback
 function AuthLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/pictures_car_example/bg_search.jpg')",
+          }}
+        />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      </div>
+      
+      <div className="relative z-10 text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/20 border-t-orange-500 mx-auto mb-4"></div>
+        <p className="text-white/80 font-medium">Loading...</p>
       </div>
     </div>
   )
