@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { MapPin, Calendar, X, Search, AlertCircle } from 'lucide-react';
+import { MapPin, Calendar, Search, AlertCircle } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
+import { MOROCCAN_CITIES } from '@/constants';
+import { motion } from 'framer-motion';
 
 export default function SearchForm({ onSearch, initialValues = {} }) {
   // Get today's date for min date attribute
@@ -11,12 +13,17 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const dayAfterTomorrow = new Date(today);
   dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
-  const dayAfterTomorrowStr = dayAfterTomorrow.toISOString().split('T')[0];
-  const todayStr = today.toISOString().split('T')[0];
+  
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const dateToYmd = (date) =>
+    `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+
+  const todayStr = dateToYmd(today);
+  const tomorrowStr = dateToYmd(tomorrow);
+  const dayAfterTomorrowStr = dateToYmd(dayAfterTomorrow);
 
   const [location, setLocation] = useState(initialValues.location || '');
-  const [pickupDate, setPickupDate] = useState(initialValues.pickupDate || tomorrowStr);
+  const [pickupDate, setPickupDate] = useState(initialValues.pickupDate || todayStr);
   const [returnDate, setReturnDate] = useState(initialValues.returnDate || dayAfterTomorrowStr);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -26,36 +33,45 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
   useEffect(() => {
     if (initialValues.location !== undefined) setLocation(initialValues.location);
     if (initialValues.pickupDate !== undefined) setPickupDate(initialValues.pickupDate);
-    else if (!initialValues.pickupDate && !pickupDate) setPickupDate(tomorrowStr);
+    else if (!initialValues.pickupDate && !pickupDate) setPickupDate(todayStr);
     if (initialValues.returnDate !== undefined) setReturnDate(initialValues.returnDate);
     else if (!initialValues.returnDate && !returnDate) setReturnDate(dayAfterTomorrowStr);
   }, [initialValues]);
-  
-  // Calculate minimum return date (should be same or after pickup date)
-  const minReturnDate = pickupDate || todayStr;
 
-  // Calculate number of days
-  const numberOfDays = useMemo(() => {
-    if (pickupDate && returnDate) {
-      const pickup = new Date(pickupDate);
-      const returnD = new Date(returnDate);
-      const diffTime = Math.abs(returnD - pickup);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays > 0 ? diffDays : 1;
-    }
-    return null;
-  }, [pickupDate, returnDate]);
+  // Helper functions for dates
+  const ymdToLocalDate = (dateStr) => {
+    const parts = String(dateStr).split('-');
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts.map((p) => Number(p));
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
+  const formatDateLabel = (dateStr) => {
+    const date = ymdToLocalDate(dateStr);
+    if (!date || Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
       day: 'numeric',
-      year: 'numeric'
     });
+  };
+
+  const buildDateOptions = (startDateStr, days) => {
+    const start = ymdToLocalDate(startDateStr);
+    if (!start || Number.isNaN(start.getTime())) return [];
+
+    const options = [];
+    const seen = new Set();
+    for (let i = 0; i <= days; i += 1) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const value = dateToYmd(d);
+      if (seen.has(value)) continue;
+      seen.add(value);
+      options.push({ value, label: formatDateLabel(value) });
+    }
+    return options;
   };
 
   // Validation
@@ -68,12 +84,6 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
 
     if (!pickupDate) {
       newErrors.pickupDate = 'Pick-up date is required';
-    } else {
-      const pickup = new Date(pickupDate);
-      const todayDate = new Date(todayStr);
-      if (pickup < todayDate) {
-        newErrors.pickupDate = 'Pick-up date cannot be in the past';
-      }
     }
 
     if (!returnDate) {
@@ -109,9 +119,9 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
     const newPickupDate = e.target.value;
     setPickupDate(newPickupDate);
     
-    // If return date is before new pickup date, clear it
+    // If return date is before new pickup date, update it to be at least same day or next day
     if (returnDate && newPickupDate && returnDate < newPickupDate) {
-      setReturnDate('');
+      setReturnDate(newPickupDate);
     }
     
     if (touched.pickupDate && errors.pickupDate) {
@@ -150,244 +160,130 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
     }
   };
 
-  // Handle clear form
-  const handleClear = () => {
-    setLocation('');
-    setPickupDate('');
-    setReturnDate('');
-    setErrors({});
-    setTouched({});
-  };
+  const heroBlurFieldClass =
+    'bg-white/10 hover:bg-white/15 ' +
+    'dark:bg-white/10 dark:hover:bg-white/15 ' +
+    'border border-white/25 hover:border-white/35 ' +
+    'dark:border-white/25 dark:hover:border-white/35 ' +
+    'text-white ' +
+    'backdrop-blur-xl backdrop-saturate-150 ' +
+    'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:backdrop-saturate-150 ' +
+    'focus:ring-orange-500/30 focus:border-orange-400 placeholder:text-white/50';
 
-  // Check if form has values
-  const hasValues = location || pickupDate || returnDate;
+  const heroBlurContentClass =
+    'border border-white/20 bg-white/10 text-white ' +
+    'dark:border-white/20 dark:bg-white/10 dark:text-white ' +
+    'backdrop-blur-2xl backdrop-saturate-150 ' +
+    'supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150';
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100">
-      {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Car</h2>
-        <p className="text-gray-600 text-sm">Search by location and dates to discover available vehicles</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+    <motion.form
+      onSubmit={handleSubmit}
+      initial={{ opacity: 0, y: 16, scale: 0.99 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: 0.08, duration: 0.5 }}
+      className="rounded-2xl p-5 md:p-8 w-full border border-white/25 shadow-2xl bg-transparent supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-120"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
         {/* Location Select */}
-        <div className="relative">
-          <label htmlFor="location" className="block text-sm font-semibold text-gray-700 mb-2">
-            <MapPin className="inline w-4 h-4 mr-1" />
-            Pick-up Location
+        <div className="md:col-span-1">
+          <label htmlFor="location" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
+            Pickup location
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-              <MapPin className="h-5 w-5 text-gray-400" />
-            </div>
-            <SelectField
-              id="location"
-              value={location}
-              onChange={(e) => handleLocationChange(e)}
-              placeholder="Select a location"
-              options={[
-                { value: 'Casablanca', label: 'Casablanca' },
-                { value: 'Rabat', label: 'Rabat' },
-                { value: 'Marrakech', label: 'Marrakech' },
-                { value: 'Fes', label: 'Fes' },
-                { value: 'Tangier', label: 'Tangier' },
-                { value: 'Tetouan', label: 'Tetouan' },
-                { value: 'Agadir', label: 'Agadir' },
-                { value: 'Oujda', label: 'Oujda' },
-                { value: 'Meknes', label: 'Meknes' },
-                { value: 'Kenitra', label: 'Kenitra' },
-                { value: 'El Jadida', label: 'El Jadida' },
-                { value: 'Safi', label: 'Safi' },
-                { value: 'Mohammedia', label: 'Mohammedia' },
-                { value: 'Nador', label: 'Nador' },
-                { value: 'Beni Mellal', label: 'Beni Mellal' },
-                { value: 'Taza', label: 'Taza' },
-                { value: 'Essaouira', label: 'Essaouira' },
-                { value: 'Larache', label: 'Larache' },
-                { value: 'Khouribga', label: 'Khouribga' },
-                { value: 'Settat', label: 'Settat' },
-                { value: 'Casablanca Airport', label: 'Casablanca Airport (CMN)' },
-                { value: 'Marrakech Airport', label: 'Marrakech Airport (RAK)' },
-                { value: 'Fes Airport', label: 'Fes Airport (FEZ)' },
-                { value: 'Tangier Airport', label: 'Tangier Airport (TNG)' },
-                { value: 'Agadir Airport', label: 'Agadir Airport (AGA)' },
-              ]}
-              className={`block w-full pl-12 pr-10 py-3.5 border rounded-xl transition-all text-gray-900 bg-white cursor-pointer ${
-                errors.location && touched.location
-                  ? 'border-red-300 bg-red-50 focus:ring-red-500/30 focus:border-red-500'
-                  : 'border-gray-300 hover:border-gray-400 focus:ring-orange-500/30 focus:border-orange-500'
-              } ${!location ? 'text-gray-500' : 'text-gray-900'}`}
-              triggerProps={{
-                onBlur: () => handleBlur('location'),
-                'aria-invalid': Boolean(errors.location && touched.location),
-                'aria-describedby': errors.location && touched.location ? 'location-error' : undefined,
-              }}
-            />
-            {location && (
-              <button
-                type="button"
-                onClick={() => {
-                  setLocation('');
-                  setErrors(prev => ({ ...prev, location: undefined }));
-                }}
-                className="absolute inset-y-0 right-8 pr-2 flex items-center text-gray-400 hover:text-gray-600 transition-colors z-20"
-                aria-label="Clear location"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+          <SelectField
+            id="location"
+            value={location}
+            onChange={handleLocationChange}
+            placeholder="Select a city"
+            options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
+            triggerProps={{ 
+              'aria-label': 'Pickup location',
+              onBlur: () => handleBlur('location')
+            }}
+            contentProps={{ className: heroBlurContentClass }}
+            className={`${heroBlurFieldClass} ${errors.location && touched.location ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+          />
           {errors.location && touched.location && (
-            <div id="location-error" className="mt-1.5 flex items-center text-sm text-red-600" role="alert">
-              <AlertCircle className="h-4 w-4 mr-1" />
+            <div className="mt-1.5 flex items-center text-xs text-red-300">
+              <AlertCircle className="h-3 w-3 mr-1" />
               {errors.location}
             </div>
           )}
         </div>
 
-        {/* Pick-up Date */}
-        <div className="relative">
-          <label htmlFor="pickupDate" className="block text-sm font-semibold text-gray-700 mb-2">
-            <Calendar className="inline w-4 h-4 mr-1" />
-            Pick-up Date
+        {/* Pickup Date */}
+        <div className="md:col-span-1">
+          <label htmlFor="pickupDate" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
+            Pickup date
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Calendar className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="date"
-              id="pickupDate"
-              value={pickupDate}
-              onChange={handlePickupDateChange}
-              onBlur={() => handleBlur('pickupDate')}
-              min={todayStr}
-              className={`block w-full pl-12 pr-3 py-3.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900 ${
-                errors.pickupDate && touched.pickupDate
-                  ? 'border-red-300 bg-red-50'
-                  : 'border-gray-300 bg-white hover:border-gray-400'
-              }`}
-              aria-invalid={errors.pickupDate && touched.pickupDate}
-              aria-describedby={errors.pickupDate && touched.pickupDate ? 'pickupDate-error' : undefined}
-            />
-            {pickupDate && (
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <span className="text-xs text-gray-500 font-medium">
-                  {formatDate(pickupDate).split(',')[0]}
-                </span>
-              </div>
-            )}
-          </div>
+          <SelectField
+            id="pickupDate"
+            value={pickupDate}
+            onChange={handlePickupDateChange}
+            options={buildDateOptions(todayStr, 180)}
+            triggerProps={{ 
+              'aria-label': 'Pickup date',
+              onBlur: () => handleBlur('pickupDate')
+            }}
+            contentProps={{ className: heroBlurContentClass }}
+            className={`${heroBlurFieldClass} ${errors.pickupDate && touched.pickupDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+          />
           {errors.pickupDate && touched.pickupDate && (
-            <div id="pickupDate-error" className="mt-1.5 flex items-center text-sm text-red-600" role="alert">
-              <AlertCircle className="h-4 w-4 mr-1" />
+            <div className="mt-1.5 flex items-center text-xs text-red-300">
+              <AlertCircle className="h-3 w-3 mr-1" />
               {errors.pickupDate}
-            </div>
-          )}
-          {pickupDate && !errors.pickupDate && (
-            <div className="mt-1.5 text-xs text-gray-500">
-              {formatDate(pickupDate)}
             </div>
           )}
         </div>
 
         {/* Return Date */}
-        <div className="relative">
-          <label htmlFor="returnDate" className="block text-sm font-semibold text-gray-700 mb-2">
-            <Calendar className="inline w-4 h-4 mr-1" />
-            Return Date
+        <div className="md:col-span-1">
+          <label htmlFor="returnDate" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
+            Return date
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Calendar className={`h-5 w-5 ${!pickupDate ? 'text-gray-300' : 'text-gray-400'}`} />
-            </div>
-            <input
-              type="date"
-              id="returnDate"
-              value={returnDate}
-              onChange={handleReturnDateChange}
-              onBlur={() => handleBlur('returnDate')}
-              min={minReturnDate}
-              disabled={!pickupDate}
-              className={`block w-full pl-12 pr-3 py-3.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all text-gray-900 ${
-                !pickupDate
-                  ? 'bg-gray-50 border-gray-200 cursor-not-allowed text-gray-400'
-                  : errors.returnDate && touched.returnDate
-                  ? 'border-red-300 bg-red-50'
-                  : 'border-gray-300 bg-white hover:border-gray-400'
-              }`}
-              aria-invalid={errors.returnDate && touched.returnDate}
-              aria-describedby={errors.returnDate && touched.returnDate ? 'returnDate-error' : undefined}
-              aria-disabled={!pickupDate}
-            />
-            {returnDate && pickupDate && (
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <span className="text-xs text-gray-500 font-medium">
-                  {formatDate(returnDate).split(',')[0]}
-                </span>
-              </div>
-            )}
-          </div>
+          <SelectField
+            id="returnDate"
+            value={returnDate}
+            onChange={handleReturnDateChange}
+            options={buildDateOptions(pickupDate || todayStr, 180)}
+            triggerProps={{ 
+              'aria-label': 'Return date',
+              onBlur: () => handleBlur('returnDate')
+            }}
+            contentProps={{ className: heroBlurContentClass }}
+            className={`${heroBlurFieldClass} ${errors.returnDate && touched.returnDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+          />
           {errors.returnDate && touched.returnDate && (
-            <div id="returnDate-error" className="mt-1.5 flex items-center text-sm text-red-600" role="alert">
-              <AlertCircle className="h-4 w-4 mr-1" />
+            <div className="mt-1.5 flex items-center text-xs text-red-300">
+              <AlertCircle className="h-3 w-3 mr-1" />
               {errors.returnDate}
             </div>
           )}
-          {returnDate && !errors.returnDate && (
-            <div className="mt-1.5 text-xs text-gray-500">
-              {formatDate(returnDate)}
-            </div>
-          )}
-          {numberOfDays && numberOfDays > 0 && !errors.returnDate && (
-            <div className="mt-1.5 text-xs font-medium text-orange-600">
-              {numberOfDays} {numberOfDays === 1 ? 'day' : 'days'} rental
-            </div>
-          )}
         </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
-        {/* Clear Button */}
-        {hasValues && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
-          >
-            <X className="w-4 h-4 mr-2" />
-            Clear All
-          </button>
-        )}
 
         {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting || !location.trim() || !pickupDate || !returnDate}
-          className={`inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold rounded-xl text-white transition-all shadow-lg ${
-            isSubmitting || !location.trim() || !pickupDate || !returnDate
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 hover:shadow-xl transform hover:-translate-y-0.5'
-          }`}
-        >
-          {isSubmitting ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Searching...
-            </>
-          ) : (
-            <>
-              <Search className="w-5 h-5 mr-2" />
-              Search Cars
-            </>
-          )}
-        </button>
+        <div className="md:col-span-1 flex items-end">
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full py-3.5 px-6 rounded-xl font-bold text-lg text-white border border-orange-500/20 bg-orange-500 shadow-lg hover:shadow-xl hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-500/40 backdrop-blur-2xl backdrop-saturate-150 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Searching...
+              </>
+            ) : (
+              'Search Cars'
+            )}
+          </motion.button>
+        </div>
       </div>
-    </form>
+    </motion.form>
   );
 }

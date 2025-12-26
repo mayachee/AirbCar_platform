@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useMemo } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, SlidersHorizontal, Grid3x3, List, X, Filter, Car, MapPin, Calendar, TrendingUp, Shield, Clock, Star, Zap } from 'lucide-react';
 import Header from '@/components/layout/Header';
@@ -8,18 +8,36 @@ import Footer from '@/components/layout/Footer';
 import { SearchFilters, SearchResults, LoadingSkeleton, SearchForm, useSearch, useFavorites } from '@/features/search';
 import { Button } from '@/components/ui';
 import { SelectField } from '@/components/ui/select-field';
+import SearchPageSkeleton from './SearchPageSkeleton';
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(6);
   
+  // Calculate default dates
+  const today = new Date();
+  const next2Days = new Date(today);
+  next2Days.setDate(today.getDate() + 2);
+
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const defaultLocation = '';
+  const defaultPickupDate = formatDate(today);
+  const defaultReturnDate = formatDate(next2Days);
+
   // Initialize filters from URL params
   const initialFilters = {
-    location: searchParams.get('location') || '',
-    pickupDate: searchParams.get('pickupDate') || '',
-    returnDate: searchParams.get('dropoffDate') || searchParams.get('returnDate') || '',
+    location: searchParams.get('location') || defaultLocation,
+    pickupDate: searchParams.get('pickupDate') || defaultPickupDate,
+    returnDate: searchParams.get('dropoffDate') || searchParams.get('returnDate') || defaultReturnDate,
     priceRange: [0, 5000],
     transmission: [],
     fuelType: [],
@@ -43,6 +61,19 @@ function SearchContent() {
 
   // Ensure filteredCars is always an array
   const safeFilteredCars = Array.isArray(filteredCars) ? filteredCars : [];
+  
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [filters, sortBy]);
+
+  // Get currently visible cars
+  const visibleCars = safeFilteredCars.slice(0, visibleCount);
+
+  // Handle load more
+  const handleLoadMore = () => {
+    setVisibleCount(prev => Math.min(prev + 6, safeFilteredCars.length));
+  };
 
   // Use favorites hook
   const { isFavorite, toggleFavorite, loading: favoritesLoading } = useFavorites();
@@ -141,170 +172,144 @@ function SearchContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#0F172A] relative overflow-hidden">
+      {/* Abstract Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+      </div>
+
       <Header />
       
-      {/* Hero Section - Bolt Style Enhanced */}
-      <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white pt-20 pb-32 sm:pt-28 sm:pb-40 overflow-hidden">
-        {/* Subtle Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-transparent"></div>
-        
-        {/* Animated Background Elements */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-        
+      {/* Hero Section - Modern & Stylish */}
+      <section className="relative text-white pt-32 pb-12 md:pt-60 md:pb-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-5xl mx-auto">
-            {/* Main Heading */}
-            <div className="text-center mb-12">
-              <h1 className="text-6xl sm:text-7xl lg:text-8xl font-bold mb-6 leading-[1.1] tracking-tight">
-                Find your perfect car
-          </h1>
-              <p className="text-xl sm:text-2xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                Request in seconds, book in minutes. Discover amazing vehicles for your next adventure.
-          </p>
-        </div>
 
-            {/* Search Form - Ultra Modern */}
-            <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 max-w-5xl mx-auto border border-gray-100">
-          <SearchForm 
-            onSearch={handleSearchFormSubmit}
-            initialValues={{
-              location: filters.location,
-              pickupDate: filters.pickupDate,
-              returnDate: filters.returnDate
-            }}
-          />
-        </div>
+          <div className="max-w-5xl mx-auto relative z-20">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center -z-10 select-none pointer-events-none">
+              <h1 className="w-full h-full text-4xl sm:text-6xl md:text-9xl font-black text-white/40 tracking-tighter uppercase">
+                Find your perfect Car
+              </h1>
+            </div>
 
-            {/* Quick Stats */}
-            {!loading && safeFilteredCars.length > 0 && (
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-base text-gray-300">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <Car className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-white text-lg">{safeFilteredCars.length}</div>
-                    <div className="text-sm">available cars</div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Search Form Container */}
+            <SearchForm 
+              onSearch={handleSearchFormSubmit}
+              initialValues={{
+                location: filters.location,
+                pickupDate: filters.pickupDate,
+                returnDate: filters.returnDate
+              }}
+            />
           </div>
         </div>
       </section>
 
       {/* Main Content Section */}
-      <main className="bg-white -mt-16 relative z-20">
+      <main className="min-h-screen relative z-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* Results Header */}
-          <div className="mb-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 pb-8 border-b border-gray-200">
-            <div className="flex-1">
-              <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-2 leading-tight">
-                {loading ? (
-                  <span className="flex items-center gap-3">
-                    <span className="animate-pulse">Searching...</span>
-                  </span>
-                ) : (
-                  <>
-                    {safeFilteredCars.length > 0 ? (
-                      <>
-                        <span className="text-orange-600">{safeFilteredCars.length}</span>{' '}
-                        <span className="font-normal text-gray-700">car{safeFilteredCars.length === 1 ? '' : 's'} found</span>
-                      </>
-                    ) : hasSearchCriteria ? (
-                      'No cars found'
-                    ) : (
-                      'Browse all cars'
-                    )}
-                  </>
-                )}
-              </h2>
-              <p className="text-lg text-gray-500 mt-2">
-                {hasSearchCriteria ? 'Matching your search criteria' : 'Discover your perfect ride'}
-              </p>
+          <div className="mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div>
+                <h2 className="text-3xl font-bold text-white tracking-tight">
+                  {loading ? (
+                    <span className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
+                      Searching...
+                    </span>
+                  ) : (
+                    <>
+                      {safeFilteredCars.length > 0 ? (
+                        <>
+                          <span className="text-orange-500">{safeFilteredCars.length}</span>{' '}
+                          <span className="text-white">vehicles available</span>
+                        </>
+                      ) : hasSearchCriteria ? (
+                        'No vehicles found'
+                      ) : (
+                        'Browse all vehicles'
+                      )}
+                    </>
+                  )}
+                </h2>
+                <p className="text-gray-400 mt-2 flex items-center gap-2">
+                  {hasSearchCriteria ? (
+                    <>
+                      <MapPin className="h-4 w-4 text-gray-500" />
+                      Matching your search criteria
+                    </>
+                  ) : (
+                    'Find the perfect car for your next adventure'
+                  )}
+                </p>
+              </div>
               
-              {activeFiltersCount > 0 && (
-                <div className="flex items-center gap-3 mt-4">
-                  <span className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl border border-gray-200">
-                    <Filter className="h-4 w-4 mr-2" />
-                    {activeFiltersCount} filter{activeFiltersCount > 1 ? 's' : ''} active
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="text-gray-600 hover:text-gray-900 font-medium"
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Clear all
-                  </Button>
+              {/* View Controls */}
+              <div className="flex items-center gap-3">
+                {/* Mobile Filter Toggle */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFiltersMobile(!showFiltersMobile)}
+                  className="lg:hidden flex items-center gap-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span className="font-medium">Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-1 px-2 py-0.5 bg-orange-500/20 text-orange-400 text-xs rounded-full font-bold">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </Button>
+            
+                {/* Sort Options */}
+                <div className="flex items-center gap-2 px-2">
+                  <span className="text-sm text-gray-400 font-medium hidden sm:inline">Sort by:</span>
+                  <SelectField
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    options={[
+                      { value: 'price_low', label: 'Price: Low to High' },
+                      { value: 'price_high', label: 'Price: High to Low' },
+                      { value: 'rating', label: 'Highest Rated' },
+                      { value: 'newest', label: 'Newest First' },
+                    ]}
+                    className="border-none bg-transparent text-sm font-semibold text-white focus:ring-0 cursor-pointer py-1 pr-8 pl-2"
+                    contentProps={{
+                      className: "bg-[#0F172A] border-white/10 text-white"
+                    }}
+                  />
                 </div>
-              )}
+              </div>
             </div>
             
-            {/* View Controls */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Mobile Filter Toggle */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-                className="lg:hidden flex items-center gap-2 border-gray-300"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                <span>Filters</span>
-                {activeFiltersCount > 0 && (
-                  <span className="ml-1 px-2 py-0.5 bg-orange-600 text-white text-xs rounded-full font-bold">
-                    {activeFiltersCount}
+            {/* Active Filters Bar */}
+            {activeFiltersCount > 0 && (
+              <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-white/10">
+                <span className="text-sm font-medium text-gray-400">Active filters:</span>
+                {filters.location && (
+                  <span className="inline-flex items-center px-3 py-1 bg-white/10 border border-white/10 rounded-full text-sm text-white shadow-sm backdrop-blur-sm">
+                    <MapPin className="h-3 w-3 mr-1.5 text-orange-400" />
+                    {filters.location}
+                    <button onClick={() => handleFilterChange({ location: '' })} className="ml-2 hover:text-red-400 text-gray-400">
+                      <X className="h-3 w-3" />
+                    </button>
                   </span>
                 )}
-              </Button>
-          
-          {/* Sort Options */}
-          <div className="flex items-center gap-2">
-                <label className="text-sm text-gray-600 font-semibold hidden sm:inline">Sort:</label>
-            <SelectField
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              options={[
-                { value: 'price_low', label: 'Price: Low to High' },
-                { value: 'price_high', label: 'Price: High to Low' },
-                { value: 'rating', label: 'Highest Rated' },
-                { value: 'newest', label: 'Newest First' },
-              ]}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm"
-            />
-              </div>
-
-              {/* View Toggle */}
-              <div className="hidden sm:flex border border-gray-300 rounded-xl overflow-hidden bg-white shadow-sm">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2.5 transition-all ${
-                    viewMode === 'grid'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  aria-label="Grid view"
+                {/* Add more filter tags here if needed */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 font-medium text-sm ml-auto"
                 >
-                  <Grid3x3 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2.5 border-l border-gray-300 transition-all ${
-                    viewMode === 'list'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                  aria-label="List view"
-                >
-                  <List className="h-4 w-4" />
-                </button>
+                  Clear all
+                </Button>
               </div>
+            )}
           </div>
-        </div>
 
           {/* Filters Mobile Overlay */}
           {showFiltersMobile && (
@@ -313,14 +318,17 @@ function SearchContent() {
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
                 onClick={() => setShowFiltersMobile(false)}
               />
-              <div className="fixed inset-y-0 left-0 w-80 bg-white shadow-2xl z-50 overflow-y-auto lg:hidden">
-                <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gray-50 sticky top-0">
-                  <h3 className="text-xl font-bold text-gray-900">Filters</h3>
+              <div className="fixed inset-y-0 left-0 w-80 bg-[#0F172A] shadow-2xl z-50 overflow-y-auto lg:hidden border-r border-white/10">
+                <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#0F172A] sticky top-0 z-10">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <SlidersHorizontal className="h-5 w-5 text-orange-500" />
+                    Filters
+                  </h3>
                   <button
                     onClick={() => setShowFiltersMobile(false)}
-                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                    className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white"
                   >
-                    <X className="h-5 w-5 text-gray-500" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
                 <div className="p-6">
@@ -335,12 +343,12 @@ function SearchContent() {
 
         <div className="flex flex-col lg:flex-row gap-8">
             {/* Filters Sidebar - Desktop */}
-            <aside className="hidden lg:block lg:w-80 flex-shrink-0">
-              <div className="sticky top-24">
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <SlidersHorizontal className="h-5 w-5 text-gray-900" />
+            <aside className="hidden lg:block lg:w-72 flex-shrink-0">
+              <div className="sticky top-8">
+                <div className="bg-white/5 rounded-2xl border border-white/10 p-5 shadow-sm backdrop-blur-sm">
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <SlidersHorizontal className="h-5 w-5 text-orange-500" />
                       Filters
                     </h3>
                     {activeFiltersCount > 0 && (
@@ -348,9 +356,9 @@ function SearchContent() {
                         variant="ghost"
                         size="sm"
                         onClick={clearFilters}
-                        className="text-sm text-gray-600 hover:text-gray-900"
+                        className="text-xs text-gray-400 hover:text-white h-auto py-1 px-2"
                       >
-                        Clear all
+                        Reset
                       </Button>
                     )}
                   </div>
@@ -366,69 +374,73 @@ function SearchContent() {
             <div className="flex-1 min-w-0">
             {loading ? (
                 <div className="space-y-6">
-              <LoadingSkeleton count={6} />
+                  <LoadingSkeleton count={6} />
                 </div>
               ) : filteredCars.length === 0 ? (
                 <div className="space-y-12">
-                  {/* Empty State */}
-                  <div className="bg-white rounded-3xl border-2 border-gray-100 p-16 text-center">
-                    {hasSearchCriteria ? (
-                      <>
-                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                          <Search className="h-12 w-12 text-gray-400" />
-                        </div>
-                        <h3 className="text-3xl font-bold text-gray-900 mb-4">No cars found</h3>
-                        <p className="text-gray-600 mb-10 max-w-md mx-auto text-lg">
-                          We couldn't find any cars matching your search criteria. Try adjusting your filters or search for a different location.
-                        </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                          <Button
-                            variant="outline"
-                            onClick={clearFilters}
-                            size="lg"
-                            className="border-gray-300 px-8"
-                          >
-                            Clear all filters
-                          </Button>
-                          <Button
-                            onClick={() => router.push('/')}
-                            size="lg"
-                            className="px-8"
-                          >
-                            Start new search
-                          </Button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                          <Car className="h-12 w-12 text-gray-400" />
-                        </div>
-                        <h3 className="text-3xl font-bold text-gray-900 mb-4">Start your search</h3>
-                        <p className="text-gray-600 mb-10 max-w-md mx-auto text-lg">
-                          Enter a location, pickup date, and return date above to find available cars in your area.
-                        </p>
-                      </>
-                    )}
+                  {/* Empty State - Modern */}
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-12 text-center shadow-sm relative overflow-hidden backdrop-blur-sm">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 to-orange-600" />
+                    <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl opacity-50" />
+                    <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl opacity-50" />
+                    
+                    <div className="relative z-10">
+                      {hasSearchCriteria ? (
+                        <>
+                          <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 shadow-sm backdrop-blur-md">
+                            <Search className="h-10 w-10 text-orange-400" />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-3">No vehicles found</h3>
+                          <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                            We couldn't find any cars matching your specific criteria. Try adjusting your filters or search for a different location.
+                          </p>
+                          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Button
+                              variant="outline"
+                              onClick={clearFilters}
+                              className="border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent"
+                            >
+                              Clear all filters
+                            </Button>
+                            <Button
+                              onClick={() => router.push('/')}
+                              className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20"
+                            >
+                              Start new search
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-20 h-20 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 -rotate-3 shadow-sm backdrop-blur-md">
+                            <Car className="h-10 w-10 text-blue-400" />
+                          </div>
+                          <h3 className="text-2xl font-bold text-white mb-3">Start your search</h3>
+                          <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                            Enter a location, pickup date, and return date above to find available cars in your area.
+                          </p>
+                        </>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Features Section - Bolt Style */}
+                  {/* Features Section - Modern Cards */}
                   {!hasSearchCriteria && (
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">Why choose us</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <h3 className="text-xl font-bold text-white mb-6">Why choose AirbCar</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {features.map((feature, index) => {
                           const Icon = feature.icon;
                           return (
                             <div 
                               key={index}
-                              className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 group"
+                              className="bg-white/5 rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-all duration-300 group hover:-translate-y-1 backdrop-blur-sm"
                             >
-                              <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
-                                <Icon className="h-7 w-7 text-orange-600" />
+                              <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500/20 transition-colors">
+                                <Icon className="h-5 w-5 text-orange-400" />
                               </div>
-                              <h4 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h4>
-                              <p className="text-gray-600 text-sm">{feature.description}</p>
+                              <h4 className="font-bold text-white mb-1">{feature.title}</h4>
+                              <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
                             </div>
                           );
                         })}
@@ -442,7 +454,7 @@ function SearchContent() {
                   : 'space-y-4'
                 }>
               <SearchResults
-                filteredCars={safeFilteredCars}
+                filteredCars={visibleCars}
                 onViewDetails={handleViewDetails}
                 onToggleFavorite={handleToggleFavorite}
                 isFavorite={isFavorite}
@@ -454,16 +466,27 @@ function SearchContent() {
           </div>
 
           {/* Results Footer */}
-          {!loading && safeFilteredCars.length > 0 && safeFilteredCars.length >= 12 && (
-            <div className="mt-16 pt-8 border-t border-gray-200 text-center">
-              <p className="text-base text-gray-500">
-                Showing <span className="font-bold text-gray-900">{safeFilteredCars.length}</span> results
-                {safeFilteredCars.length >= 12 && '. Scroll to see more.'}
+          {!loading && safeFilteredCars.length > 0 && (
+            <div className="mt-16 pt-8 border-t border-white/10 text-center">
+              <p className="text-base text-gray-400 mb-6">
+                Showing <span className="font-bold text-white">{Math.min(visibleCount, safeFilteredCars.length)}</span> of <span className="font-bold text-white">{safeFilteredCars.length}</span> results
               </p>
+              
+              {visibleCount < safeFilteredCars.length && (
+                <Button
+                  onClick={handleLoadMore}
+                  className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-2 rounded-xl text-lg font-medium transition-all duration-300 hover:scale-105"
+                >
+                  Load More Vehicles
+                </Button>
+              )}
             </div>
           )}
         </div>
       </main>
+
+      {/* Smooth transition to footer */}
+      <div className="h-24 bg-gradient-to-b from-[#0F172A] to-[#0B0F19]" />
 
       <Footer />
     </div>
@@ -472,15 +495,7 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <LoadingSkeleton count={6} />
-        </main>
-        <Footer />
-      </div>
-    }>
+    <Suspense fallback={<SearchPageSkeleton />}>
       <SearchContent />
     </Suspense>
   );
