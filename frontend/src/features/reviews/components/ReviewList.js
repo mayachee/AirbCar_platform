@@ -310,7 +310,7 @@ export default function ReviewList({
 
       {/* Sorting and Filtering Controls */}
       {stats.totalReviews > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 p-4 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-4 flex-1">
               {/* Sort Dropdown */}
@@ -325,7 +325,7 @@ export default function ReviewList({
                     { value: 'rating_low', label: 'Lowest Rating' },
                     { value: 'helpful', label: 'Most Helpful' },
                   ]}
-                  className="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                  className="appearance-none bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export default function ReviewList({
                   className={`flex items-center space-x-2 px-4 py-2 border rounded-lg text-sm transition-colors ${
                     filterRating
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                      : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}
                 >
                   <Filter className="h-4 w-4" />

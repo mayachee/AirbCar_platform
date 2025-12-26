@@ -11,20 +11,20 @@ export default function AnimatedBreadcrumb({ vehicleName }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <ol className="flex items-center space-x-2 text-sm text-gray-600">
+      <ol className="flex items-center space-x-2 text-sm text-gray-400">
         <li>
-          <Link href="/" className="hover:text-orange-600 transition-colors">
+          <Link href="/" className="hover:text-orange-400 transition-colors">
             Home
           </Link>
         </li>
         <li>/</li>
         <li>
-          <Link href="/search" className="hover:text-orange-600 transition-colors">
+          <Link href="/search" className="hover:text-orange-400 transition-colors">
             Search
           </Link>
         </li>
         <li>/</li>
-        <li className="text-gray-900 font-medium">{vehicleName || 'Vehicle Details'}</li>
+        <li className="text-white font-medium">{vehicleName || 'Vehicle Details'}</li>
       </ol>
     </motion.nav>
   )

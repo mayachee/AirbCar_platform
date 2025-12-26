@@ -41,18 +41,18 @@ export default function Restrictions({ vehicle }) {
   return (
     <div className="space-y-6 mb-8">
       {/* Car Rules & Restrictions */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="">
         <div className="flex items-center mb-5">
-          <div className="p-2 bg-red-50 rounded-lg mr-3">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
+          <div className="p-2 bg-red-500/10 rounded-lg mr-3">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900">Car Rules & Restrictions</h3>
+          <h3 className="text-xl font-bold text-white">Car Rules & Restrictions</h3>
         </div>
         <div className="space-y-3">
           {displayRestrictions.map((restriction, index) => (
-            <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-              <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-700 leading-relaxed">{restriction}</span>
+            <div key={index} className="flex items-start space-x-3 p-3">
+              <XCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-gray-300 leading-relaxed">{restriction}</span>
             </div>
           ))}
         </div>
@@ -60,18 +60,18 @@ export default function Restrictions({ vehicle }) {
 
       {/* Partner Information */}
       {owner && (
-        <div className="bg-gradient-to-br from-orange-50 to-white rounded-xl border border-orange-200 shadow-sm p-6">
+        <div className="bg-gradient-to-br from-orange-500/10 to-transparent rounded-xl border border-orange-500/20 shadow-sm p-6 backdrop-blur-sm">
           <div className="flex items-center mb-5">
-            <div className="p-2 bg-orange-100 rounded-lg mr-3">
-              <Shield className="w-5 h-5 text-orange-600" />
+            <div className="p-2 bg-orange-500/20 rounded-lg mr-3">
+              <Shield className="w-5 h-5 text-orange-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900">Owner Information</h3>
+            <h3 className="text-xl font-bold text-white">Owner Information</h3>
           </div>
 
           <div className="space-y-4">
             {/* Partner Logo and Company Name */}
             {companyName && (
-              <div className="flex items-start space-x-4 pb-4 border-b border-orange-200">
+              <div className="flex items-start space-x-4 pb-4 border-b border-orange-500/20">
                 {/* Logo */}
                 {partnerSlug ? (
                   <Link 
@@ -82,7 +82,7 @@ export default function Restrictions({ vehicle }) {
                       <img 
                         src={owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture} 
                         alt={companyName}
-                        className="w-16 h-16 rounded-xl object-cover border-2 border-orange-200 shadow-sm"
+                        className="w-16 h-16 rounded-xl object-cover border-2 border-orange-500/20 shadow-sm"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -90,7 +90,7 @@ export default function Restrictions({ vehicle }) {
                       />
                     ) : null}
                     <div 
-                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white text-xl font-bold border-2 border-orange-200 shadow-sm"
+                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white text-xl font-bold border-2 border-orange-500/20 shadow-sm"
                       style={{ display: (owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture) ? 'none' : 'flex' }}
                     >
                       {companyName[0]?.toUpperCase() || 'P'}
@@ -124,7 +124,7 @@ export default function Restrictions({ vehicle }) {
                   {partnerSlug ? (
                     <Link 
                       href={`/partner/${partnerSlug}`}
-                      className="text-lg font-bold text-gray-900 hover:text-orange-600 transition-colors block truncate"
+                      className="text-lg font-bold text-orange-500 transition-colors block truncate"
                     >
                       {companyName}
                     </Link>
@@ -209,18 +209,6 @@ export default function Restrictions({ vehicle }) {
               </div>
             )}
 
-            {/* View Partner Profile Link */}
-            {partnerSlug && (
-              <div className="pt-4 border-t border-orange-200">
-                <Link
-                  href={`/partner/${partnerSlug}`}
-                  className="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-semibold text-orange-600 bg-white border border-orange-300 rounded-lg hover:bg-orange-50 hover:border-orange-400 transition-colors"
-                >
-                  <Info className="w-4 h-4 mr-2" />
-                  View Partner Profile
-                </Link>
-              </div>
-            )}
           </div>
         </div>
       )}
