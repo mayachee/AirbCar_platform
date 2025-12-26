@@ -212,7 +212,8 @@ function CarDetailsContent() {
             />
           )}
 
-
+          {/* Smooth transition to footer */}
+          <div className="h-24 bg-gradient-to-b from-[#0F172A]/20 to-[#0B0F19]" />
           <Footer />
         </div>
       </div>
