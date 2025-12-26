@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function CarTypes() {
   const carTypes = [
@@ -71,9 +72,15 @@ export default function CarTypes() {
   const isHeroTile = (index) => index === 0 || index === 5;
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8"
+        >
           <div>
             <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">Car categories</p>
             <h2 className="mt-3 text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
@@ -86,24 +93,31 @@ export default function CarTypes() {
           <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
             Pick a size that fits your trip. Compare capacity and typical daily price.
           </p>
-        </div>
+        </motion.div>
 
         {/* Editorial Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 md:auto-rows-[240px]">
           {carTypes.map((car, index) => {
             const displayName = car.title ?? car.name;
             return (
-              <Link
+              <motion.div
                 key={car.name}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`${getEditorialSpanClass(index)} h-full`}
+              >
+              <Link
                 href={`/search?type=${encodeURIComponent(car.name)}`}
                 aria-label={`Browse ${displayName} cars`}
-                className={`group relative block h-full rounded-2xl border border-gray-200 bg-white overflow-hidden transition-colors hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/20 ${getEditorialSpanClass(index)}`}
+                className={`group relative block h-full rounded-2xl border border-gray-200 bg-white overflow-hidden transition-colors hover:border-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/20`}
               >
                 <div className="relative h-[320px] sm:h-[380px] md:h-full overflow-hidden">
                   <img
                     src={car.image}
                     alt={displayName}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                     sizes="(min-width: 768px) 60vw, 100vw"
                   />
@@ -135,6 +149,7 @@ export default function CarTypes() {
                   </span>
                 </div>
               </Link>
+              </motion.div>
             );
           })}
         </div>
@@ -143,11 +158,17 @@ export default function CarTypes() {
         <div className="mt-14 md:mt-20 border-t border-gray-200 pt-8 md:pt-10">
           <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">All types</p>
           <div className="mt-6">
-            {carTypes.map((car) => {
+            {carTypes.map((car, index) => {
               const displayName = car.title ?? car.name;
               return (
-                <Link
+                <motion.div
                   key={`${car.name}-row`}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.05 }}
+                >
+                <Link
                   href={`/search?type=${encodeURIComponent(car.name)}`}
                   aria-label={`Browse ${displayName} cars`}
                   className="group relative block py-3 md:py-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/20"
@@ -173,6 +194,7 @@ export default function CarTypes() {
                     </div>
                   </div>
                 </Link>
+                </motion.div>
               );
             })}
           </div>
