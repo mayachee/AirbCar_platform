@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -491,7 +492,7 @@ function AuthForm() {
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: "url('/pictures_car_example/bg_search.jpg')",
+              backgroundImage: "url('/sven-d-a4S6KUuLeoM-unsplash.jpg')",
             }}
           />
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
@@ -507,9 +508,11 @@ function AuthForm() {
                 transition={{ duration: 0.5 }}
                 className="mb-10 text-center"
               >
-                <h1 className="text-3xl font-bold text-white">
-                  Airbcar
-                </h1>
+                <Link href="/">
+                  <h1 className="text-3xl font-bold text-white hover:text-orange-500 transition-colors cursor-pointer">
+                    Airbcar
+                  </h1>
+                </Link>
               </motion.div>
 
               <motion.div
@@ -561,20 +564,20 @@ function AuthForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-900">
+    <div className="min-h-screen flex items-center justify-center lg:justify-start relative overflow-hidden bg-slate-900 lg:px-32">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/pictures_car_example/bg_search.jpg')",
+            backgroundImage: "url('/sven-d-a4S6KUuLeoM-unsplash.jpg')",
           }}
         />
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       </div>
 
-      <div className="relative z-10 w-full max-w-md mx-4">
+      <div className="relative z-10 w-full max-w-md mx-4 lg:mx-0">
         <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
           <div className="py-10 px-6 sm:px-10">
           {/* Logo with enhanced styling */}
@@ -584,9 +587,11 @@ function AuthForm() {
             transition={{ duration: 0.5 }}
             className="mb-10"
           >
-            <h1 className="text-3xl font-bold text-white">
-              Airbcar
-            </h1>
+            <Link href="/">
+              <h1 className="text-3xl font-bold text-white hover:text-orange-500 transition-colors cursor-pointer">
+                Airbcar
+              </h1>
+            </Link>
           </motion.div>
 
           {/* Enhanced Tab Navigation */}
@@ -1060,25 +1065,6 @@ function AuthForm() {
                     )}
                   </span>
                 </motion.button>
-
-                <div className="relative py-2 flex items-center gap-4">
-                  <div className="flex-1 border-t border-white/20" />
-                  <span className="text-sm text-white/60 font-medium">Or continue with</span>
-                  <div className="flex-1 border-t border-white/20" />
-                </div>
-
-                <div 
-                  id="google-signin-button-container-signup" 
-                  className="w-full flex justify-center"
-                  style={{ minHeight: '44px' }}
-                >
-                  {!googleReady && (
-                    <div className="w-full flex justify-center items-center py-3.5 px-4 border border-white/20 rounded-xl bg-white/10">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                      <span className="text-sm text-white/80">Loading Google sign-in...</span>
-                    </div>
-                  )}
-                </div>
               </div>
             </form>
           )}
@@ -1098,7 +1084,7 @@ function AuthLoading() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/pictures_car_example/bg_search.jpg')",
+            backgroundImage: "url('/sven-d-a4S6KUuLeoM-unsplash.jpg')",
           }}
         />
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />

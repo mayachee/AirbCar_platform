@@ -18,9 +18,10 @@ import {
 } from 'lucide-react'
 
 const STEPS = [
-  { id: 1, name: 'Dates & Time', icon: Calendar, description: 'Select pickup and return dates' },
+  { id: 1, name: 'Dates', icon: Calendar, description: 'Select pickup and return dates' },
   { id: 2, name: 'Documents', icon: FileText, description: 'Upload driver\'s license' },
-  { id: 3, name: 'Review', icon: CheckCircle2, description: 'Review and confirm booking' },
+  { id: 3, name: 'Payment', icon: CreditCard, description: 'Choose payment method' },
+  { id: 4, name: 'Review', icon: CheckCircle2, description: 'Review and confirm booking' },
 ]
 
 export default function BookingFlow({ 
@@ -239,6 +240,8 @@ export default function BookingFlow({
       if (validateStep2()) {
         setCurrentStep(3)
       }
+    } else if (currentStep === 3) {
+      setCurrentStep(4)
     }
   }
 
@@ -463,8 +466,76 @@ export default function BookingFlow({
                 </div>
               )}
 
-              {/* Step 3: Review */}
+              {/* Step 3: Payment Method */}
               {currentStep === 3 && (
+                <div className="space-y-6">
+                  <div className="text-left mb-6">
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Payment Method
+                    </h3>
+                    <p className="text-sm text-white/60">
+                      Select how you would like to pay
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div 
+                      onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'online' }))}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        formData.paymentMethod === 'online' 
+                          ? 'bg-orange-500/20 border-orange-500' 
+                          : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-full ${
+                          formData.paymentMethod === 'online' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white/60'
+                        }`}>
+                          <CreditCard className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white">Pay Online</h4>
+                          <p className="text-sm text-white/60">Secure payment with credit card</p>
+                        </div>
+                        {formData.paymentMethod === 'online' && (
+                          <div className="ml-auto text-orange-500">
+                            <CheckCircle2 className="w-6 h-6" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div 
+                      onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'cash' }))}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                        formData.paymentMethod === 'cash' 
+                          ? 'bg-orange-500/20 border-orange-500' 
+                          : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-full ${
+                          formData.paymentMethod === 'cash' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white/60'
+                        }`}>
+                          <div className="w-6 h-6 font-bold flex items-center justify-center text-lg">$</div>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white">Pay at Pickup</h4>
+                          <p className="text-sm text-white/60">Pay when you pick up the car</p>
+                        </div>
+                        {formData.paymentMethod === 'cash' && (
+                          <div className="ml-auto text-orange-500">
+                            <CheckCircle2 className="w-6 h-6" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Review */}
+              {currentStep === 4 && (
                 <div className="space-y-6">
                   <div className="text-center mb-6">
                     <h3 className="text-lg font-semibold text-white mb-2">
@@ -525,6 +596,22 @@ export default function BookingFlow({
                       )}
                     </div>
                   )}
+
+                  {/* Payment Method Review */}
+                  <div className={`${glassContentClass} p-4`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <CreditCard className="w-5 h-5 text-white/60" />
+                      <h4 className="font-semibold text-white">Payment Method</h4>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white">
+                        {formData.paymentMethod === 'online' ? 'Pay Online (Credit Card)' : 'Pay at Pickup (Cash)'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-medium border border-orange-500/20">
+                        Selected
+                      </span>
+                    </div>
+                  </div>
 
                   {/* Driver's License Images */}
                   <div className={`${glassContentClass} p-4`}>

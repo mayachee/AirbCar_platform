@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Search, SlidersHorizontal, Grid3x3, List, X, Filter, Car, MapPin, Calendar, TrendingUp, Shield, Clock, Star, Zap } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -16,6 +17,13 @@ function SearchContent() {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [visibleCount, setVisibleCount] = useState(6);
+
+  // Scroll animations for hero text
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
+  const heroScale = useTransform(scrollY, [0, 300], [1, 1.1]);
+  const heroFilter = useTransform(scrollY, [0, 300], ["blur(0px)", "blur(8px)"]);
+  const heroY = useTransform(scrollY, [0, 300], [0, -50]);
   
   // Calculate default dates
   const today = new Date();
@@ -187,11 +195,27 @@ function SearchContent() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
           <div className="max-w-5xl mx-auto relative z-20">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center -z-10 select-none pointer-events-none">
-              <h1 className="w-full h-full text-4xl sm:text-6xl md:text-9xl font-black text-white/40 tracking-tighter uppercase">
-                Find your perfect Car
-              </h1>
-            </div>
+            <motion.div 
+              style={{ 
+                opacity: heroOpacity,
+                scale: heroScale,
+                filter: heroFilter,
+                y: heroY
+              }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center -z-10 select-none pointer-events-none"
+            >
+              <div className="relative">
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-orange-500/20 blur-[100px] rounded-full mix-blend-screen animate-pulse" />
+                 <h1 className="relative flex flex-col items-center justify-center">
+                    <span className="text-4xl sm:text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tighter uppercase drop-shadow-sm">
+                      Find your
+                    </span>
+                    <span className="text-5xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 via-orange-500 to-orange-600 tracking-tighter uppercase drop-shadow-lg mt-[-10px] sm:mt-[-20px]">
+                      Perfect Car
+                    </span>
+                 </h1>
+              </div>
+            </motion.div>
 
             {/* Search Form Container */}
             <SearchForm 
