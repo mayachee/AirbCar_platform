@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { apiClient } from '@/lib/api/client'
+import { motion } from 'framer-motion'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -121,46 +122,57 @@ export default function ForgotPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex">
-        {/* Left side - Success message */}
-        <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white">
-          <div className="mx-auto w-full max-w-sm lg:w-96">
-            {/* Logo */}
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-orange-500">Airbcar</h1>
-            </div>
-
-            <div className="text-center">
-              <div className="mx-auto h-12 w-12 text-green-600 mb-6">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Check your email
-              </h2>
-              <p className="text-sm text-gray-600 mb-6">
-                If an account with that email exists, we've sent you a password reset link.
-              </p>
-              <p className="text-xs text-gray-500 mb-4">
-                Please check your inbox, spam folder, and promotions tab. The email may take a few minutes to arrive.
-              </p>
-              <Link
-                href="/auth/signin"
-                className="inline-flex justify-center py-3 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-              >
-                Back to sign in
-              </Link>
-            </div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center lg:justify-start relative overflow-hidden bg-slate-900 lg:px-32">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: "url('/sven-d-a4S6KUuLeoM-unsplash.jpg')",
+            }}
+          />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         </div>
 
-        {/* Right side - Image/Background */}
-        <div className="hidden lg:block relative w-0 flex-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-            <div className="text-center text-white p-8">
-              <h3 className="text-3xl font-bold mb-4">Email Sent!</h3>
-              <p className="text-lg opacity-90">Check your inbox for the reset link</p>
+        <div className="relative z-10 w-full max-w-md mx-4 lg:mx-0">
+          <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+            <div className="py-10 px-6 sm:px-10">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-10"
+              >
+                <Link href="/">
+                  <h1 className="text-3xl font-bold text-white hover:text-orange-500 transition-colors cursor-pointer">
+                    Airbcar
+                  </h1>
+                </Link>
+              </motion.div>
+
+              <div className="text-center">
+                <div className="mx-auto h-12 w-12 text-green-400 mb-6">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  Check your email
+                </h2>
+                <p className="text-sm text-white/80 mb-6">
+                  If an account with that email exists, we've sent you a password reset link.
+                </p>
+                <p className="text-xs text-white/60 mb-8">
+                  Please check your inbox, spam folder, and promotions tab. The email may take a few minutes to arrive.
+                </p>
+                <Link
+                  href="/auth/signin"
+                  className="inline-flex justify-center w-full py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
+                >
+                  Back to sign in
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -169,82 +181,132 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Form */}
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white">
-        <div className="mx-auto w-full max-w-sm lg:w-96">
-          {/* Logo */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-orange-500">Airbcar</h1>
-          </div>
-
-          {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Forgot your password?</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Enter your registered email address and we'll send you a link to reset your password.
-            </p>
-            <p className="mt-1 text-xs text-gray-500">
-              You can use any email address that's registered in your account.
-            </p>
-          </div>
-
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm whitespace-pre-line">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
-                <input
-                  {...register('email')}
-                  type="email"
-                  autoComplete="email"
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm text-gray-900 placeholder-gray-500"
-                  placeholder="Enter your email"
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isLoading ? 'Sending...' : 'Send reset link'}
-              </button>
-
-              <Link
-                href="/auth/signin"
-                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-              >
-                Back to sign in
-              </Link>
-            </div>
-          </form>
-        </div>
+    <div className="min-h-screen flex items-center justify-center lg:justify-start relative overflow-hidden bg-slate-900 lg:px-32">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('/sven-d-a4S6KUuLeoM-unsplash.jpg')",
+          }}
+        />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       </div>
 
-      {/* Right side - Image/Background */}
-      <div className="hidden lg:block relative w-0 flex-1">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-          <div className="text-center text-white p-8">
-            <h3 className="text-3xl font-bold mb-4">Reset Your Password</h3>
-            <p className="text-lg opacity-90">Don&apos;t worry, we&apos;ll help you get back into your account</p>
+      <div className="relative z-10 w-full max-w-md mx-4 lg:mx-0">
+        <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+          <div className="py-10 px-6 sm:px-10">
+            {/* Logo */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="mb-10"
+            >
+              <Link href="/">
+                <h1 className="text-3xl font-bold text-white hover:text-orange-500 transition-colors cursor-pointer">
+                  Airbcar
+                </h1>
+              </Link>
+            </motion.div>
+
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="mb-8"
+            >
+              <h2 className="text-3xl font-bold text-white">
+                Forgot your password?
+              </h2>
+              <p className="mt-2 text-sm text-white/80">
+                Enter your registered email address and we'll send you a link to reset your password.
+              </p>
+            </motion.div>
+
+            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm whitespace-pre-line"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-white/90 mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
+                  </div>
+                  <input
+                    {...register('email')}
+                    type="email"
+                    autoComplete="email"
+                    className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <motion.button
+                  type="submit"
+                  disabled={isLoading}
+                  whileHover={{ scale: isLoading ? 1 : 1.02, y: -2 }}
+                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                  className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all overflow-hidden group"
+                >
+                  {/* Shine effect */}
+                  {!isLoading && (
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0"
+                      animate={{
+                        x: ['-200%', '200%'],
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 2,
+                        ease: 'linear',
+                      }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-2">
+                    {isLoading ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                        />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send reset link'
+                    )}
+                  </span>
+                </motion.button>
+
+                <Link
+                  href="/auth/signin"
+                  className="w-full flex justify-center py-3.5 px-4 border border-white/20 rounded-xl shadow-lg text-sm font-semibold text-white bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
+                >
+                  Back to sign in
+                </Link>
+              </div>
+            </form>
           </div>
         </div>
       </div>
