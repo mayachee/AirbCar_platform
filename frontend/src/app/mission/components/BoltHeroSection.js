@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Sparkles, Info } from 'lucide-react';
+import { ArrowRight, Sparkles, Info, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui';
 import MissionDialog from './MissionDialog';
 
@@ -42,55 +42,26 @@ export default function BoltHeroSection() {
   const y = useTransform(scrollYProgress, [0, 1], [0, 100]);
 
   return (
-    <section ref={ref} className="relative bg-gradient-to-br from-white via-gray-50/50 to-white min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Enhanced Animated Background Elements - 21st.dev style */}
+    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+      {/* Immersive Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Gradient orbs with enhanced animation */}
         <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2],
-            x: [0, 50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-orange-400/40 via-orange-300/30 to-transparent rounded-full blur-3xl"
+          animate={{ scale: [1, 1.3, 1], opacity: [0.25, 0.5, 0.25], x: [0, 60, 0], y: [0, -40, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-10 left-10 w-[500px] h-[500px] bg-gradient-to-br from-orange-400/30 via-orange-500/20 to-transparent rounded-full blur-3xl"
         />
         <motion.div
-          animate={{
-            scale: [1, 1.4, 1],
-            opacity: [0.15, 0.35, 0.15],
-            x: [0, -40, 0],
-            y: [0, 40, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: 2,
-          }}
-          className="absolute bottom-20 right-10 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/30 via-purple-400/20 to-transparent rounded-full blur-3xl"
+          animate={{ scale: [1, 1.4, 1], opacity: [0.18, 0.38, 0.18], x: [0, -50, 0], y: [0, 50, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          className="absolute bottom-10 right-10 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/30 via-purple-400/20 to-transparent rounded-full blur-3xl"
         />
         <motion.div
-          animate={{
-            rotate: 360,
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border-2 border-orange-200/20 rounded-full"
+          animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border-2 border-orange-200/20 rounded-full"
         />
-        {/* Additional subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-orange-50/20 to-transparent" />
       </div>
-      
+
       <motion.div
         style={{ opacity, y }}
         variants={containerVariants}
@@ -99,102 +70,92 @@ export default function BoltHeroSection() {
         className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10"
       >
         <div className="max-w-5xl mx-auto text-center">
-          {/* Tagline with enhanced sparkle effect */}
+          {/* Comfort Tagline */}
           <motion.div
             variants={itemVariants}
             className="flex items-center justify-center gap-3 mb-6"
           >
-            <p className="text-gray-600 text-lg sm:text-xl font-medium tracking-wide">
-              Let's make cities for people
+            <p className="text-orange-200 text-xl sm:text-2xl font-semibold tracking-wide drop-shadow-lg">
+              Welcome to the future of comfort and mobility
             </p>
           </motion.div>
 
-          {/* Main Headline with enhanced gradient styling */}
+          {/* Main Headline - Bold, Modern, Emotional */}
           <motion.h1
             variants={itemVariants}
-            className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold mb-8 leading-[1.1] tracking-tight"
+            className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-extrabold mb-8 leading-[1.05] tracking-tighter bg-gradient-to-br from-orange-400 via-orange-200 to-white text-transparent bg-clip-text drop-shadow-[0_4px_32px_rgba(249,115,22,0.25)]"
           >
-            <motion.span
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="inline-block relative"
-            >
-              <span className="relative z-10 text-orange-600 px-6 py-3 rounded-2xl mb-3 inline-block">
-                Ride out
-              </span>
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-orange-400/20 via-orange-300/30 to-orange-400/20 rounded-2xl blur-xl"
-                animate={{
-                  opacity: [0.5, 0.8, 0.5],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
-            </motion.span>
-            {' '}
-            <span className="block sm:inline bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-              or stay in
-            </span>
+            <span className="block">Feel at home,</span>
+            <span className="block text-white">wherever you go.</span>
           </motion.h1>
 
-          {/* Subheadline with enhanced styling */}
+          {/* Subheadline - Reassurance and Vision */}
           <motion.p
             variants={itemVariants}
-            className="text-xl sm:text-2xl lg:text-3xl text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed font-light"
+            className="text-2xl sm:text-3xl lg:text-4xl text-orange-500 mb-12 max-w-3xl mx-auto leading-relaxed font-light drop-shadow"
           >
-            Get picked up anywhere with Airbcar. Have anything delivered with Airbcar.
+            Airbcar is not just a ride, it's your comfort zone, your delivery partner, and your community. Experience the startup that's changing how the world moves, with heart.
           </motion.p>
 
-          {/* CTA Buttons with enhanced glass-morphism effects */}
+          {/* CTA Buttons - Glassmorphism, Big, Inviting */}
           <motion.div
             variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap"
+            className="flex flex-col sm:flex-row gap-6 justify-center items-center flex-wrap"
           >
             <motion.div 
-              whileHover={{ scale: 1.05, y: -2 }} 
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.08, y: -2 }} 
+              whileTap={{ scale: 0.97 }}
             >
               <Button
-                size="lg"
+                size="xl"
                 onClick={() => router.push('/search')}
-                className="relative bg-orange-600 text-white px-8 sm:px-10 py-5 text-base sm:text-lg font-semibold rounded-2xl shadow-2xl hover:shadow-orange-500/50 transition-all flex items-center gap-2 group w-full sm:w-auto overflow-hidden"
+                className="relative bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600 text-white px-12 sm:px-16 py-6 text-xl sm:text-2xl font-bold rounded-3xl shadow-2xl hover:shadow-orange-500/50 transition-all flex items-center gap-3 group w-full sm:w-auto overflow-hidden backdrop-blur-xl"
               >
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-                  animate={{
-                    x: ['-200%', '200%'],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 1,
-                    ease: 'linear',
-                  }}
+                  animate={{ x: ['-200%', '200%'] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, ease: 'linear' }}
                 />
-                <span className="relative z-10">Get Airbcar</span>
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform relative z-10" />
+                <span className="relative z-10">Get Started</span>
+                <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform relative z-10" />
               </Button>
             </motion.div>
             <motion.div 
-              whileHover={{ scale: 1.05, y: -2 }} 
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.08, y: -2 }} 
+              whileTap={{ scale: 0.97 }}
             >
               <MissionDialog>
                 <Button
-                  size="lg"
+                  size="xl"
                   variant="ghost"
-                  className="relative border-2 border-gray-200 hover:border-orange-300 text-gray-700 hover:text-orange-600 hover:bg-orange-50/80 backdrop-blur-sm px-8 sm:px-10 py-5 text-base sm:text-lg font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl flex items-center gap-2 group w-full sm:w-auto bg-white/50"
+                  className="relative border-2 border-orange-200 hover:border-orange-400 text-orange-200 hover:text-orange-500 hover:bg-orange-50/80 backdrop-blur-xl px-12 sm:px-16 py-6 text-xl sm:text-2xl font-bold rounded-3xl transition-all shadow-lg hover:shadow-xl flex items-center gap-3 group w-full sm:w-auto bg-white/10"
                 >
-                  <Info className="h-5 w-5 group-hover:rotate-12 transition-transform" />
-                  Our Mission
+                  <Info className="h-6 w-6 group-hover:rotate-12 transition-transform" />
+                  Learn More
                 </Button>
               </MissionDialog>
             </motion.div>
           </motion.div>
 
         </div>
+      </motion.div>
+
+      {/* Scroll Indicator - Modernized */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 1 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20"
+      >
+        <motion.div
+          animate={{ y: [0, 16] }}
+          transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-orange-300 text-xs font-semibold tracking-widest uppercase">Scroll</span>
+            <ChevronDown className="w-10 h-10 text-orange-300" />
+          </div>
+        </motion.div>
       </motion.div>
     </section>
   );

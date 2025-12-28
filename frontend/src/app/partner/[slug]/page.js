@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Star, MapPin, TrendingUp, Sparkles } from 'lucide-react'
+import { Star, MapPin, TrendingUp, Sparkles, Calendar, Phone, Mail, Car, Award } from 'lucide-react'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import BackButton from './BackButton'
+import AnimatedBreadcrumb from './components/AnimatedBreadcrumb'
 import OwnerSpotlight from './components/OwnerSpotlight'
 import FleetSection from './components/FleetSection'
 import { fetchPartnerProfile } from './api'
@@ -83,12 +84,14 @@ export default function PartnerPublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="min-h-screen bg-[#0F172A]">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
-            <p className="text-gray-600">Loading partner profile...</p>
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="text-center space-y-4">
+            <div className="relative inline-flex">
+              <div className="w-16 h-16 border-4 border-orange-500/30 rounded-full animate-spin border-t-orange-500"></div>
+            </div>
+            <p className="text-gray-400 font-medium animate-pulse">Loading partner profile...</p>
           </div>
         </div>
         <Footer />
@@ -98,13 +101,18 @@ export default function PartnerPublicProfilePage() {
 
   if (error || !partner) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="min-h-screen bg-[#0F172A]">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Partner Not Found</h2>
-            <p className="text-gray-600 mb-4">{error || 'The partner you are looking for does not exist.'}</p>
-            <BackButton />
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="text-center max-w-md mx-auto px-4">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-8">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">Partner Not Found</h2>
+              <p className="text-gray-400 mb-6">{error || 'The partner you are looking for does not exist.'}</p>
+              <BackButton />
+            </div>
           </div>
         </div>
         <Footer />
@@ -113,98 +121,176 @@ export default function PartnerPublicProfilePage() {
   }
 
   const { minPrice, maxRating, locationCount } = computeFleetInsights(listings)
+  
+  // Extract partner data for display
+  const partnerData = partner?.data || partner || {}
+  const companyName = partnerData?.business_name || partnerData?.company_name || partnerData?.companyName || 'Partner'
+  const description = partnerData?.description || partnerData?.bio
+  const location = partnerData?.location || partnerData?.city || partnerData?.user?.city
+  const phone = partnerData?.phone || partnerData?.phone_number || partnerData?.user?.phone_number
+  const email = partnerData?.email || partnerData?.user?.email
+  const totalBookings = partnerData?.total_bookings || 0
+  const totalEarnings = partnerData?.total_earnings || 0
+  const reviewCount = partnerData?.review_count || 0
+  const rating = partnerData?.rating || 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen bg-[#0F172A] relative overflow-hidden">
+      {/* Abstract Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+      </div>
+
       <Header />
       
-      {/* Hero Background with Pattern */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-blue-500/5"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,146,60,0.1),transparent_50%)]"></div>
-        
-        <main className="relative mx-auto w-full max-w-7xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+      <AnimatedBreadcrumb partnerName={companyName} />
+
+      <main className="relative mx-auto w-full max-w-7xl px-4 pb-24 pt-8 sm:px-6 lg:px-8 z-10">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-8"
+            className="space-y-6"
           >
             {/* Back Button */}
             <motion.div variants={itemVariants}>
               <BackButton />
             </motion.div>
 
-            {/* Owner Spotlight */}
-            <motion.div variants={itemVariants}>
-              <OwnerSpotlight partner={partner} />
-            </motion.div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Owner Spotlight (Header Card) */}
+              <div className="lg:col-span-2">
+                <motion.div variants={itemVariants}>
+                  <OwnerSpotlight partner={partner} />
+                </motion.div>
+              </div>
 
-            {/* Stats Cards */}
-            {listings.length > 0 && (
-              <motion.div 
-                variants={itemVariants}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4"
-              >
-                {minPrice && (
-                  <motion.div
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <TrendingUp className="h-6 w-6 text-green-600" />
+              {/* Right Column - Sidebar */}
+              <div className="lg:col-span-1 lg:row-span-2 space-y-6 h-fit">
+                {/* Analytics/Stats Card */}
+                <motion.div 
+                  variants={itemVariants}
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
+                >
+                  <h2 className="text-xl font-bold text-white mb-4">Analytics</h2>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-500/10 rounded-lg">
+                          <Car className="h-5 w-5 text-orange-500" />
+                        </div>
+                        <span className="text-gray-300 font-medium">Total Bookings</span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 font-medium">Starting from</p>
-                        <p className="text-2xl font-bold text-gray-900">{minPrice} MAD/day</p>
-                      </div>
+                      <span className="text-white font-bold">{totalBookings}</span>
                     </div>
-                  </motion.div>
-                )}
-                {maxRating > 0 && (
-                  <motion.div
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-yellow-100 rounded-lg">
-                        <Star className="h-6 w-6 text-yellow-600 fill-yellow-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 font-medium">Average Rating</p>
-                        <p className="text-2xl font-bold text-gray-900">{maxRating.toFixed(1)}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-                {locationCount > 0 && (
-                  <motion.div
-                    whileHover={{ scale: 1.02, y: -4 }}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 p-6 hover:shadow-lg transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <MapPin className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 font-medium">Locations</p>
-                        <p className="text-2xl font-bold text-gray-900">{locationCount}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
 
-            {/* Fleet Section */}
-            <motion.div variants={itemVariants}>
-              <FleetSection listings={listings} />
-            </motion.div>
+                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-yellow-500/10 rounded-lg">
+                          <Star className="h-5 w-5 text-yellow-500" />
+                        </div>
+                        <span className="text-gray-300 font-medium">Rating</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-white font-bold block">{rating.toFixed(1)}</span>
+                        <span className="text-xs text-gray-500">{reviewCount} reviews</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Contact Info Card */}
+                <motion.div 
+                  variants={itemVariants}
+                  className="hidden sm:block bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
+                >
+                  <h2 className="text-xl font-bold text-white mb-4">Contact Info</h2>
+                  <div className="space-y-4">
+                    {location && (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-gray-400 font-medium">Location</p>
+                          <p className="text-white">{location}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {phone && (
+                      <div className="flex items-start gap-3">
+                        <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-gray-400 font-medium">Phone</p>
+                          <a href={`tel:${phone}`} className="text-orange-400 hover:text-orange-300 transition-colors">
+                            {phone}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {email && (
+                      <div className="flex items-start gap-3">
+                        <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-gray-400 font-medium">Email</p>
+                          <a href={`mailto:${email}`} className="text-orange-400 hover:text-orange-300 transition-colors break-all">
+                            {email}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {!location && !phone && !email && (
+                      <p className="text-gray-500 italic text-sm">
+                        No contact information available.
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Fleet Insights Card */}
+                {listings.length > 0 && (
+                  <motion.div 
+                    variants={itemVariants}
+                    className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
+                  >
+                    <h2 className="text-xl font-bold text-white mb-4">Fleet Insights</h2>
+                    <div className="space-y-4">
+                      {minPrice && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Starting Price</span>
+                          <span className="text-white font-bold">{minPrice} MAD/day</span>
+                        </div>
+                      )}
+                      {locationCount > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Locations</span>
+                          <span className="text-white font-bold">{locationCount}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Total Vehicles</span>
+                        <span className="text-white font-bold">{listings.length}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Fleet Section */}
+              <div className="lg:col-span-2">
+                <motion.div variants={itemVariants}>
+                  <FleetSection listings={listings} />
+                </motion.div>
+              </div>
+            </div>
           </motion.div>
         </main>
-      </div>
       
+          {/* Smooth transition to footer */}
+          <div className="h-24 bg-gradient-to-b from-[#0F172A]/20 to-[#0B0F19]" />
       <Footer />
     </div>
   )

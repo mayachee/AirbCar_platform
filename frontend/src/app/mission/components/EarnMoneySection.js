@@ -50,7 +50,7 @@ export default function EarnMoneySection() {
   ];
 
   return (
-    <section ref={ref} className="relative py-24 bg-gradient-to-b from-white via-gray-50/20 to-white overflow-hidden">
+    <section ref={ref} className="relative py-24 bg-transparent overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -93,10 +93,10 @@ export default function EarnMoneySection() {
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             className="mb-16"
           >
-            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-6 leading-tight">
+            <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
               Earn money with Airbcar
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl leading-relaxed font-light">
+            <p className="text-xl text-gray-300 max-w-3xl leading-relaxed font-light">
               Join over 4.5 million partners worldwide that earn with Airbcar. For drivers, couriers, merchants, and fleet owners looking for new ways to boost revenue.
             </p>
           </motion.div>
@@ -191,7 +191,7 @@ export default function EarnMoneySection() {
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
                         transition={{ delay: index * 0.1 + 0.4 }}
-                        className="text-sm font-semibold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent uppercase tracking-wide"
+                        className="text-sm font-semibold text-orange-500 uppercase tracking-wide"
                       >
                         {option.smallHeading}
                       </motion.p>
@@ -202,7 +202,7 @@ export default function EarnMoneySection() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: index * 0.1 + 0.5 }}
-                        className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent leading-tight"
+                        className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight"
                       >
                         {option.title}
                       </motion.h3>
@@ -213,7 +213,7 @@ export default function EarnMoneySection() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: index * 0.1 + 0.6 }}
-                        className="text-lg text-gray-600 leading-relaxed"
+                        className="text-lg text-gray-300 leading-relaxed"
                       >
                         {option.description}
                       </motion.p>

@@ -364,6 +364,28 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
+class SimpleListingSerializer(serializers.ModelSerializer):
+    """Simplified listing serializer for embedding in partner profile."""
+    brand = serializers.CharField(source='make', read_only=True)
+    model_name = serializers.CharField(source='model', read_only=True)
+    dailyRate = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
+    price = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Listing
+        fields = [
+            'id', 'make', 'brand', 'model', 'model_name', 'year', 
+            'price_per_day', 'dailyRate', 'price', 'location', 
+            'rating', 'review_count', 'image', 'images', 'is_available'
+        ]
+        
+    def get_image(self, obj):
+        if obj.images and len(obj.images) > 0:
+            return obj.images[0]
+        return None
+
+
 class PartnerSerializer(serializers.ModelSerializer):
     """Partner serializer."""
     user = UserSerializer(read_only=True)
@@ -497,6 +519,21 @@ class PartnerSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
+
+
+class PartnerDetailSerializer(PartnerSerializer):
+    """Partner serializer with listings."""
+    listings = SimpleListingSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Partner
+        fields = [
+            'id', 'user', 'business_name', 'business_type', 'business_license',
+            'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
+            'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
+            'address', 'city', 'state', 'listings'
+        ]
+        read_only_fields = ['id', 'created_at', 'logo_url']
 
 
 class ListingSerializer(serializers.ModelSerializer):
