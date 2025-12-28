@@ -60,7 +60,7 @@ export default function MissionPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F172A] relative overflow-hidden">
+    <div className="min-h-screen bg-[#ffff] relative overflow-hidden">
       {/* Abstract Background Pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Top Left - Primary Orange Glow */}
@@ -123,61 +123,6 @@ export default function MissionPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           
           <div className="flex flex-col lg:flex-row gap-12">
-            {/* Sidebar Navigation - Sticky */}
-            <aside className="hidden lg:block lg:w-72 flex-shrink-0">
-              <div className="sticky top-24">
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 shadow-lg">
-                  <h3 className="text-lg font-bold text-white mb-6 px-2">
-                    Contents
-                  </h3>
-                  <nav className="space-y-2">
-                    {sidebarItems.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeSection === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => scrollToSection(item.id)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                            isActive 
-                              ? 'bg-orange-500/20 text-orange-400 shadow-sm border border-orange-500/20' 
-                              : 'text-gray-400 hover:bg-white/10 hover:text-white'
-                          }`}
-                        >
-                          <Icon className={`h-4 w-4 ${isActive ? 'text-orange-400' : 'text-gray-400'}`} />
-                          {item.label}
-                          {isActive && (
-                            <ChevronRight className="h-4 w-4 ml-auto text-orange-400" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </nav>
-
-                  {/* Quick Stats or Info */}
-                  <div className="mt-8 pt-8 border-t border-white/10 px-2">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-green-500/20 rounded-lg">
-                        <Leaf className="h-5 w-5 text-green-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400 font-medium">Carbon Offset</p>
-                        <p className="text-sm font-bold text-white">100% Neutral</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-500/20 rounded-lg">
-                        <Users className="h-5 w-5 text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400 font-medium">Community</p>
-                        <p className="text-sm font-bold text-white">5M+ Users</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </aside>
 
             {/* Main Content Area */}
             <div className="flex-1 min-w-0 space-y-24 pb-24">

@@ -75,7 +75,6 @@ export default function BoltHeroSection() {
             variants={itemVariants}
             className="flex items-center justify-center gap-3 mb-6"
           >
-            <Sparkles className="h-7 w-7 text-orange-400 animate-pulse" />
             <p className="text-orange-200 text-xl sm:text-2xl font-semibold tracking-wide drop-shadow-lg">
               Welcome to the future of comfort and mobility
             </p>
