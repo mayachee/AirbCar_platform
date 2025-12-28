@@ -15,7 +15,7 @@ import traceback
 from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
-    ReviewSerializer, UserSerializer, PartnerSerializer,
+    ReviewSerializer, UserSerializer, PartnerSerializer, PartnerDetailSerializer,
 )
 
 
@@ -152,14 +152,14 @@ class PartnerMeView(APIView):
         """Get current user's partner profile."""
         try:
             try:
-                partner = Partner.objects.get(user=request.user)
+                partner = Partner.objects.prefetch_related('listings').get(user=request.user)
             except Partner.DoesNotExist:
                 return Response({
                     'error': 'Partner profile not found',
                     'message': 'Please complete your partner profile first'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            serializer = PartnerSerializer(partner, context={'request': request})
+            serializer = PartnerDetailSerializer(partner, context={'request': request})
             return Response({
                 'data': serializer.data
             }, status=status.HTTP_200_OK)
@@ -277,8 +277,11 @@ class PartnerDetailView(APIView):
     def get(self, request, pk):
         """Get partner detail by ID."""
         try:
-            partner = Partner.objects.select_related('user').get(pk=pk)
-            serializer = PartnerSerializer(partner, context={'request': request})
+            partner = Partner.objects.select_related('user').prefetch_related('listings').get(pk=pk)
+            serializer = PartnerDetailSerializer(partner, context={'request': request})
+            if settings.DEBUG:
+                print(f"PartnerDetailView: Partner {partner.id} has {partner.listings.count()} listings")
+                # print(f"PartnerDetailView: Serializer data keys: {serializer.data.keys()}")
             return Response({
                 'data': serializer.data
             }, status=status.HTTP_200_OK)

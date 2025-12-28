@@ -1,9 +1,15 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  MapPin, Globe, Shield, Users, Leaf, Heart, 
+  ArrowRight, CheckCircle2, ChevronRight 
+} from 'lucide-react';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { Button } from '@/components/ui';
 import {
-  MissionLayout,
   BoltHeroSection,
   EarnMoneySection,
   BookRideSection,
@@ -11,228 +17,203 @@ import {
   AboutUsSection,
   ChallengeSection,
   ImpactSection,
-  CreativeSeparator,
-  SectionWrapper,
-  ScrollProgress,
 } from './components';
 
 export default function MissionPage() {
-  const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"]
-  });
+  const [activeSection, setActiveSection] = useState('mission');
 
-  // Background gradient animation based on scroll
-  const backgroundY = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
-  const backgroundOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.1, 0.05, 0]);
+  // Handle scroll spy for active section
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['mission', 'earn', 'ride', 'impact', 'about', 'download'];
+      const scrollPosition = window.scrollY + 200;
+
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element && element.offsetTop <= scrollPosition && (element.offsetTop + element.offsetHeight) > scrollPosition) {
+          setActiveSection(section);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      window.scrollTo({
+        top: element.offsetTop - 100,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const sidebarItems = [
+    { id: 'mission', label: 'Our Mission', icon: Globe },
+    { id: 'earn', label: 'Earn with AirbCar', icon: Users },
+    { id: 'ride', label: 'Book a Ride', icon: MapPin },
+    { id: 'impact', label: 'Social Impact', icon: Leaf },
+    { id: 'about', label: 'About Us', icon: Shield },
+    { id: 'download', label: 'Get the App', icon: ArrowRight },
+  ];
 
   return (
-    <MissionLayout>
-      <ScrollProgress />
-      
-      {/* Enhanced animated background gradients - 21st.dev style */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Primary gradient orb */}
-        <motion.div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px]"
-          style={{
-            background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 107, 53, 0.15), transparent)',
-            y: backgroundY,
-            opacity: backgroundOpacity,
+    <div className="min-h-screen bg-[#0F172A] relative overflow-hidden">
+      {/* Abstract Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Top Left - Primary Orange Glow */}
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.2, 0.3, 0.2],
           }}
-        />
-        {/* Secondary gradient orbs for depth */}
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-[800px] h-[600px]"
-          style={{
-            background: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(255, 107, 53, 0.08), transparent)',
-            y: useTransform(scrollYProgress, [0, 1], ['0%', '50%']),
-            opacity: useTransform(scrollYProgress, [0, 0.5, 1], [0.08, 0.05, 0]),
+          transition={{ 
+            duration: 8, 
+            repeat: Infinity,
+            ease: "easeInOut" 
           }}
+          className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-orange-500/20 via-orange-400/10 to-transparent blur-[100px]" 
         />
-        <motion.div
-          className="absolute top-1/2 right-1/4 w-[600px] h-[500px]"
-          style={{
-            background: 'radial-gradient(ellipse 50% 35% at 50% 50%, rgba(59, 130, 246, 0.06), transparent)',
-            y: useTransform(scrollYProgress, [0, 1], ['0%', '-30%']),
-            opacity: useTransform(scrollYProgress, [0, 0.5, 1], [0.06, 0.03, 0]),
-          }}
-        />
-      </div>
-
-      <div ref={containerRef} className="relative z-10">
-        {/* Hero Section - Full Impact */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-        >
-          <BoltHeroSection />
-        </motion.div>
-
-                {/* Image with Scale Animation */}
-                <SectionWrapper delay={0.2}>
-          <motion.div
-            className="py-12"
-            initial={{ scale: 0.9, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ 
-              duration: 1, 
-              ease: [0.22, 1, 0.36, 1],
-              type: "spring",
-              stiffness: 100
-            }}
-          >
-            <img 
-              src="/Figure1.jpg" 
-              alt="Book a Ride"
-              className="w-full h-full"
-            />
-          </motion.div>
-        </SectionWrapper>
-
         
-        {/* The Challenge Section */}
-        <ChallengeSection />
+        {/* Top Right - Secondary Cool Glow for Contrast */}
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.15, 0.1],
+          }}
+          transition={{ 
+            duration: 12, 
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+          className="absolute top-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-b from-blue-600/10 to-purple-600/10 blur-[120px]" 
+        />
 
-        {/* Creative Wave Separator */}
-        <CreativeSeparator variant="wave" index={0} />
+        {/* Bottom Center - Rising Orange Mist */}
+        <motion.div 
+          animate={{ 
+            y: [0, -50, 0],
+            opacity: [0.1, 0.2, 0.1],
+          }}
+          transition={{ 
+            duration: 15, 
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1
+          }}
+          className="absolute bottom-0 left-1/4 w-[50%] h-[40%] rounded-full bg-gradient-to-t from-orange-600/10 to-transparent blur-[100px]" 
+        />
 
-        {/* Diagonal Separator */}
-        <CreativeSeparator variant="diagonal" index={1} />
-
-        {/* Earn Money Section */}
-        <SectionWrapper delay={0.15} className="pt-8">
-          <EarnMoneySection />
-        </SectionWrapper>
-
-        {/* Image with Parallax */}
-        {/* <SectionWrapper delay={0.25}>
-          <motion.div
-            className="py-12 relative"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-          >
-            <img 
-              src="/Index_DT_Media_08_2b9a617d79.webp" 
-              alt="Sharing Best Practices"
-              parallaxSpeed={0.4}
-              delay={0.2}
-            />
-          </motion.div>
-        </SectionWrapper> */}
-
-        {/* Default Separator */}
-        <CreativeSeparator variant="default" index={2} />
-
-        {/* Cities Section */}
-        {/* <SectionWrapper delay={0.1} className="pt-8">
-          <CitiesForPeopleSection />
-        </SectionWrapper> */}
-
-
-        {/* Sharing Section */}
-        {/* <SectionWrapper delay={0.2}>
-          <SharingBestPracticesSection />
-        </SectionWrapper> */}
-
-                {/* About Section with Smooth Reveal */}
-                <SectionWrapper delay={0.1}>
-          <AboutUsSection />
-        </SectionWrapper>
-
-        {/* Image with Enhanced Animation */}
-        <SectionWrapper delay={0.2}>
-          <motion.div
-            style={{ marginTop: "-50px" }}
-            className="py-12"
-          >
-            <img 
-              src="/ChatGPT Image Jul 22, 2025, 02_32_15 PM.png" 
-              alt="About Us"
-            />
-          </motion.div>
-        </SectionWrapper>
-
-        {/* Image with Fade In */}
-        {/* <SectionWrapper delay={0.3}>
-          <motion.div
-            className="py-12"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <img 
-              src="/Figure.jpg" 
-              alt="Figure"
-              parallaxSpeed={0.35}
-              delay={0.15}
-            />
-          </motion.div>
-        </SectionWrapper> */}
-
-        {/* Wave Separator */}
-        <CreativeSeparator variant="wave" index={3} />
-
-        {/* Book Ride Section */}
-        <SectionWrapper delay={0.1} className="pt-8">
-          <BookRideSection />
-        </SectionWrapper>
-
-
-        {/* Diagonal Separator before Final Section */}
-        <CreativeSeparator variant="diagonal" index={4} />
-
-        {/* Download Apps Section - Grand Finale */}
-        <SectionWrapper delay={0.15} className="pt-8">
-          <DownloadAppsSection />
-        </SectionWrapper>
-
-        {/* Wave Separator */}
-        <CreativeSeparator variant="wave" index={5} />
-
-        {/* Wave Separator */}
-        <CreativeSeparator variant="wave" index={6} />
-
-        {/* The Impact Section */}
-        <ImpactSection />
-
-        {/* Enhanced floating particles effect - 21st.dev style */}
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full blur-sm"
-              style={{
-                width: `${4 + (i % 3) * 2}px`,
-                height: `${4 + (i % 3) * 2}px`,
-                left: `${15 + i * 12}%`,
-                top: `${25 + i * 8}%`,
-                background: i % 2 === 0 
-                  ? 'radial-gradient(circle, rgba(255, 107, 53, 0.4), rgba(255, 107, 53, 0.1))'
-                  : 'radial-gradient(circle, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.1))',
-              }}
-              animate={{
-                y: [0, -40, 0],
-                x: [0, 20, 0],
-                opacity: [0.2, 0.5, 0.2],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 4 + i * 0.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 0.3,
-              }}
-            />
-          ))}
-        </div>
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
       </div>
-    </MissionLayout>
+
+      <Header />
+      
+      {/* Hero Section */}
+      <div id="mission">
+        <BoltHeroSection />
+      </div>
+
+      {/* Main Content Section */}
+      <main className="relative z-20 bg-transparent">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          
+          <div className="flex flex-col lg:flex-row gap-12">
+            {/* Sidebar Navigation - Sticky */}
+            <aside className="hidden lg:block lg:w-72 flex-shrink-0">
+              <div className="sticky top-24">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 shadow-lg">
+                  <h3 className="text-lg font-bold text-white mb-6 px-2">
+                    Contents
+                  </h3>
+                  <nav className="space-y-2">
+                    {sidebarItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeSection === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => scrollToSection(item.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-orange-500/20 text-orange-400 shadow-sm border border-orange-500/20' 
+                              : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <Icon className={`h-4 w-4 ${isActive ? 'text-orange-400' : 'text-gray-400'}`} />
+                          {item.label}
+                          {isActive && (
+                            <ChevronRight className="h-4 w-4 ml-auto text-orange-400" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  {/* Quick Stats or Info */}
+                  <div className="mt-8 pt-8 border-t border-white/10 px-2">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-green-500/20 rounded-lg">
+                        <Leaf className="h-5 w-5 text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 font-medium">Carbon Offset</p>
+                        <p className="text-sm font-bold text-white">100% Neutral</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500/20 rounded-lg">
+                        <Users className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 font-medium">Community</p>
+                        <p className="text-sm font-bold text-white">5M+ Users</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0 space-y-24 pb-24">
+              
+              {/* Sections */}
+              <section id="earn" className="scroll-mt-24">
+                <EarnMoneySection />
+              </section>
+
+              <section id="ride" className="scroll-mt-24">
+                <BookRideSection />
+              </section>
+
+              <section id="impact" className="scroll-mt-24">
+                <ImpactSection />
+              </section>
+
+              <section id="about" className="scroll-mt-24">
+                <AboutUsSection />
+              </section>
+
+              <section id="download" className="scroll-mt-24">
+                <DownloadAppsSection />
+              </section>
+
+              {/* Challenge Section as a footer-like element in content */}
+              <section className="pt-12">
+                <ChallengeSection />
+              </section>
+
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 }

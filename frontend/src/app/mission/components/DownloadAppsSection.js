@@ -73,6 +73,30 @@ export default function DownloadAppsSection() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    setParticles([...Array(6)].map((_, i) => ({
+      initial: { 
+        x: Math.random() * 400 - 200, 
+        y: Math.random() * 400 - 200,
+        opacity: 0 
+      },
+      animate: {
+        y: [null, Math.random() * 100 - 50],
+        x: [null, Math.random() * 100 - 50],
+        opacity: [0, 0.5, 0],
+        scale: [0, 1, 0]
+      },
+      transition: {
+        duration: 3 + Math.random() * 2,
+        repeat: Infinity,
+        delay: i * 0.5,
+        ease: "easeInOut"
+      }
+    })));
+  }, []);
   
   // Parallax scroll effect for background elements
   const { scrollYProgress } = useScroll({
@@ -85,7 +109,7 @@ export default function DownloadAppsSection() {
   const opacity2 = useTransform(scrollYProgress, [0, 0.5, 1], [0.05, 0.04, 0.03]);
 
   return (
-    <section ref={ref} className="py-24 bg-gray-900 relative overflow-hidden">
+    <section ref={ref} className="py-24 relative overflow-hidden">
       {/* Background decorative elements with parallax */}
       <motion.div 
         style={{ 
@@ -252,27 +276,13 @@ export default function DownloadAppsSection() {
                 animate="float"
               >
                 {/* Floating particles background */}
-                {[...Array(6)].map((_, i) => (
+                {particles.map((particle, i) => (
                   <motion.div
                     key={i}
                     className="absolute w-2 h-2 bg-[#FF6B35]/30 rounded-full"
-                    initial={{ 
-                      x: Math.random() * 400 - 200, 
-                      y: Math.random() * 400 - 200,
-                      opacity: 0 
-                    }}
-                    animate={{
-                      y: [null, Math.random() * 100 - 50],
-                      x: [null, Math.random() * 100 - 50],
-                      opacity: [0, 0.5, 0],
-                      scale: [0, 1, 0]
-                    }}
-                    transition={{
-                      duration: 3 + Math.random() * 2,
-                      repeat: Infinity,
-                      delay: i * 0.5,
-                      ease: "easeInOut"
-                    }}
+                    initial={particle.initial}
+                    animate={particle.animate}
+                    transition={particle.transition}
                   />
                 ))}
 
@@ -405,23 +415,6 @@ export default function DownloadAppsSection() {
                       whileHover={{ scale: 1.08, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <motion.div
-                        className="flex items-center gap-3 bg-gradient-to-br from-black/90 to-black/70 hover:from-black hover:to-black/90 backdrop-blur-md px-6 py-4 rounded-2xl border border-gray-700/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/20"
-                        whileHover={{ borderColor: '#FF6B35' }}
-                      >
-                        <motion.div
-                          animate={{ rotate: [0, 10, -10, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                        >
-                          <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M17.05 20.28c-.98.95-2.05.88-3.08.42-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.42C7.28 19.17 6.98 18.04 7.11 16.8c.12-1.2.69-2.37 1.62-3.39 1.77-1.9 3.98-3.15 6.24-3.88.5-.16 1-.29 1.51-.41.76-.17 1.48-.13 2.17.15 1.11.36 1.89 1.12 2.08 2.28-.19 1.16-1.01 1.88-2.08 2.28-.69.28-1.41.32-2.17.15-.51-.12-1.01-.25-1.51-.41-2.26-.73-4.47-1.98-6.24-3.88-.93-1.02-1.5-2.19-1.62-3.39-.13-1.24.17-2.37 1.24-3.28.86-.86 1.62-1.04 3.06-.42 1.15.48 2.15.46 3.24 0 1.03-.46 2.1-.53 3.08.42 1.07.91 1.37 2.04 1.24 3.28-.12 1.2-.69 2.37-1.62 3.39-1.77 1.9-3.98 3.15-6.24 3.88-.5.16-1 .29-1.51.41-.76.17-1.48.13-2.17-.15-1.07-.4-1.89-1.12-2.08-2.28.19-1.16 1.01-1.88 2.08-2.28.69-.28 1.41-.32 2.17-.15.51.12 1.01.25 1.51.41 2.26.73 4.47 1.98 6.24 3.88.93 1.02 1.5 2.19 1.62 3.39.13 1.24-.17 2.37-1.24 3.28z"/>
-                          </svg>
-                        </motion.div>
-                        <div className="text-left">
-                          <div className="text-xs text-gray-400 font-medium">Download on the</div>
-                          <div className="text-lg font-bold text-white">App Store</div>
-                        </div>
-                      </motion.div>
                     </motion.a>
 
                     {/* Google Play Badge */}
@@ -431,44 +424,7 @@ export default function DownloadAppsSection() {
                       whileHover={{ scale: 1.08, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <motion.div
-                        className="flex items-center gap-3 bg-gradient-to-br from-black/90 to-black/70 hover:from-black hover:to-black/90 backdrop-blur-md px-6 py-4 rounded-2xl border border-gray-700/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-[#FF6B35]/20"
-                        whileHover={{ borderColor: '#FF6B35' }}
-                      >
-                        <motion.div
-                          animate={{ rotate: [0, -10, 10, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                        >
-                          <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.5,12.92 20.16,13.19L16.81,15.12L14.54,12.85L16.81,10.81L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
-                          </svg>
-                        </motion.div>
-                        <div className="text-left">
-                          <div className="text-xs text-gray-400 font-medium">Get it on</div>
-                          <div className="text-lg font-bold text-white">Google Play</div>
-                        </div>
-                      </motion.div>
                     </motion.a>
-                  </motion.div>
-
-                  {/* QR Code option for mobile */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ delay: 0.9, duration: 0.6 }}
-                    className="text-center"
-                  >
-                    <p className="text-xs text-gray-500 mb-2">Scan QR code to download</p>
-                    <motion.div
-                      className="inline-block p-3 bg-white rounded-xl shadow-lg"
-                      whileHover={{ scale: 1.1 }}
-                    >
-                      <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border-2 border-gray-300">
-                        <svg className="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                        </svg>
-                      </div>
-                    </motion.div>
                   </motion.div>
 
                   {/* Enhanced decorative elements */}

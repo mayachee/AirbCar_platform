@@ -5,7 +5,7 @@ import SectionWrapper from './SectionWrapper';
 
 export default function ChallengeSection() {
   return (
-    <div className="relative py-20 bg-gradient-to-b from-white via-gray-50/30 to-white overflow-hidden">
+    <div className="relative py-20 overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div

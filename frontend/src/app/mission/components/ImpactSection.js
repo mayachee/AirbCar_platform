@@ -47,7 +47,7 @@ export default function ImpactSection() {
   const currentContent = tabContent[activeTab];
 
   return (
-    <div className="relative py-20 bg-gradient-to-b from-white via-gray-50/30 to-white overflow-hidden">
+    <div className="relative py-20 bg-transparent overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -103,10 +103,10 @@ export default function ImpactSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-6 leading-[56px] tracking-[-0.48px]">
+              <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6 leading-[56px] tracking-[-0.48px]">
                 The impact
               </h2>
-              <div className="text-xl text-gray-600 leading-7 tracking-[-0.176px] space-y-1 font-light">
+              <div className="text-xl text-gray-300 leading-7 tracking-[-0.176px] space-y-1 font-light">
                 <p>By offering a convenient alternative to every</p>
                 <p>purpose a private car serves, AirbCar's shared</p>
                 <p>mobility platform can help reduce the number of</p>
@@ -133,7 +133,7 @@ export default function ImpactSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <h3 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent leading-[48px] tracking-[-0.4px]">
+              <h3 className="text-4xl sm:text-5xl font-bold text-white leading-[48px] tracking-[-0.4px]">
                 Key facts of our impact
               </h3>
             </motion.div>
@@ -154,8 +154,8 @@ export default function ImpactSection() {
                   whileTap={{ scale: 0.95 }}
                   className={`relative px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 overflow-hidden ${
                     activeTab === tab
-                      ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-gray-600 shadow-lg shadow-orange-500/30'
-                      : 'bg-white/80 backdrop-blur-sm text-gray-600 border border-gray-200 hover:bg-white hover:border-orange-300 hover:text-orange-600 shadow-md'
+                      ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-lg shadow-orange-500/30'
+                      : 'bg-white/5 backdrop-blur-sm text-gray-300 border border-white/10 hover:bg-white/10 hover:border-orange-500/50 hover:text-orange-400 shadow-md'
                   }`}
                 >
                   {activeTab === tab && (

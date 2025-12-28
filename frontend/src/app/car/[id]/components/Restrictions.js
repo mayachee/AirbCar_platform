@@ -142,7 +142,7 @@ export default function Restrictions({ vehicle }) {
 
             {/* Contact Information */}
             {(owner.phone || owner.email || owner.phone_number) && (
-              <div className="pt-3 border-t border-orange-200">
+              <div className="pt-3">
                 <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Contact Information</p>
                 <div className="space-y-2">
                   {(owner.phone || owner.phone_number) && (
@@ -173,7 +173,7 @@ export default function Restrictions({ vehicle }) {
 
             {/* Location */}
             {(owner.city || owner.address || owner.location) && (
-              <div className="pt-3 border-t border-orange-200">
+              <div className="pt-3">
                 <div className="flex items-start space-x-3">
                   <MapPin className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
@@ -188,7 +188,7 @@ export default function Restrictions({ vehicle }) {
 
             {/* Response Time */}
             {owner.responseTime && (
-              <div className="pt-3 border-t border-orange-200">
+              <div className="pt-3">
                 <div className="flex items-center space-x-3">
                   <Clock className="w-4 h-4 text-orange-600" />
                   <div>
@@ -201,7 +201,7 @@ export default function Restrictions({ vehicle }) {
 
             {/* Verified Badge */}
             {owner.verified && (
-              <div className="pt-3 border-t border-orange-200">
+              <div className="pt-3">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <span className="text-sm font-medium text-green-700">Verified Partner</span>

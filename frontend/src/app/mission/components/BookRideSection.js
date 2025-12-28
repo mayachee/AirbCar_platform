@@ -18,7 +18,7 @@ export default function BookRideSection() {
   ];
 
   return (
-    <section ref={ref} className="py-24 bg-gradient-to-b from-white via-gray-50/50 to-white relative overflow-hidden">
+    <section ref={ref} className="py-24 bg-transparent relative overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -45,17 +45,17 @@ export default function BookRideSection() {
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
               <motion.span 
-                className="inline-block text-sm font-semibold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent uppercase tracking-wider mb-4"
+                className="inline-block text-sm font-semibold text-orange-500 uppercase tracking-wider mb-4"
                 initial={{ opacity: 0 }}
                 animate={isInView ? { opacity: 1 } : { opacity: 0 }}
                 transition={{ delay: 0.1 }}
               >
                 Latest features
               </motion.span>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-6 leading-tight">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
                 Book a ride in advance
               </h2>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
                 Planning a trip? Schedule a Bolt ride in advance for even more convenient airport transfers, important meetings, or any occasion that requires punctuality. Simply enter your details and secure your ride up to 90 days ahead.
               </p>
               
@@ -73,12 +73,12 @@ export default function BookRideSection() {
                       className="flex items-center gap-3 group cursor-default"
                     >
                       <motion.div 
-                        className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-50 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow"
+                        className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow"
                         whileHover={{ scale: 1.1, rotate: 5 }}
                       >
-                        <Icon className="h-6 w-6 text-orange-600" />
+                        <Icon className="h-6 w-6 text-orange-400" />
                       </motion.div>
-                      <span className="text-gray-700 font-medium group-hover:text-gray-900 transition-colors">{feature.text}</span>
+                      <span className="text-gray-300 font-medium group-hover:text-white transition-colors">{feature.text}</span>
                     </motion.div>
                   );
                 })}

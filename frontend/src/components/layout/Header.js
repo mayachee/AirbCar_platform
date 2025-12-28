@@ -14,7 +14,7 @@ const navigationItems = [
   { label: 'Mission', href: '/mission' }
 ]
 
-export default function Header() {
+export default function Header({ theme = 'dark' }) {
   const { user, loading, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [language, setLanguage] = useState('en')
@@ -148,11 +148,15 @@ export default function Header() {
       ? 'py-2 shadow-lg shadow-black/0' 
       : 'bg-transparent py-6'}`
   
-  const navTextClassName = isScrolled ? 'text-white' : 'text-white drop-shadow-md'
+  const isLight = theme === 'light'
+
+  const navTextClassName = isScrolled 
+    ? (isLight ? 'text-gray-900' : 'text-white') 
+    : (isLight ? 'text-gray-900' : 'text-white drop-shadow-md')
   
   const buttonClassName = isScrolled 
-    ? 'bg-[#0B0F19]/80 text-white border-transparent shadow-sm' 
-    : 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-md border-white/10 shadow-lg shadow-black/5'
+    ? (isLight ? 'bg-white/80 text-gray-900 border-gray-200 shadow-sm' : 'bg-[#0B0F19]/80 text-white border-transparent shadow-sm')
+    : (isLight ? 'bg-white/50 hover:bg-white/80 text-gray-900 backdrop-blur-md border-gray-200 shadow-lg shadow-black/5' : 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-md border-white/10 shadow-lg shadow-black/5')
 
   return (
     <>
