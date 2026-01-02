@@ -139,24 +139,6 @@ export default function BoltHeroSection() {
 
         </div>
       </motion.div>
-
-      {/* Scroll Indicator - Modernized */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20"
-      >
-        <motion.div
-          animate={{ y: [0, 16] }}
-          transition={{ duration: 1, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-orange-300 text-xs font-semibold tracking-widest uppercase">Scroll</span>
-            <ChevronDown className="w-10 h-10 text-orange-300" />
-          </div>
-        </motion.div>
-      </motion.div>
     </section>
   );
 }

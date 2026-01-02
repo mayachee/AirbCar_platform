@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
   UploadCloud,
   Users,
@@ -14,7 +15,7 @@ const steps = [
     title: 'Configure your fleet in minutes',
     description:
       'Create your account, bulk import vehicles, and tailor pricing policies in the same flow. The Quick Actions panel, bulk operations, and Add Vehicle modal let you set availability, extras, and cancellation rules without leaving the dashboard.',
-    image: '/parthner_images/imgi_5_bike_setup.png',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_9.png',
     accent: 'Upload & Configure',
     icon: UploadCloud
   },
@@ -22,7 +23,7 @@ const steps = [
     title: 'Customers book on Airbcar.com',
     description:
       'Your fleet gains instant exposure to thousands of renters browsing every month. Live availability syncs with the Booking Calendar, so every listing reflects the latest schedule while secure pre-payments follow your configured rules.',
-    image: '/parthner_images/imgi_6_customer_reservation.png',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pci_8.png',
     accent: 'Get Discovered',
     icon: Users
   },
@@ -30,7 +31,7 @@ const steps = [
     title: 'Own every booking decision',
     description:
       'Notification Center alerts and the Upcoming Bookings view keep you updated in real time. Accept, reject, or reschedule requests directly from Booking Management while processing states and automated messages keep riders informed.',
-    image: '/parthner_images/imgi_7_online_booking.png',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_7.png',
     accent: 'Control & Automate',
     icon: CheckCircle2
   },
@@ -38,7 +39,7 @@ const steps = [
     title: 'Instant confirmation & operations',
     description:
       'Approve a trip and we trigger vouchers, reminders, and payment status updates immediately. Vehicle Availability Calendar, verification checks, and policy safeguards activate automatically so your team just shows up prepared.',
-    image: '/parthner_images/imgi_8_voucher-2.png',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_6.png',
     accent: 'We Handle The Rest',
     icon: Zap
   },
@@ -46,7 +47,39 @@ const steps = [
     title: 'Keep scaling with insights',
     description:
       'Advanced Analytics, earnings dashboards, review metrics, and smart forecasting surface the trends that matter. Pair them with Recent Activity feeds and customer profiles to uncover growth opportunities and keep riders coming back.',
-    image: '/parthner_images/imgi_9_dashboard.png',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_5.png',
+    accent: 'Scale With Insights',
+    icon: BarChart3
+  },
+  {
+    title: 'Keep scaling with insights',
+    description:
+      'Advanced Analytics, earnings dashboards, review metrics, and smart forecasting surface the trends that matter. Pair them with Recent Activity feeds and customer profiles to uncover growth opportunities and keep riders coming back.',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_4.png',
+    accent: 'Scale With Insights',
+    icon: BarChart3
+  },
+  {
+    title: 'Keep scaling with insights',
+    description:
+      'Advanced Analytics, earnings dashboards, review metrics, and smart forecasting surface the trends that matter. Pair them with Recent Activity feeds and customer profiles to uncover growth opportunities and keep riders coming back.',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_3.png',
+    accent: 'Scale With Insights',
+    icon: BarChart3
+  },
+  {
+    title: 'Keep scaling with insights',
+    description:
+      'Advanced Analytics, earnings dashboards, review metrics, and smart forecasting surface the trends that matter. Pair them with Recent Activity feeds and customer profiles to uncover growth opportunities and keep riders coming back.',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_2.png',
+    accent: 'Scale With Insights',
+    icon: BarChart3
+  },
+  {
+    title: 'Keep scaling with insights',
+    description:
+      'Advanced Analytics, earnings dashboards, review metrics, and smart forecasting surface the trends that matter. Pair them with Recent Activity feeds and customer profiles to uncover growth opportunities and keep riders coming back.',
+    image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_1.png',
     accent: 'Scale With Insights',
     icon: BarChart3
   }
@@ -98,9 +131,9 @@ export default function PartnerHowItWorks() {
         >
           {steps.map(({ title, description, image, accent, icon: Icon }, index) => (
             <motion.div
-              key={title}
+              key={`${title}-${index}`}
               variants={cardVariants}
-              className={`relative flex flex-col gap-8 rounded-3xl border border-orange-100/80 bg-white/90 p-8 shadow-lg shadow-orange-100/40 ring-1 ring-transparent transition hover:-translate-y-1 hover:shadow-xl hover:ring-orange-200/60 md:gap-12 lg:grid lg:grid-cols-[1fr_1fr] lg:items-center ${
+              className={`relative flex flex-col gap-8 rounded-3xl p-8 shadow-lg shadow-orange-100/40 ring-1 ring-transparent transition hover:-translate-y-1 md:gap-12 lg:grid lg:grid-cols-[1fr_1fr] lg:items-center ${
                 index % 2 === 1 ? 'lg:flex-row-reverse' : ''
               }`}
             >
@@ -124,12 +157,13 @@ export default function PartnerHowItWorks() {
               <div className="order-1 lg:order-2">
                 <div className="relative">
                   <div className="absolute -inset-4 hidden rounded-3xl bg-orange-100/50 blur-2xl md:block" />
-                  <div className="relative overflow-hidden rounded-3xl border border-orange-100 bg-white">
-                    <img
+                  <div className="relative overflow-hidden rounded-3xl bg-white aspect-video">
+                    <Image
                       src={image}
                       alt={title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
                     />
                   </div>
                 </div>
