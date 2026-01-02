@@ -43,6 +43,11 @@ const nextConfig = {
         hostname: 'airbcar-backend.onrender.com',
         pathname: '/media/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ik.imagekit.io',
+        pathname: '/**',
+      },
     ],
     // Optimize images for Vercel
     formats: ['image/avif', 'image/webp'],

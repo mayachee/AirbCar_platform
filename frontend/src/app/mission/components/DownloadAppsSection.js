@@ -312,7 +312,10 @@ export default function DownloadAppsSection() {
                     <motion.div
                       className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 bg-gradient-to-br from-[#FF6B35] via-[#FF8555] to-[#FF6B35] rounded-3xl sm:rounded-[2.5rem] shadow-2xl flex items-center justify-center overflow-hidden"
                       whileHover={{ scale: 1.15, rotate: [0, -5, 5, -5, 0] }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      transition={{ 
+                        scale: { type: "spring", stiffness: 300, damping: 20 },
+                        rotate: { duration: 0.5, ease: "easeInOut" }
+                      }}
                     >
                       {/* Animated gradient overlay */}
                       <motion.div

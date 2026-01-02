@@ -38,15 +38,6 @@ export default function Footer() {
         { label: 'Contact Us', href: '/contact', prefetch: false },
         { label: 'Safety', href: '/safety', prefetch: false },
       ]
-    },
-    {
-      title: 'Legal',
-      links: [
-        { label: 'Terms of Service', href: '/terms', prefetch: false },
-        { label: 'Privacy Policy', href: '/privacy', prefetch: false },
-        { label: 'Rental Policies', href: '/rental-policies', prefetch: false },
-        { label: 'Cookie Policy', href: '/cookies', prefetch: false },
-      ]
     }
   ]
 
@@ -137,33 +128,60 @@ export default function Footer() {
 
   return (
     <footer className="relative bg-[#0B0F19] text-white overflow-hidden">
-      {/* Decorative top border */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-orange-600 to-transparent opacity-50" />
+      {/* Deep Space Background */}
+      <div className="absolute inset-0 bg-[#0B0F19]" />
       
-      {/* Background decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
-      </div>
+      {/* Main Gradient Mesh */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-orange-950/40 via-[#0B0F19] to-[#0B0F19]" />
+      
+      {/* Vivid Orange Glow (Top Left) */}
+      <div className="absolute -top-[200px] -left-[200px] w-[800px] h-[800px] bg-orange-600/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
+      
+      {/* Subtle Purple/Blue Contrast (Bottom Right) */}
+      <div className="absolute -bottom-[200px] -right-[200px] w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none" />
+      
+      {/* Top Highlight Line (Aurora) */}
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-orange-500/40 to-transparent shadow-[0_1px_20px_rgba(249,115,22,0.2)]" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
-          {/* Brand Section - Spans 4 columns */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl font-bold tracking-tight">{APP_NAME}</span>
-            </div>
-            <p className="text-gray-400 leading-relaxed max-w-sm">
-              Premium car rental platform connecting travelers with trusted local partners across Morocco.
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-8 sm:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-24 mb-16 sm:mb-24">
+          {/* Brand Section - Spans 5 columns */}
+          <div className="lg:col-span-5 space-y-6 sm:space-y-8">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
+              Stay Focused,<br />Stay Ahead
+            </h2>
+            <p className="text-gray-400 leading-relaxed max-w-md text-lg font-light">
+              Join thousands of teams using {APP_NAME} to streamline work and unlock clarity every day.
             </p>
             
-            {/* Social Links */}
-            <div className="flex items-center space-x-4 pt-2">
+            {/* Newsletter Form */}
+            <form onSubmit={handleNewsletterSubmit} className="relative max-w-md pt-2">
+              <div className="relative">
+                <input 
+                  type="email" 
+                  placeholder="Enter your email address" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-full py-3.5 pl-6 pr-36 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all backdrop-blur-sm"
+                />
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="absolute right-1.5 top-1.5 bottom-1.5 px-6 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-full transition-all hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? '...' : 'Subscribe'}
+                </button>
+              </div>
+              {error && <p className="mt-2 text-xs text-red-400 pl-4 animate-in fade-in slide-in-from-top-1">{error}</p>}
+              {success && <p className="mt-2 text-xs text-green-400 pl-4 animate-in fade-in slide-in-from-top-1">Thanks for subscribing!</p>}
+            </form>
+
+            <div className="pt-6 flex gap-5">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
-                  className="w-10 h-10 rounded-full bg-gray-800/50 flex items-center justify-center text-gray-400 hover:bg-orange-600 hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-orange-600/20"
+                  className="text-gray-400 hover:text-orange-500 transition-colors transform hover:scale-110 duration-200"
                   aria-label={social.name}
                 >
                   {social.icon}
@@ -172,11 +190,12 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links Sections - Spans 5 columns */}
-          <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-3 gap-8">
+          {/* Links Sections - Spans 7 columns */}
+          <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-12 pt-2">
+            {/* Dynamic Footer Sections */}
             {footerSections.map((section) => (
               <div key={section.title}>
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-6">
+                <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-6">
                   {section.title}
                 </h3>
                 <ul className="space-y-4">
@@ -185,9 +204,8 @@ export default function Footer() {
                       <Link
                         href={link.href}
                         prefetch={link.prefetch !== undefined ? link.prefetch : existingPages.includes(link.href)}
-                        className="group flex items-center text-gray-400 hover:text-orange-500 transition-colors text-sm"
+                        className="text-sm text-gray-400 hover:text-orange-500 transition-colors block hover:translate-x-1 duration-200"
                       >
-                        <span className="w-0 group-hover:w-2 h-px bg-orange-500 mr-0 group-hover:mr-2 transition-all duration-300" />
                         {link.label}
                       </Link>
                     </li>
@@ -195,83 +213,42 @@ export default function Footer() {
                 </ul>
               </div>
             ))}
-          </div>
-
-          {/* Newsletter - Spans 3 columns */}
-          <div className="lg:col-span-3">
-            <div className="bg-gray-800/30 rounded-2xl p-6 border border-gray-700/50 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-white mb-2">
-                Join our newsletter
-              </h3>
-              <p className="text-sm text-gray-400 mb-6">
-                Get exclusive offers and travel inspiration directly in your inbox.
-              </p>
-              <form onSubmit={handleNewsletterSubmit} className="space-y-3">
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value)
-                      setError('')
-                      setSuccess(false)
-                    }}
-                    placeholder="Enter your email"
-                    disabled={isLoading}
-                    className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all disabled:opacity-50"
-                    required
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full px-4 py-3 bg-orange-500 backdrop-blur-xl border border-white/10 text-white hover:from-orange-500 hover:to-orange-500 rounded-xl transition-all duration-300 font-medium shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Subscribing...
-                    </span>
-                  ) : 'Subscribe Now'}
-                </button>
-                {error && (
-                  <p className="text-xs text-red-400 mt-2 bg-red-900/20 p-2 rounded-lg border border-red-900/50">
-                    {error}
-                  </p>
-                )}
-                {success && (
-                  <p className="text-xs text-green-400 mt-2 bg-green-900/20 p-2 rounded-lg border border-green-900/50">
-                    ✓ Subscribed successfully!
-                  </p>
-                )}
-              </form>
+            
+            {/* Contact Info */}
+            <div>
+                <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-6">
+                  Contact
+                </h3>
+                <ul className="space-y-4 text-sm text-gray-400">
+                    <li>
+                        <a href="mailto:hello@airbcar.com" className="hover:text-orange-500 transition-colors">
+                            hello@airbcar.com
+                        </a>
+                    </li>
+                    <li>Tetouan, Morocco</li>
+                </ul>
             </div>
           </div>
         </div>
 
+        {/* Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8 sm:mb-12" />
+
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-8 mt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500">
-              © {currentYear} {APP_NAME}. All rights reserved.
-            </p>
-            
-            <div className="flex items-center space-x-6 text-sm text-gray-500">
-              <span className="flex items-center hover:text-gray-300 transition-colors">
-                Made in Morocco
-              </span>
-              <span className="w-1 h-1 bg-gray-700 rounded-full" />
-              <span className="flex items-center hover:text-gray-300 transition-colors">
-                <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                Secure & Trusted
-              </span>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-gray-500 mb-12 sm:mb-20">
+            <p className="text-center md:text-left">&copy; {currentYear} {APP_NAME}. All rights reserved.</p>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+                <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                <Link href="/cookies" className="hover:text-white transition-colors">Cookie Settings</Link>
             </div>
-          </div>
+        </div>
+
+        {/* Big Brand Name */}
+        <div className="relative w-full flex justify-center overflow-hidden select-none pointer-events-none opacity-40 pt-8 sm:pt-0 sm:-mb-24">
+          <h1 className="text-[28vw] sm:text-[25vw] leading-[0.7] font-bold text-center tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white/80 to-transparent blur-sm">
+            {APP_NAME}
+          </h1>
         </div>
       </div>
     </footer>

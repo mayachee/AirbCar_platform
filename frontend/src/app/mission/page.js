@@ -74,7 +74,7 @@ export default function MissionPage() {
             repeat: Infinity,
             ease: "easeInOut" 
           }}
-          className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-orange-500/20 via-orange-400/10 to-transparent blur-[100px]" 
+          className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-orange-500/80 via-orange-400/60 to-transparent blur-[100px]" 
         />
         
         {/* Top Right - Secondary Cool Glow for Contrast */}
