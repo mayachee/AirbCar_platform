@@ -9,8 +9,8 @@ export default function ImpactSection() {
 
   const tabs = [
     'Boosting partner earning opportunities',
-    'Diversity and inclusion',
-    'Sustainable communities'
+    'Community Driven',
+    'Eco-Friendly'
   ];
 
   const tabContent = {
@@ -24,7 +24,7 @@ export default function ImpactSection() {
         "50% of drivers on AirbCar platform use ride-hailing to supplement their main source of income *"
       ]
     },
-    'Diversity and inclusion': {
+    'Community Driven': {
       image: '/Figure.jpg',
       dataNote: '*Data: Various regions',
       facts: [
@@ -33,7 +33,7 @@ export default function ImpactSection() {
         "Inclusive platform design and policies"
       ]
     },
-    'Sustainable communities': {
+    'Eco-Friendly': {
       image: '/ChatGPT Image Jul 22, 2025, 02_32_15 PM.png',
       dataNote: '*Data: Global impact',
       facts: [
@@ -47,7 +47,7 @@ export default function ImpactSection() {
   const currentContent = tabContent[activeTab];
 
   return (
-    <div className="relative py-20 bg-transparent overflow-hidden">
+    <div className="relative py-12">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -65,7 +65,7 @@ export default function ImpactSection() {
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="space-y-16">
         {/* Top Section: The Impact */}
         <SectionWrapper delay={0.1}>
           <div className="flex flex-col lg:flex-row gap-14 lg:gap-28 items-center mb-20">
@@ -97,7 +97,7 @@ export default function ImpactSection() {
 
             {/* Text Content with enhanced styling */}
             <motion.div
-              className="flex-1 max-w-[464px]"
+              className="flex-1"
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -106,17 +106,15 @@ export default function ImpactSection() {
               <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6 leading-[56px] tracking-[-0.48px]">
                 The impact
               </h2>
-              <div className="text-xl text-gray-300 leading-7 tracking-[-0.176px] space-y-1 font-light">
-                <p>By offering a convenient alternative to every</p>
-                <p>purpose a private car serves, AirbCar's shared</p>
-                <p>mobility platform can help reduce the number of</p>
-                <p>trips made by private cars. This will ultimately lead</p>
-                <p>to better cities with less traffic congestion,</p>
-                <p>pollution, and land taken up by parking spaces.</p>
-                <p>People will still go wherever they need to go, but</p>
-                <p>will do so with a mix of ride-hailing, car-sharing,</p>
-                <p>public transport, micromobility, walking and</p>
-                <p>cycling, depending on a trip's purpose.</p>
+              <div className="text-xl text-gray-300 leading-7  space-y-10">
+                <p>By offering a convenient alternative to every purpose a private car serves, AirbCar's shared
+                mobility platform can help reduce the number of trips made by private cars. This will ultimately lead
+                to better cities with less traffic congestion,
+                pollution, and land taken up by parking spaces.
+                People will still go wherever they need to go, but
+                will do so with a mix of ride-hailing, car-sharing,
+                public transport, micromobility, walking and
+                cycling, depending on a trip's purpose.</p>
               </div>
             </motion.div>
           </div>
@@ -212,22 +210,12 @@ export default function ImpactSection() {
 
               {/* Facts List with enhanced styling */}
               <motion.div
-                className="flex-1 max-w-[464px]"
+                className="flex-1"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
               >
                 <div className="space-y-8">
-                  {/* Data Note */}
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-sm text-gray-500 tracking-[-0.176px] font-medium"
-                  >
-                    {currentContent.dataNote}
-                  </motion.p>
-
                   {/* Facts with enhanced animations */}
                   <ul className="space-y-6">
                     {currentContent.facts.map((fact, index) => (
@@ -242,9 +230,9 @@ export default function ImpactSection() {
                           className="w-8 h-8 bg-orange-600 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow"
                           whileHover={{ scale: 1.1, rotate: 5 }}
                         >
-                          <div className="w-3 h-3 rounded-full" />
+                          <div className="w-3 h-3 rounded-full bg-white" />
                         </motion.div>
-                        <p className="text-base text-gray-600 leading-6 tracking-[-0.176px] group-hover:text-gray-900 transition-colors">
+                        <p className="text-base text-gray-300 leading-6 tracking-[-0.176px] group-hover:text-white transition-colors">
                           {fact}
                         </p>
                       </motion.li>

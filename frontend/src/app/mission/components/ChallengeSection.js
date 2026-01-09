@@ -23,9 +23,58 @@ export default function ChallengeSection() {
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="">
         <SectionWrapper delay={0.1}>
           <div className="flex flex-col lg:flex-row gap-14 lg:gap-28 items-center">
+            
+            {/* Text Content with enhanced styling */}
+            <motion.div
+              className="flex-1"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent mb-6 leading-[56px] tracking-[-0.48px]">
+                The challenge
+              </h2>
+              <div className="text-xl text-gray-300 leading-7 space-y-10">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <p>For decades, cities have been built for cars,
+                  neglecting pedestrians and light vehicles.</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <p>Today, cities devote up to 60% of urban land to
+                  car infrastructure. Passenger transport accounts
+                  for almost half of global transport emissions. It is
+                  also the primary cause of air pollution that can
+                  lead to serious health problems. That's
+                  astonishing, given private cars sit idle for up to
+                  95% of the time.</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p>As the global urban population is projected to
+                  double by 2050, cities, their citizens, and the
+                  transport sector must work together to drive
+                  positive change.</p>
+                </motion.div>
+              </div>
+            </motion.div>
             {/* Image with enhanced styling */}
             <motion.div
               className="w-full lg:w-[560px] flex-shrink-0"
@@ -50,55 +99,6 @@ export default function ChallengeSection() {
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </motion.div>
-            </motion.div>
-
-            {/* Text Content with enhanced styling */}
-            <motion.div
-              className="flex-1 max-w-[464px]"
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-6 leading-[56px] tracking-[-0.48px]">
-                The challenge
-              </h2>
-              <div className="text-xl text-gray-600 leading-7 tracking-[-0.176px] space-y-7">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <p>For decades, cities have been built for cars,</p>
-                  <p>neglecting pedestrians and light vehicles.</p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <p>Today, cities devote up to 60% of urban land to</p>
-                  <p>car infrastructure. Passenger transport accounts</p>
-                  <p>for almost half of global transport emissions. It is</p>
-                  <p>also the primary cause of air pollution that can</p>
-                  <p>lead to serious health problems. That's</p>
-                  <p>astonishing, given private cars sit idle for up to</p>
-                  <p>95% of the time.</p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <p>As the global urban population is projected to</p>
-                  <p>double by 2050, cities, their citizens, and the</p>
-                  <p>transport sector must work together to drive</p>
-                  <p>positive change.</p>
-                </motion.div>
-              </div>
             </motion.div>
           </div>
         </SectionWrapper>
