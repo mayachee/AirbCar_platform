@@ -58,7 +58,7 @@ export default function MissionPage() {
         </section>
         
         {/* Vision Section */}
-        <section id="mission" className="relative pt-0 pb-20">
+        <section id="mission" className="relative pt-0 pb-10 md:pb-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <OurMissionSection />
           </div>

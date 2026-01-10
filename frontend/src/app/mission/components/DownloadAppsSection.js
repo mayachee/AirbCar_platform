@@ -109,7 +109,7 @@ export default function DownloadAppsSection() {
   const opacity2 = useTransform(scrollYProgress, [0, 0.5, 1], [0.05, 0.04, 0.03]);
 
   return (
-    <section ref={ref} className="p-12 relative">
+    <section ref={ref} className="relative py-20 sm:py-24 md:py-32 overflow-hidden">
       {/* Background decorative elements with parallax */}
       <motion.div 
         style={{ 
@@ -129,7 +129,7 @@ export default function DownloadAppsSection() {
       />
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
           {/* Header Section with enhanced styling */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -165,7 +165,7 @@ export default function DownloadAppsSection() {
               
               {/* Enhanced App Download Visual - Responsive sizing */}
               <motion.div
-                className="relative z-10 w-full max-w-md sm:max-w-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl h-[600px] sm:h-[650px] md:h-[600px] lg:h-[700px] xl:h-[800px] flex items-center justify-center"
+                className="relative z-10 w-full max-w-md sm:max-w-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl min-h-[550px] md:h-[600px] lg:h-[700px] xl:h-[800px] flex items-center justify-center"
                 variants={phoneVariants}
                 animate="float"
               >
@@ -180,7 +180,8 @@ export default function DownloadAppsSection() {
                   />
                 ))}
 
-                <div className="relative w-full h-full flex flex-col items-center justify-center space-y-6 sm:space-y-8 p-6 sm:p-8">
+
+                <div className="relative w-full h-full flex flex-col items-center justify-center space-y-0 sm:space-y-8 p-4 sm:p-8">
                   {/* Main App Icon with enhanced effects */}
                   <motion.div
                     className="relative group"
@@ -204,11 +205,10 @@ export default function DownloadAppsSection() {
                     
                     {/* Main icon container */}
                     <motion.div
-                      className="relative w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 bg-gradient-to-br from-[#FF6B35] via-[#FF8555] to-[#FF6B35] rounded-3xl sm:rounded-[2.5rem] shadow-2xl flex items-center justify-center overflow-hidden"
-                      whileHover={{ scale: 1.15, rotate: [0, -5, 5, -5, 0] }}
+                      className="relative w-64 h-[32rem] sm:w-72 sm:h-[36rem] md:w-80 md:h-[40rem] bg-gradient-to-br from-[#FF6B35] via-[#FF8555] to-[#FF6B35] rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl flex items-center justify-center overflow-hidden"
+                      whileHover={{ scale: 1.02 }}
                       transition={{ 
-                        scale: { type: "spring", stiffness: 300, damping: 20 },
-                        rotate: { duration: 0.5, ease: "easeInOut" }
+                        scale: { type: "spring", stiffness: 300, damping: 20 }
                       }}
                     >
                       {/* Animated gradient overlay */}
@@ -225,62 +225,15 @@ export default function DownloadAppsSection() {
                         }}
                       />
                       
-                      {/* Car Icon */}
-                      <svg className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-white z-10" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
-                      </svg>
+                      {/* App Icon Image */}
+                      <img 
+                        src="https://ik.imagekit.io/szcfr7vth/localhost_3001_mission(iPhone%2012%20Pro)%20(2).png"
+                        alt="AirbCar App"
+                        className="relative w-full h-full object-cover z-10"
+                      />
                     </motion.div>
                   </motion.div>
 
-                  {/* App Name with enhanced styling */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                    className="text-center space-y-2"
-                  >
-                    <motion.h3 
-                      className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent"
-                      animate={{
-                        backgroundPosition: ['0%', '100%', '0%']
-                      }}
-                      transition={{
-                        duration: 5,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                    >
-                      AirbCar
-                    </motion.h3>
-                    <p className="text-gray-300 text-sm sm:text-base font-medium">Your ride, your way</p>
-                    
-                  </motion.div>
-
-                  {/* Enhanced App Store Badges */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ delay: 0.7, duration: 0.6 }}
-                    className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full"
-                  >
-                    {/* App Store Badge */}
-                    <motion.a
-                      href="#"
-                      className="relative inline-block w-full sm:w-auto"
-                      whileHover={{ scale: 1.08, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                    </motion.a>
-
-                    {/* Google Play Badge */}
-                    <motion.a
-                      href="#"
-                      className="relative inline-block w-full sm:w-auto"
-                      whileHover={{ scale: 1.08, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                    </motion.a>
-                  </motion.div>
 
                   {/* Enhanced decorative elements */}
                   <motion.div
@@ -304,7 +257,7 @@ export default function DownloadAppsSection() {
               initial={{ opacity: 0, x: 50 }}
               animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
               transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
-              className="flex flex-col order-1 md:order-2"
+              className="flex flex-col order-1 md:order-2 mt-10 md:mt-0"
             >
               {/* Tabs with enhanced animations */}
               <div className="flex gap-8 mb-10">
