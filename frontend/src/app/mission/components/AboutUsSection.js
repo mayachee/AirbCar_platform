@@ -71,15 +71,6 @@ const itemVariants = {
             className="relative overflow-hidden shadow-2xl"
             transition={{ duration: 0.4 }}
           >
-            <motion.img 
-              src="https://ik.imagekit.io/szcfr7vth/photo-1767404955043-ce692d554591.jpg" 
-              alt="Book a ride in advance" 
-              className="w-full h-auto object-cover" 
-              loading="lazy"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              style={{ willChange: 'transform' }}
-            />
             {/* Gradient overlay for depth */}
             <motion.div 
               className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent pointer-events-none"
@@ -148,15 +139,7 @@ const itemVariants = {
                 className="relative overflow-hidden shadow-2xl"
                 transition={{ duration: 0.4 }}
               >
-                <motion.img 
-                  src="https://ik.imagekit.io/szcfr7vth/photo-1587580945215-5d4aabb2c8ef.jpg" 
-                  alt="Book a ride in advance" 
-                  className="w-full h-auto object-cover" 
-                  loading="lazy"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ willChange: 'transform' }}
-                />
+              
                 {/* Gradient overlay for depth */}
                 <motion.div 
                   className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent pointer-events-none"

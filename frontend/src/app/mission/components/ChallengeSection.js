@@ -92,9 +92,9 @@ export default function ChallengeSection() {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 <img
-                  src="/Figure1.jpg"
+                  src="https://cdn.cosmos.so/5d771d19-58c5-4e06-b42c-7079a660f3b1?format=jpeg"
                   alt="The challenge"
-                  className="w-full h-[420px] object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-[450px] object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
