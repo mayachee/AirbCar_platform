@@ -117,9 +117,9 @@ export default function BoltHeroSection() {
       className="relative min-h-[120vh] flex flex-col items-center justify-start pt-32 overflow-hidden"
     >
       {/* Background Text Layer */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-0">
+      <div className="absolute  inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-0">
         <motion.div style={{ y: yText }} className="text-center">
-            <h1 className="text-[13vw] leading-[0.8] font-serif font-light text-white tracking-tight">
+            <h1 className="text-[13vw] leading-[0.8] font-bold text-white tracking-tight">
               FEEL AT HOME<br/>
               WHATEVER<br/>
               YOU GO
