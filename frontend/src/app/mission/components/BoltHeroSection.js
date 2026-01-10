@@ -1,144 +1,237 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowRight, Sparkles, Info, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui';
-import MissionDialog from './MissionDialog';
+import { motion, useScroll, useTransform, useMotionValue, useMotionTemplate } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
+import Image from 'next/image';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
+const cards = [
+  { 
+    id: 1,
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg", 
+    alt: "Premium Fleet", 
+    angle: -12, 
+    x: '-38%', 
+    y: '-28%',
+    zIndex: 10,
+    scale: 0.95
   },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.8,
-      ease: [0.22, 1, 0.36, 1],
-    },
+  { 
+    id: 2,
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/marina_malkova-nIOK_GnEGeU-unsplash.jpg", 
+    alt: "Our Partners", 
+    angle: 15, 
+    x: '35%',
+    y: '-32%',
+    zIndex: 20,
+    scale: 0.85
   },
-};
+  { 
+    id: 3,
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/danijel-skabic--GNdBb4WkDU-unsplash.jpg", 
+    alt: "Comfort", 
+    angle: -5, 
+    x: '-8%',
+    y: '5%',
+    zIndex: 40,
+    scale: 1.1
+  },
+  { 
+    id: 4,
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/helena-lopes-e3OUQGT9bWU-unsplash.jpg", 
+    alt: "Community", 
+    angle: 20, 
+    x: '42%',
+    y: '15%',
+    zIndex: 15,
+    scale: 0.9
+  },
+  { 
+    id: 5,
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg", 
+    alt: "Performance", 
+    angle: -25, 
+    x: '-42%',
+    y: '25%',
+    zIndex: 5,
+    scale: 1.05
+  },
+   { 
+    id: 6,
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/martin-katler-h9g8CdsDG7Q-unsplash.jpg", 
+    alt: "Adventure", 
+    angle: 8, 
+    x: '18%',
+    y: '35%',
+    zIndex: 35,
+    scale: 0.9
+  },
+  { 
+    id: 7,
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/marina_malkova-nIOK_GnEGeU-unsplash.jpg", 
+    alt: "Future", 
+    angle: -10, 
+    x: '-22%',
+    y: '-38%',
+    zIndex: 1,
+    scale: 0.8
+  }
+];
 
 export default function BoltHeroSection() {
-  const router = useRouter();
-  const ref = useRef(null);
+  const containerRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start start', 'end start'],
+    target: containerRef,
+    offset: ["start start", "end end"]
   });
 
-  const opacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
-  const y = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const { clientX, clientY, innerWidth, innerHeight } = window;
+      mouseX.set((clientX - innerWidth / 2) / innerWidth);
+      mouseY.set((clientY - innerHeight / 2) / innerHeight);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
+
+  const yText = useTransform(scrollYProgress, [0, 1], [0, 100]);
 
   return (
-    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Immersive Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          animate={{ scale: [1, 1.3, 1], opacity: [0.25, 0.5, 0.25], x: [0, 60, 0], y: [0, -40, 0] }}
-          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-10 left-10 w-[500px] h-[500px] bg-gradient-to-br from-orange-400/30 via-orange-500/20 to-transparent rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.4, 1], opacity: [0.18, 0.38, 0.18], x: [0, -50, 0], y: [0, 50, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-          className="absolute bottom-10 right-10 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/30 via-purple-400/20 to-transparent rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{ rotate: 360, scale: [1, 1.1, 1] }}
-          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border-2 border-orange-200/20 rounded-full"
-        />
+    <section 
+      ref={containerRef} 
+      className="relative min-h-[120vh] flex flex-col items-center justify-start pt-32 overflow-hidden"
+    >
+      {/* Background Text Layer */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-0">
+        <motion.div style={{ y: yText }} className="text-center">
+            <h1 className="text-[13vw] leading-[0.8] font-serif font-light text-white tracking-tight">
+              FEEL AT HOME<br/>
+              WHATEVER<br/>
+              YOU GO
+            </h1>
+        </motion.div>
       </div>
 
-      <motion.div
-        style={{ opacity, y }}
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10"
-      >
-        <div className="max-w-5xl mx-auto text-center">
-          {/* Comfort Tagline */}
-          <motion.div
-            variants={itemVariants}
-            className="flex items-center justify-center gap-3 mb-6"
-          >
-            <p className="text-orange-200 text-xl sm:text-2xl font-semibold tracking-wide drop-shadow-lg">
-              Welcome to the future of comfort and mobility
+      {/* Main Cluster */}
+      <div className="relative z-[-10] w-full h-[600px] flex items-center justify-center mt-10 md:mt-0 perspective-1000">
+        {cards.map((card, index) => (
+          <Card 
+            key={card.id} 
+            card={card} 
+            index={index} 
+            mouseX={mouseX} 
+            mouseY={mouseY}
+            scrollYProgress={scrollYProgress}
+            isMobile={isMobile}
+          />
+        ))}
+      </div>
+
+       {/* Footer / Est */}
+      <div className="absolute bottom-12 left-0 w-full flex items-center justify-center z-50 px-4 text-center">
+         <div className="flex items-center gap-4 px-6 py-3">
+            <p className="text-[10px] md:text-sm uppercase tracking-[0.15em] md:tracking-[0.25em] font-semibold text-orange-500">
+              Airbcar is not just a ride, it's your comfort zone
             </p>
-          </motion.div>
+         </div>
+      </div>
 
-          {/* Main Headline - Bold, Modern, Emotional */}
-          <motion.h1
-            variants={itemVariants}
-            className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-extrabold mb-8 leading-[1.05] tracking-tighter bg-gradient-to-br from-orange-400 via-orange-200 to-white text-transparent bg-clip-text drop-shadow-[0_4px_32px_rgba(249,115,22,0.25)]"
-          >
-            <span className="block">Feel at home,</span>
-            <span className="block text-white">wherever you go.</span>
-          </motion.h1>
-
-          {/* Subheadline - Reassurance and Vision */}
-          <motion.p
-            variants={itemVariants}
-            className="text-2xl sm:text-3xl lg:text-4xl text-orange-500 mb-12 max-w-3xl mx-auto leading-relaxed font-light drop-shadow"
-          >
-            Airbcar is not just a ride, it's your comfort zone, your delivery partner, and your community. Experience the startup that's changing how the world moves, with heart.
-          </motion.p>
-
-          {/* CTA Buttons - Glassmorphism, Big, Inviting */}
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center flex-wrap"
-          >
-            <motion.div 
-              whileHover={{ scale: 1.08, y: -2 }} 
-              whileTap={{ scale: 0.97 }}
-            >
-              <Button
-                size="xl"
-                onClick={() => router.push('/search')}
-                className="relative bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600 text-white px-12 sm:px-16 py-6 text-xl sm:text-2xl font-bold rounded-3xl shadow-2xl hover:shadow-orange-500/50 transition-all flex items-center gap-3 group w-full sm:w-auto overflow-hidden backdrop-blur-xl"
-              >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-                  animate={{ x: ['-200%', '200%'] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, ease: 'linear' }}
-                />
-                <span className="relative z-10">Get Started</span>
-                <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform relative z-10" />
-              </Button>
-            </motion.div>
-            <motion.div 
-              whileHover={{ scale: 1.08, y: -2 }} 
-              whileTap={{ scale: 0.97 }}
-            >
-              <MissionDialog>
-                <Button
-                  size="xl"
-                  variant="ghost"
-                  className="relative border-2 border-orange-200 hover:border-orange-400 text-orange-200 hover:text-orange-500 hover:bg-orange-50/80 backdrop-blur-xl px-12 sm:px-16 py-6 text-xl sm:text-2xl font-bold rounded-3xl transition-all shadow-lg hover:shadow-xl flex items-center gap-3 group w-full sm:w-auto bg-white/10"
-                >
-                  <Info className="h-6 w-6 group-hover:rotate-12 transition-transform" />
-                  Learn More
-                </Button>
-              </MissionDialog>
-            </motion.div>
-          </motion.div>
-
-        </div>
-      </motion.div>
+      {/* Texture */}
+      <div className="absolute inset-0 z-[5] opacity-[0.03] pointer-events-none mix-blend-multiply" 
+           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
+      />
     </section>
+  );
+}
+
+function Card({ card, index, mouseX, mouseY, scrollYProgress, isMobile }) {
+  // 1. Mouse Parallax (pixel offset)
+  const mouseXOffset = useTransform(mouseX, [-0.5, 0.5], [-25, 25]);
+  const mouseYOffset = useTransform(mouseY, [-0.5, 0.5], [-25, 25]);
+
+  // 2. Scroll Parallax Vertical (pixel offset)
+  // Higher zIndex = closer to camera = moves more
+  const dist = card.zIndex * 8 + 50; // Increased movement for more dramatic effect
+  const scrollYOffset = useTransform(scrollYProgress, [0, 1], [0, -dist]);
+  
+  // 3. Scroll Parallax Horizontal (spread effect)
+  // Cards on left move left, cards on right move right
+  const isLeft = String(card.x).startsWith('-');
+  const spread = isMobile ? 30 : 80; // Reduce spread on mobile
+  const scrollXOffset = useTransform(scrollYProgress, [0, 1], [0, isLeft ? -spread : spread]);
+
+  // 4. Combine all into CSS calc
+  // We utilize the useTransform hook to combine multiple motion values
+  // Squeeze width on mobile to fit screen
+  const xPosition = useTransform(
+    [mouseXOffset, scrollXOffset],
+    ([m, s]) => isMobile 
+      ? `calc(${card.x} * 0.6 + ${m + s}px)`
+      : `calc(${card.x} + ${m + s}px)`
+  );
+
+  const yPosition = useTransform(
+    [mouseYOffset, scrollYOffset],
+    ([m, s]) => `calc(${card.y} + ${m + s}px)`
+  );
+
+  return (
+    <motion.div
+      style={{
+        zIndex: card.zIndex,
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        x: xPosition, 
+        y: yPosition,
+      }}
+      initial={{ 
+        opacity: 0, 
+        scale: 0,
+        rotate: card.angle + (index % 2 === 0 ? 10 : -10)
+      }}
+      animate={{ 
+        opacity: 1, 
+        scale: card.scale * (isMobile ? 0.85 : 1),
+        rotate: card.angle,
+        transition: {
+          duration: 1.2,
+          ease: [0.22, 1, 0.36, 1],
+          delay: index * 0.08
+        }
+      }}
+      whileHover={{ 
+        scale: card.scale * (isMobile ? 1 : 1.15), 
+        rotate: 0, 
+        zIndex: 100,
+        transition: { duration: 0.3 }
+      }}
+      className="absolute w-32 h-44 md:w-56 md:h-80 p-1 shadow-xl origin-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+    >
+      <div className="relative w-full h-full overflow-hidden">
+        <Image 
+          src={card.src} 
+          alt={card.alt} 
+          fill 
+          sizes="(max-width: 768px) 128px, 224px"
+          className="object-cover"
+        />
+      </div>
+    </motion.div>
   );
 }
