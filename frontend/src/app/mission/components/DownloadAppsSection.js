@@ -185,9 +185,6 @@ export default function DownloadAppsSection() {
                   {/* Main App Icon with enhanced effects */}
                   <motion.div
                     className="relative group"
-                    initial={{ opacity: 0, scale: 0.5, rotate: -180 }}
-                    animate={isInView ? { opacity: 1, scale: 1, rotate: 0 } : { opacity: 0, scale: 0.5, rotate: -180 }}
-                    transition={{ delay: 0.2, duration: 0.8, type: "spring", stiffness: 200 }}
                   >
                     {/* Outer glow ring */}
                     <motion.div
@@ -207,22 +204,10 @@ export default function DownloadAppsSection() {
                     <motion.div
                       className="relative w-64 h-[32rem] sm:w-72 sm:h-[36rem] md:w-80 md:h-[40rem] bg-gradient-to-br from-[#FF6B35] via-[#FF8555] to-[#FF6B35] rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl flex items-center justify-center overflow-hidden"
                       whileHover={{ scale: 1.02 }}
-                      transition={{ 
-                        scale: { type: "spring", stiffness: 300, damping: 20 }
-                      }}
                     >
                       {/* Animated gradient overlay */}
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        animate={{
-                          x: ['-100%', '200%']
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          repeatDelay: 1,
-                          ease: "easeInOut"
-                        }}
                       />
                       
                       {/* App Icon Image */}
@@ -370,7 +355,7 @@ export default function DownloadAppsSection() {
                       transition: { type: "spring", stiffness: 400, damping: 25 }
                     }}
                     whileTap={{ scale: 0.95 }}
-                    className="relative bg-[#FF6B35] text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#FF6B35]/30 overflow-hidden group"
+                    className="relative bg-orange-500/60 backdrop-blur-md border border-white/20 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:bg-orange-500 hover:text-white overflow-hidden group"
                     style={{ willChange: 'transform' }}
                   >
                     {/* Animated shine effect */}

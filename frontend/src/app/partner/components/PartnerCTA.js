@@ -5,15 +5,18 @@ import { ArrowRight, Handshake, Rocket } from 'lucide-react';
 
 export default function PartnerCTA() {
   return (
-    <section className="bg-orange-50 scroll-mt-16">
-      <div className="max-w-6xl mx-auto px-4 py-12">
+    <section className="py-12 scroll-mt-16">
+      <div className="max-w-6xl mx-auto px-4">
         <motion.div
-          className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8"
+          className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 backdrop-blur-sm relative overflow-hidden"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="flex items-center gap-8 flex-1">
+          {/* Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center text-center md:text-left gap-6 md:gap-8 flex-1 w-full">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
@@ -21,13 +24,13 @@ export default function PartnerCTA() {
               transition={{ delay: 0.2 }}
               className="flex-shrink-0"
             >
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white shadow-lg flex items-center justify-center">
-                <Handshake className="w-12 h-12 md:w-16 md:h-16 text-orange-600" />
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/20">
+                <Handshake className="w-12 h-12 md:w-16 md:h-16 text-orange-500" />
               </div>
             </motion.div>
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <motion.div
-                className="text-xs uppercase tracking-wider text-orange-600 font-semibold mb-2"
+                className="text-xs uppercase tracking-wider text-orange-500 font-semibold mb-2"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -36,23 +39,23 @@ export default function PartnerCTA() {
                 REACH THE WORLD
               </motion.div>
               <motion.h2
-                className="text-2xl md:text-4xl font-bold text-gray-900 mb-3 flex items-center gap-2"
+                className="text-2xl md:text-4xl font-bold text-white mb-3 flex flex-wrap items-center justify-center md:justify-start gap-2"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.4 }}
               >
                 Ready to get more rentals?
-                <Rocket className="w-6 h-6 md:w-8 md:h-8 text-orange-600" />
+                <Rocket className="w-6 h-6 md:w-8 md:h-8 text-orange-500" />
               </motion.h2>
               <motion.p
-                className="text-base md:text-lg text-gray-700"
+                className="text-base md:text-lg text-gray-400"
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.5 }}
               >
-                Setting up takes <span className="font-bold">less than 5 minutes</span> to complete, <span className="font-bold">and its free!</span>
+                Setting up takes <span className="font-bold text-white">less than 5 minutes</span> to complete, <span className="font-bold text-white">and its free!</span>
               </motion.p>
             </div>
           </div>
@@ -61,10 +64,11 @@ export default function PartnerCTA() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+            className="relative z-10"
           >
             <motion.a
               href="#partner-form"
-              className="px-6 md:px-8 py-3 md:py-4 bg-orange-600 text-white font-semibold rounded-lg uppercase text-sm md:text-base flex items-center gap-2 shadow-lg"
+              className="px-6 md:px-8 py-3 md:py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg uppercase text-sm md:text-base flex items-center gap-2 shadow-lg transition-colors"
               whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4)' }}
               whileTap={{ scale: 0.95 }}
             >

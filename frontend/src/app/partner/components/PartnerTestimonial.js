@@ -1,52 +1,83 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Quote } from 'lucide-react';
 
 export default function PartnerTestimonial() {
   return (
-    <section id="testimonials" className="bg-white border-t scroll-mt-16">
-      <div className="max-w-6xl mx-auto px-4 py-12">
+    <section id="testimonials" className="relative py-24 scroll-mt-16 overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 relative z-10">
         <motion.div
-          className="bg-white rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 md:gap-12"
+          className="relative bg-orange-500/5 border border-orange-500/10 rounded-3xl p-8 md:p-16 backdrop-blur-sm"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="flex-1">
-            <motion.blockquote
-              className="text-2xl md:text-3xl font-bold text-gray-900 leading-relaxed mb-6"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              "Getting Our vehicle online was quick.
-              Managing all my reservations has been very
-              easy. Customer support is excellent, they
-              are always ready to help."
-            </motion.blockquote>
+          {/* Decorative Quote Icon */}
+          <div className="absolute top-8 left-8 text-orange-500/20">
+            <Quote className="w-24 h-24 transform -scale-x-100" />
+          </div>
+
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-[1.5fr_1fr] items-center gap-12">
+            <div className="space-y-8">
+              <motion.div 
+                className="flex gap-1"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+              >
+                {[...Array(5)].map((_, i) => (
+                  <svg key={i} className="w-6 h-6 text-orange-500 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                  </svg>
+                ))}
+              </motion.div>
+              
+              <motion.blockquote
+                className="text-2xl md:text-4xl font-bold text-white leading-tight"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+              >
+                "Getting our vehicle online was <span className="text-orange-500">quick</span>.
+                Managing all my reservations has been very
+                easy. Customer support is excellent, they
+                are always ready to help."
+              </motion.blockquote>
+              
+              <motion.div
+                className="flex items-center gap-4"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+              >
+                <div>
+                  <div className="font-bold text-xl text-white">M. Yassine AYACHE</div>
+                  <div className="text-gray-400 font-medium">AirbCar Co-Founder</div>
+                </div>
+              </motion.div>
+            </div>
+
             <motion.div
-              className="flex flex-col"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              className="relative"
+              initial={{ opacity: 0, scale: 0.9, rotate: 5 }}
+              whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
             >
-              <div className="font-semibold text-lg text-gray-900">M. Yassine AYACHE</div>
-              <div className="text-sm text-gray-600">AirbCar Co-Founder</div>
+              <div className="absolute inset-0 bg-orange-500/20 rounded-3xl transform rotate-6 translate-x-4 translate-y-4" />
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-square border-2 border-white/10">
+                <img 
+                  src="https://pbs.twimg.com/profile_images/1917726086734979074/GupYtYsR_400x400.jpg" 
+                  alt="M. Yassine AYACHE" 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
             </motion.div>
           </div>
-          <motion.div
-            className="flex-shrink-0"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
-          >
-            <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-orange-100 shadow-xl bg-gray-100 flex items-center justify-center">
-              <img src="https://pbs.twimg.com/profile_images/1917726086734979074/GupYtYsR_400x400.jpg" alt="M. Yassine AYACHE" className="w-full h-full object-cover" />
-            </div>
-          </motion.div>
         </motion.div>
       </div>
     </section>
