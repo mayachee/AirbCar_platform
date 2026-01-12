@@ -114,7 +114,7 @@ export default function BoltHeroSection() {
   return (
     <section 
       ref={containerRef} 
-      className="relative min-h-[120vh] flex flex-col items-center justify-start pt-32 overflow-hidden"
+      className="relative min-h-[90vh] md:min-h-[120vh] flex flex-col items-center justify-start pt-20 md:pt-32 overflow-hidden"
     >
       {/* Background Text Layer */}
       <div className="absolute  inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-0">
@@ -207,7 +207,7 @@ function Card({ card, index, mouseX, mouseY, scrollYProgress, isMobile }) {
       }}
       animate={{ 
         opacity: 1, 
-        scale: card.scale * (isMobile ? 0.85 : 1),
+        scale: card.scale * (isMobile ? 1 : 1),
         rotate: card.angle,
         transition: {
           duration: 1.2,
@@ -216,12 +216,12 @@ function Card({ card, index, mouseX, mouseY, scrollYProgress, isMobile }) {
         }
       }}
       whileHover={{ 
-        scale: card.scale * (isMobile ? 1 : 1.15), 
+        scale: card.scale * (isMobile ? 1.05 : 1.15), 
         rotate: 0, 
         zIndex: 100,
         transition: { duration: 0.3 }
       }}
-      className="absolute w-32 h-44 md:w-56 md:h-80 p-1 shadow-xl origin-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+      className="absolute w-40 h-56 md:w-56 md:h-80 p-1 shadow-xl origin-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
     >
       <div className="relative w-full h-full overflow-hidden">
         <Image 

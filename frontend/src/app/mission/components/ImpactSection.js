@@ -68,7 +68,7 @@ export default function ImpactSection() {
       <div className="space-y-16">
         {/* Top Section: The Impact */}
         <SectionWrapper delay={0.1}>
-          <div className="flex flex-col lg:flex-row gap-14 lg:gap-28 items-center mb-20">
+          <div className="flex flex-col-reverse lg:flex-row gap-14 lg:gap-28 items-center mb-20">
             {/* Image with enhanced styling */}
             <motion.div
               className="w-full lg:w-[560px] flex-shrink-0"
