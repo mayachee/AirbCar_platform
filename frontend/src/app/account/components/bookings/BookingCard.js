@@ -32,7 +32,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -4 }}
-      className="bg-orange-500/50 rounded-2xl shadow-lg border border-orange-500 overflow-hidden hover:shadow-2xl hover:shadow-orange-500/10 hover:border-orange-500 transition-all duration-300 group"
+      className="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden hover:shadow-2xl hover:shadow-orange-500/10 hover:border-orange-500/50 transition-all duration-300 group"
     >
       <div className="flex flex-col md:flex-row">
         {/* Vehicle Image */}
@@ -105,20 +105,20 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">
+                    <h3 className="text-2xl font-bold text-white mb-1 group-hover:text-orange-500 transition-colors">
                       {listing.make && listing.model ? `${listing.make} ${listing.model}` : 'Unknown Vehicle'}
-                      {listing.year && <span className="text-lg text-gray-500 font-normal"> ({listing.year})</span>}
+                      {listing.year && <span className="text-lg text-slate-400 font-normal"> ({listing.year})</span>}
                     </h3>
                     <div className="flex items-center flex-wrap gap-3 mt-2">
-                      <span className="text-sm text-gray-500 font-medium">Booking #{booking.id}</span>
+                      <span className="text-sm text-slate-400 font-medium">Booking #{booking.id}</span>
                       {duration && (
-                        <span className="text-sm text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <span className="text-sm text-slate-300 bg-slate-700/50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-white/5">
                           <Clock className="h-3.5 w-3.5 text-orange-500" />
                           <span className="font-medium">{duration} day{duration !== 1 ? 's' : ''}</span>
                         </span>
                       )}
                       {booking.requested_at && (
-                        <span className="text-sm text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <span className="text-sm text-slate-300 bg-slate-700/50 px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-white/5">
                           <Calendar className="h-3.5 w-3.5 text-orange-500" />
                           <span>{formatDate(booking.requested_at)}</span>
                         </span>
@@ -131,69 +131,69 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
               {/* Booking Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <motion.div
-                  whileHover={{ x: 4, backgroundColor: "rgba(224, 231, 255, 0.6)" }}
-                  className="flex items-start gap-3 p-3 bg-indigo-50/40 rounded-xl border border-indigo-100/80 transition-colors"
+                  whileHover={{ x: 4, backgroundColor: "rgba(99, 102, 241, 0.15)" }}
+                  className="flex items-start gap-3 p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 transition-colors"
                 >
-                  <div className="p-2 bg-white rounded-lg text-indigo-600 shadow-sm border border-indigo-50">
+                  <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-300 shadow-sm border border-indigo-500/30">
                     <Calendar className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-indigo-900 uppercase tracking-wide mb-1">Pickup</p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs font-bold text-indigo-200 uppercase tracking-wide mb-1">Pickup</p>
+                    <p className="text-sm font-semibold text-white">
                       {formatDateTime(booking.start_time || booking.start_date || booking.pickup_date)}
                     </p>
                     {booking.pickup_location && (
-                      <p className="text-xs text-gray-500 mt-1 font-medium">{booking.pickup_location}</p>
+                      <p className="text-xs text-slate-400 mt-1 font-medium">{booking.pickup_location}</p>
                     )}
                   </div>
                 </motion.div>
                 
                 <motion.div
-                  whileHover={{ x: 4, backgroundColor: "rgba(209, 250, 229, 0.6)" }}
-                  className="flex items-start gap-3 p-3 bg-emerald-50/40 rounded-xl border border-emerald-100/80 transition-colors"
+                  whileHover={{ x: 4, backgroundColor: "rgba(16, 185, 129, 0.15)" }}
+                  className="flex items-start gap-3 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 transition-colors"
                 >
-                  <div className="p-2 bg-white rounded-lg text-emerald-600 shadow-sm border border-emerald-50">
+                  <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-300 shadow-sm border border-emerald-500/30">
                     <Calendar className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-emerald-900 uppercase tracking-wide mb-1">Return</p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-xs font-bold text-emerald-200 uppercase tracking-wide mb-1">Return</p>
+                    <p className="text-sm font-semibold text-white">
                       {formatDateTime(booking.end_time || booking.end_date || booking.return_date)}
                     </p>
                     {booking.return_location && (
-                      <p className="text-xs text-gray-500 mt-1 font-medium">{booking.return_location}</p>
+                      <p className="text-xs text-slate-400 mt-1 font-medium">{booking.return_location}</p>
                     )}
                   </div>
                 </motion.div>
                 
                 <motion.div
-                  whileHover={{ x: 4, backgroundColor: "rgba(237, 233, 254, 0.6)" }}
-                  className="flex items-start gap-3 p-3 bg-violet-50/40 rounded-xl border border-violet-100/80 transition-colors"
+                  whileHover={{ x: 4, backgroundColor: "rgba(139, 92, 246, 0.15)" }}
+                  className="flex items-start gap-3 p-3 bg-violet-500/10 rounded-xl border border-violet-500/20 transition-colors"
                 >
-                  <div className="p-2 bg-white rounded-lg text-violet-600 shadow-sm border border-violet-50">
+                  <div className="p-2 bg-violet-500/20 rounded-lg text-violet-300 shadow-sm border border-violet-500/30">
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-violet-900 uppercase tracking-wide mb-1">Location</p>
-                    <p className="text-sm font-semibold text-gray-900">{listing.location || 'Location not specified'}</p>
+                    <p className="text-xs font-bold text-violet-200 uppercase tracking-wide mb-1">Location</p>
+                    <p className="text-sm font-semibold text-white">{listing.location || 'Location not specified'}</p>
                   </div>
                 </motion.div>
                 
                 {listing.fuel_type && (
                   <motion.div
-                    whileHover={{ x: 4, backgroundColor: "rgba(254, 243, 199, 0.6)" }}
-                    className="flex items-start gap-3 p-3 bg-amber-50/40 rounded-xl border border-amber-100/80 transition-colors"
+                    whileHover={{ x: 4, backgroundColor: "rgba(245, 158, 11, 0.15)" }}
+                    className="flex items-start gap-3 p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 transition-colors"
                   >
-                    <div className="p-2 bg-white rounded-lg text-amber-600 shadow-sm border border-amber-50">
+                    <div className="p-2 bg-amber-500/20 rounded-lg text-amber-300 shadow-sm border border-amber-500/30">
                       <Car className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-amber-900 uppercase tracking-wide mb-1">Vehicle</p>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-xs font-bold text-amber-200 uppercase tracking-wide mb-1">Vehicle</p>
+                      <p className="text-sm font-semibold text-white">
                         {listing.fuel_type} • {listing.transmission || 'Auto'}
                       </p>
                       {listing.seating_capacity && (
-                        <p className="text-xs text-gray-500 mt-1 font-medium">{listing.seating_capacity} seats</p>
+                        <p className="text-xs text-slate-400 mt-1 font-medium">{listing.seating_capacity} seats</p>
                       )}
                     </div>
                   </motion.div>
@@ -205,34 +205,34 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200"
+                  className="mt-4 p-4 bg-slate-700/30 rounded-xl border border-slate-600"
                 >
-                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1.5">Your Message</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{booking.request_message}</p>
+                  <p className="text-xs font-semibold text-slate-300 uppercase tracking-wide mb-1.5">Your Message</p>
+                  <p className="text-sm text-slate-300 leading-relaxed">{booking.request_message}</p>
                 </motion.div>
               )}
             </div>
             
             {/* Price & Actions Sidebar */}
             <div className="lg:w-64 flex-shrink-0">
-              <div className="h-full bg-orange-500/50 backdrop-blur-xl rounded-2xl p-6 border border-white/60 shadow-xl flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-orange-400/20 rounded-full blur-2xl"></div>
-                <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-orange-300/20 rounded-full blur-2xl"></div>
+              <div className="h-full bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl flex flex-col justify-between relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
                 
                 <div className="relative text-center mb-6 z-10">
                   <div className="flex items-center justify-center gap-2 mb-3">
-                    <div className="p-1.5 bg-orange-100 rounded-lg">
-                      <TrendingUp className="h-4 w-4 text-orange-600" />
+                    <div className="p-1.5 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                      <TrendingUp className="h-4 w-4 text-orange-500" />
                     </div>
-                    <p className="text-xs font-bold text-orange-900/80 uppercase tracking-wider">Total Price</p>
+                    <p className="text-xs font-bold text-orange-200/80 uppercase tracking-wider">Total Price</p>
                   </div>
-                  <p className="text-4xl font-black text-gray-900 mb-2 tracking-tight drop-shadow-sm">
+                  <p className="text-4xl font-black text-white mb-2 tracking-tight drop-shadow-sm">
                     {formatCurrency(booking.price || booking.total_price || booking.total_amount)}
                   </p>
                   {booking.payment_method && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-orange-100 shadow-sm">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 shadow-sm">
                       <CreditCard className="h-3.5 w-3.5 text-orange-500" />
-                      <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">{booking.payment_method}</span>
+                      <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wide">{booking.payment_method}</span>
                     </div>
                   )}
                 </div>
@@ -253,10 +253,10 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => onPrint(booking)}
-                    className="w-full px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-semibold flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full px-4 py-2.5 bg-transparent text-slate-300 border border-slate-600 rounded-xl hover:bg-white/5 hover:border-slate-500 transition-all font-semibold flex items-center justify-center gap-2 shadow-sm"
                     title="Print receipt"
                   >
-                    <Printer className="h-4 w-4 text-gray-400" />
+                    <Printer className="h-4 w-4 text-slate-400" />
                     <span className="text-xs uppercase tracking-wide">Print booking</span>
                   </motion.button>
                 </div>
@@ -265,14 +265,14 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
           </div>
 
           {/* Quick Actions Footer */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="mt-6 pt-6 border-t border-slate-700/50">
             {canCancel ? (
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onCancel(booking.id)}
                 disabled={actionLoading}
-                className="px-6 py-2.5 text-sm font-bold text-red-600 bg-red-50/50 border border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+                className="px-6 py-2.5 text-sm font-bold text-red-600 bg-red border border-red-600 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
               >
                 {actionLoading ? (
                   <>
