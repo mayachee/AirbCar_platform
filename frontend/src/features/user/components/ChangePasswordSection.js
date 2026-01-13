@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { usePasswordChange } from '../hooks/usePasswordChange';
+import { Input } from '@/components/ui/input';
+import { Lock, Key, Shuffle } from 'lucide-react';
 
 export default function ChangePasswordSection() {
   const { changePassword, loading, error, success } = usePasswordChange();
@@ -43,73 +45,100 @@ export default function ChangePasswordSection() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Change Password</h3>
+    <div className="bg-orange-500/5 backdrop-blur-md rounded-2xl p-8 border border-orange-500/10 transition-shadow duration-300 hover:shadow-lg">
+      <h3 className="text-lg font-bold text-white-900 mb-6 flex items-center gap-2">
+            <Lock className="w-5 h-5 text-orange-500" />
+            Change Password
+      </h3>
 
       {success && (
-        <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">
-          Password changed successfully!
+        <div className="mb-6 p-4 bg-green-50/50 border border-green-200 rounded-xl flex items-center gap-3">
+             <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <span className="text-green-600 text-lg">✓</span>
+             </div>
+             <div>
+                <p className="font-semibold text-green-900">Password Updated</p>
+                <p className="text-sm text-green-700">Your password has been changed successfully.</p>
+             </div>
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-          {error}
+        <div className="mb-6 p-4 bg-red-50/50 border border-red-200 rounded-xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                  <span className="text-red-600 text-lg">!</span>
+             </div>
+             <div>
+                <p className="font-semibold text-red-900">Error</p>
+                <p className="text-sm text-red-700">{error}</p>
+             </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Current Password *
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700 block">
+            Current Password <span className="text-red-500">*</span>
           </label>
-          <input
+           <Input
             type="password"
             name="oldPassword"
+            icon={Lock}
             value={formData.oldPassword}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Enter current password"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            New Password *
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700 block">
+            New Password <span className="text-red-500">*</span>
           </label>
-          <input
+           <Input
             type="password"
             name="newPassword"
+            icon={Key}
             value={formData.newPassword}
             onChange={handleChange}
             required
             minLength={8}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Enter new password (min. 8 chars)"
           />
-          <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Confirm New Password *
+        <div className="space-y-2">
+           <label className="text-sm font-semibold text-gray-700 block">
+            Confirm New Password <span className="text-red-500">*</span>
           </label>
-          <input
+           <Input
             type="password"
             name="confirmPassword"
+            icon={Key}
             value={formData.confirmPassword}
             onChange={handleChange}
             required
             minLength={8}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            placeholder="Confirm new password"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-orange-600 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg hover:shadow-orange-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-4 flex items-center justify-center gap-2"
         >
-          {loading ? 'Changing Password...' : 'Change Password'}
+          {loading ? (
+             <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Changing Password...
+             </>
+          ) : (
+            <>
+                 <Shuffle className="w-4 h-4" />
+                Change Password
+            </>
+          )}
         </button>
       </form>
     </div>

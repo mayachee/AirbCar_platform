@@ -79,7 +79,7 @@ export default function AdminDashboard() {
       }
 
       const response = await fetch(`${apiUrl}/api/verify-token/`, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -87,11 +87,15 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        // Check if user is admin (staff or superuser)
-        const isUserAdmin = userData.is_staff === true || 
-                           userData.is_superuser === true ||
-                           userData.is_admin === true;
+        const data = await response.json();
+        const userObj = data.user || {};
+        
+        // Check if user is admin (staff or superuser) or has specific email
+        const isUserAdmin = userObj.is_staff === true || 
+                           userObj.is_superuser === true ||
+                           userObj.is_admin === true ||
+                           userObj.role === 'admin' ||
+                           userObj.email === 'ayacheyassine2000@gmail.com';
         
         setIsAdmin(isUserAdmin);
         

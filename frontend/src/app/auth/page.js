@@ -280,6 +280,7 @@ function AuthForm() {
     handleSubmit: handleSignUpSubmit,
     formState: { errors: signUpErrors },
     watch: watchSignUp,
+    setValue: setSignUpValue,
   } = useForm({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -290,6 +291,14 @@ function AuthForm() {
   
   // Watch isPartner field to show/hide partner fields
   const isPartnerSignup = watchSignUp('isPartner') || false
+
+  // Check if role is partner in query params to auto-check the checkbox
+  useEffect(() => {
+    const role = searchParams.get('role')
+    if (role === 'partner') {
+      setSignUpValue('isPartner', true)
+    }
+  }, [searchParams, setSignUpValue])
 
   const onSignInSubmit = async (data) => {
     setIsLoading(true)

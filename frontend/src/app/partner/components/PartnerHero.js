@@ -111,7 +111,6 @@ export default function PartnerHero() {
                 alt="Partner Dashboard showing earnings and fleet management" 
                 className="w-full h-full object-cover opacity-90" 
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent pointer-events-none z-20" />
             </div>
             
             {/* Floating Card 1 */}

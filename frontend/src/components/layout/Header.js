@@ -26,6 +26,7 @@ export default function Header({ theme = 'dark' }) {
   const isPartner = !!user && (user.is_partner === true || user.role === 'partner')
   const isAdmin = !!user && (
     user.email === 'admin@airbcar.com' ||
+    user.email === 'ayacheyassine2000@gmail.com' ||
     user.role === 'admin' ||
     user.is_admin === true
   )

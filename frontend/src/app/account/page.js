@@ -2,19 +2,19 @@
 
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountPage } from './hooks';
 import { formatProfileCompletion } from '@/features/user';
 import {
-  AccountTabs,
   ProfileTab,
   SecurityTab,
-  PreferencesTab,
   FavoritesTab,
 } from './components';
 import ImprovedBookingsTab from './components/ImprovedBookingsTab';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { User, Shield, Settings, Heart, Calendar, LogOut, Wallet, Award, Car } from 'lucide-react';
 
 function AccountPageContent() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -64,7 +64,7 @@ function AccountPageContent() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
@@ -74,166 +74,138 @@ function AccountPageContent() {
     return null;
   }
 
+  const sidebarItems = [
+    { id: 'profile', label: 'Profile Settings', icon: User },
+    { id: 'bookings', label: 'My Bookings', icon: Calendar },
+    { id: 'favorites', label: 'Favorites', icon: Heart },
+    { id: 'security', label: 'Security', icon: Shield },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0F172A] relative overflow-hidden font-sans">
+       {/* Abstract Background Pattern */}
+       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/10 to-orange-600/10 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+      </div>
+
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Header with User Info */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 relative z-10">
+        
+        {/* Welcome Section */}
+        <div className="mb-12">
+            <h1 className="text-4xl font-bold text-white mb-4">
                 Welcome back, {user?.first_name || user?.username || 'User'}! 👋
-              </h1>
-              <p className="text-gray-600 mt-2">Manage your profile, bookings, and preferences</p>
-            </div>
-            {profileCompletion !== undefined && (
-              <div className="flex-shrink-0">
-                <div className="bg-white rounded-lg shadow-sm border p-4 min-w-[200px]">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Profile Complete</span>
-                    <span className="text-sm font-semibold text-orange-600">{profileCompletion}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="bg-gradient-to-r from-orange-500 to-orange-600 h-2.5 rounded-full transition-all duration-500"
-                      style={{ width: `${profileCompletion}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Stats Cards */}
-          {stats && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-700">Total Bookings</p>
-                    <p className="text-2xl font-bold text-blue-900 mt-1">{stats.total_bookings || 0}</p>
-                  </div>
-                  <div className="bg-blue-200 rounded-full p-3">
-                    <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-green-700">Completed</p>
-                    <p className="text-2xl font-bold text-green-900 mt-1">{stats.completed_bookings || 0}</p>
-                  </div>
-                  <div className="bg-green-200 rounded-full p-3">
-                    <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-purple-700">Favorites</p>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">{stats.total_favorites || 0}</p>
-                  </div>
-                  <div className="bg-purple-200 rounded-full p-3">
-                    <svg className="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-orange-700">Total Spent</p>
-                    <p className="text-2xl font-bold text-orange-900 mt-1">
-                      {stats.total_spent ? `${parseFloat(stats.total_spent).toFixed(0)} MAD` : '0 MAD'}
-                    </p>
-                  </div>
-                  <div className="bg-orange-200 rounded-full p-3">
-                    <svg className="w-6 h-6 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            </h1>
+            <p className="text-slate-300 text-lg">Manage your account, bookings, and preferences.</p>
         </div>
 
         {/* Save Message */}
         {saveMessage && (
           <div
-            className={`mb-6 p-4 rounded-lg border ${
+            className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-fade-in ${
               saveMessage.includes('success')
-                ? 'bg-green-50 text-green-800 border-green-200'
-                : 'bg-red-50 text-red-800 border-red-200'
+                ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                : 'bg-red-500/10 text-red-400 border-red-500/20'
             }`}
           >
-            <div className="flex items-center gap-2">
-              {saveMessage.includes('success') ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+             {saveMessage.includes('success') ? (
+                <Shield className="w-5 h-5" />
               ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Shield className="w-5 h-5" />
               )}
-              <span className="font-medium">{saveMessage}</span>
-            </div>
+            <span className="font-medium">{saveMessage}</span>
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <AccountTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        {/* Dashboard Layout */}
+        <div className="flex flex-col lg:flex-row gap-8">
+            
+            {/* Sidebar Navigation */}
+            <aside className="lg:w-72 flex-shrink-0">
+                <div className="bg-[#1E293B]/50 backdrop-blur-md border border-white/10 rounded-2xl p-4 sticky top-24">
+                    <nav className="space-y-2">
+                        {sidebarItems.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = activeTab === item.id;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                                        isActive 
+                                        ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' 
+                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white transition-colors'}`} />
+                                    {item.label}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </div>
+            </aside>
 
-        {/* Tab Content */}
-        <div className="bg-white rounded-b-xl shadow-sm border overflow-hidden">
-          {activeTab === 'profile' && (
-            <ProfileTab
-              accountData={accountData}
-              handleAccountFieldChange={handleAccountFieldChange}
-              formatProfileCompletion={formatProfileCompletion}
-              profileCompletion={profileCompletion}
-              onProfilePictureChange={handleProfilePictureUpload}
-              handleSaveProfile={handleSaveProfile}
-              saving={saving}
-              stats={stats}
-              upcomingBookings={upcomingBookings}
-            />
-          )}
+            {/* Main Content Area */}
+            <main className="flex-1 min-w-0">
+                <div className="group relative bg-[#1E293B]/50 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden min-h-[600px] border border-white/10 transition-all duration-500 hover:shadow-orange-500/10">
+                    {/* Decorative Top Gradient */}
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500" />
+                    
+                    {/* Ambient Background Glows */}
+                    <div className="absolute -top-32 -right-32 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {activeTab === 'security' && (
-            <SecurityTab
-              emailVerified={emailVerified}
-              onRefreshVerification={refreshVerificationStatus}
-              onDeleteAccount={() => handleDeleteAccount(logout)}
-            />
-          )}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} // Custom spring-like easing
+                            className="h-full relative z-10"
+                        >
+                            {activeTab === 'profile' && (
+                                <ProfileTab
+                                    accountData={accountData}
+                                    handleAccountFieldChange={handleAccountFieldChange}
+                                    formatProfileCompletion={formatProfileCompletion}
+                                    profileCompletion={profileCompletion}
+                                    onProfilePictureChange={handleProfilePictureUpload}
+                                    handleSaveProfile={handleSaveProfile}
+                                    saving={saving}
+                                    stats={stats}
+                                    upcomingBookings={upcomingBookings}
+                                />
+                            )}
 
-          {activeTab === 'preferences' && <PreferencesTab />}
+                            {activeTab === 'security' && (
+                                <SecurityTab
+                                    emailVerified={emailVerified}
+                                    onRefreshVerification={refreshVerificationStatus}
+                                    onDeleteAccount={() => handleDeleteAccount(logout)}
+                                />
+                            )}
 
-          {activeTab === 'favorites' && (
-            <FavoritesTab
-              favorites={favorites}
-              loading={favoritesLoading}
-              onRemoveFavorite={handleRemoveFavorite}
-              onBookNow={handleBookNow}
-              onViewDetails={handleViewDetails}
-            />
-          )}
+                            {activeTab === 'favorites' && (
+                                <FavoritesTab
+                                    favorites={favorites}
+                                    loading={favoritesLoading}
+                                    onRemoveFavorite={handleRemoveFavorite}
+                                    onBookNow={handleBookNow}
+                                    onViewDetails={handleViewDetails}
+                                />
+                            )}
 
-          {activeTab === 'bookings' && <ImprovedBookingsTab />}
+                            {activeTab === 'bookings' && <ImprovedBookingsTab />}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            </main>
+        
         </div>
       </div>
 
@@ -246,7 +218,7 @@ export default function AccountPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
         </div>
       }

@@ -272,7 +272,7 @@ export default function BookingFlow({
 
       {/* Abstract Background Pattern - Only visible if parent doesn't provide it */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 rounded-3xl">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full" />
         <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
       </div>
 

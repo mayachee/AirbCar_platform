@@ -148,10 +148,10 @@ export default function Footer() {
           {/* Brand Section - Spans 5 columns */}
           <div className="lg:col-span-5 space-y-6 sm:space-y-8">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
-              Stay Focused,<br />Stay Ahead
+              Drive Your<br />Next Adventure
             </h2>
             <p className="text-gray-400 leading-relaxed max-w-md text-lg font-light">
-              Join thousands of teams using {APP_NAME} to streamline work and unlock clarity every day.
+              Join thousands of travelers using {APP_NAME} to find the perfect ride for any journey.
             </p>
             
             {/* Newsletter Form */}

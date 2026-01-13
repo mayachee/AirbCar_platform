@@ -139,7 +139,7 @@ export default function BookingsTab({ upcomingBookings, pastBookings, loading: p
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">My Bookings</h3>
+            <h3 className="text-xl font-semibold text-white-900 mb-2">My Bookings</h3>
             <p className="text-gray-600">View and manage your car rental bookings</p>
           </div>
           <button

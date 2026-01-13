@@ -126,7 +126,7 @@ export function useOptimizedDashboard() {
       }
 
       const response = await fetch(`${apiUrl}/api/verify-token/`, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -134,10 +134,11 @@ export function useOptimizedDashboard() {
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        const isUserPartner = userData.is_partner === true || 
-                             userData.role === 'partner' || 
-                             userData.email?.includes('partner');
+        const data = await response.json();
+        const userObj = data.user || {}; // Safer extraction
+        const isUserPartner = userObj.is_partner === true || 
+                             userObj.role === 'partner' || 
+                             userObj.email?.includes('partner');
         
         setIsPartner(isUserPartner);
         setBackendAvailable(true);

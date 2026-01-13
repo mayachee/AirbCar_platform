@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { validateField } from '@/features/user/types/accountData';
+import { Input } from '@/components/ui/input';
+import { User, Mail, Phone, Calendar, Camera,  FileText, CheckCircle, AlertCircle, Eye } from 'lucide-react';
 
 export default function ProfileSection({ accountData, handleFieldChange, formatProfileCompletion, profileCompletion, onProfilePictureChange }) {
   const [uploading, setUploading] = useState(false);
@@ -65,29 +67,6 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
     };
   }, []);
 
-  // Helper to get field error class
-  const getFieldErrorClass = (fieldName) => {
-    const hasError = touchedFields.has(fieldName) && fieldErrors[fieldName];
-    return hasError 
-      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-      : 'border-gray-300 focus:ring-orange-500 focus:border-transparent';
-  };
-
-  // Helper to render field error
-  const renderFieldError = (fieldName) => {
-    if (touchedFields.has(fieldName) && fieldErrors[fieldName]) {
-      return (
-        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          {fieldErrors[fieldName]}
-        </p>
-      );
-    }
-    return null;
-  };
-
   // Debug: Log profile image data
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -99,23 +78,22 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
   return (
     <div className="space-y-8">
       {/* Profile Picture Upload */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h3>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 space-y-4 sm:space-y-0">
-          <div className="flex-shrink-0 mx-auto sm:mx-0">
+      <div className="bg-orange-500/5 backdrop-blur-md rounded-2xl p-6 border border-orange-500/10 transition-shadow duration-300 hover:shadow-lg">
+        <h3 className="text-lg font-bold text-white-400 mb-6 flex items-center gap-2">
+            <User className="w-5 h-5 text-orange-500" />
+            Profile Picture
+        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-8 space-y-4 sm:space-y-0">
+          <div className="relative group mx-auto sm:mx-0">
+            <div className="absolute inset-0 bg-orange-500 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
             <img
               src={accountData.profileImage || accountData.profileImageUrl || '/default-avatar.svg'}
               alt="Profile"
-              className="h-32 w-32 sm:h-36 sm:w-36 rounded-full object-cover border-4 border-white shadow-lg"
+              className="relative h-32 w-32 sm:h-36 sm:w-36 rounded-full object-cover border-4 border-white shadow-xl bg-white"
               onError={(e) => {
                 console.warn('⚠️ Profile image failed to load, using default');
                 if (e.target.src !== '/default-avatar.svg') {
                   e.target.src = '/default-avatar.svg';
-                }
-              }}
-              onLoad={() => {
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('✅ Profile image loaded successfully');
                 }
               }}
             />
@@ -130,137 +108,137 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                 className="hidden"
                 id="profile-picture-upload"
               />
-              <span className="inline-flex items-center px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+              <span className="cursor-pointer inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-orange-500/25 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                <Camera className="w-4 h-4" />
                 {uploading ? 'Uploading...' : 'Change Picture'}
               </span>
             </label>
-            <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF. Max size 5MB.</p>
+            <p className="text-xs text-gray-500 mt-2 font-medium">Supported: JPG, PNG, GIF (Max 5MB)</p>
           </div>
         </div>
       </div>
 
       {/* Basic Information */}
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+      <div className="border-t border-gray-100 pt-8">
+        <h3 className="text-lg font-bold text-white-900 mb-6 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-orange-500" />
+            Basic Information
+        </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            First Name *
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700 block">
+            First Name <span className="text-red-500">*</span>
           </label>
-          <input
+          <Input
             type="text"
             name="firstName"
+            icon={User}
             value={accountData.firstName || ''}
             onChange={(e) => handleFieldChangeWithValidation('firstName', e.target.value)}
             onBlur={() => setTouchedFields(prev => new Set([...prev, 'firstName']))}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${getFieldErrorClass('firstName')}`}
             placeholder="Enter your first name"
+            error={touchedFields.has('firstName') ? fieldErrors['firstName'] : null}
           />
-          {renderFieldError('firstName')}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Last Name *
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700 block">
+            Last Name <span className="text-red-500">*</span>
           </label>
-          <input
+           <Input
             type="text"
             name="lastName"
+            icon={User}
             value={accountData.lastName || ''}
             onChange={(e) => handleFieldChangeWithValidation('lastName', e.target.value)}
             onBlur={() => setTouchedFields(prev => new Set([...prev, 'lastName']))}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${getFieldErrorClass('lastName')}`}
             placeholder="Enter your last name"
+            error={touchedFields.has('lastName') ? fieldErrors['lastName'] : null}
           />
-          {renderFieldError('lastName')}
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Email Address *
+      <div className="mt-6 space-y-2">
+        <label className="text-sm font-semibold text-gray-700 block">
+          Email Address <span className="text-red-500">*</span>
         </label>
-        <input
+         <Input
           type="email"
           name="email"
+          icon={Mail}
           value={accountData.email}
           disabled
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+          className="bg-gray-50/50 text-gray-500 border-gray-200"
         />
-        <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+        <p className="text-xs text-gray-400 pl-1">Email cannot be changed directly.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number *
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700 block">
+            Phone Number <span className="text-red-500">*</span>
           </label>
-          <input
+           <Input
             type="tel"
             name="phoneNumber"
+            icon={Phone}
             value={accountData.phoneNumber || ''}
             onChange={(e) => handleFieldChangeWithValidation('phoneNumber', e.target.value)}
             onBlur={() => setTouchedFields(prev => new Set([...prev, 'phoneNumber']))}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${getFieldErrorClass('phoneNumber')}`}
-            placeholder="+1234567890"
+            placeholder="+212 6..."
+            error={touchedFields.has('phoneNumber') ? fieldErrors['phoneNumber'] : null}
           />
-          {renderFieldError('phoneNumber')}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Date of Birth *
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-700 block">
+            Date of Birth <span className="text-red-500">*</span>
           </label>
-          <input
+           <Input
             type="date"
             name="dateOfBirth"
+            icon={Calendar}
             value={accountData.dateOfBirth || ''}
             onChange={(e) => handleFieldChangeWithValidation('dateOfBirth', e.target.value)}
             onBlur={() => setTouchedFields(prev => new Set([...prev, 'dateOfBirth']))}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${getFieldErrorClass('dateOfBirth')}`}
             max={new Date().toISOString().split('T')[0]}
+            error={touchedFields.has('dateOfBirth') ? fieldErrors['dateOfBirth'] : null}
           />
-          {renderFieldError('dateOfBirth')}
         </div>
           </div>
         </div>
         
         {/* Driver's License Documents */}
-      <div className="border-t-2 border-gray-300 pt-8 mt-8 bg-white rounded-lg p-6 shadow-sm">
+      <div className="border-t border-gray-100 pt-8 mt-4">
         <div className="mb-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+          <h3 className="text-lg font-bold text-white-400 mb-2 flex items-center gap-2">
+             <FileText className="w-5 h-5 text-orange-500" />
             Driver's License Documents
           </h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Upload both sides of your driver's license for verification purposes. These documents are required to complete your profile and enable bookings.
+          <p className="text-sm text-gray-500 leading-relaxed max-w-2xl">
+            Upload both sides of your driver's license for verification purposes. These documents are required to complete your profile.
           </p>
         </div>
+        
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
             {(accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl) && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Complete
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold shadow-sm">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Documents Verified
               </span>
             )}
           </div>
           
           {/* Show success message if documents exist */}
           {(accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl) && (
-            <div className="mb-4 p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+            <div className="mb-6 p-4 bg-green-50/50 border border-green-200 rounded-xl">
               <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-green-900 mb-1">
-                    ✓ Driver's License Documents Saved
+                    Documents Uploaded Successfully
                   </p>
                   <p className="text-xs text-green-700 mb-3">
-                    Both front and back documents are saved in your profile and will be used for bookings.
+                    Both front and back documents are saved.
                   </p>
                   <div className="flex items-center gap-4">
                     {accountData.licenseFrontDocumentUrl && (
@@ -268,12 +246,9 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                         href={accountData.licenseFrontDocumentUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 underline font-medium"
+                        className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 underline font-medium transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                       <Eye className="w-3.5 h-3.5" />
                         View Front
                       </a>
                     )}
@@ -282,12 +257,9 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                         href={accountData.licenseBackDocumentUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 underline font-medium"
+                        className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 underline font-medium transition-colors"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                         <Eye className="w-3.5 h-3.5" />
                         View Back
                       </a>
                     )}
@@ -298,8 +270,8 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           )}
           
           {accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl && (
-          <p className="text-sm text-gray-600 mb-4">
-              You can replace your documents below if needed.
+          <p className="text-sm text-gray-600 mb-4 font-medium pl-1">
+              Update Documents
           </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -316,19 +288,29 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                 const isBlob = isBlobUrl(imageUrl);
                 
                 return (
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
-                    <p className="text-sm font-medium text-gray-700">{label}</p>
-                    <label className="block">
+                  <div className="group rounded-xl border border-orange-500 bg-orange-500/30 p-4 space-y-4 transition-all duration-200 hover:shadow-md hover:border-orange-200">
+                    <p className="text-sm font-semibold text-white-300 flex items-center gap-2">
+                        {label}
+                        {imageUrl && <CheckCircle className="w-4 h-4 text-green-500 ml-auto" />}
+                    </p>
+                    <label className="block w-full">
                       <input
                         type="file"
                         accept="image/*"
                         onChange={onSelect}
-                        className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-orange-500 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-orange-600"
+                         className="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-xs file:font-semibold
+                        file:bg-orange-50 file:text-orange-700
+                        hover:file:bg-orange-100
+                        cursor-pointer file:cursor-pointer
+                        transition-all"
                       />
                     </label>
                     {fileName && (
-                      <p className="text-xs text-gray-500 truncate">
-                        Selected file: <span className="font-medium">{fileName}</span>
+                      <p className="text-xs text-gray-500 truncate bg-orange-600/40 px-2 py-1 rounded border border-gray-100">
+                        Selected: <span className="font-medium text-gray-900">{fileName}</span>
                       </p>
                     )}
                     {imageUrl ? (
@@ -336,18 +318,18 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                         href={url || preview} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="block group"
+                        className="block group/image relative"
                         onClick={(e) => {
                           if (isBlob && !imageUrl) {
                             e.preventDefault();
                           }
                         }}
                       >
-                        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                        <div className="overflow-hidden rounded-lg border border-gray-100 bg-white aspect-video relative">
                           <img
                             src={imageUrl}
                             alt={`${label}`}
-                            className="h-40 w-full object-contain bg-gray-100 transition-transform duration-200 group-hover:scale-[1.02]"
+                            className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover/image:scale-105"
                             onError={(event) => {
                               event.currentTarget.onerror = null;
                               if (isBlobUrl(event.target.src)) {
@@ -361,17 +343,16 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                               event.currentTarget.src = '/document-placeholder.svg';
                             }}
                           />
+                           <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/5 transition-colors rounded-lg" />
                         </div>
-                        <span className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-orange-600 group-hover:text-orange-700">
-                          {url ? 'View current document' : 'View upload preview'}
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5h6m0 0v6m0-6L10 14" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19h14" />
-                          </svg>
-                        </span>
                       </a>
                     ) : (
-                      <p className="text-sm text-gray-500">No document on file.</p>
+                      <div className="aspect-video rounded-lg border-2 border-dashed border-orange-500 bg-orange-500/40 flex flex-col items-center justify-center text-gray-400 gap-2">
+                         <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                            <Camera className="w-5 h-5 opacity-40" />
+                        </div>
+                        <span className="text-xs font-medium">No document uploaded</span>
+                      </div>
                     )}
                   </div>
                 );

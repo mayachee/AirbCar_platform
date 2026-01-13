@@ -151,7 +151,7 @@ export class AuthService {
   }
 
   async verifyToken() {
-    return apiClient.get('/api/verify-token/')
+    return apiClient.post('/api/verify-token/', {})
   }
 
   async verifyAdmin() {
