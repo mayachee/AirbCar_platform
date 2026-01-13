@@ -545,7 +545,7 @@ export default function RentalProviders() {
                     )}
                   </div>
                   <button
-                    className="group/btn relative overflow-hidden bg-gray-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 hover:bg-orange-500 hover:shadow-lg hover:shadow-orange-500/30 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                    className="group/btn relative overflow-hidden bg-orange-500 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/30 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 active:scale-95"
                     type="button"
                     onClick={() => safeNavigate(provider.id)}
                   >
