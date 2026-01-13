@@ -46,7 +46,6 @@ export default function PartnerCTA() {
                 transition={{ delay: 0.4 }}
               >
                 Ready to get more rentals?
-                <Rocket className="w-6 h-6 md:w-8 md:h-8 text-orange-500" />
               </motion.h2>
               <motion.p
                 className="text-base md:text-lg text-gray-400"
@@ -67,7 +66,7 @@ export default function PartnerCTA() {
             className="relative z-10"
           >
             <motion.a
-              href="#partner-form"
+              href="/auth?mode=signup&role=partner"
               className="px-6 md:px-8 py-3 md:py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg uppercase text-sm md:text-base flex items-center gap-2 shadow-lg transition-colors"
               whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4)' }}
               whileTap={{ scale: 0.95 }}

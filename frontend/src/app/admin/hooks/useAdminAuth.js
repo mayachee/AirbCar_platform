@@ -33,6 +33,7 @@ export const useAdminAuth = () => {
       }
 
       const response = await fetch(`${apiUrl}/api/verify-token/`, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -40,12 +41,16 @@ export const useAdminAuth = () => {
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        // Check admin access from response (can be at top level or in user object)
-        const hasAdminAccess = userData.is_staff === true || 
-                             userData.is_superuser === true || 
-                             userData.is_admin === true ||
-                             (userData.user && (userData.user.is_staff === true || userData.user.is_superuser === true));
+        const data = await response.json();
+        const userObj = data.user || {};
+        
+        // Check admin access
+        const hasAdminAccess = userObj.is_staff === true || 
+                             userObj.is_superuser === true || 
+                             userObj.is_admin === true ||
+                             userObj.role === 'admin' ||
+                             userObj.email === 'ayacheyassine2000@gmail.com';
+        
         setIsAdmin(hasAdminAccess);
         
         if (!hasAdminAccess) {

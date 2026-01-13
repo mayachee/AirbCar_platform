@@ -156,7 +156,7 @@ export default function ImprovedBookingsTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">My Bookings</h3>
+          <h3 className="text-2xl font-bold text-white-900 mb-2">My Bookings</h3>
           <p className="text-gray-600">View and manage your car rental bookings</p>
         </div>
         <button

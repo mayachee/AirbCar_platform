@@ -99,7 +99,7 @@ export default function PartnerDashboard() {
       }
 
       const response = await fetch(`${apiUrl}/api/verify-token/`, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -107,8 +107,9 @@ export default function PartnerDashboard() {
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        const isUserPartner = userData.is_partner === true || userData.role === 'partner';
+        const data = await response.json();
+        const userObj = data.user || {};
+        const isUserPartner = userObj.is_partner === true || userObj.role === 'partner';
         
         setIsPartner(isUserPartner);
         

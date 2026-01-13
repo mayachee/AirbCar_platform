@@ -41,8 +41,8 @@ export default function PartnerFAQs() {
                 <Accordion.Header>
                   <Accordion.Trigger className="w-full px-6 py-4 font-semibold text-lg text-left flex items-center justify-between group text-white">
                     {faq.q}
-                    <div className="p-1 rounded-full bg-white/10 group-hover:bg-orange-500/20 group-data-[state=open]:bg-orange-500/20 transition-colors">
-                      <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-orange-500 group-data-[state=open]:text-orange-500 transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                    <div className="p-1 rounded-full bg-white/10 group-hover:bg-orange-500/20 group-data-[state=open]:bg-orange-500/20 transition-colors duration-200">
+                      <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-orange-500 group-data-[state=open]:text-orange-500 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </div>
                   </Accordion.Trigger>
                 </Accordion.Header>

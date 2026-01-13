@@ -6,7 +6,7 @@ export default function SecurityTab({ emailVerified, onRefreshVerification, onDe
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Security Settings</h3>
+        <h3 className="text-xl font-semibold text-white-900 mb-2">Security Settings</h3>
         <p className="text-gray-600">Manage your password and account security</p>
       </div>
 

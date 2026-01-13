@@ -365,7 +365,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center space-x-2">
+          <h3 className="text-2xl font-bold text-white-900 mb-2 flex items-center space-x-2">
             <Heart className="h-6 w-6 text-red-500 fill-red-500" />
             <span>My Favorite Cars</span>
           </h3>
