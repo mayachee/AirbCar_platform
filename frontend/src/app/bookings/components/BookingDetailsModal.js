@@ -1,3 +1,5 @@
+import { useCurrency } from '@/contexts/CurrencyContext';
+
 export default function BookingDetailsModal({ 
   selectedBooking, 
   onClose, 
@@ -7,6 +9,8 @@ export default function BookingDetailsModal({
   onCancel, 
   cancelLoading 
 }) {
+  const { formatPrice } = useCurrency();
+
   if (!selectedBooking) return null
 
   return (
@@ -84,7 +88,7 @@ export default function BookingDetailsModal({
               </div>
               <div>
                 <p className="font-medium text-gray-900">Total Price</p>
-                <p className="text-lg font-semibold text-orange-600">{selectedBooking.price?.toLocaleString()} MAD</p>
+                <p className="text-lg font-semibold text-orange-600">{formatPrice(selectedBooking.price)}</p>
               </div>
             </div>
           </div>

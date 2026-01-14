@@ -218,14 +218,20 @@ function SearchContent() {
             </motion.div>
 
             {/* Search Form Container */}
-            <SearchForm 
-              onSearch={handleSearchFormSubmit}
-              initialValues={{
-                location: filters.location,
-                pickupDate: filters.pickupDate,
-                returnDate: filters.returnDate
-              }}
-            />
+            <div className='flex flex-col gap-4 max-w-7xl mx-auto'>
+              <h2 className='text-3xl font-bold text-white text-center sm:text-left drop-shadow-md'>
+                Book you perfect ride
+              </h2>
+              <SearchForm 
+                onSearch={handleSearchFormSubmit}
+                initialValues={{
+                  location: filters.location,
+                  pickupDate: filters.pickupDate,
+                  returnDate: filters.returnDate
+                }}
+              />
+            </div>
+
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { useCurrency } from '@/contexts/CurrencyContext'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
@@ -10,15 +11,14 @@ import { SelectField } from '@/components/ui/select-field'
 // Navigation items
 const navigationItems = [
   { label: 'Search', href: '/search' },
-  { label: 'Be Partner', href: '/partner' },
   { label: 'Mission', href: '/mission' }
 ]
 
 export default function Header({ theme = 'dark' }) {
   const { user, loading, logout } = useAuth()
+  const { currency, setCurrency, currencies } = useCurrency() // Get currencies from context
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [language, setLanguage] = useState('en')
-  const [currency, setCurrency] = useState('MAD')
   const [isScrolled, setIsScrolled] = useState(false)
 
   const pathname = usePathname()
@@ -59,9 +59,7 @@ export default function Header({ theme = 'dark' }) {
   useEffect(() => {
     try {
       const storedLanguage = localStorage.getItem('airbcar_language')
-      const storedCurrency = localStorage.getItem('airbcar_currency')
       if (storedLanguage) setLanguage(storedLanguage)
-      if (storedCurrency) setCurrency(storedCurrency)
     } catch {
       // ignore storage errors
     }
@@ -80,11 +78,6 @@ export default function Header({ theme = 'dark' }) {
   const handleCurrencyChange = (event) => {
     const value = event.target.value
     setCurrency(value)
-    try {
-      localStorage.setItem('airbcar_currency', value)
-    } catch {
-      // ignore storage errors
-    }
   }
 
   // Close menus on ESC
@@ -107,7 +100,11 @@ export default function Header({ theme = 'dark' }) {
 
       const clickedPanel = menuPanelRef.current?.contains(target)
       const clickedButton = menuButtonRef.current?.contains(target)
-      if (!clickedPanel && !clickedButton) closeMenu()
+      
+      // Check for clicks inside Radix Select content (which renders in a portal)
+      const clickedSelectContent = target.closest('[role="listbox"]') || target.closest('[data-radix-popper-content-wrapper]') || target.closest('.ignore-outside-click')
+      
+      if (!clickedPanel && !clickedButton && !clickedSelectContent) closeMenu()
     }
 
     document.addEventListener('pointerdown', onPointerDown)
@@ -121,7 +118,19 @@ export default function Header({ theme = 'dark' }) {
   }
 
   const overlayItems = useMemo(() => {
-    const items = [...navigationItems]
+    const items = [{ label: 'Search', href: '/search' }]
+
+    if (!loading) {
+      if (user && isPartner) {
+        items.push({ label: 'Partner Dashboard', href: '/partner/dashboard' })
+      } else {
+        items.push({ label: 'Be Partner', href: '/partner' })
+      }
+    } else {
+      items.push({ label: 'Be Partner', href: '/partner' })
+    }
+
+    items.push({ label: 'Mission', href: '/mission' })
 
     if (!loading) {
       if (user) {
@@ -130,7 +139,6 @@ export default function Header({ theme = 'dark' }) {
           { label: 'My Bookings', href: '/account?tab=bookings' }
         )
 
-        if (isPartner) items.push({ label: 'Partner Dashboard', href: '/partner/dashboard' })
         if (isAdmin) items.push({ label: 'Admin Dashboard', href: '/admin/dashboard' })
       } else {
         items.push(
@@ -202,6 +210,15 @@ export default function Header({ theme = 'dark' }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </Link>
+
+              {!loading && isPartner && (
+                <Link
+                  href="/partner/dashboard"
+                  className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 border ${buttonClassName}`}
+                >
+                  Partner Dashboard
+                </Link>
+              )}
 
               {!loading && !user && (
                 <>
@@ -290,6 +307,7 @@ export default function Header({ theme = 'dark' }) {
                       <SelectField
                         value={language}
                         onChange={(e) => handleLanguageChange(e)}
+                        contentProps={{ className: 'z-[100] ignore-outside-click', position: 'popper' }}
                         options={[
                           { value: 'ar', label: 'Arabic' },
                           { value: 'en', label: 'English' },
@@ -306,11 +324,8 @@ export default function Header({ theme = 'dark' }) {
                       <SelectField
                         value={currency}
                         onChange={(e) => handleCurrencyChange(e)}
-                        options={[
-                          { value: 'USD', label: 'USD ($)' },
-                          { value: 'EUR', label: 'EUR (€)' },
-                          { value: 'MAD', label: 'MAD (DH)' },
-                        ]}
+                        contentProps={{ className: 'z-[100] ignore-outside-click', position: 'popper' }}
+                        options={currencies.map(c => ({ value: c.code, label: c.label }))}
                         className="w-full rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors"
                       />
                   </div>
