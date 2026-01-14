@@ -3,8 +3,10 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api/client'
 import { motion } from 'framer-motion';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function RentalProviders() {
+  const { formatPrice: formatCurrencyPrice } = useCurrency();
   const router = useRouter()
   const scrollContainerRef = useRef(null);
   const didInitLoopScrollRef = useRef(false)
@@ -51,18 +53,12 @@ export default function RentalProviders() {
     return { startMiddle: secondLeft, startThird: thirdLeft, singleWidth }
   }, [providers.length, shouldLoop])
 
-  const formatPrice = (value) => {
-    const num = typeof value === 'number' ? value : Number(value);
-    if (!Number.isFinite(num)) return null;
-    return Math.round(num);
-  }
-
   const toProvider = (partner) => {
     const rawName = partner?.business_name || partner?.businessName || partner?.companyName || 'Partner'
     const name = rawName.charAt(0).toUpperCase() + rawName.slice(1)
     const rating = Number(partner?.rating) || 0
     const reviewCount = Number(partner?.review_count) || 0
-    const price = formatPrice(partner?.min_price_per_day)
+    const price = partner?.min_price_per_day ? formatCurrencyPrice(partner.min_price_per_day) : null
     const city = partner?.city || partner?.user?.city || ''
     const isVerified = Boolean(partner?.is_verified)
     const businessType = partner?.business_type || ''
@@ -533,7 +529,7 @@ export default function RentalProviders() {
                       <div className="flex flex-col">
                         <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Starting at</span>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-xl sm:text-2xl font-bold text-gray-900">{provider.price}€</span>
+                          <span className="text-xl sm:text-2xl font-bold text-gray-900">{provider.price}</span>
                           <span className="text-xs sm:text-sm text-gray-500 font-medium">/day</span>
                         </div>
                       </div>

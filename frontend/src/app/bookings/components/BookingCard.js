@@ -1,3 +1,5 @@
+import { useCurrency } from '@/contexts/CurrencyContext';
+
 export default function BookingCard({ 
   booking, 
   getStatusColor, 
@@ -7,6 +9,8 @@ export default function BookingCard({
   onCancel, 
   cancelLoading 
 }) {
+  const { formatPrice } = useCurrency();
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="p-6">
@@ -35,7 +39,7 @@ export default function BookingCard({
               <div>
                 <p className="font-medium text-gray-900">Duration</p>
                 <p>{calculateDuration(booking.start_time, booking.end_time)} {calculateDuration(booking.start_time, booking.end_time) === 1 ? 'day' : 'days'}</p>
-                <p className="font-semibold text-orange-600">{booking.price?.toLocaleString()} MAD</p>
+                <p className="font-semibold text-orange-600">{formatPrice(booking.price)}</p>
               </div>
             </div>
           </div>

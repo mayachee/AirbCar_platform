@@ -1,10 +1,12 @@
 'use client';
 
-import { formatCurrency } from '../utils/formatting';
 import { Heart, MapPin, Users, DollarSign, Calendar, Car, Loader2 } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function FavoritesGrid({ favorites, loading, onRemoveFavorite, onBookNow, onViewDetails, viewMode = 'grid', removingFavorite = null }) {
+  const { formatPrice } = useCurrency();
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,7 +120,7 @@ export default function FavoritesGrid({ favorites, loading, onRemoveFavorite, on
                         <div className="flex items-center text-sm text-gray-700">
                           <DollarSign className="w-4 h-4 mr-1 text-orange-500" />
                           <span className="text-lg font-bold text-orange-500">
-                            {formatCurrency(car.price_per_day || car.price)}
+                            {formatPrice(car.price_per_day || car.price)}
                           </span>
                           <span className="text-xs text-gray-500 ml-1">/day</span>
                         </div>
@@ -199,7 +201,7 @@ export default function FavoritesGrid({ favorites, loading, onRemoveFavorite, on
               <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-lg">
                 <div className="flex items-baseline space-x-1">
                   <span className="text-xl font-bold text-orange-500">
-                    {formatCurrency(car.price_per_day || car.price)}
+                    {formatPrice(car.price_per_day || car.price)}
                   </span>
                   <span className="text-xs text-gray-500">/day</span>
                 </div>

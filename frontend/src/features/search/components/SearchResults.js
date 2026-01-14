@@ -1,7 +1,7 @@
 'use client';
 
 import VehicleCard from './VehicleCard';
-import { formatPrice, showPricePerDay } from '@/features/search';
+import { showPricePerDay } from '@/features/search';
 
 export default function SearchResults({ 
   filteredCars, 

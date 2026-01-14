@@ -2,7 +2,8 @@
 
 import { motion } from 'framer-motion'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import { calculateTotalPrice, formatPrice } from '../utils/pricing'
+import { calculateTotalPrice } from '../utils/pricing'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -31,6 +32,8 @@ const itemVariants = {
 }
 
 export default function BookingSidebar({ vehicle, searchDetails, selectedDates, onBookNow, onChangeDates }) {
+  const { formatPrice } = useCurrency()
+
   if (!vehicle) {
     return null
   }
@@ -86,7 +89,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 delay: 0.2,
               }}
             >
-              {price} MAD
+              {formatPrice(price)}
             </motion.div>
             <motion.div
               className="text-gray-400"

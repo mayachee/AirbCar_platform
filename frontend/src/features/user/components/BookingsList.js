@@ -1,8 +1,11 @@
 'use client';
 
-import { formatDate, formatDateRange, formatCurrency, formatBookingStatus, getStatusColor, calculateDays } from '../utils/formatting';
+import { formatDate, formatBookingStatus, getStatusColor, calculateDays } from '../utils/formatting';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function BookingsList({ bookings, loading, onViewDetails, onCancelBooking }) {
+  const { formatPrice } = useCurrency();
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -104,7 +107,7 @@ export default function BookingsList({ bookings, loading, onViewDetails, onCance
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-orange-500">
-                    {formatCurrency(booking.price || booking.total_price || booking.total_amount || 0)}
+                    {formatPrice(booking.price || booking.total_price || booking.total_amount || 0)}
                   </p>
                 </div>
               </div>

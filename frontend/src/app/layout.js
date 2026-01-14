@@ -2,6 +2,7 @@ import { Outfit, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -145,9 +146,11 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning={true}
       >
         <AuthProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <CurrencyProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </CurrencyProvider>
         </AuthProvider>
         <SpeedInsights />
         <Analytics />

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function SearchFilters({ filters, onFilterChange }) {
+  const { formatPrice, currency: currentCurrency } = useCurrency();
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [showAllBrands, setShowAllBrands] = useState(false);
   const [showAllStyles, setShowAllStyles] = useState(false);
@@ -66,7 +68,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       {/* Price Range */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-300 mb-3">
-          Price Range (MAD/day)
+          Price Range ({currentCurrency}/day)
         </label>
         <div className="px-3">
           <input
@@ -81,9 +83,9 @@ export default function SearchFilters({ filters, onFilterChange }) {
             }}
           />
           <div className="flex justify-between text-sm mt-2">
-            <span className="text-gray-400 font-medium bg-white/5 px-2 py-1 rounded">0 MAD</span>
+            <span className="text-gray-400 font-medium bg-white/5 px-2 py-1 rounded">{formatPrice(0)}</span>
             <span className="text-orange-400 font-medium bg-orange-500/10 px-2 py-1 rounded">
-              {filters.priceRange ? (filters.priceRange[1] >= 5000 ? '5000+' : filters.priceRange[1]) : '5000+'} MAD
+              {filters.priceRange ? (filters.priceRange[1] >= 5000 ? formatPrice(5000) + '+' : formatPrice(filters.priceRange[1])) : formatPrice(5000) + '+'}
             </span>
           </div>
         </div>

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function CarTypes() {
+  const { formatPrice } = useCurrency();
   const carTypes = [
     {
       name: "Economy",
@@ -131,7 +133,7 @@ export default function CarTypes() {
                       {car.doors} • {car.people} people • {car.bags} bags
                     </p>
                     <span className="text-[11px] tracking-[0.22em] uppercase text-white/70 whitespace-nowrap shrink-0">
-                      {car.price} € / day
+                      {formatPrice(car.price)} / day
                     </span>
                   </div>
 
@@ -178,7 +180,7 @@ export default function CarTypes() {
                       {displayName}
                     </span>
                     <span className="text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-gray-500 whitespace-nowrap shrink-0 transition-colors duration-200 group-hover:text-orange-700">
-                      {car.price} € / day
+                      {formatPrice(car.price)} / day
                     </span>
                   </div>
 

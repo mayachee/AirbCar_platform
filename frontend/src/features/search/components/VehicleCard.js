@@ -1,9 +1,11 @@
 'use client';
 
-import { formatPrice, showPricePerDay } from '@/features/search';
+import { showPricePerDay } from '@/features/search';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFavorite, favoritesLoading }) {
+  const { formatPrice } = useCurrency();
   // Use the image utility to fix URLs
   const imageUrl = getVehicleImageUrl(car);
 
@@ -55,7 +57,7 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
             {car.totalPrice ? (
               <div className="bg-orange-500/10 rounded-lg p-3 border border-orange-500/20">
                 <div className="text-2xl font-bold text-orange-500 mb-1">
-                  {car.totalPrice} MAD
+                  {formatPrice(car.totalPrice)}
                 </div>
                 <div className="text-xs text-gray-400 font-medium">
                   {car.rentalDuration} day{car.rentalDuration > 1 ? 's' : ''}
