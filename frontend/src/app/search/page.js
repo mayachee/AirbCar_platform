@@ -196,8 +196,7 @@ function SearchContent() {
 
           <div className="max-w-5xl mx-auto relative z-20">
             <motion.div 
-              style={{ 
-                opacity: heroOpacity,
+              style={{
                 scale: heroScale,
                 filter: heroFilter,
                 y: heroY
@@ -219,9 +218,14 @@ function SearchContent() {
 
             {/* Search Form Container */}
             <div className='flex flex-col gap-4 max-w-7xl mx-auto'>
-              <h2 className='text-3xl font-bold text-white text-center sm:text-left drop-shadow-md'>
-                Book you perfect ride
-              </h2>
+              <h1 className="relative flex flex-col items-center justify-center">
+                <span className="text-4xl sm:text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tighter uppercase drop-shadow-sm">
+                  Find your
+                </span>
+                <span className="text-5xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 via-orange-500 to-orange-600 tracking-tighter uppercase drop-shadow-lg mt-[-10px] sm:mt-[-20px]">
+                  Perfect Car
+                </span>
+              </h1>
               <SearchForm 
                 onSearch={handleSearchFormSubmit}
                 initialValues={{
