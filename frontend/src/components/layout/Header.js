@@ -23,11 +23,29 @@ export default function Header({ theme = 'dark' }) {
 
   const pathname = usePathname()
 
-  const isPartner = !!user && (user.is_partner === true || user.role === 'partner')
+  const isPartner = !!user && (
+    user.is_partner === true || 
+    user.is_partner === 'true' || 
+    user.is_partner === 1 || 
+    (user.role && user.role.toLowerCase() === 'partner')
+  )
+  
+  // Debug partner status
+  useEffect(() => {
+    if (user) {
+      console.log('👤 Header auth state:', { 
+        id: user.id, 
+        role: user.role, 
+        is_partner: user.is_partner, 
+        computedIsPartner: isPartner 
+      })
+    }
+  }, [user, isPartner])
+
   const isAdmin = !!user && (
     user.email === 'admin@airbcar.com' ||
     user.email === 'ayacheyassine2000@gmail.com' ||
-    user.role === 'admin' ||
+    (user.role && user.role.toLowerCase() === 'admin') ||
     user.is_admin === true
   )
 
@@ -214,7 +232,7 @@ export default function Header({ theme = 'dark' }) {
               {!loading && isPartner && (
                 <Link
                   href="/partner/dashboard"
-                  className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 border ${buttonClassName}`}
+                  className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 bg-orange-600 text-white border border-transparent hover:bg-orange-700 shadow-lg shadow-orange-900/20`}
                 >
                   Partner Dashboard
                 </Link>
@@ -280,9 +298,20 @@ export default function Header({ theme = 'dark' }) {
                       key={`${item.href}-${item.label}`}
                       href={item.href}
                       onClick={closeMenu}
-                      className="group flex items-center text-3xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300"
+                      className={`group flex items-center text-3xl sm:text-5xl font-bold transition-all duration-300 ${
+                        item.label === 'Partner Dashboard' 
+                          ? 'text-orange-500 hover:text-white' 
+                          : 'text-white hover:text-orange-500'
+                      }`}
                     >
-                      <span className="transition-transform duration-300 group-hover:translate-x-2">{item.label}</span>
+                      <span className="transition-transform duration-300 group-hover:translate-x-2 flex items-center gap-4">
+                        {item.label}
+                        {item.label === 'Partner Dashboard' && (
+                          <svg className="w-6 h-6 sm:w-8 sm:h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        )}
+                      </span>
                     </Link>
                   ))}
 

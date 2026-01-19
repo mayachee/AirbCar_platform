@@ -16,11 +16,12 @@ class UserSerializer(serializers.ModelSerializer):
     id_back_document_url = serializers.SerializerMethodField()
     license_front_document_url = serializers.SerializerMethodField()
     license_back_document_url = serializers.SerializerMethodField()
+    is_partner = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'first_name', 'last_name', 'role', 
+            'id', 'username', 'email', 'first_name', 'last_name', 'role', 'is_partner', 
             'phone_number', 'profile_picture', 'profile_picture_url', 'profile_picture_base64',
             'id_front_document', 'id_front_document_url',
             'id_back_document', 'id_back_document_url',
@@ -41,6 +42,29 @@ class UserSerializer(serializers.ModelSerializer):
             'license_front_document': {'write_only': True},  # Don't return in API, use URL instead
             'license_back_document': {'write_only': True},    # Don't return in API, use URL instead
         }
+
+    def get_is_partner(self, obj):
+        """Check if user is a partner."""
+        try:
+            # Check for partner profile existence
+            if hasattr(obj, 'partner_profile'):
+                return True
+            
+            # Check role
+            if obj.role == 'partner':
+                return True
+                
+            # Fallback: Exception-safe check using filer
+            # sometimes hasattr on OneToOneField can be tricky if related object missing
+            from .models import Partner
+            if Partner.objects.filter(user=obj).exists():
+                return True
+                
+            return False
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"Error checking partner status for user {obj.id}: {e}")
+            return False
     
     def get_profile_picture_url(self, obj):
         """Return full URL for profile picture. Priority: base64 > Supabase/external URLs > None."""

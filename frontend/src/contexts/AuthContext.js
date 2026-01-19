@@ -51,8 +51,8 @@ export function AuthProvider({ children }) {
           return
         }
         
-        // Set user data from token payload
-        setUser({
+        // Initial user setup from token payload
+        const userData = {
           id: payload.user_id,
           username: payload.username,
           email: payload.email || '',
@@ -63,7 +63,42 @@ export function AuthProvider({ children }) {
           is_staff: payload.is_staff || false,
           is_superuser: payload.is_superuser || false,
           role: payload.role || 'user'
-        })
+        }
+
+        // Fetch latest user data from backend to get updated status (like is_partner)
+        const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+        try {
+          console.log(`🔍 Fetching user profile from ${apiUrl}/users/me/`)
+          const res = await fetch(`${apiUrl}/users/me/`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+          
+          if (res.ok) {
+            const profileData = await res.json()
+            console.log('👤 User profile fetched:', profileData)
+            if (profileData && profileData.data) {
+              // Merge profile data with token data
+              // The backend serializer now returns 'is_partner'
+              const updatedUser = { ...userData, ...profileData.data }
+              // Ensure we use the latest is_partner status from DB
+              if (updatedUser.is_partner === undefined && profileData.data.is_partner !== undefined) {
+                 updatedUser.is_partner = profileData.data.is_partner
+              }
+              console.log('✅ Updated user state:', updatedUser)
+              setUser(updatedUser)
+            } else {
+              setUser(userData)
+            }
+          } else {
+             console.warn('⚠️ Fetch profile failed:', res.status, res.statusText)
+             setUser(userData)
+          }
+        } catch (fetchError) {
+          console.error('❌ Failed to fetch user profile:', fetchError)
+          setUser(userData)
+        }
       } catch {
         // Invalid token format
         localStorage.removeItem('access_token')
