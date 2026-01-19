@@ -8,6 +8,7 @@ import {
   OurMissionSection,
   DownloadAppsSection,
   AboutUsSection,
+  AboutUs,
   ChallengeSection,
   ImpactSection,
 } from './components';
@@ -31,6 +32,10 @@ export default function MissionPage() {
         {/* Hero Section */}
         <section id="hero">
            <BoltHeroSection />
+        </section>
+        {/* About Us Section */}
+        <section id="about-us">
+          <AboutUs />
         </section>
 
         {/* Challenge Section */}

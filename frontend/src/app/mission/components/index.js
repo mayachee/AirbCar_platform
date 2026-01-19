@@ -1,4 +1,5 @@
 export { default as MissionLayout } from './MissionLayout';
+export { default as AboutUs } from './AboutUs';
 export { default as BoltHeroSection } from './BoltHeroSection';
 export { default as CitiesForPeopleSection } from './CitiesForPeopleSection';
 export { default as SharingBestPracticesSection } from './SharingBestPracticesSection';

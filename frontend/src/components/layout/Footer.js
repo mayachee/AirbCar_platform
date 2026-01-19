@@ -19,9 +19,9 @@ export default function Footer() {
     {
       title: 'Company',
       links: [
-        { label: 'About Us', href: '/about', prefetch: false },
+        { label: 'About Us', href: '/mission#about-us', prefetch: true },
         { label: 'Mission', href: '/mission', prefetch: true },
-        { label: 'Careers', href: '/careers', prefetch: false },
+        { label: 'The impact', href: '/mission#impact', prefetch: true },
       ]
     },
     {
