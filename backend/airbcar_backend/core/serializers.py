@@ -12,21 +12,15 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     """User serializer."""
     profile_picture_url = serializers.SerializerMethodField()
-    id_front_document_url = serializers.SerializerMethodField()
-    id_back_document_url = serializers.SerializerMethodField()
-    license_front_document_url = serializers.SerializerMethodField()
-    license_back_document_url = serializers.SerializerMethodField()
     is_partner = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'role', 'is_partner', 
-            'phone_number', 'profile_picture', 'profile_picture_url', 'profile_picture_base64',
-            'id_front_document', 'id_front_document_url',
-            'id_back_document', 'id_back_document_url',
-            'license_front_document', 'license_front_document_url',
-            'license_back_document', 'license_back_document_url',
+            'phone_number', 'profile_picture', 'profile_picture_url',
+            'license_front_document',
+            'license_back_document',
             'is_verified', 'date_joined',
             # Personal Information
             'date_of_birth', 'nationality',
@@ -35,10 +29,8 @@ class UserSerializer(serializers.ModelSerializer):
             # License Information
             'license_number', 'license_origin_country', 'issue_date', 'expiry_date'
         ]
-        read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username', 'profile_picture_base64']
+        read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
         extra_kwargs = {
-            'id_front_document': {'write_only': True},  # Don't return in API, use URL instead
-            'id_back_document': {'write_only': True},    # Don't return in API, use URL instead
             'license_front_document': {'write_only': True},  # Don't return in API, use URL instead
             'license_back_document': {'write_only': True},    # Don't return in API, use URL instead
         }
@@ -67,16 +59,9 @@ class UserSerializer(serializers.ModelSerializer):
             return False
     
     def get_profile_picture_url(self, obj):
-        """Return full URL for profile picture. Priority: base64 > Supabase/external URLs > None."""
+        """Return full URL for profile picture. Priority: Supabase/external URLs > None."""
         try:
-            # First check if there's a base64 data URL (stored directly in database)
-            if hasattr(obj, 'profile_picture_base64') and obj.profile_picture_base64:
-                # Return base64 data URL if it exists (format: data:image/jpeg;base64,...)
-                base64_data = obj.profile_picture_base64
-                if base64_data and isinstance(base64_data, str) and base64_data.startswith('data:image/'):
-                    return base64_data
-            
-            # Then check if there's a profile_picture_url (e.g., from Google Sign-In or Supabase)
+            # Check if there's a profile_picture_url (e.g., from Google Sign-In or Supabase)
             if hasattr(obj, 'profile_picture_url') and obj.profile_picture_url:
                 url = str(obj.profile_picture_url).strip()
                 
@@ -127,124 +112,6 @@ class UserSerializer(serializers.ModelSerializer):
                 traceback.print_exc()
             return None
     
-    def get_id_front_document_url(self, obj):
-        """Return full URL for front identity document. Only returns Supabase URLs."""
-        try:
-            # Only return Supabase URL - local files are not accessible on production (Render)
-            # Filter out any URLs that point to local media (even if stored in _url field)
-            if hasattr(obj, 'id_front_document_url') and obj.id_front_document_url:
-                url = str(obj.id_front_document_url)
-                # Filter out local media URLs
-                if (
-                    '/media/' in url or
-                    '/profiles/' in url or
-                    'airbcar-backend.onrender.com/media/' in url or
-                    'localhost/media/' in url or
-                    '127.0.0.1/media/' in url
-                ):
-                    # This is a local file URL, don't return it
-                    return None
-                # Only return Supabase or external URLs
-                if 'supabase.co' in url and '/storage/v1/object/public/' in url:
-                    return url
-                # Allow other external URLs (Google, CDNs, etc.)
-                if url.startswith('http://') or url.startswith('https://'):
-                    return url
-            
-            # Don't return local file URLs - they're not accessible on Render
-            return None
-        except Exception:
-            return None
-    
-    def get_id_back_document_url(self, obj):
-        """Return full URL for back identity document. Only returns Supabase URLs."""
-        try:
-            # Only return Supabase URL - local files are not accessible on production (Render)
-            # Filter out any URLs that point to local media (even if stored in _url field)
-            if hasattr(obj, 'id_back_document_url') and obj.id_back_document_url:
-                url = str(obj.id_back_document_url)
-                # Filter out local media URLs
-                if (
-                    '/media/' in url or
-                    '/profiles/' in url or
-                    'airbcar-backend.onrender.com/media/' in url or
-                    'localhost/media/' in url or
-                    '127.0.0.1/media/' in url
-                ):
-                    # This is a local file URL, don't return it
-                    return None
-                # Only return Supabase or external URLs
-                if 'supabase.co' in url and '/storage/v1/object/public/' in url:
-                    return url
-                # Allow other external URLs (Google, CDNs, etc.)
-                if url.startswith('http://') or url.startswith('https://'):
-                    return url
-            
-            # Don't return local file URLs - they're not accessible on Render
-            return None
-        except Exception:
-            return None
-    
-    def get_license_front_document_url(self, obj):
-        """Return full URL for front license document."""
-        try:
-            # Only return Supabase URL - local files are not accessible on production (Render)
-            # Filter out any URLs that point to local media (even if stored in _url field)
-            if hasattr(obj, 'license_front_document_url') and obj.license_front_document_url:
-                url = str(obj.license_front_document_url)
-                # Filter out local media URLs
-                if (
-                    '/media/' in url or
-                    '/profiles/' in url or
-                    'airbcar-backend.onrender.com/media/' in url or
-                    'localhost/media/' in url or
-                    '127.0.0.1/media/' in url
-                ):
-                    # This is a local file URL, don't return it
-                    return None
-                # Only return Supabase or external URLs
-                if 'supabase.co' in url and '/storage/v1/object/public/' in url:
-                    return url
-                # Allow other external URLs (Google, CDNs, etc.)
-                if url.startswith('http://') or url.startswith('https://'):
-                    return url
-            
-            # Don't return local file URLs - they're not accessible on Render
-            # If user has local file but no Supabase URL, they need to re-upload
-            return None
-        except Exception:
-            return None
-    
-    def get_license_back_document_url(self, obj):
-        """Return full URL for back license document."""
-        try:
-            # Only return Supabase URL - local files are not accessible on production (Render)
-            # Filter out any URLs that point to local media (even if stored in _url field)
-            if hasattr(obj, 'license_back_document_url') and obj.license_back_document_url:
-                url = str(obj.license_back_document_url)
-                # Filter out local media URLs
-                if (
-                    '/media/' in url or
-                    '/profiles/' in url or
-                    'airbcar-backend.onrender.com/media/' in url or
-                    'localhost/media/' in url or
-                    '127.0.0.1/media/' in url
-                ):
-                    # This is a local file URL, don't return it
-                    return None
-                # Only return Supabase or external URLs
-                if 'supabase.co' in url and '/storage/v1/object/public/' in url:
-                    return url
-                # Allow other external URLs (Google, CDNs, etc.)
-                if url.startswith('http://') or url.startswith('https://'):
-                    return url
-            
-            # Don't return local file URLs - they're not accessible on Render
-            # If user has local file but no Supabase URL, they need to re-upload
-            return None
-        except Exception:
-            return None
-    
     def update(self, instance, validated_data):
         """Update user profile and handle document uploads to Supabase Storage."""
         request = self.context.get('request')
@@ -257,82 +124,6 @@ class UserSerializer(serializers.ModelSerializer):
                 from core.utils.image_utils import upload_file_to_supabase_storage
             except ImportError:
                 from ..utils.image_utils import upload_file_to_supabase_storage
-            
-            # Handle ID front document
-            if 'id_front_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['id_front_document']
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',  # Use listings bucket (or create 'user_documents' bucket)
-                        folder='user_documents/identity',
-                        user_id=instance.id
-                    )
-                    instance.id_front_document_url = supabase_url
-                    instance.id_front_document = None  # Clear local file field
-                    if settings.DEBUG:
-                        print(f"✅ ID front document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload ID front document: {str(e)}")
-                    raise ValueError(f"Failed to upload ID front document: {str(e)}")
-            
-            # Handle ID back document
-            if 'id_back_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['id_back_document']
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',
-                        folder='user_documents/identity',
-                        user_id=instance.id
-                    )
-                    instance.id_back_document_url = supabase_url
-                    instance.id_back_document = None  # Clear local file field
-                    if settings.DEBUG:
-                        print(f"✅ ID back document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload ID back document: {str(e)}")
-                    raise ValueError(f"Failed to upload ID back document: {str(e)}")
-            
-            # Handle license front document
-            if 'license_front_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['license_front_document']
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',
-                        folder='user_documents/license',
-                        user_id=instance.id
-                    )
-                    instance.license_front_document_url = supabase_url
-                    instance.license_front_document = None  # Clear local file field
-                    if settings.DEBUG:
-                        print(f"✅ License front document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload license front document: {str(e)}")
-                    raise ValueError(f"Failed to upload license front document: {str(e)}")
-            
-            # Handle license back document
-            if 'license_back_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['license_back_document']
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',
-                        folder='user_documents/license',
-                        user_id=instance.id
-                    )
-                    instance.license_back_document_url = supabase_url
-                    instance.license_back_document = None  # Clear local file field
-                    if settings.DEBUG:
-                        print(f"✅ License back document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload license back document: {str(e)}")
-                    raise ValueError(f"Failed to upload license back document: {str(e)}")
             
             # Handle profile picture upload
             if 'profile_picture' in request.FILES:
@@ -352,27 +143,6 @@ class UserSerializer(serializers.ModelSerializer):
                     if settings.DEBUG:
                         print(f"❌ Failed to upload profile picture: {str(e)}")
                     raise ValueError(f"Failed to upload profile picture: {str(e)}")
-        
-        # Handle document removal (if explicitly set to None or empty string)
-        if 'id_front_document' in validated_data and validated_data['id_front_document'] is None:
-            instance.id_front_document = None
-            instance.id_front_document_url = None
-            validated_data.pop('id_front_document')
-        
-        if 'id_back_document' in validated_data and validated_data['id_back_document'] is None:
-            instance.id_back_document = None
-            instance.id_back_document_url = None
-            validated_data.pop('id_back_document')
-        
-        if 'license_front_document' in validated_data and validated_data['license_front_document'] is None:
-            instance.license_front_document = None
-            instance.license_front_document_url = None
-            validated_data.pop('license_front_document')
-        
-        if 'license_back_document' in validated_data and validated_data['license_back_document'] is None:
-            instance.license_back_document = None
-            instance.license_back_document_url = None
-            validated_data.pop('license_back_document')
         
         if 'profile_picture' in validated_data and validated_data['profile_picture'] is None:
             instance.profile_picture = None
@@ -739,8 +509,6 @@ class BookingSerializer(serializers.ModelSerializer):
     listing = ListingSerializer(read_only=True)
     customer = UserSerializer(read_only=True)
     partner = PartnerSerializer(read_only=True)
-    id_front_document_url = serializers.SerializerMethodField()
-    id_back_document_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Booking
@@ -748,170 +516,17 @@ class BookingSerializer(serializers.ModelSerializer):
             'id', 'listing', 'customer', 'partner', 'pickup_date', 'return_date',
             'pickup_time', 'return_time', 'pickup_location', 'return_location',
             'total_amount', 'status', 'payment_status', 'payment_method', 'special_requests',
-            'id_front_document', 'id_front_document_url',
-            'id_back_document', 'id_back_document_url',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
-        extra_kwargs = {
-            'id_front_document': {'write_only': True},  # Don't return in API, use URL instead
-            'id_back_document': {'write_only': True},    # Don't return in API, use URL instead
-        }
-    
-    def get_id_front_document_url(self, obj):
-        """Return full URL for front identity document. Only returns Supabase URLs."""
-        # Only return Supabase URL - local files are not accessible on production (Render)
-        if obj.id_front_document_url:
-            url = str(obj.id_front_document_url)
-            # Filter out local media URLs
-            if '/media/' in url.lower() or 'airbcar-backend.onrender.com/media' in url.lower():
-                return None
-            return url
-        
-        # Don't return local file URLs - they're not accessible on Render
-        return None
-    
-    def get_id_back_document_url(self, obj):
-        """Return full URL for back identity document. Only returns Supabase URLs."""
-        # Only return Supabase URL - local files are not accessible on production (Render)
-        if obj.id_back_document_url:
-            url = str(obj.id_back_document_url)
-            # Filter out local media URLs
-            if '/media/' in url.lower() or 'airbcar-backend.onrender.com/media' in url.lower():
-                return None
-            return url
-        
-        # Don't return local file URLs - they're not accessible on Render
-        return None
     
     def create(self, validated_data):
-        """Create booking and handle document uploads to Supabase Storage."""
-        request = self.context.get('request')
-        
-        # Get customer ID (could be object or ID)
-        customer = validated_data.get('customer')
-        customer_id = customer.id if hasattr(customer, 'id') else customer if isinstance(customer, int) else None
-        
-        # Handle document uploads to Supabase Storage
-        if request and request.FILES:
-            # Use absolute import to avoid relative import issues
-            try:
-                from core.utils.image_utils import upload_file_to_supabase_storage
-            except ImportError:
-                from ..utils.image_utils import upload_file_to_supabase_storage
-            
-            # Handle ID front document
-            if 'id_front_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['id_front_document']
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',
-                        folder='booking_documents/identity',
-                        user_id=customer_id
-                    )
-                    validated_data['id_front_document_url'] = supabase_url
-                    validated_data['id_front_document'] = None  # Don't save local file
-                    if settings.DEBUG:
-                        print(f"✅ Booking ID front document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload booking ID front document: {str(e)}")
-                    raise ValueError(f"Failed to upload ID front document: {str(e)}")
-            
-            # Handle ID back document
-            if 'id_back_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['id_back_document']
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',
-                        folder='booking_documents/identity',
-                        user_id=customer_id
-                    )
-                    validated_data['id_back_document_url'] = supabase_url
-                    validated_data['id_back_document'] = None  # Don't save local file
-                    if settings.DEBUG:
-                        print(f"✅ Booking ID back document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload booking ID back document: {str(e)}")
-                    raise ValueError(f"Failed to upload ID back document: {str(e)}")
-        
-        # Create booking
-        booking = super().create(validated_data)
-        return booking
+        """Create booking."""
+        return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        """Update booking and handle document uploads to Supabase Storage."""
-        request = self.context.get('request')
-        
-        # Handle document uploads to Supabase Storage
-        if request and request.FILES:
-            # Use absolute import to avoid relative import issues
-            try:
-                from core.utils.image_utils import upload_file_to_supabase_storage
-            except ImportError:
-                from ..utils.image_utils import upload_file_to_supabase_storage
-            
-            # Handle ID front document
-            if 'id_front_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['id_front_document']
-                    customer_id = instance.customer.id if instance.customer else None
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',
-                        folder='booking_documents/identity',
-                        user_id=customer_id
-                    )
-                    instance.id_front_document_url = supabase_url
-                    instance.id_front_document = None  # Clear local file field
-                    if settings.DEBUG:
-                        print(f"✅ Booking ID front document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload booking ID front document: {str(e)}")
-                    raise ValueError(f"Failed to upload ID front document: {str(e)}")
-            
-            # Handle ID back document
-            if 'id_back_document' in request.FILES:
-                try:
-                    doc_file = request.FILES['id_back_document']
-                    customer_id = instance.customer.id if instance.customer else None
-                    supabase_url = upload_file_to_supabase_storage(
-                        file=doc_file,
-                        bucket_name='listings',
-                        folder='booking_documents/identity',
-                        user_id=customer_id
-                    )
-                    instance.id_back_document_url = supabase_url
-                    instance.id_back_document = None  # Clear local file field
-                    if settings.DEBUG:
-                        print(f"✅ Booking ID back document uploaded to Supabase: {supabase_url}")
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"❌ Failed to upload booking ID back document: {str(e)}")
-                    raise ValueError(f"Failed to upload ID back document: {str(e)}")
-        
-        # Handle document removal
-        if 'id_front_document' in validated_data and validated_data['id_front_document'] is None:
-            instance.id_front_document = None
-            instance.id_front_document_url = None
-            validated_data.pop('id_front_document')
-        
-        if 'id_back_document' in validated_data and validated_data['id_back_document'] is None:
-            instance.id_back_document = None
-            instance.id_back_document_url = None
-            validated_data.pop('id_back_document')
-        
-        # Update other fields
-        for attr, value in validated_data.items():
-            if hasattr(instance, attr):
-                setattr(instance, attr, value)
-        
-        instance.save()
-        return instance
+        """Update booking."""
+        return super().update(instance, validated_data)
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
