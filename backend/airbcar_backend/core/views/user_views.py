@@ -106,6 +106,10 @@ class UserMeView(APIView):
                 'message': error_msg if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+    def patch(self, request):
+        """Update current user profile (partial)."""
+        return self.put(request)
+
     def put(self, request):
         """Update current user profile."""
         try:

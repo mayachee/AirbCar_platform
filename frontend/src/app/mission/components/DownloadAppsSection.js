@@ -200,22 +200,31 @@ export default function DownloadAppsSection() {
                       }}
                     />
                     
-                    {/* Main icon container */}
+                    {/* Main Phone Mockup Container */}
                     <motion.div
-                      className="relative w-64 h-[32rem] sm:w-72 sm:h-[36rem] md:w-80 md:h-[40rem] bg-gradient-to-br from-[#FF6B35] via-[#FF8555] to-[#FF6B35] rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl flex items-center justify-center overflow-hidden"
+                      className="relative w-64 h-[32rem] sm:w-72 sm:h-[36rem] md:w-80 md:h-[40rem] bg-gray-900 rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl flex items-center justify-center border-[6px] border-gray-800"
                       whileHover={{ scale: 1.02 }}
                     >
-                      {/* Animated gradient overlay */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                      />
-                      
-                      {/* App Icon Image */}
-                      <img 
-                        src="https://ik.imagekit.io/szcfr7vth/localhost_3001_mission(iPhone%2012%20Pro)%20(2).png"
-                        alt="AirbCar App"
-                        className="relative w-full h-full object-cover z-10"
-                      />
+                      {/* Dynamic Island / Notch */}
+                      <div className="absolute top-3 w-28 sm:w-32 h-6 sm:h-7 bg-black rounded-full z-30 shadow-md transform -translate-x-1/2 left-1/2" />
+                       
+                      {/* Side Buttons */}
+                      <div className="absolute -left-[8px] top-28 w-2 h-10 bg-gray-800 rounded-l-lg" />
+                      <div className="absolute -left-[8px] top-44 w-2 h-14 bg-gray-800 rounded-l-lg" />
+                      <div className="absolute -right-[8px] top-36 w-2 h-20 bg-gray-800 rounded-r-lg" />
+
+                      {/* Screen Content */}
+                      <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black border-[3px] border-black">
+                        {/* App Screenshot */}
+                        <img 
+                          src="https://ik.imagekit.io/szcfr7vth/localhost_3001_mission(iPhone%2012%20Pro)%20(2).png"
+                          alt="AirbCar App Interface"
+                          className="w-full h-full object-cover z-10 relative"
+                        />
+                        
+                        {/* Screen Reflection/Gloss */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none z-20" />
+                      </div>
                     </motion.div>
                   </motion.div>
 
