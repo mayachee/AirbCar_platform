@@ -22,13 +22,6 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
     profile_picture_url = models.URLField(max_length=500, blank=True, null=True, help_text='URL for profile picture (e.g., Google profile picture)')
-    profile_picture_base64 = models.TextField(blank=True, null=True, help_text='Base64 encoded profile picture (data:image/jpeg;base64,...) - stored directly in database')
-    profile_picture_base64 = models.TextField(blank=True, null=True, help_text='Base64 encoded profile picture (data:image/jpeg;base64,...)')
-    id_front_document = models.ImageField(upload_to='identity_documents/', blank=True, null=True, help_text='Front side of identity document (local storage)')
-    id_back_document = models.ImageField(upload_to='identity_documents/', blank=True, null=True, help_text='Back side of identity document (local storage)')
-    # Supabase Storage URLs (for new uploads)
-    id_front_document_url = models.URLField(blank=True, null=True, help_text='Supabase URL for front identity document')
-    id_back_document_url = models.URLField(blank=True, null=True, help_text='Supabase URL for back identity document')
     is_verified = models.BooleanField(default=False)
     
     # Personal Information
@@ -50,8 +43,6 @@ class User(AbstractUser):
     # License Documents (Front and Back)
     license_front_document = models.ImageField(upload_to='license_documents/', blank=True, null=True, help_text='Front side of driver license')
     license_back_document = models.ImageField(upload_to='license_documents/', blank=True, null=True, help_text='Back side of driver license')
-    license_front_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for front license document hosted on Supabase')
-    license_back_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for back license document hosted on Supabase')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -246,12 +237,6 @@ class Booking(models.Model):
     
     # Additional
     special_requests = models.TextField(blank=True, null=True)
-    
-    # Identity Documents (uploaded during booking)
-    id_front_document = models.ImageField(upload_to='booking_documents/', blank=True, null=True, help_text='Front side of identity document uploaded during booking')
-    id_back_document = models.ImageField(upload_to='booking_documents/', blank=True, null=True, help_text='Back side of identity document uploaded during booking')
-    id_front_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for front identity document hosted on Supabase')
-    id_back_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for back identity document hosted on Supabase')
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
