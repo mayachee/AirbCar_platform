@@ -67,6 +67,21 @@ class LoginView(APIView):
             # Generate JWT tokens
             try:
                 refresh = RefreshToken.for_user(user)
+                
+                # Add custom claims
+                is_partner = False
+                try:
+                    is_partner = hasattr(user, 'partner_profile') or user.role == 'partner'
+                except Exception:
+                    pass
+                
+                refresh['role'] = user.role
+                refresh['is_partner'] = is_partner
+                refresh['is_staff'] = user.is_staff
+                refresh['is_superuser'] = user.is_superuser
+                refresh['email'] = user.email
+                refresh['username'] = user.username
+                
                 access_token = str(refresh.access_token)
                 refresh_token = str(refresh)
             except Exception as token_error:
