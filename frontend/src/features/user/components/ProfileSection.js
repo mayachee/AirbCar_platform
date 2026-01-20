@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { validateField } from '@/features/user/types/accountData';
 import { Input } from '@/components/ui/input';
-import { User, Mail, Phone, Calendar, Camera,  FileText, CheckCircle, AlertCircle, Eye } from 'lucide-react';
+import { SelectField } from '@/components/ui/select-field';
+import { MOROCCAN_CITIES } from '@/constants';
+import { User, Mail, Phone, Calendar, Camera,  FileText, CheckCircle, AlertCircle, Eye, MapPin } from 'lucide-react';
 
 export default function ProfileSection({ accountData, handleFieldChange, formatProfileCompletion, profileCompletion, onProfilePictureChange }) {
   const [uploading, setUploading] = useState(false);
@@ -162,8 +164,8 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             error={touchedFields.has('dateOfBirth') ? fieldErrors['dateOfBirth'] : null}
           />
         </div>
-          </div>
-        </div>
+      </div>
+    </div>
         
         {/* Driver's License Documents */}
       <div className="border-t border-gray-100 pt-8 mt-4">

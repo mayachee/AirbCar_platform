@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Save, Upload, Building2, FileText, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { MOROCCAN_CITIES } from '@/constants';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function PartnerProfileSettings({ partnerData, hasPartnerProfile = true, onUpdate, loading }) {
   const { user } = useAuth();
+  const { addToast } = useToast();
   const [formData, setFormData] = useState({
     company_name: '',
     tax_id: '',
@@ -297,97 +299,162 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
     };
   };
 
+  /**
+   * Prepares the form data for API submission
+   * Handles field mapping, cleanup, and business logic
+   */
+  const preparePayload = (data) => {
+    const payload = { ...data };
+    
+    // Remove logo file from payload (handled separately as file or not sent)
+    delete payload.logo; 
+
+    // Field Mappings
+    if (payload.company_name) {
+      payload.business_name = payload.company_name;
+    }
+    
+    // Backend Logic: Map "fleet" and "dealership" to "company"
+    if (['fleet', 'dealership'].includes(payload.business_type)) {
+      payload.business_type = 'company';
+    }
+    
+    // Cleanup: Remove empty business_type
+    if (payload.business_type === '') {
+      delete payload.business_type;
+    }
+
+    // Cleanup: Remove read-only & frontend-only fields
+    const fieldsToRemove = [
+      'company_name', 'companyName', 'businessName', 'logo_url', 
+      'user', 'min_price_per_day', 'rating', 'review_count', 
+      'total_bookings', 'total_earnings', 'is_verified', 'id', 
+      'created_at', 'verification_document', 'zip_code'
+    ];
+    
+    fieldsToRemove.forEach(field => delete payload[field]);
+    
+    return payload;
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Validate phone number format
+      // 1. Validation
       const phoneValidation = validatePhoneNumber(formData.phone_number);
       if (!phoneValidation.isValid) {
-        alert(phoneValidation.error);
+        addToast(phoneValidation.error, 'error');
         setSaving(false);
         return;
       }
       
-      // Validate required fields
-      if (!formData.city || formData.city.trim() === '') {
-        alert('City is required. Please select a city.');
+      if (!formData.city?.trim()) {
+        addToast('City is required. Please select a city.', 'error');
         setSaving(false);
         return;
       }
       
-      // Prepare form data
-      const dataToSave = { ...formData };
-      delete dataToSave.logo; // Remove logo from dataToSave, handle separately
+      // 2. Prepare Data
+      const payload = preparePayload(formData);
       
-      // Ensure phone_number and city are included (already validated above)
-      // Backend will also validate these fields are not empty
-      
-      // If logo file is uploaded, use FormData for multipart upload
+      // 3. Handle Update Strategy (FormData vs JSON)
       if (logoFile) {
-        const formDataToSend = new FormData();
-        
-        // Append all form fields as strings
-        // Always include phone_number and city (required fields)
-        Object.keys(dataToSave).forEach(key => {
-          const value = dataToSave[key];
-          // Always include required fields (phone_number, city) even if empty
-          if (key === 'phone_number' || key === 'city') {
-            formDataToSend.append(key, value || '');
-          } else if (value !== null && value !== undefined && value !== '') {
-            formDataToSend.append(key, String(value));
-          }
-        });
-        
-        // Ensure phone_number and city are always present
-        if (!dataToSave.phone_number) {
-          formDataToSend.append('phone_number', '');
-        }
-        if (!dataToSave.city) {
-          formDataToSend.append('city', '');
-        }
-        
-        // Append logo file
-        formDataToSend.append('logo', logoFile);
-        
-        // Call onUpdate with FormData (backend will handle multipart)
-        await onUpdate(formDataToSend);
-      } else {
-        // No logo file - send regular JSON data
-        // If logo was explicitly removed, we need to send it via FormData with empty string
-        // because the serializer ignores read-only fields, but perform_update checks request.data
-        if (logoRemoved && partnerData?.logo) {
-          // Send as FormData with empty logo to signal removal
-          const formDataToSend = new FormData();
-          Object.keys(dataToSave).forEach(key => {
-            const value = dataToSave[key];
-            // Always include required fields (phone_number, city) even if empty
-            if (key === 'phone_number' || key === 'city') {
-              formDataToSend.append(key, value || '');
-            } else if (value !== null && value !== undefined && value !== '') {
-              formDataToSend.append(key, String(value));
-            }
-          });
-          // Ensure phone_number and city are always present
-          if (!dataToSave.phone_number) {
-            formDataToSend.append('phone_number', '');
-          }
-          if (!dataToSave.city) {
-            formDataToSend.append('city', '');
-          }
-          formDataToSend.append('logo', ''); // Empty string signals removal
-          await onUpdate(formDataToSend);
-        } else {
-          // Send JSON data - phone_number and city are already validated and included
-          await onUpdate(dataToSave);
-        }
+         // Strategy A: Logo Upload via FormData
+         const formDataToSend = new FormData();
+         
+         // Append clean payload fields
+         Object.entries(payload).forEach(([key, value]) => {
+           if (value !== null && value !== undefined && value !== '') {
+             formDataToSend.append(key, String(value));
+           }
+         });
+         
+         // Ensure required fields for FormData
+         if (!formDataToSend.has('phone_number')) formDataToSend.append('phone_number', payload.phone_number || '');
+         if (!formDataToSend.has('city')) formDataToSend.append('city', payload.city || '');
+         
+         formDataToSend.append('logo', logoFile);
+         
+         await onUpdate(formDataToSend);
+      } 
+      else if (logoRemoved && partnerData?.logo) {
+         // Strategy B: Explicit Logo Removal via FormData
+         const formDataToSend = new FormData();
+         Object.entries(payload).forEach(([key, value]) => {
+           if (value !== null && value !== undefined && value !== '') {
+             formDataToSend.append(key, String(value));
+           }
+         });
+         // Ensure required fields
+         if (!formDataToSend.has('phone_number')) formDataToSend.append('phone_number', payload.phone_number || '');
+         if (!formDataToSend.has('city')) formDataToSend.append('city', payload.city || '');
+         
+         formDataToSend.append('logo', ''); // Signal removal
+         
+         await onUpdate(formDataToSend);
+      } 
+      else {
+         // Strategy C: Standard JSON Update
+         await onUpdate(payload);
       }
       
+      // 4. Success State
       setIsEditing(false);
-      setLogoFile(null); // Clear file after successful save
-      setLogoRemoved(false); // Reset removal flag
+      setLogoFile(null);
+      setLogoRemoved(false);
+      addToast('Profile updated successfully', 'success');
+      
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Failed to save profile. Please try again.');
+      
+      // 5. Error Handling & Retry Logic
+      const serverErrorDetails = error.data?.details || error.data?.detail || error.data;
+      const errorMsgDetails = typeof serverErrorDetails === 'string' 
+        ? serverErrorDetails 
+        : (serverErrorDetails?.message || JSON.stringify(serverErrorDetails));
+
+      // Check for specific Render/Supabase limitations
+      const isStorageError = errorMsgDetails && 
+        (errorMsgDetails.includes('Supabase Storage') || errorMsgDetails.includes('ephemeral filesystem'));
+
+      if (isStorageError) {
+        const confirmRetry = window.confirm(
+          "Logo upload is not supported on the Demo server (file storage is disabled). \n\n" +
+          "Do you want to save your profile changes WITHOUT the logo?"
+        );
+        
+        if (confirmRetry) {
+          try {
+             // Retry with Strategy C (JSON only, no logo)
+             const retryPayload = preparePayload(formData);
+             await onUpdate(retryPayload);
+             
+             setIsEditing(false);
+             setLogoFile(null);
+             setLogoRemoved(false);
+             addToast('Profile updated successfully (without logo)', 'success');
+          } catch (retryError) {
+             console.error('Retry failed:', retryError);
+             addToast('Failed to save profile changes.', 'error');
+          }
+        }
+      } else {
+        // Generic Error Display
+        let displayError = 'Failed to save profile. Please try again.';
+        
+        if (typeof serverErrorDetails === 'object' && serverErrorDetails !== null) {
+           // Format field-specific errors
+           const fieldErrors = Object.entries(serverErrorDetails)
+             .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+             .join('\n');
+             
+           if (fieldErrors) displayError = `Validation failed:\n${fieldErrors}`;
+        } else if (serverErrorDetails) {
+           displayError = String(serverErrorDetails);
+        }
+        
+        addToast(displayError, 'error');
+      }
     } finally {
       setSaving(false);
     }
