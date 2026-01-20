@@ -108,15 +108,18 @@ class UserMeView(APIView):
     
     def patch(self, request):
         """Update current user profile (partial)."""
-        return self.put(request)
+        return self._update(request, partial=True)
 
     def put(self, request):
         """Update current user profile."""
+        return self._update(request, partial=False)
+
+    def _update(self, request, partial=True):
+        """Helper to handle profile updates."""
         try:
             # Prepare user data - create clean copy without file objects
             user_data = {}
             for key, value in request.data.items():
-                # Skip file objects - they're handled separately via request.FILES
                 if hasattr(value, 'read') or hasattr(value, 'chunks'):
                     continue
                 user_data[key] = value
@@ -124,7 +127,7 @@ class UserMeView(APIView):
             serializer = UserSerializer(
                 request.user,
                 data=user_data,
-                partial=True,
+                partial=partial,
                 context={'request': request}
             )
             
@@ -136,18 +139,32 @@ class UserMeView(APIView):
                         request.user.refresh_from_db()
                         
                         if settings.DEBUG:
-                            print(f"✅ PUT /users/me/ - User profile updated successfully")
+                            print(f"✅ User profile updated successfully")
                         
                         return Response({
                             'data': UserSerializer(request.user, context={'request': request}).data,
                             'message': 'Profile updated successfully'
                         }, status=status.HTTP_200_OK)
                 except ValueError as ve:
-                    # Supabase upload errors
+                    # Provide specific error details
+                    error_msg = str(ve)
+                    if settings.DEBUG:
+                        print(f"❌ User update error: {error_msg}")
                     return Response({
-                        'error': 'File upload failed',
-                        'message': str(ve)
+                        'error': error_msg,
+                        'message': error_msg
                     }, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in UserMeView.update: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             else:
                 if settings.DEBUG:
                     print(f"❌ PUT /users/me/ - Validation failed: {serializer.errors}")

@@ -28,13 +28,6 @@ class User(AbstractUser):
     date_of_birth = models.DateField(blank=True, null=True)
     nationality = models.CharField(max_length=100, blank=True, null=True)
     
-    # Address Information
-    address = models.CharField(max_length=255, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    country = models.CharField(max_length=100, blank=True, null=True)
-    country_of_residence = models.CharField(max_length=100, blank=True, null=True)
-    postal_code = models.CharField(max_length=20, blank=True, null=True)
-    
     # License Information
     license_number = models.CharField(max_length=100, blank=True, null=True)
     license_origin_country = models.CharField(max_length=100, blank=True, null=True)

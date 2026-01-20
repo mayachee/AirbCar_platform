@@ -64,22 +64,22 @@ export class AuthService {
     expiry_date?: string
     nationality?: string
     default_currency?: string
-  }, method: 'PATCH' | 'POST' | 'PUT' = 'PATCH') {
+  }, method: 'PATCH' | 'POST' | 'PUT' = 'PUT') {
     if (typeof FormData !== 'undefined' && profileData instanceof FormData) {
       if (method === 'POST') {
         return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
-      } else if (method === 'PUT') {
-        return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
+      } else if (method === 'PATCH') {
+        return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
       }
-      return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
+      return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
     }
     
     if (method === 'POST') {
       return apiClient.post(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
-    } else if (method === 'PUT') {
-      return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
+    } else if (method === 'PATCH') {
+      return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
     }
-    return apiClient.patch(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
+    return apiClient.put(API_ENDPOINTS.AUTH.PROFILE, profileData, { timeout: 90000 })
   }
 
   async uploadProfilePicture(file: File) {

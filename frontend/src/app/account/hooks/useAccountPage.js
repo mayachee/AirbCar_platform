@@ -127,9 +127,9 @@ export const useAccountPage = () => {
           formData.append('license_back_document', accountData.licenseBackDocumentFile);
         }
 
-        response = await authService.updateProfile(formData);
+        response = await authService.updateProfile(formData, 'PUT');
       } else {
-        response = await authService.updateProfile(profileData);
+        response = await authService.updateProfile(profileData, 'PUT');
       }
       // Unwrap ApiResponse - the actual data is in response.data
       const updatedUserData = response?.data || response;
@@ -177,7 +177,13 @@ export const useAccountPage = () => {
       
       let errorMessage = 'Failed to update profile. Please try again.';
       
-      if (error.message) {
+      // Try to get specific error message from backend response
+      const backendError = error.response?.data?.message || error.response?.data?.error || error.response?.data?.detail || (error.response?.data && typeof error.response.data === 'string' ? error.response.data : null);
+
+      if (backendError) {
+        // Use the specific backend error message
+        errorMessage = typeof backendError === 'string' ? backendError : JSON.stringify(backendError);
+      } else if (error.message) {
         if (error.message.includes('400')) {
           errorMessage = 'Invalid profile data. Please check all required fields are filled correctly.';
         } else if (error.message.includes('401') || error.message.includes('403')) {

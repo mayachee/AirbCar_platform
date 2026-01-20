@@ -365,10 +365,7 @@ export const mapBackendToFrontend = (userData) => {
       
       return url || '/default-avatar.svg';
     })(),
-    address: getValue(userData.address),
-    city: getValue(userData.city),
-    country: getValue(userData.country_of_residence) || getValue(userData.country),
-    postalCode: getValue(userData.postal_code),
+    // Address Information removed
     licenseNumber: getValue(userData.license_number),
     licenseCountry: getValue(userData.license_origin_country) || getValue(userData.license_country),
     licenseIssueDate: formatDate(userData.issue_date) || formatDate(userData.license_issue_date),
@@ -446,10 +443,6 @@ export const mapFrontendToBackend = (accountData) => {
     last_name: accountData.lastName || null,
     phone_number: accountData.phoneNumber || null,
     date_of_birth: accountData.dateOfBirth || null,
-    address: accountData.address || null,
-    city: accountData.city || null,
-    country_of_residence: accountData.country || null,
-    postal_code: accountData.postalCode || null,
     license_number: accountData.licenseNumber || null,
     license_origin_country: accountData.licenseCountry || null,
     issue_date: accountData.licenseIssueDate || null,
