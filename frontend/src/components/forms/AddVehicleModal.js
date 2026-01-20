@@ -3,74 +3,15 @@
 import { useState, useEffect } from 'react';
 import { X, Car, Upload, Save } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
+import { apiClient } from '@/lib/api/client';
 
-// Car makes options
-const CAR_MAKES = [
-  'Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Audi', 
-  'Volkswagen', 'Nissan', 'Hyundai', 'Kia', 'Mazda', 'Subaru', 'Volvo',
-  'Tesla', 'Jeep', 'GMC', 'Ram', 'Dodge', 'Chrysler', 'Lexus', 'Infiniti',
-  'Acura', 'Cadillac', 'Lincoln', 'Buick', 'Porsche', 'Jaguar', 'Land Rover',
-  'Genesis', 'Mini', 'Fiat', 'Alfa Romeo', 'Mitsubishi', 'Suzuki', 'Other'
-];
-
-// Car models (popular models across makes) - removing duplicates
-const CAR_MODELS = [
-  // Toyota
-  'Camry', 'Corolla', 'RAV4', 'Highlander', 'Prius', '4Runner', 'Tacoma', 'Tundra',
-  // Honda
-  'Civic', 'Accord', 'CR-V', 'Pilot', 'Odyssey', 'HR-V', 'Ridgeline',
-  // Ford
-  'F-150', 'Mustang', 'Explorer', 'Escape', 'Edge', 'Expedition', 'Ranger',
-  // Chevrolet
-  'Silverado', 'Equinox', 'Tahoe', 'Malibu', 'Traverse', 'Suburban', 'Camaro',
-  // BMW
-  '3 Series', '5 Series', 'X3', 'X5', 'X1', '7 Series', 'X7',
-  // Mercedes-Benz
-  'C-Class', 'E-Class', 'S-Class', 'GLC', 'GLE', 'GLS', 'A-Class',
-  // Audi
-  'A4', 'A6', 'Q5', 'Q7', 'Q3', 'A3', 'A8',
-  // Tesla
-  'Model 3', 'Model S', 'Model Y', 'Model X',
-  // Jeep
-  'Wrangler', 'Grand Cherokee', 'Cherokee', 'Renegade', 'Compass',
-  // Mazda
-  'CX-5', 'CX-9', 'CX-3', 'Mazda3', 'Mazda6',
-  // Subaru
-  'Outback', 'Forester', 'Crosstrek', 'Ascent', 'Legacy',
-  // Nissan
-  'Altima', 'Sentra', 'Rogue', 'Pathfinder', 'Murano', 'Maxima',
-  // Hyundai
-  'Sonata', 'Elantra', 'Tucson', 'Santa Fe', 'Palisade',
-  // Kia
-  'Soul', 'Optima', 'Telluride', 'Sportage', 'Sorento', 'Forte',
-  // Other
-  'Other'
-];
-
-// Remove duplicates (in case any slip through)
-const UNIQUE_CAR_MODELS = [...new Set(CAR_MODELS)];
-
-// Generate years from 2000 to current year + 1
-const generateYears = () => {
-  const currentYear = new Date().getFullYear();
-  const years = [];
-  for (let year = 2000; year <= currentYear + 1; year++) {
-    years.push(year);
-  }
-  return years.reverse(); // Most recent first
-};
-
-// Popular locations (major cities in Morocco)
-const LOCATIONS = [
-  'Casablanca', 'Rabat', 'Fes', 'Marrakech', 'Tangier', 'Agadir', 'Meknes',
-  'Oujda', 'Kenitra', 'Tetouan', 'Safi', 'Mohammedia', 'El Jadida', 'Nador',
-  'Settat', 'Beni Mellal', 'Khouribga', 'Taza', 'Larache', 'Ksar El Kebir',
-  'Taroudant', 'Errachidia', 'Guelmim', 'Khemisset', 'Berrechid', 'Tifelt',
-  'Chefchaouen', 'Al Hoceima', 'Ouarzazate', 'Taourirt', 'Dakhla', 'Laayoune',
-  'Azrou', 'Ifrane', 'Essaouira', 'Oualidia', 'Asilah', 'Tarfaya', 'Zagora',
-  'Tinghir', 'Midelt', 'Khenifra', 'Azemmour', 'Aguelmous',
-  'Other'
-];
+import { 
+  CAR_MAKES, 
+  UNIQUE_CAR_MODELS, 
+  generateYears, 
+  LOCATIONS, 
+  AVAILABLE_FEATURES 
+} from '@/constants/vehicleData';
 
 export default function AddVehicleModal({ 
   showModal, 
@@ -90,6 +31,8 @@ export default function AddVehicleModal({
     fuel_type: 'gasoline',
     transmission: 'automatic',
     seating_capacity: '',
+    vehicle_style: 'sedan',
+    color: 'White',
     vehicle_condition: 'excellent',
     pictures: []
   });
@@ -99,22 +42,28 @@ export default function AddVehicleModal({
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkCount, setBulkCount] = useState(3);
 
+  // Initialize form when vehicleData changes or modal opens
   useEffect(() => {
-    if (vehicleData && Object.keys(vehicleData).length > 0) {
-      // Handle images - convert from backend format (images array with url objects) to form format
+    // If modal is closed, don't continuously reset/edit to avoid performance issues
+    if (!showModal) return;
+
+    // Reset UI states whenever modal opens
+    setErrors({});
+    setLoading(false);
+    setBulkMode(false);
+
+    if (vehicleData?.id) {
+      // Edit Mode: Populate form with vehicle data
+      
+      // Handle images - convert from backend format
       let existingImages = [];
       if (vehicleData.images && Array.isArray(vehicleData.images) && vehicleData.images.length > 0) {
-        // Extract URLs from image objects (format: {url: "...", name: "..."} or just URL strings)
         existingImages = vehicleData.images.map(img => {
-          if (typeof img === 'string') {
-            return img; // Already a URL string
-          } else if (img && img.url) {
-            return img.url; // Extract URL from object
-          }
+          if (typeof img === 'string') return img;
+          if (img && img.url) return img.url;
           return null;
-        }).filter(Boolean); // Remove any null values
+        }).filter(Boolean);
       } else if (vehicleData.pictures && Array.isArray(vehicleData.pictures)) {
-        // Fallback to pictures if images not available
         existingImages = vehicleData.pictures;
       }
       
@@ -129,15 +78,15 @@ export default function AddVehicleModal({
         fuel_type: vehicleData.fuel_type || vehicleData.fuelType || 'gasoline',
         transmission: vehicleData.transmission || 'automatic',
         seating_capacity: vehicleData.seating_capacity || vehicleData.seats || '',
-        vehicle_style: vehicleData.vehicle_style || vehicleData.style || '',
-        color: vehicleData.color || '',
+        vehicle_style: vehicleData.vehicle_style || vehicleData.style || 'sedan',
+        color: vehicleData.color || 'White',
         vehicle_condition: vehicleData.vehicle_condition || 'excellent',
-        pictures: existingImages, // Use existing images from database
-        is_available: vehicleData.is_available !== undefined ? vehicleData.is_available : (vehicleData.isAvailable !== undefined ? vehicleData.isAvailable : true),
-        instant_booking: vehicleData.instant_booking !== undefined ? vehicleData.instant_booking : (vehicleData.instantBooking !== undefined ? vehicleData.instantBooking : false)
+        pictures: existingImages,
+        is_available: vehicleData.is_available !== undefined ? vehicleData.is_available : true,
+        instant_booking: vehicleData.instant_booking !== undefined ? vehicleData.instant_booking : false
       });
     } else {
-      // Reset form when no vehicle data (for new vehicle)
+      // Add Mode: Reset form to defaults
       setFormData({
         make: '',
         model: '',
@@ -149,18 +98,19 @@ export default function AddVehicleModal({
         fuel_type: 'gasoline',
         transmission: 'automatic',
         seating_capacity: '',
-        vehicle_style: '',
-        color: '',
+        vehicle_style: 'sedan',
+        color: 'White',
         vehicle_condition: 'excellent',
         pictures: [],
         is_available: true,
         instant_booking: false
       });
     }
-  }, [vehicleData]);
+  }, [vehicleData?.id, showModal]); // Only re-run if ID changes or modal visibility changes
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    console.log(`📝 Field Changed: ${name} =`, value);
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -249,17 +199,11 @@ export default function AddVehicleModal({
           uploadFormData.append('is_available', 'false'); // Make it unavailable so it's not shown
           
           // Upload images by creating a temporary vehicle
-          const tempVehicleResponse = await fetch(`${process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'}/listings/`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-            },
-            body: uploadFormData
-          });
+          const tempVehicleResponse = await apiClient.post('/listings/', uploadFormData);
           
-          if (tempVehicleResponse.ok) {
-            const tempVehicleData = await tempVehicleResponse.json();
-            const tempImages = tempVehicleData?.data?.images || tempVehicleData?.images || [];
+          if (tempVehicleResponse?.data?.data) {
+            const tempVehicleData = tempVehicleResponse.data.data;
+            const tempImages = tempVehicleData?.images || [];
             
             // Extract URLs from the uploaded images
             uploadedImageUrls = tempImages.map(img => {
@@ -274,21 +218,16 @@ export default function AddVehicleModal({
             console.log('✅ Bulk create - Images uploaded successfully:', uploadedImageUrls);
             
             // Delete the temporary vehicle after extracting image URLs
-            if (tempVehicleData?.data?.id) {
+            if (tempVehicleData?.id) {
               try {
-                await fetch(`${process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000'}/listings/${tempVehicleData.data.id}/`, {
-                  method: 'DELETE',
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                  }
-                });
+                await apiClient.delete(`/listings/${tempVehicleData.id}/`);
                 console.log('🗑️ Bulk create - Temporary vehicle deleted');
               } catch (deleteError) {
                 console.warn('⚠️ Failed to delete temporary vehicle (non-critical):', deleteError);
               }
             }
           } else {
-            console.error('⚠️ Failed to upload images:', await tempVehicleResponse.text());
+            console.error('⚠️ Failed to upload images - no data returned');
           }
         } catch (uploadError) {
           console.error('❌ Error uploading images:', uploadError);
@@ -505,7 +444,9 @@ export default function AddVehicleModal({
     if (!formData.location.trim()) newErrors.location = 'Location is required';
     if (!formData.fuel_type) newErrors.fuel_type = 'Fuel type is required';
     if (!formData.transmission) newErrors.transmission = 'Transmission is required';
-    if (!formData.seating_capacity || formData.seating_capacity < 2 || formData.seating_capacity > 8) {
+    
+    const seats = parseInt(formData.seating_capacity, 10);
+    if (!formData.seating_capacity || isNaN(seats) || seats < 2 || seats > 8) {
       newErrors.seating_capacity = 'Valid seating capacity (2-8) is required';
     }
     if (!formData.vehicle_condition) newErrors.vehicle_condition = 'Vehicle condition is required';
@@ -555,9 +496,11 @@ export default function AddVehicleModal({
         fuel_type: formData.fuel_type,
         transmission: formData.transmission,
         seating_capacity: seatingValue,
+        vehicle_style: formData.vehicle_style || 'sedan',
+        color: formData.color || 'White',
         vehicle_condition: formData.vehicle_condition,
         vehicle_description: formData.description?.trim() || '',
-        features: formData.features || [],
+        available_features: formData.features || [], // Use available_features for backend
       };
 
       // Validate all required fields are present
@@ -567,8 +510,6 @@ export default function AddVehicleModal({
         year: vehicleData.year,
         location: vehicleData.location,
         price_per_day: vehicleData.price_per_day,
-        fuel_type: vehicleData.fuel_type,
-        transmission: vehicleData.transmission,
         seating_capacity: vehicleData.seating_capacity,
         vehicle_condition: vehicleData.vehicle_condition,
       };
@@ -618,7 +559,9 @@ export default function AddVehicleModal({
           const value = vehicleData[key];
           // Handle different value types
           if (value !== null && value !== undefined) {
-            if (key === 'features' && Array.isArray(value)) {
+            // Field name is already correct in vehicleData (available_features)
+            
+            if (key === 'available_features' && Array.isArray(value)) {
               // For features array, convert to JSON string for FormData
               // The backend JSONField expects a JSON string, not individual form entries
               if (value.length > 0) {
@@ -691,8 +634,12 @@ export default function AddVehicleModal({
         fuel_type: 'gasoline',
         transmission: 'automatic',
         seating_capacity: '',
+        vehicle_style: 'sedan',
+        color: 'White',
         vehicle_condition: 'excellent',
-        pictures: []
+        pictures: [],
+        is_available: true,
+        instant_booking: false
       });
       setErrors({});
     } catch (error) {
@@ -761,18 +708,41 @@ export default function AddVehicleModal({
     }
   };
 
-  const availableFeatures = [
-    'GPS Navigation',
-    'Bluetooth',
-    'Air Conditioning',
-    'Heated Seats',
-    'Sunroof',
-    'Backup Camera',
-    'USB Ports',
-    'Leather Seats',
-    'Cruise Control',
-    'Keyless Entry'
-  ];
+  const availableFeatures = AVAILABLE_FEATURES;
+
+  // Logic to ensure current values are in options (Edit Mode fix)
+  const yearOptions = (() => {
+    const years = generateYears().map(y => ({ value: String(y), label: String(y) }));
+    if (formData.year) {
+      const yearStr = String(formData.year);
+      if (!years.some(y => y.value === yearStr)) {
+        // Add current year if not in generated range
+        years.unshift({ value: yearStr, label: yearStr });
+      }
+    }
+    return years;
+  })();
+
+  const locationOptions = (() => {
+    const locs = LOCATIONS.map(l => ({ value: l, label: l }));
+    if (formData.location && !locs.some(l => l.value === formData.location)) {
+      // Add current location if not in LOCATIONS list
+      locs.unshift({ value: formData.location, label: formData.location });
+    }
+    return locs;
+  })();
+  
+  const seatingOptions = (() => {
+    const seats = [2, 3, 4, 5, 6, 7, 8].map(s => ({ value: String(s), label: `${s} ${s === 1 ? 'Seat' : 'Seats'}` }));
+    if (formData.seating_capacity) {
+      const seatStr = String(formData.seating_capacity);
+      if (!seats.some(s => s.value === seatStr)) {
+        // Add current seating capacity if not in standard list
+        seats.unshift({ value: seatStr, label: `${seatStr} Seats` });
+      }
+    }
+    return seats;
+  })();
 
   if (!showModal) return null;
 
@@ -783,7 +753,7 @@ export default function AddVehicleModal({
           <div className="flex items-center space-x-3">
             <Car className="h-6 w-6 text-gray-600 dark:text-gray-300" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {Object.keys(vehicleData).length > 0 ? 'Edit Vehicle' : 'Add New Vehicle'}
+              {vehicleData?.id ? 'Edit Vehicle' : 'Add New Vehicle'}
             </h3>
           </div>
           <button
@@ -878,7 +848,7 @@ export default function AddVehicleModal({
                 required
                 placeholder="Select Year"
                 showPlaceholderOption
-                options={generateYears().map((year) => ({ value: year, label: String(year) }))}
+                options={yearOptions}
                 className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.year ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
@@ -920,7 +890,7 @@ export default function AddVehicleModal({
                 required
                 placeholder="Select Location"
                 showPlaceholderOption
-                options={LOCATIONS.map((location) => ({ value: location, label: location }))}
+                options={locationOptions}
                 className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.location ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
@@ -945,7 +915,7 @@ export default function AddVehicleModal({
                   { value: 'hybrid', label: 'Hybrid' },
                   { value: 'electric', label: 'Electric' },
                 ]}
-                className="w-60 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-50 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -961,7 +931,7 @@ export default function AddVehicleModal({
                   { value: 'automatic', label: 'Automatic' },
                   { value: 'manual', label: 'Manual' },
                 ]}
-                className="w-60 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-50 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -974,13 +944,10 @@ export default function AddVehicleModal({
                 value={formData.seating_capacity}
                 onChange={handleInputChange}
                 required
-                placeholder="Select Seating Capacity"
+                placeholder="Select Seating"
                 showPlaceholderOption
-                options={[2, 3, 4, 5, 6, 7, 8].map((seats) => ({
-                  value: seats,
-                  label: `${seats} ${seats === 1 ? 'Seat' : 'Seats'}`,
-                }))}
-                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                options={seatingOptions}
+                className={`w-50 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.seating_capacity ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
               />
@@ -1002,11 +969,46 @@ export default function AddVehicleModal({
                   { value: 'fair', label: 'Fair' },
                   { value: 'poor', label: 'Poor' },
                 ]}
-                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                className={`w-50 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
                   errors.vehicle_condition ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                 }`}
               />
               {errors.vehicle_condition && <p className="text-red-500 text-xs mt-1">{errors.vehicle_condition}</p>}
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                Vehicle Style
+              </label>
+              <SelectField
+                name="vehicle_style"
+                value={formData.vehicle_style}
+                onChange={handleInputChange}
+                options={[
+                  { value: 'sedan', label: 'Sedan' },
+                  { value: 'suv', label: 'SUV' },
+                  { value: 'hatchback', label: 'Hatchback' },
+                  { value: 'coupe', label: 'Coupe' },
+                  { value: 'convertible', label: 'Convertible' },
+                  { value: 'truck', label: 'Truck' },
+                  { value: 'van', label: 'Van' },
+                ]}
+                className="w-50 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                Color
+              </label>
+              <input
+                type="text"
+                name="color"
+                value={formData.color}
+                onChange={handleInputChange}
+                placeholder="e.g. White"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
 

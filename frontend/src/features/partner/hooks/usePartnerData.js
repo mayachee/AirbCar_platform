@@ -264,11 +264,27 @@ export function usePartnerData() {
       }
     } catch (error) {
       console.error('Error adding vehicle:', error);
-      console.error('Error details:', {
-        message: error.message,
-        status: error?.status,
-        data: error?.data
-      });
+      
+      // Log full error details including non-enumerable properties
+      try {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const errorData = error?.data || error?.response?.data;
+        const errorStatus = error?.status || error?.response?.status;
+        
+        console.error('Vehicle creation failed:', {
+          message: errorMsg,
+          status: errorStatus,
+          data: errorData
+        });
+        
+        // Ensure we throw an object with message to avoid empty error details upstream
+        if (!error.message) {
+           error.message = errorMsg;
+        }
+      } catch (logError) {
+        console.error('Failed to parse error details:', logError);
+      }
+      
       throw error;
     }
   };
@@ -317,6 +333,13 @@ export function usePartnerData() {
       setVehicles(prev => prev.filter(v => v.id !== vehicleId));
     } catch (error) {
       console.error('Error deleting vehicle:', error);
+      
+      // If listing not found (404), it's already deleted, so remove from UI
+      if (error?.status === 404 || error?.message?.includes('not found')) {
+        setVehicles(prev => prev.filter(v => v.id !== vehicleId));
+        return;
+      }
+      
       throw error;
     }
   };

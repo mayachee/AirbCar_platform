@@ -23,7 +23,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
   const dayAfterTomorrowStr = dateToYmd(dayAfterTomorrow);
 
   const [location, setLocation] = useState(initialValues.location || '');
-  const [pickupDate, setPickupDate] = useState(initialValues.pickupDate || todayStr);
+  const [pickupDate, setPickupDate] = useState(initialValues.pickupDate || tomorrowStr);
   const [returnDate, setReturnDate] = useState(initialValues.returnDate || dayAfterTomorrowStr);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -33,7 +33,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
   useEffect(() => {
     if (initialValues.location !== undefined) setLocation(initialValues.location);
     if (initialValues.pickupDate !== undefined) setPickupDate(initialValues.pickupDate);
-    else if (!initialValues.pickupDate && !pickupDate) setPickupDate(todayStr);
+    else if (!initialValues.pickupDate && !pickupDate) setPickupDate(tomorrowStr);
     if (initialValues.returnDate !== undefined) setReturnDate(initialValues.returnDate);
     else if (!initialValues.returnDate && !returnDate) setReturnDate(dayAfterTomorrowStr);
   }, [initialValues]);
@@ -220,7 +220,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
             id="pickupDate"
             value={pickupDate}
             onChange={handlePickupDateChange}
-            options={buildDateOptions(todayStr, 180)}
+            options={buildDateOptions(tomorrowStr, 180)}
             triggerProps={{ 
               'aria-label': 'Pickup date',
               onBlur: () => handleBlur('pickupDate')
