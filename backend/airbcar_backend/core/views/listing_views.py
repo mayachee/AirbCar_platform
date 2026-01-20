@@ -382,11 +382,35 @@ class ListingListView(APIView):
                 'model_name': 'model',
                 'dailyRate': 'price_per_day',
                 'price': 'price_per_day',
+                'features': 'available_features',
+                'description': 'vehicle_description',
             }
             
             for frontend_key, backend_key in field_mapping.items():
-                if frontend_key in listing_data and backend_key not in listing_data:
-                    listing_data[backend_key] = listing_data.pop(frontend_key)
+                if frontend_key in listing_data:
+                    val = listing_data.pop(frontend_key)
+                    if backend_key not in listing_data:
+                        listing_data[backend_key] = val
+            
+            # Parse available_features if it's a string (from FormData)
+            if 'available_features' in listing_data and isinstance(listing_data['available_features'], str):
+                try:
+                    listing_data['available_features'] = json.loads(listing_data['available_features'])
+                except (json.JSONDecodeError, TypeError):
+                    if settings.DEBUG:
+                        print(f"⚠️ Failed to parse available_features JSON: {listing_data['available_features']}")
+                    listing_data['available_features'] = []
+            
+            # Additional fallback: Check 'features' if available_features is empty
+            if (not listing_data.get('available_features')) and 'features' in request.data:
+                features_val = request.data['features']
+                if isinstance(features_val, str):
+                    try:
+                        listing_data['available_features'] = json.loads(features_val)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                elif isinstance(features_val, list):
+                    listing_data['available_features'] = features_val
             
             # Debug: Log what we received
             if settings.DEBUG:
@@ -397,6 +421,26 @@ class ListingListView(APIView):
                     print(f"   {field}: {value} (type: {type(value).__name__})")
             
             listing_data['partner_id'] = partner.id
+            
+            # Remove keys that aren't in the model to avoid issues with custom validation logic
+            # This is a safety measure to ensure compatibility with older frontend code
+            valid_model_fields = [
+                'make', 'model', 'year', 'color', 'transmission', 'fuel_type',
+                'seating_capacity', 'vehicle_style', 'price_per_day', 'location',
+                'vehicle_description', 'available_features', 'images', 'is_available',
+                'is_verified', 'instant_booking', 'partner_id'
+            ]
+            
+            # Filter listing_data to only include known fields
+            # We construct a new dict to avoid modifying the one we're iterating over
+            filtered_data = {}
+            for key, value in listing_data.items():
+                if key in valid_model_fields:
+                    filtered_data[key] = value
+                elif settings.DEBUG:
+                    print(f"⚠️ Removing unknown field from payload: {key}")
+            
+            listing_data = filtered_data
             
             # Convert FormData string values to proper types
             # FormData sends everything as strings, so we need to convert numbers
@@ -416,7 +460,7 @@ class ListingListView(APIView):
                 try:
                     listing_data['seating_capacity'] = int(listing_data['seating_capacity'])
                 except (ValueError, TypeError):
-                    pass
+                    listing_data['seating_capacity'] = 5  # Default to 5 if invalid string
             
             if 'is_available' in listing_data and isinstance(listing_data['is_available'], str):
                 listing_data['is_available'] = listing_data['is_available'].lower() in ('true', '1', 'yes')
@@ -433,6 +477,18 @@ class ListingListView(APIView):
                 'price_per_day': 'number',
                 'location': 'string'
             }
+            # Add defaults for optional fields if missing
+            if 'fuel_type' not in listing_data or not listing_data['fuel_type']:
+                listing_data['fuel_type'] = 'gasoline'
+            if 'transmission' not in listing_data or not listing_data['transmission']:
+                listing_data['transmission'] = 'automatic'
+            if 'seating_capacity' not in listing_data:
+                listing_data['seating_capacity'] = 5
+            if 'vehicle_style' not in listing_data or not listing_data['vehicle_style']:
+                listing_data['vehicle_style'] = 'sedan'
+            if 'color' not in listing_data or not listing_data['color']:
+                listing_data['color'] = 'White'
+                
             missing_fields = []
             for field, field_type in required_fields.items():
                 value = listing_data.get(field)
@@ -489,23 +545,66 @@ class ListingListView(APIView):
                 print(f"📋 POST /listings/ - Content-Type: {request.content_type}")
             
             # Process uploaded files (from 'pictures' field in FormData)
-            # STRATEGY: Skip image uploads during listing creation to prevent timeouts
-            # Images can be added later via PATCH /listings/{id}/
-            # This ensures listing is created immediately without waiting for slow Supabase uploads
+            # STRATEGY: Allow image uploads but limit count to prevent timeouts
             if 'pictures' in request.FILES:
                 files = request.FILES.getlist('pictures')
                 num_files = len(files)
                 
+                # Limit to 5 images per creation request to prevent timeout
+                max_images = 5
+                if num_files > max_images:
+                    files = files[:max_images]
+                    image_errors.append(f"Limited to {max_images} images to prevent timeout. Please add remaining images via edit.")
+                
                 if settings.DEBUG:
-                    print(f"📸 POST /listings/ - Received {num_files} image(s), but skipping upload during creation to prevent timeout")
-                    print(f"   Images can be added later via PATCH /listings/{{id}}/")
+                    print(f"📸 POST /listings/ - Processing {len(files)} image(s)")
                 
-                # Skip image uploads entirely during listing creation
-                # This prevents timeouts - user can add images via update endpoint
-                image_errors.append(f"Skipped {num_files} image(s) during listing creation to prevent timeout. Please add images later via the update endpoint (PATCH /listings/{{id}}/).")
-                
-                # Don't attempt any uploads - just create listing without images
-                uploaded_images = []
+                for file in files:
+                    try:
+                        # Quick basic validation (file size and type only)
+                        if file.size > MAX_FILE_SIZE:
+                            image_errors.append(f"{file.name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
+                            continue
+                        
+                        # OPTIMIZED: Upload directly to Supabase - using the same logic as in update
+                        try:
+                            from core.utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                        except ImportError:
+                            from ..utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                        
+                        # Lightweight validation
+                        is_valid, validation_error = validate_image_file(file)
+                        if not is_valid:
+                            image_errors.append(f"{file.name}: {validation_error}")
+                            continue
+
+                        # Upload directly to Supabase
+                        supabase_url = upload_file_to_supabase_storage(
+                            file=file,
+                            bucket_name='listings',
+                            folder='listings',
+                            user_id=partner.id if partner else None
+                        )
+                        
+                        uploaded_images.append({
+                            'url': supabase_url,
+                            'name': file.name
+                        })
+                        
+                        if settings.DEBUG:
+                            print(f"✓ Uploaded image to Supabase: {supabase_url}")
+                    except ValueError as e:
+                        # Validation error
+                        image_errors.append(f"{file.name}: {str(e)}")
+                        if settings.DEBUG:
+                            print(f"❌ Validation error for {file.name}: {str(e)}")
+                    except Exception as e:
+                        # Other errors
+                        error_msg = f"Error processing {file.name}: {str(e)}"
+                        image_errors.append(error_msg)
+                        if settings.DEBUG:
+                            print(f"❌ {error_msg}")
+                        traceback.print_exc()
             
             # Handle existing images from JSON (if provided as JSON string or array)
             # Remove 'images' from listing_data first to avoid serializer validation issues

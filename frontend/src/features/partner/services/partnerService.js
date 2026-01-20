@@ -45,7 +45,8 @@ export const partnerService = {
   },
 
   async getPartnerProfile() {
-    return apiClient.get('/partners/me/')
+    // Disable cache to ensure we always get fresh data (bookings, listings, stats change frequently)
+    return apiClient.get('/partners/me/', undefined, { cache: 'no-store' })
   },
 
   async getPartnerById(partnerId) {
