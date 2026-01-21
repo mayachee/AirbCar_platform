@@ -199,7 +199,7 @@ export default function AddVehicleModal({
           uploadFormData.append('is_available', 'false'); // Make it unavailable so it's not shown
           
           // Upload images by creating a temporary vehicle
-          const tempVehicleResponse = await apiClient.post('/listings/', uploadFormData);
+          const tempVehicleResponse = await apiClient.post('/listings/', uploadFormData, { timeout: 180000 });
           
           if (tempVehicleResponse?.data?.data) {
             const tempVehicleData = tempVehicleResponse.data.data;
