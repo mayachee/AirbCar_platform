@@ -165,24 +165,6 @@ class UserMeView(APIView):
                 'error': 'An error occurred',
                 'message': error_msg if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            else:
-                if settings.DEBUG:
-                    print(f"❌ PUT /users/me/ - Validation failed: {serializer.errors}")
-                return Response({
-                    'error': 'Validation failed',
-                    'errors': serializer.errors
-                }, status=status.HTTP_400_BAD_REQUEST)
-                
-        except Exception as e:
-            error_msg = str(e)
-            error_type = type(e).__name__
-            if settings.DEBUG:
-                print(f"❌ PUT /users/me/ - Exception ({error_type}): {error_msg}")
-                traceback.print_exc()
-            return Response({
-                'error': 'An error occurred',
-                'message': f'{error_type}: {error_msg}' if settings.DEBUG else 'An error occurred while updating profile'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UserStatsView(APIView):
