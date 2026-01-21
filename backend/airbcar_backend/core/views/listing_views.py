@@ -20,7 +20,7 @@ import time
 import signal
 from pathlib import Path
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
+from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, Notification
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
@@ -672,6 +672,20 @@ class ListingListView(APIView):
                         
                         # Return created listing with full details
                         response_serializer = ListingSerializer(listing, context={'request': request})
+                        
+                        # Create notification
+                        try:
+                            Notification.objects.create(
+                                user=request.user,
+                                title="Vehicle Created",
+                                message=f"Your vehicle {listing.make} {listing.model} has been successfully created.",
+                                type="success",
+                                related_object_type="listing",
+                                related_object_id=listing.id
+                            )
+                        except Exception as notif_error:
+                            print(f"Warning: Failed to create notification: {notif_error}")
+
                         response_data = {
                             'data': response_serializer.data,
                             'message': 'Listing created successfully',
@@ -810,6 +824,16 @@ class ListingListView(APIView):
                             })
                             # Rollback transaction on first error
                             raise ValueError(f"Validation failed for vehicle {idx+1}: {serializer.errors}")
+
+                    # Create notification for bulk creation
+                    Notification.objects.create(
+                        user=request.user,
+                        title="Vehicles Created",
+                        message=f"Successfully created {len(created_listings)} vehicles.",
+                        type="success",
+                        related_object_type="bulk_listing",
+                        related_object_id=0
+                    )
 
                 return Response({
                     'data': created_listings,
@@ -1216,8 +1240,19 @@ class ListingDetailView(APIView):
             
             # Use transaction for data consistency
             listing_id = listing.id
+            listing_name = f"{listing.make} {listing.model} ({listing.year})"
             with transaction.atomic():
                 listing.delete()
+                
+                # Create notification
+                Notification.objects.create(
+                    user=request.user,
+                    title="Vehicle Deleted",
+                    message=f"Your vehicle {listing_name} has been successfully deleted.",
+                    type="success",
+                    related_object_type="listing",
+                    related_object_id=listing_id
+                )
                 
                 if settings.DEBUG:
                     print(f"✅ DELETE /listings/{pk}/ - Listing {listing_id} deleted successfully")

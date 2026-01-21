@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { CarFront, Edit, Trash2, Eye, Plus, Search, Filter, ArrowUpDown, MapPin, DollarSign, Users, Fuel, Calendar, Star, RefreshCw, Grid3x3, List, Copy, MoreVertical, CheckCircle2, XCircle, Wrench, TrendingUp, Eye as EyeIcon, Download } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
 import { SelectField } from '@/components/ui/select-field';
+import { useToast } from '@/contexts/ToastContext';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ export default function VehiclesList({
   onViewVehicle,
   onRefresh
 }) {
+  const { addToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -268,7 +270,10 @@ export default function VehiclesList({
           <div className="flex gap-2">
             {onRefresh && (
               <button
-                onClick={onRefresh}
+                onClick={() => {
+                  onRefresh();
+                  addToast("Refreshed vehicle list", 'info');
+                }}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 title="Refresh"
               >
@@ -693,8 +698,10 @@ export default function VehiclesList({
                 
                 try {
                   await onDeleteVehicle(vehicle, true);
+                  addToast(`${vehicle.make} ${vehicle.model} successfully deleted`, 'success');
                 } catch (error) {
                   console.error('Delete error:', error);
+                  addToast("Failed to delete vehicle. Please try again.", 'error');
                 } finally {
                   setDeletingVehicleId(null);
                 }

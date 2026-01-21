@@ -17,6 +17,8 @@ import AddVehicleModal from '@/components/forms/AddVehicleModal';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
+import { apiClient } from '@/lib/api/client';
+
 export default function PartnerDashboard() {
   const { user, loading } = useAuth();
   const [isPartner, setIsPartner] = useState(false);
@@ -29,24 +31,7 @@ export default function PartnerDashboard() {
   const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [loadingPendingRequests, setLoadingPendingRequests] = useState(false);
   const [loadingUpcomingBookings, setLoadingUpcomingBookings] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'new_booking',
-      title: 'New Booking Request',
-      message: 'John Doe wants to book your Toyota Camry',
-      timestamp: new Date().toISOString(),
-      read: false
-    },
-    {
-      id: 2,
-      type: 'payment_received',
-      title: 'Payment Received',
-      message: '$150 payment received for booking #123',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      read: false
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const router = useRouter();
   
   const {
@@ -85,8 +70,60 @@ export default function PartnerDashboard() {
     if (isPartner && hasPartnerProfile && !dataLoading) {
       fetchPendingRequests();
       fetchUpcomingBookings();
+      fetchNotifications();
     }
   }, [isPartner, hasPartnerProfile, dataLoading]);
+  
+  // Set up polling for new notifications every 60 seconds
+  useEffect(() => {
+    if (isPartner) {
+        const intervalId = setInterval(() => {
+            fetchNotifications();
+        }, 60000);
+        
+        return () => clearInterval(intervalId);
+    }
+  }, [isPartner]);
+
+  const fetchNotifications = async () => {
+    try {
+        const response = await apiClient.get('/notifications/');
+        if (response.data) {
+            // Sort by created_at desc (if backend doesn't already)
+            // Backend endpoint: /notifications/ - returns filtered(user=self)
+            setNotifications(response.data.results || response.data || []); 
+        }
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const handleMarkNotificationRead = async (id = null) => {
+    try {
+        if (id) {
+            // Mark specific notification as read
+            await apiClient.post(`/notifications/${id}/read/`);
+            setNotifications(prev => prev.map(n => 
+                n.id === id ? { ...n, is_read: true } : n
+            ));
+        } else {
+            // Mark all as read
+            await apiClient.post('/notifications/read-all/');
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        }
+    } catch (error) {
+        console.error('Error marking notifications read:', error);
+    }
+  };
+  
+  const handleClearAllNotifications = async () => {
+     // Optional: If you want to delete them or just clear from local view
+     // For now, let's assuming clearing view implies marking all read or simple state clear
+     // Usually clearer to "Archive" or "Delete" but UI is "Clear all"
+     // We'll mark all read for now as "soft clear" or implemented delete endpoint
+     await handleMarkNotificationRead(); 
+     setNotifications([]);
+  };
 
   const checkPartnerStatus = async () => {
     try {
@@ -251,6 +288,7 @@ export default function PartnerDashboard() {
       await acceptBooking(bookingId);
       await fetchPendingRequests();
       await fetchUpcomingBookings();
+      fetchNotifications(); // Refresh notifications
       refetch();
     } catch (error) {
       console.error('Error accepting booking:', error);
@@ -261,6 +299,7 @@ export default function PartnerDashboard() {
     try {
       await rejectBooking(bookingId, reason);
       await fetchPendingRequests();
+      fetchNotifications(); // Refresh notifications
       refetch();
     } catch (error) {
       console.error('Error rejecting booking:', error);
@@ -318,6 +357,7 @@ export default function PartnerDashboard() {
                 refetch();
                 fetchPendingRequests();
                 fetchUpcomingBookings();
+                fetchNotifications();
               }}
               className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
             >
@@ -325,8 +365,8 @@ export default function PartnerDashboard() {
             </button>
             <NotificationCenter
               notifications={notifications}
-              onMarkAsRead={handleNotificationMarkAsRead}
-              onClearAll={handleNotificationClearAll}
+              onMarkAsRead={handleMarkNotificationRead}
+              onClearAll={handleClearAllNotifications}
             />
           </div>
         </div>

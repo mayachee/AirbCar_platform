@@ -4,7 +4,7 @@ DRF serializers for core app.
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from .models import User, Partner, Listing, Booking, Favorite, Review
+from .models import User, Partner, Listing, Booking, Favorite, Review, Notification
 
 User = get_user_model()
 
@@ -637,4 +637,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ['id', 'listing', 'user', 'rating', 'comment', 'is_published',
                   'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    """Notification serializer."""
+    
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'message', 'type', 'is_read', 'created_at', 'related_object_id', 'related_object_type']
+        read_only_fields = ['id', 'created_at']
 
