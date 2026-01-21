@@ -1159,10 +1159,12 @@ export default function AddVehicleModal({
               <div className="flex space-x-2">
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent form submission
+                    e.stopPropagation();
                     setBulkMode(true);
                     setBulkCount(3);
-                    await handleBulkCreate(3);
+                    handleBulkCreate(3);
                   }}
                   disabled={loading}
                   className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-200 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
@@ -1171,10 +1173,12 @@ export default function AddVehicleModal({
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent form submission
+                    e.stopPropagation();
                     setBulkMode(true);
                     setBulkCount(5);
-                    await handleBulkCreate(5);
+                    handleBulkCreate(5);
                   }}
                   disabled={loading}
                   className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-200 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
