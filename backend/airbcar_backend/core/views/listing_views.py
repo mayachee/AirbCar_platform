@@ -367,7 +367,12 @@ class ListingListView(APIView):
                 }, status=status.HTTP_403_FORBIDDEN)
 
             # Check for bulk creation request
-            if request.data.get('bulk') is True and 'vehicles' in request.data:
+            # Handle potential string 'true' from FormData or boolean True from JSON
+            is_bulk = request.data.get('bulk')
+            if isinstance(is_bulk, str):
+                is_bulk = is_bulk.lower() == 'true'
+            
+            if is_bulk and 'vehicles' in request.data:
                 return self._handle_bulk_create(request, partner)
             
             # Prepare listing data
