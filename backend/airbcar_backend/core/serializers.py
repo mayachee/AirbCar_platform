@@ -18,9 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name', 'role', 'is_partner', 
-            'phone_number', 'profile_picture', 'profile_picture_url',
-            'license_front_document',
-            'license_back_document',
+            'phone_number', 'profile_picture_url',
             'is_verified', 'date_joined',
             # Personal Information
             'date_of_birth', 'nationality',
@@ -28,10 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
             'license_number', 'license_origin_country', 'issue_date', 'expiry_date'
         ]
         read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
-        extra_kwargs = {
-            'license_front_document': {'write_only': True},  # Don't return in API, use URL instead
-            'license_back_document': {'write_only': True},    # Don't return in API, use URL instead
-        }
 
     def get_is_partner(self, obj):
         """Check if user is a partner."""
@@ -193,6 +187,15 @@ class UserSerializer(serializers.ModelSerializer):
             # doesn't have URL fields for license docs.
             # If we wanted to, we would need to add URL fields to User model first.
 
+        # Handle profile picture deletion manually (as field is not in serializer)
+        if request and 'profile_picture' in request.data:
+            val = request.data.get('profile_picture')
+            if val is None or val == '' or val == 'null':
+                instance.profile_picture = None
+                # Don't clear profile_picture_url automatically as it might be from external source
+                # Unless explicit deletion intended?
+                # For now just clear local picture.
+
         if 'profile_picture' in validated_data and validated_data['profile_picture'] is None:
             instance.profile_picture = None
             # Don't clear profile_picture_url as it might be from Google Sign-In
@@ -264,6 +267,9 @@ class PartnerSerializer(serializers.ModelSerializer):
                   'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
                    'phone_number', 'first_name', 'last_name']
         read_only_fields = ['id', 'created_at', 'logo_url']
+        extra_kwargs = {
+            'logo': {'write_only': True},
+        }
     
     def get_logo_url(self, obj):
         """Return full URL for partner logo. Only returns Supabase/external URLs."""
@@ -379,15 +385,36 @@ class PartnerDetailSerializer(PartnerSerializer):
     """Partner serializer with listings."""
     listings = SimpleListingSerializer(many=True, read_only=True)
     
+    # Add fields that are not in the model but expected by frontend
+    address = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    
     class Meta:
         model = Partner
         fields = [
             'id', 'user', 'business_name', 'business_type', 'business_license',
             'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
             'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
+             'phone_number', 'first_name', 'last_name',
             'address', 'city', 'state', 'listings'
         ]
         read_only_fields = ['id', 'created_at', 'logo_url']
+        extra_kwargs = {
+            'logo': {'write_only': True},
+        }
+
+    def get_address(self, obj):
+        """Return address - currently not stored in Partner or User model."""
+        return ""
+    
+    def get_city(self, obj):
+        """Return city - currently not stored in Partner or User model."""
+        return ""
+
+    def get_state(self, obj):
+        """Return state - currently not stored in Partner or User model."""
+        return ""
 
 
 class ListingSerializer(serializers.ModelSerializer):
