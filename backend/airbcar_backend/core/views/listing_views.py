@@ -249,7 +249,11 @@ class ListingListView(APIView):
             # Pagination - do count before slicing for better performance
             page = int(request.query_params.get('page', 1))
             page_size = int(request.query_params.get('page_size', 20))
-            page_size = min(page_size, 50)  # Reduced max page size from 100 to 50 for better performance
+            # Increased limit to support "fetch all" strategy for client-side filtering
+            # page_size = min(page_size, 50) 
+            if page_size > 1000:
+                page_size = 1000
+
             
             # Use exists() check first if we only need to know if there are results
             # For count, use a more efficient method if possible

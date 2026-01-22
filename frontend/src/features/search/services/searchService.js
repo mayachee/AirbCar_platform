@@ -32,6 +32,9 @@ class SearchService {
       if (filters.verified) {
         params.append('verified', 'true');
       }
+
+      // Request larger page size to support client-side filtering
+      params.append('page_size', '1000');
       
       const queryString = params.toString();
       
