@@ -8,7 +8,7 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
   
   // Use useMemo instead of useEffect to prevent infinite re-renders
   const unreadCount = useMemo(() => {
-    return notifications.filter(n => !n.read).length;
+    return notifications.filter(n => !n.is_read && !n.read).length; // Check both legacy 'read' and backend 'is_read'
   }, [notifications]);
 
   const getNotificationIcon = (type) => {
@@ -18,6 +18,9 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
       case 'booking_rejected': return <AlertCircle className="h-5 w-5 text-red-500" />;
       case 'payment_received': return <DollarSign className="h-5 w-5 text-green-500" />;
       case 'vehicle_issue': return <Car className="h-5 w-5 text-orange-500" />;
+      case 'success': return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'error': return <AlertCircle className="h-5 w-5 text-red-500" />;
+      case 'info': return <Bell className="h-5 w-5 text-blue-500" />;
       default: return <Bell className="h-5 w-5 text-gray-500" />;
     }
   };
@@ -29,11 +32,15 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
       case 'booking_rejected': return 'border-l-red-500 bg-red-50 dark:bg-red-900/20';
       case 'payment_received': return 'border-l-green-500 bg-green-50 dark:bg-green-900/20';
       case 'vehicle_issue': return 'border-l-orange-500 bg-orange-50 dark:bg-orange-900/20';
+      case 'success': return 'border-l-green-500 bg-green-50 dark:bg-green-900/20';
+      case 'error': return 'border-l-red-500 bg-red-50 dark:bg-red-900/20';
+      case 'info': return 'border-l-blue-500 bg-blue-50 dark:bg-blue-900/20';
       default: return 'border-l-gray-500 bg-gray-50 dark:bg-gray-700/40';
     }
   };
 
   const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return 'Unknown';
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now - time) / (1000 * 60));
@@ -102,7 +109,7 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
                   <div
                     key={notification.id}
                     className={`p-4 border-l-4 ${getNotificationColor(notification.type)} ${
-                      !notification.read ? 'bg-opacity-50' : ''
+                      !(notification.is_read || notification.read) ? 'bg-opacity-50' : 'bg-opacity-20'
                     }`}
                   >
                     <div className="flex items-start space-x-3">
@@ -117,12 +124,19 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
                           {notification.message}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                          {formatTimeAgo(notification.timestamp)}
+                          {formatTimeAgo(notification.created_at || notification.timestamp)}
                         </p>
                       </div>
-                      {!notification.read && (
+                      {!(notification.is_read || notification.read) && (
                         <div className="flex-shrink-0">
-                          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                          <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if(onMarkAsRead) onMarkAsRead(notification.id);
+                            }}
+                            className="h-2 w-2 bg-blue-500 rounded-full hover:bg-blue-600 cursor-pointer" 
+                            title="Mark as read"
+                          />
                         </div>
                       )}
                     </div>

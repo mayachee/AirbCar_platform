@@ -92,7 +92,7 @@ export const partnerService = {
   async addVehiclesBulk(vehiclesArray) {
     // Send array of vehicles for bulk creation
     // Increase timeout to 90 seconds for bulk operations (processing multiple vehicles may take time)
-    return apiClient.post('/listings/', { vehicles: vehiclesArray }, { timeout: 90000 })
+    return apiClient.post('/listings/', { vehicles: vehiclesArray, bulk: true }, { timeout: 90000 })
   },
 
   async updateVehicle(vehicleId, vehicleData) {

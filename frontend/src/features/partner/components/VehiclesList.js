@@ -4,6 +4,15 @@ import { useState, useMemo } from 'react';
 import { CarFront, Edit, Trash2, Eye, Plus, Search, Filter, ArrowUpDown, MapPin, DollarSign, Users, Fuel, Calendar, Star, RefreshCw, Grid3x3, List, Copy, MoreVertical, CheckCircle2, XCircle, Wrench, TrendingUp, Eye as EyeIcon, Download } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
 import { SelectField } from '@/components/ui/select-field';
+import { useToast } from '@/contexts/ToastContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function VehiclesList({ 
   vehicles, 
@@ -14,6 +23,7 @@ export default function VehiclesList({
   onViewVehicle,
   onRefresh
 }) {
+  const { addToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -21,6 +31,7 @@ export default function VehiclesList({
   const [selectedVehicles, setSelectedVehicles] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [deletingVehicleId, setDeletingVehicleId] = useState(null);
+  const [vehicleToDelete, setVehicleToDelete] = useState(null);
 
   // Handle undefined or null vehicles array
   const vehiclesList = vehicles || [];
@@ -259,7 +270,10 @@ export default function VehiclesList({
           <div className="flex gap-2">
             {onRefresh && (
               <button
-                onClick={onRefresh}
+                onClick={() => {
+                  onRefresh();
+                  addToast("Refreshed vehicle list", 'info');
+                }}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 title="Refresh"
               >
@@ -585,32 +599,12 @@ export default function VehiclesList({
                   {viewMode === "grid" && <span>Edit</span>}
                 </button>
                 <button
-                  onClick={async (e) => {
+                  onClick={(e) => {
                     e.stopPropagation();
-                    const vehicleName = `${vehicle.make || vehicle.brand || 'Vehicle'} ${vehicle.model || ''}`.trim();
-                    const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
-                    const fullVehicleName = `${vehicleName}${vehicleYear}`;
-                    
-                    // Simple confirmation - much easier!
-                    if (window.confirm(
-                      `Delete "${fullVehicleName}"?\n\n` +
-                      `This will permanently remove the vehicle from your listings.\n` +
-                      `This action cannot be undone.`
-                    )) {
-                      setDeletingVehicleId(vehicle.id);
-                      try {
-                        // Pass skipConfirmation=true since we already confirmed
-                        await onDeleteVehicle(vehicle, true);
-                      } catch (error) {
-                        // Error is already handled by the handler, just reset loading state
-                        console.error('Delete error:', error);
-                      } finally {
-                        setDeletingVehicleId(null);
-                      }
-                    }
+                    setVehicleToDelete(vehicle);
                   }}
                   disabled={deletingVehicleId === vehicle.id || loading}
-                  className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed group/delete"
                   title="Delete Vehicle"
                 >
                   {deletingVehicleId === vehicle.id ? (
@@ -620,7 +614,7 @@ export default function VehiclesList({
                     </>
                   ) : (
                     <>
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 transition-transform group-hover/delete:scale-110" />
                       {viewMode === "grid" && <span>Delete</span>}
                     </>
                   )}
@@ -672,6 +666,53 @@ export default function VehiclesList({
           </div>
         )}
       </div>
+
+      <Dialog open={!!vehicleToDelete} onOpenChange={(open) => !open && setVehicleToDelete(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              Delete Vehicle
+            </DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-gray-100">
+                {vehicleToDelete ? `${vehicleToDelete.make} ${vehicleToDelete.model}` : 'this vehicle'}
+              </span>?
+              <br className="mb-2" />
+              This action cannot be undone and will permanently remove the vehicle from your listings.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <button
+              onClick={() => setVehicleToDelete(null)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (!vehicleToDelete) return;
+                setDeletingVehicleId(vehicleToDelete.id);
+                const vehicle = vehicleToDelete;
+                setVehicleToDelete(null); // Close modal
+                
+                try {
+                  await onDeleteVehicle(vehicle, true);
+                  addToast(`${vehicle.make} ${vehicle.model} successfully deleted`, 'success');
+                } catch (error) {
+                  console.error('Delete error:', error);
+                  addToast("Failed to delete vehicle. Please try again.", 'error');
+                } finally {
+                  setDeletingVehicleId(null);
+                }
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors shadow-sm"
+            >
+              Delete Vehicle
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

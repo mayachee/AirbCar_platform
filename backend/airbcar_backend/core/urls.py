@@ -161,6 +161,14 @@ if views.ReviewListView is not None:
 if views.CanReviewView is not None:
     urlpatterns.append(path('reviews/can_review/', views.CanReviewView.as_view(), name='can-review'))
 
+# Notification endpoints
+if views.NotificationListView is not None:
+    urlpatterns.append(path('notifications/', views.NotificationListView.as_view(), name='notification-list'))
+if views.MarkNotificationReadView is not None:
+    urlpatterns.append(path('notifications/<int:pk>/read/', views.MarkNotificationReadView.as_view(), name='notification-read'))
+if views.MarkAllNotificationsReadView is not None:
+    urlpatterns.append(path('notifications/read-all/', views.MarkAllNotificationsReadView.as_view(), name='notification-read-all'))
+
 # Admin endpoints
 if views.AdminStatsView is not None:
     urlpatterns.append(path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'))

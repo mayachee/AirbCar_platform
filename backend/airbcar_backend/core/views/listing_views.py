@@ -20,7 +20,7 @@ import time
 import signal
 from pathlib import Path
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
+from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, Notification
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
@@ -348,7 +348,7 @@ class ListingListView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
-        """Create a new listing (vehicle)."""
+        """Create a new listing (vehicle) or bulk create listings."""
         # Check authentication
         if not request.user.is_authenticated:
             return Response({
@@ -365,6 +365,15 @@ class ListingListView(APIView):
                     'error': 'Partner profile not found. Please complete your partner profile first.',
                     'message': 'You must have a partner profile to create listings'
                 }, status=status.HTTP_403_FORBIDDEN)
+
+            # Check for bulk creation request
+            # Handle potential string 'true' from FormData or boolean True from JSON
+            is_bulk = request.data.get('bulk')
+            if isinstance(is_bulk, str):
+                is_bulk = is_bulk.lower() == 'true'
+            
+            if is_bulk and 'vehicles' in request.data:
+                return self._handle_bulk_create(request, partner)
             
             # Prepare listing data
             # IMPORTANT: Create a clean copy without file objects to prevent pickle errors
@@ -665,6 +674,20 @@ class ListingListView(APIView):
                         
                         # Return created listing with full details
                         response_serializer = ListingSerializer(listing, context={'request': request})
+                        
+                        # Create notification
+                        try:
+                            Notification.objects.create(
+                                user=request.user,
+                                title="Vehicle Created",
+                                message=f"Your vehicle {listing.make} {listing.model} has been successfully created.",
+                                type="success",
+                                related_object_type="listing",
+                                related_object_id=listing.id
+                            )
+                        except Exception as notif_error:
+                            print(f"Warning: Failed to create notification: {notif_error}")
+
                         response_data = {
                             'data': response_serializer.data,
                             'message': 'Listing created successfully',
@@ -729,6 +752,110 @@ class ListingListView(APIView):
                 'message': f'{error_type}: {display_msg}' if settings.DEBUG else f'Error: {error_type} - {display_msg[:200]}',
                 'error_type': error_type,
                 'traceback': tb_str if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def _handle_bulk_create(self, request, partner):
+        """Handle bulk creation of listings."""
+        try:
+            vehicles_data = request.data.get('vehicles', [])
+            if not isinstance(vehicles_data, list):
+                return Response({
+                    'error': 'Invalid format',
+                    'message': 'Vehicles data must be a list'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            created_listings = []
+            errors = []
+            
+            # Use atomic transaction to ensure all or nothing
+            try:
+                with transaction.atomic():
+                    for idx, vehicle_data in enumerate(vehicles_data):
+                        # Prepare listing data
+                        listing_data = vehicle_data.copy()
+                        listing_data['partner_id'] = partner.id
+                        
+                        # Ensure defaults
+                        if 'is_available' not in listing_data:
+                            listing_data['is_available'] = True
+                        if 'fuel_type' not in listing_data:
+                            listing_data['fuel_type'] = 'gasoline'
+                        if 'transmission' not in listing_data:
+                            listing_data['transmission'] = 'automatic'
+                        if 'seating_capacity' not in listing_data:
+                            listing_data['seating_capacity'] = 5
+                        if 'vehicle_style' not in listing_data:
+                            listing_data['vehicle_style'] = 'sedan'
+                        if 'color' not in listing_data:
+                            listing_data['color'] = 'White'
+                        
+                        # Ensure numeric fields are correctly typed
+                        numeric_fields = ['year', 'price_per_day', 'seating_capacity']
+                        for field in numeric_fields:
+                            if field in listing_data and isinstance(listing_data[field], str):
+                                try:
+                                    if field == 'price_per_day':
+                                        listing_data[field] = float(listing_data[field])
+                                    else:
+                                        listing_data[field] = int(listing_data[field])
+                                except (ValueError, TypeError):
+                                    pass
+
+                        # Remove unknown fields that might cause issues
+                        valid_model_fields = [
+                            'make', 'model', 'year', 'color', 'transmission', 'fuel_type',
+                            'seating_capacity', 'vehicle_style', 'price_per_day', 'location',
+                            'vehicle_description', 'available_features', 'images', 'is_available',
+                            'is_verified', 'instant_booking', 'partner_id'
+                        ]
+                        
+                        filtered_data = {}
+                        for key, value in listing_data.items():
+                            if key in valid_model_fields:
+                                filtered_data[key] = value
+
+                        # Validate and create
+                        serializer = ListingSerializer(data=filtered_data, context={'request': request})
+                        if serializer.is_valid():
+                            listing = serializer.save()
+                            created_listings.append(ListingSerializer(listing).data)
+                        else:
+                            errors.append({
+                                'index': idx,
+                                'error': serializer.errors
+                            })
+                            # Rollback transaction on first error
+                            raise ValueError(f"Validation failed for vehicle {idx+1}: {serializer.errors}")
+
+                    # Create notification for bulk creation
+                    Notification.objects.create(
+                        user=request.user,
+                        title="Vehicles Created",
+                        message=f"Successfully created {len(created_listings)} vehicles.",
+                        type="success",
+                        related_object_type="bulk_listing",
+                        related_object_id=0
+                    )
+
+                return Response({
+                    'data': created_listings,
+                    'count': len(created_listings),
+                    'message': f'Successfully created {len(created_listings)} vehicles'
+                }, status=status.HTTP_201_CREATED)
+                
+            except ValueError as ve:
+                return Response({
+                    'error': 'Bulk creation failed',
+                    'message': str(ve),
+                    'details': errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            if settings.DEBUG:
+                traceback.print_exc()
+            return Response({
+                'error': 'An error occurred during bulk creation',
+                'message': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -1115,8 +1242,19 @@ class ListingDetailView(APIView):
             
             # Use transaction for data consistency
             listing_id = listing.id
+            listing_name = f"{listing.make} {listing.model} ({listing.year})"
             with transaction.atomic():
                 listing.delete()
+                
+                # Create notification
+                Notification.objects.create(
+                    user=request.user,
+                    title="Vehicle Deleted",
+                    message=f"Your vehicle {listing_name} has been successfully deleted.",
+                    type="success",
+                    related_object_type="listing",
+                    related_object_id=listing_id
+                )
                 
                 if settings.DEBUG:
                     print(f"✅ DELETE /listings/{pk}/ - Listing {listing_id} deleted successfully")

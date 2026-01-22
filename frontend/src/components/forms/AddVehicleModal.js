@@ -199,7 +199,7 @@ export default function AddVehicleModal({
           uploadFormData.append('is_available', 'false'); // Make it unavailable so it's not shown
           
           // Upload images by creating a temporary vehicle
-          const tempVehicleResponse = await apiClient.post('/listings/', uploadFormData);
+          const tempVehicleResponse = await apiClient.post('/listings/', uploadFormData, { timeout: 180000 });
           
           if (tempVehicleResponse?.data?.data) {
             const tempVehicleData = tempVehicleResponse.data.data;
@@ -996,20 +996,6 @@ export default function AddVehicleModal({
                 className="w-50 px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                Color
-              </label>
-              <input
-                type="text"
-                name="color"
-                value={formData.color}
-                onChange={handleInputChange}
-                placeholder="e.g. White"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
           </div>
 
           {/* Features */}
@@ -1173,10 +1159,12 @@ export default function AddVehicleModal({
               <div className="flex space-x-2">
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent form submission
+                    e.stopPropagation();
                     setBulkMode(true);
                     setBulkCount(3);
-                    await handleBulkCreate(3);
+                    handleBulkCreate(3);
                   }}
                   disabled={loading}
                   className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-200 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
@@ -1185,10 +1173,12 @@ export default function AddVehicleModal({
                 </button>
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent form submission
+                    e.stopPropagation();
                     setBulkMode(true);
                     setBulkCount(5);
-                    await handleBulkCreate(5);
+                    handleBulkCreate(5);
                   }}
                   disabled={loading}
                   className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 dark:text-blue-200 bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700/50 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"

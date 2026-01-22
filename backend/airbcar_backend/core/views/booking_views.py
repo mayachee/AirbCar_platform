@@ -14,7 +14,7 @@ from django.conf import settings
 import traceback
 import json
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
+from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, Notification
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
@@ -203,6 +203,16 @@ class BookingListView(APIView):
                             booking.payment_status = 'paid'
                             booking.save()
                         
+                        # Create notification for partner
+                        Notification.objects.create(
+                            user=listing.partner.user,
+                            title="New Booking Request",
+                            message=f"You have a new booking request for {listing.make} {listing.model} from {request.user.username}.",
+                            type="new_booking",
+                            related_object_type="booking",
+                            related_object_id=booking.id
+                        )
+
                         if settings.DEBUG:
                             print(f"✅ POST /bookings/ - Booking created with ID: {booking.id}")
                         
@@ -333,6 +343,19 @@ class BookingCancelView(APIView):
             booking.status = 'cancelled'
             booking.save()
             
+            # Notify the other party
+            notify_user = booking.partner.user if request.user == booking.customer else booking.customer
+            notify_user_role = "Customer" if request.user == booking.partner.user else "Partner"
+            
+            Notification.objects.create(
+                user=notify_user,
+                title="Booking Cancelled",
+                message=f"Booking #{booking.id} for {booking.listing.make} {booking.listing.model} has been cancelled by {notify_user_role}.",
+                type="error",
+                related_object_type="booking",
+                related_object_id=booking.id
+            )
+
             serializer = BookingSerializer(booking, context={'request': request})
             return Response({
                 'data': serializer.data,
@@ -396,6 +419,16 @@ class BookingAcceptView(APIView):
             booking.status = 'confirmed'
             booking.save()
             
+            # Notify customer
+            Notification.objects.create(
+                user=booking.customer,
+                title="Booking Accepted",
+                message=f"Your booking request for {booking.listing.make} {booking.listing.model} has been accepted!",
+                type="success",
+                related_object_type="booking",
+                related_object_id=booking.id
+            )
+            
             serializer = BookingSerializer(booking, context={'request': request})
             return Response({
                 'data': serializer.data,
@@ -447,16 +480,26 @@ class BookingRejectView(APIView):
                     'message': 'Booking is already rejected'
                 }, status=status.HTTP_200_OK)
             
-            if booking.status != 'pending':
-                # Provide more informative error message
+            # Check if already completed/confirmed
+            if booking.status in ['confirmed', 'completed', 'active']:
                 return Response({
-                    'error': f'Booking cannot be rejected. Current status: {booking.status}',
-                    'current_status': booking.status,
-                    'message': f'Only pending bookings can be rejected. This booking is currently {booking.status}.'
+                    'error': f'Cannot reject booking with status: {booking.status}. Only pending bookings can be rejected.',
+                    'message': f'This booking is already {booking.status} and cannot be rejected.'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
+            # Reject by cancelling
             booking.status = 'cancelled'
             booking.save()
+            
+            # Notify customer
+            Notification.objects.create(
+                user=booking.customer,
+                title="Booking Rejected",
+                message=f"Your booking request for {booking.listing.make} {booking.listing.model} has been rejected.",
+                type="error",
+                related_object_type="booking",
+                related_object_id=booking.id
+            )
             
             serializer = BookingSerializer(booking, context={'request': request})
             return Response({

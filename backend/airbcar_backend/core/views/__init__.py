@@ -62,6 +62,13 @@ except Exception as e:
     ReviewListView = CanReviewView = None
 
 try:
+    from .notification_views import NotificationListView, MarkNotificationReadView, MarkAllNotificationsReadView
+except Exception as e:
+    print(f"Error importing notification_views: {e}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    NotificationListView = MarkNotificationReadView = MarkAllNotificationsReadView = None
+
+try:
     from .auth_views import (
         LoginView, RegisterView, RefreshTokenView, VerifyTokenView,
         VerifyEmailView, ResendVerificationEmailView,
