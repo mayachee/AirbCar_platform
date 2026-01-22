@@ -675,18 +675,23 @@ class ListingListView(APIView):
                         # Return created listing with full details
                         response_serializer = ListingSerializer(listing, context={'request': request})
                         
-                        # Create notification
+                        # Create notification using a savepoint to avoid breaking the transaction
                         try:
-                            Notification.objects.create(
-                                user=request.user,
-                                title="Vehicle Created",
-                                message=f"Your vehicle {listing.make} {listing.model} has been successfully created.",
-                                type="success",
-                                related_object_type="listing",
-                                related_object_id=listing.id
-                            )
-                        except Exception as notif_error:
-                            print(f"Warning: Failed to create notification: {notif_error}")
+                            from django.db import transaction as tx
+                            try:
+                                with tx.atomic():
+                                    Notification.objects.create(
+                                        user=request.user,
+                                        title="Vehicle Created",
+                                        message=f"Your vehicle {listing.make} {listing.model} has been successfully created.",
+                                        type="success",
+                                        related_object_type="listing",
+                                        related_object_id=listing.id
+                                    )
+                            except Exception as notif_error:
+                                print(f"Warning: Failed to create notification: {notif_error}")
+                        except Exception as outer_error:
+                            print(f"Warning: Notification creation outer error: {outer_error}")
 
                         response_data = {
                             'data': response_serializer.data,
@@ -725,7 +730,6 @@ class ListingListView(APIView):
             error_msg = str(e)
             error_type = type(e).__name__
             # Get full traceback for logging (but format it safely to avoid pickle issues)
-            import traceback
             try:
                 tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
             except Exception:
