@@ -71,7 +71,8 @@ def upload_file_to_supabase_storage(
     file: UploadedFile,
     bucket_name: str,
     folder: str = 'listings',
-    user_id: Optional[int] = None
+    user_id: Optional[int] = None,
+    listing_id: Optional[int] = None
 ) -> str:
     """
     Upload a file directly to Supabase Storage without saving locally first.
@@ -79,9 +80,10 @@ def upload_file_to_supabase_storage(
     
     Args:
         file: The uploaded file to process
-        bucket_name: Supabase bucket name (e.g., 'listings', 'partner_logos', 'user_documents')
+        bucket_name: Supabase bucket name (e.g., 'Pics', 'partner_logos', 'user_documents')
         folder: Folder within the bucket (e.g., 'listings', 'logos', 'identity_documents')
-        user_id: Optional user ID for generating unique file paths
+        user_id: Optional user ID for generating unique file paths (deprecated, use listing_id)
+        listing_id: Optional listing ID for organizing files as Pics/listings/{listing_id}/
         
     Returns:
         Supabase public URL of the uploaded file
@@ -112,7 +114,10 @@ def upload_file_to_supabase_storage(
     file_ext = os.path.splitext(file_name)[1] if file_name else '.jpg'
     unique_filename = f"{uuid.uuid4()}{file_ext}"
     
-    if user_id:
+    # If listing_id is provided, use it for organization
+    if listing_id:
+        file_path = f"{folder}/{listing_id}/{unique_filename}"
+    elif user_id:
         file_path = f"{folder}/{user_id}_{unique_filename}"
     else:
         file_path = f"{folder}/{unique_filename}"

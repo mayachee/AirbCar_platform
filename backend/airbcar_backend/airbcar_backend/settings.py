@@ -13,10 +13,12 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError('SECRET_KEY environment variable must be set')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # ALLOWED_HOSTS - Allow Render domain and any custom domain
 ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '')
@@ -285,4 +287,11 @@ FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3001')
 
 # Backend URL for media files and API
 BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8000')
+
+# Supabase Configuration for File Storage
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
+SUPABASE_STORAGE_BUCKET_PICS = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'pics')
+SUPABASE_STORAGE_BUCKET_LISTINGS = os.environ.get('SUPABASE_STORAGE_BUCKET_LISTINGS', 'listings')
 

@@ -553,8 +553,8 @@ class ListingListView(APIView):
                 print(f"📁 POST /listings/ - Received FILES keys: {list(request.FILES.keys())}")
                 print(f"📋 POST /listings/ - Content-Type: {request.content_type}")
             
-            # Process uploaded files (from 'pictures' field in FormData)
-            # STRATEGY: Allow image uploads but limit count to prevent timeouts
+            # Store file objects to process AFTER listing is created (so we have listing_id)
+            pending_files = []
             if 'pictures' in request.FILES:
                 files = request.FILES.getlist('pictures')
                 num_files = len(files)
@@ -566,7 +566,7 @@ class ListingListView(APIView):
                     image_errors.append(f"Limited to {max_images} images to prevent timeout. Please add remaining images via edit.")
                 
                 if settings.DEBUG:
-                    print(f"📸 POST /listings/ - Processing {len(files)} image(s)")
+                    print(f"📸 POST /listings/ - Will process {len(files)} image(s) after listing creation")
                 
                 for file in files:
                     try:
@@ -575,83 +575,42 @@ class ListingListView(APIView):
                             image_errors.append(f"{file.name}: File too large (max {MAX_FILE_SIZE / (1024 * 1024):.1f}MB)")
                             continue
                         
-                        # OPTIMIZED: Upload directly to Supabase - using the same logic as in update
+                        # Validate file
                         try:
-                            from core.utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                            from core.utils.image_utils import validate_image_file
                         except ImportError:
-                            from ..utils.image_utils import upload_file_to_supabase_storage, validate_image_file
+                            from ..utils.image_utils import validate_image_file
                         
-                        # Lightweight validation
                         is_valid, validation_error = validate_image_file(file)
                         if not is_valid:
                             image_errors.append(f"{file.name}: {validation_error}")
                             continue
-
-                        # Upload directly to Supabase
-                        supabase_url = upload_file_to_supabase_storage(
-                            file=file,
-                            bucket_name='listings',
-                            folder='listings',
-                            user_id=partner.id if partner else None
-                        )
                         
-                        uploaded_images.append({
-                            'url': supabase_url,
-                            'name': file.name
-                        })
-                        
+                        # Store for later processing
+                        pending_files.append(file)
                         if settings.DEBUG:
-                            print(f"✓ Uploaded image to Supabase: {supabase_url}")
-                    except ValueError as e:
-                        # Validation error
-                        image_errors.append(f"{file.name}: {str(e)}")
-                        if settings.DEBUG:
-                            print(f"❌ Validation error for {file.name}: {str(e)}")
+                            print(f"✓ File queued for upload: {file.name}")
                     except Exception as e:
-                        # Other errors
-                        error_msg = f"Error processing {file.name}: {str(e)}"
+                        error_msg = f"Error validating {file.name}: {str(e)}"
                         image_errors.append(error_msg)
                         if settings.DEBUG:
                             print(f"❌ {error_msg}")
-                        traceback.print_exc()
             
             # Handle existing images from JSON (if provided as JSON string or array)
             # Remove 'images' from listing_data first to avoid serializer validation issues
-            # We'll set it properly after processing
             images_data = listing_data.pop('images', [])
             existing_images = parse_images_data(images_data)
             
-            # Combine uploaded images with existing images
-            all_images = combine_images(uploaded_images, existing_images)
-            
-            # Allow listing creation even if some/all images fail
-            # Images are optional - user can add them later
-            if image_errors:
-                if settings.DEBUG:
-                    print(f"⚠️ Some images failed ({len(image_errors)} errors), but proceeding with listing creation")
-                    print(f"   Successful uploads: {len(uploaded_images)}, Errors: {image_errors}")
-                # Don't block listing creation - just log the errors
-                # The listing will be created with whatever images succeeded
-            
-            # Set images as a list (serializer expects JSON-serializable data)
-            listing_data['images'] = all_images
-            
-            # Store image errors for potential warning in response
-            if image_errors and settings.DEBUG:
-                print(f"⚠️ Some images failed: {image_errors}")
-            
-            if settings.DEBUG:
-                print(f"📸 Image summary - Uploaded: {len(uploaded_images)}, Existing: {len(existing_images)}, Total: {len(all_images)}")
-                if all_images:
-                    print(f"📸 Image URLs: {[img.get('url', img) if isinstance(img, dict) else img for img in all_images]}")
-            
-            # Validate and create listing with transaction for data consistency
-            serializer = ListingSerializer(data=listing_data, context={'request': request})
+            # Create listing with empty images first (we'll add them after we get the listing_id)
+            listing_data['images'] = []
             
             if settings.DEBUG:
                 print(f"🔍 POST /listings/ - Validating listing data...")
                 print(f"   Fields: {list(listing_data.keys())}")
-                print(f"   Images count: {len(all_images)}")
+                print(f"   Files to upload: {len(pending_files)}")
+            
+            # Validate and create listing with transaction for data consistency
+            serializer = ListingSerializer(data=listing_data, context={'request': request})
             
             if serializer.is_valid():
                 if settings.DEBUG:
@@ -661,6 +620,49 @@ class ListingListView(APIView):
                 try:
                     with transaction.atomic():
                         listing = serializer.save()
+                        
+                        # NOW upload images to Pics/listings/{listing_id}/
+                        if pending_files:
+                            if settings.DEBUG:
+                                print(f"📸 POST /listings/ - Uploading {len(pending_files)} images to Pics/listings/{listing.id}/")
+                            
+                            try:
+                                from core.utils.image_utils import upload_file_to_supabase_storage
+                            except ImportError:
+                                from ..utils.image_utils import upload_file_to_supabase_storage
+                            
+                            for file in pending_files:
+                                try:
+                                    # Upload to Pics/listings/{listing_id}/
+                                    supabase_url = upload_file_to_supabase_storage(
+                                        file=file,
+                                        bucket_name=os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics'),
+                                        folder='listings',
+                                        listing_id=listing.id
+                                    )
+                                    
+                                    uploaded_images.append({
+                                        'url': supabase_url,
+                                        'name': file.name
+                                    })
+                                    
+                                    if settings.DEBUG:
+                                        print(f"✓ Uploaded image to Supabase: {supabase_url}")
+                                except Exception as e:
+                                    error_msg = f"Error uploading {file.name}: {str(e)}"
+                                    image_errors.append(error_msg)
+                                    if settings.DEBUG:
+                                        print(f"❌ {error_msg}")
+                            
+                            # Combine all images and update listing
+                            all_images = combine_images(uploaded_images, existing_images)
+                            if all_images:
+                                listing.images = all_images
+                                listing.save(update_fields=['images'])
+                                if settings.DEBUG:
+                                    print(f"✅ Updated listing {listing.id} with {len(all_images)} image(s)")
+                        else:
+                            all_images = existing_images
                         
                         # Skip updating partner.total_bookings here - it's not critical and causes delay
                         # This can be calculated on-demand or via a background task if needed
@@ -970,12 +972,12 @@ class ListingDetailView(APIView):
                             image_errors.append(f"{file.name}: {validation_error}")
                             continue
                         
-                        # Upload directly to Supabase
+                        # Upload directly to Supabase to Pics/listings/{pk}/
                         supabase_url = upload_file_to_supabase_storage(
                             file=file,
-                            bucket_name='listings',
+                            bucket_name=os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics'),
                             folder='listings',
-                            user_id=partner.id if partner else None
+                            listing_id=pk
                         )
                         
                         uploaded_images.append({
