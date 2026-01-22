@@ -98,8 +98,13 @@ export default function PartnerDashboard() {
     }
   };
 
-  const handleMarkNotificationRead = async (id = null) => {
+  const handleMarkNotificationRead = async (idOrEvent = null) => {
     try {
+        // If it's an event object (from onClick) or null, treat as "mark all"
+        // Checking for common event properties or if it's not a number/string ID
+        const isEvent = idOrEvent && (typeof idOrEvent === 'object' && ('nativeEvent' in idOrEvent || 'preventDefault' in idOrEvent));
+        const id = isEvent ? null : idOrEvent;
+
         if (id) {
             // Mark specific notification as read
             await apiClient.post(`/notifications/${id}/read/`);
@@ -180,25 +185,33 @@ export default function PartnerDashboard() {
     setShowEditVehicleModal(true);
   };
 
-  const handleDeleteVehicle = async (vehicle) => {
+  const handleDeleteVehicle = async (vehicle, confirmed = false) => {
     const vehicleName = `${vehicle.brand || vehicle.make || 'Vehicle'} ${vehicle.model || ''}`.trim();
     const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
     const fullVehicleName = `${vehicleName}${vehicleYear}`;
     
-    // Simple confirmation - much easier!
-    if (window.confirm(
+    // If not already confirmed (by specialized UI), ask for confirmation
+    if (!confirmed && !window.confirm(
       `Delete "${fullVehicleName}"?\n\n` +
       `This will permanently remove the vehicle from your listings.\n` +
       `This action cannot be undone.`
     )) {
-      try {
-        await deleteVehicle(vehicle.id);
+      return;
+    }
+
+    try {
+      await deleteVehicle(vehicle.id);
+      if (!confirmed) {
         alert(`✅ Vehicle "${fullVehicleName}" deleted successfully.`);
-        refetch();
-      } catch (error) {
-        console.error('Error deleting vehicle:', error);
-        const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle. Please try again.';
+      }
+      refetch();
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle. Please try again.';
+      if (!confirmed) {
         alert(`❌ Error: ${errorMessage}`);
+      } else {
+        throw error; // Let the caller (DIalog) handle the error UI
       }
     }
   };
