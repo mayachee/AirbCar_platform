@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Bell, X, CheckCircle, AlertCircle, Clock, DollarSign, Car } from 'lucide-react';
 
-export default function NotificationCenter({ notifications = [], onMarkAsRead, onClearAll }) {
+export default function NotificationCenter({ notifications = [], onMarkAsRead, onClearAll, onNotificationClick }) {
   const [isOpen, setIsOpen] = useState(false);
   
   // Use useMemo instead of useEffect to prevent infinite re-renders
@@ -108,7 +108,11 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 border-l-4 ${getNotificationColor(notification.type)} ${
+                    onClick={() => {
+                        if (onNotificationClick) onNotificationClick(notification);
+                        setIsOpen(false);
+                    }}
+                    className={`p-4 border-l-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${getNotificationColor(notification.type)} ${
                       !(notification.is_read || notification.read) ? 'bg-opacity-50' : 'bg-opacity-20'
                     }`}
                   >

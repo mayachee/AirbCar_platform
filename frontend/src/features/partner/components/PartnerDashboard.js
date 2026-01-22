@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
+import { useToast } from '@/contexts/ToastContext';
 import PartnerStats from '@/features/partner/components/PartnerStats';
 import VehiclesList from '@/features/partner/components/VehiclesList';
 import BookingManagement from '@/features/partner/components/BookingManagement';
@@ -32,6 +33,8 @@ export default function PartnerDashboard() {
   const [loadingPendingRequests, setLoadingPendingRequests] = useState(false);
   const [loadingUpcomingBookings, setLoadingUpcomingBookings] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const latestNotificationIdRef = useRef(null);
+  const { addToast } = useToast();
   const router = useRouter();
   
   const {
@@ -78,23 +81,63 @@ export default function PartnerDashboard() {
   useEffect(() => {
     if (isPartner) {
         const intervalId = setInterval(() => {
-            fetchNotifications();
+            fetchNotifications(true);
         }, 60000);
         
         return () => clearInterval(intervalId);
     }
   }, [isPartner]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (isPolling = false) => {
     try {
         const response = await apiClient.get('/notifications/');
         if (response.data) {
             // Sort by created_at desc (if backend doesn't already)
             // Backend endpoint: /notifications/ - returns filtered(user=self)
-            setNotifications(response.data.results || response.data || []); 
+            const results = response.data.results || response.data || [];
+            
+            if (results.length > 0) {
+                // Assuming results are sorted descending by ID or created_at
+                const newestId = results[0].id;
+                
+                // If polling and we have a new ID that is strictly greater than our last known one
+                if (isPolling && latestNotificationIdRef.current && newestId > latestNotificationIdRef.current) {
+                    // Find all new notifications
+                    const newItems = results.filter(n => n.id > latestNotificationIdRef.current);
+                    newItems.forEach(item => {
+                        addToast(item.title || "New Notification", 'info');
+                    });
+                }
+                
+                latestNotificationIdRef.current = newestId;
+            }
+            
+            setNotifications(results); 
         }
     } catch (error) {
         console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const handleNotificationClick = (notification) => {
+    // Mark as read immediately
+    if (!notification.is_read) {
+        handleMarkNotificationRead(notification.id);
+    }
+    
+    // Navigate logic
+    if (notification.type === 'new_booking' || 
+        notification.type === 'booking_accepted' || 
+        notification.type === 'booking_rejected' ||
+        notification.related_object_type === 'booking') {
+        setCurrentView('bookings');
+        // Ideally scroll to the booking or filter, but switching view is a good start
+    } else if (notification.type === 'vehicle_issue' || 
+               notification.related_object_type === 'listing' || 
+               notification.related_object_type === 'vehicle') {
+        setCurrentView('vehicles');
+    } else if (notification.type === 'payment_received') {
+        setCurrentView('analytics');
     }
   };
 
@@ -380,6 +423,7 @@ export default function PartnerDashboard() {
               notifications={notifications}
               onMarkAsRead={handleMarkNotificationRead}
               onClearAll={handleClearAllNotifications}
+              onNotificationClick={handleNotificationClick}
             />
           </div>
         </div>
