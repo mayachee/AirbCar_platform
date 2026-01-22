@@ -195,27 +195,6 @@ function SearchContent() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
           <div className="max-w-5xl mx-auto relative z-20">
-            <motion.div 
-              style={{
-                scale: heroScale,
-                filter: heroFilter,
-                y: heroY
-              }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center -z-10 select-none pointer-events-none"
-            >
-              <div className="relative">
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-orange-500/20 blur-[100px] rounded-full mix-blend-screen animate-pulse" />
-                 <h1 className="relative flex flex-col items-center justify-center">
-                    <span className="text-4xl sm:text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tighter uppercase drop-shadow-sm">
-                      Find your
-                    </span>
-                    <span className="text-5xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 via-orange-500 to-orange-600 tracking-tighter uppercase drop-shadow-lg mt-[-10px] sm:mt-[-20px]">
-                      Perfect Car
-                    </span>
-                 </h1>
-              </div>
-            </motion.div>
-
             {/* Search Form Container */}
             <div className='flex flex-col gap-4 max-w-7xl mx-auto'>
               <h1 className="relative flex flex-col items-center justify-center">
