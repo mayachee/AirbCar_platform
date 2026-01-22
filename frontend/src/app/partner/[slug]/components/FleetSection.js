@@ -65,9 +65,6 @@ export default function FleetSection({ listings = [] }) {
         className="flex items-center justify-between mb-8"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-orange-500/10 rounded-lg">
-            <Sparkles className="h-6 w-6 text-orange-500" />
-          </div>
           <h2 className="text-3xl font-bold text-white">
             Available Vehicles
             <span className="ml-3 text-orange-500">({listings.length})</span>
@@ -99,11 +96,11 @@ export default function FleetSection({ listings = [] }) {
                 className="block bg-white/5 backdrop-blur-sm rounded-2xl shadow-md border border-white/10 hover:bg-white/10 hover:border-orange-500/30 transition-all overflow-hidden group"
               >
                 {/* Image */}
-                <div className="relative w-full h-56 bg-gray-800 overflow-hidden">
+                <div className="relative w-full bg-gray-800 overflow-hidden">
                   <motion.img
                     src={imageUrl}
                     alt={vehicleName}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.4 }}
                     onError={(e) => {

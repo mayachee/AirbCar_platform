@@ -76,17 +76,6 @@ export default function OwnerSpotlight({ partner }) {
              )}
            </div>
            
-           {/* Action Buttons (Desktop) */}
-           <div className="hidden sm:flex gap-3 mt-16 sm:mt-0 self-end sm:self-auto sm:pt-16">
-             <button 
-               onClick={handleContact}
-               className="px-6 py-2 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 flex items-center gap-2"
-             >
-               <Mail className="h-4 w-4" />
-               Contact
-             </button>
-             {/* Add more buttons if needed */}
-           </div>
         </div>
         
         {/* Info */}
@@ -130,13 +119,6 @@ export default function OwnerSpotlight({ partner }) {
            
            {/* Mobile Action Buttons */}
            <div className="flex sm:hidden gap-3 mt-6">
-             <button 
-               onClick={handleContact}
-               className="flex-1 px-4 py-2 rounded-full bg-orange-500 text-white font-semibold shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
-             >
-               <Mail className="h-4 w-4" />
-               Contact
-             </button>
            </div>
 
            {/* About Section */}

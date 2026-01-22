@@ -19,13 +19,13 @@ export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, 
   return (
     <div className="mb-8 group">
       <div className="relative bg-gray-100 rounded-xl overflow-hidden shadow-sm">
-        <div className="aspect-w-16 aspect-h-10 relative h-[400px] md:h-[500px]">
+        <div className="aspect-w-16 aspect-h-10 relative h-[250px] md:h-[500px]">
             <AnimatePresence mode="wait">
                 <motion.img
                     key={currentImage}
                     src={fixImageUrl(currentImage)}
                     alt={`${vehicle?.name || 'Vehicle'} - Image ${safeIndex + 1}`}
-                    className="w-full h-full object-cover"
+                    className="object-contain"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -98,7 +98,7 @@ export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, 
                 <img
                     src={fixImageUrl(image) || '/carsymbol.jpg'}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     loading="lazy"
                     onError={(e) => {
                         e.target.src = '/carsymbol.jpg';
