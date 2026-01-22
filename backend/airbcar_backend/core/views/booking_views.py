@@ -506,24 +506,6 @@ class BookingRejectView(APIView):
                 'data': serializer.data,
                 'message': 'Booking rejected successfully'
             }, status=status.HTTP_200_OK)
-                }, status=status.HTTP_200_OK)
-            
-            if booking.status != 'pending':
-                # Provide more informative error message
-                return Response({
-                    'error': f'Booking cannot be rejected. Current status: {booking.status}',
-                    'current_status': booking.status,
-                    'message': f'Only pending bookings can be rejected. This booking is currently {booking.status}.'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            booking.status = 'cancelled'
-            booking.save()
-            
-            serializer = BookingSerializer(booking, context={'request': request})
-            return Response({
-                'data': serializer.data,
-                'message': 'Booking rejected successfully'
-            }, status=status.HTTP_200_OK)
             
         except Booking.DoesNotExist:
             return Response({
