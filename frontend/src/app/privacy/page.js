@@ -190,7 +190,7 @@ export default function PrivacyPage() {
                 9. Contact Us
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                If you have questions or comments about this policy, you may email us at <a href="mailto:privacy@airbcar.com" className="text-blue-400 hover:text-blue-300 hover:underline">privacy@airbcar.com</a> or by post to:
+                If you have questions or comments about this policy, you may email us at <a href="mailto:privacy@airbcar.com" className="text-blue-400 hover:text-blue-300 hover:underline">privacy@airbcar.com</a>.
               </p>
             </section>
           </div>
