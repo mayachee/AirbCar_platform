@@ -23,8 +23,8 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
   const dayAfterTomorrowStr = dateToYmd(dayAfterTomorrow);
 
   const [location, setLocation] = useState(initialValues.location || '');
-  const [pickupDate, setPickupDate] = useState(initialValues.pickupDate || tomorrowStr);
-  const [returnDate, setReturnDate] = useState(initialValues.returnDate || dayAfterTomorrowStr);
+  const [pickupDate, setPickupDate] = useState(initialValues.pickupDate || todayStr);
+  const [returnDate, setReturnDate] = useState(initialValues.returnDate || tomorrowStr);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,9 +33,9 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
   useEffect(() => {
     if (initialValues.location !== undefined) setLocation(initialValues.location);
     if (initialValues.pickupDate !== undefined) setPickupDate(initialValues.pickupDate);
-    else if (!initialValues.pickupDate && !pickupDate) setPickupDate(tomorrowStr);
+    else if (!initialValues.pickupDate && !pickupDate) setPickupDate(todayStr);
     if (initialValues.returnDate !== undefined) setReturnDate(initialValues.returnDate);
-    else if (!initialValues.returnDate && !returnDate) setReturnDate(dayAfterTomorrowStr);
+    else if (!initialValues.returnDate && !returnDate) setReturnDate(tomorrowStr);
   }, [initialValues]);
 
   // Helper functions for dates
@@ -220,7 +220,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
             id="pickupDate"
             value={pickupDate}
             onChange={handlePickupDateChange}
-            options={buildDateOptions(tomorrowStr, 180)}
+            options={buildDateOptions(todayStr, 180)}
             triggerProps={{ 
               'aria-label': 'Pickup date',
               onBlur: () => handleBlur('pickupDate')

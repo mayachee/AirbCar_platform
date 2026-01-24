@@ -156,19 +156,8 @@ export default function BookingFlow({
     if (!returnDate) {
       errors.returnDate = 'Return date is required'
     }
-    if (pickupDate && returnDate) {
-      const pickup = new Date(pickupDate)
-      const returnD = new Date(returnDate)
-      const now = new Date()
-      now.setHours(0, 0, 0, 0)
-      
-      if (pickup < now) {
-        errors.pickupDate = 'Pickup date cannot be in the past'
-      }
-      if (returnD <= pickup) {
-        errors.returnDate = 'Return date must be after pickup date'
-      }
-    }
+    
+    // Simplified validation: removed date logic checks (past dates, return < pickup)
     setValidationErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -368,6 +357,7 @@ export default function BookingFlow({
                         placeholder="Select pickup date"
                         contentProps={{ className: heroBlurContentClass }}
                         className={`${heroBlurFieldClass} ${validationErrors.pickupDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+                        disabled={true}
                       />
                       {validationErrors.pickupDate && (
                         <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -406,6 +396,7 @@ export default function BookingFlow({
                         placeholder="Select return date"
                         contentProps={{ className: heroBlurContentClass }}
                         className={`${heroBlurFieldClass} ${validationErrors.returnDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+                        disabled={true}
                       />
                       {validationErrors.returnDate && (
                         <p className="mt-1 text-sm text-red-400 flex items-center gap-1">

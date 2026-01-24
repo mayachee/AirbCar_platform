@@ -43,6 +43,7 @@ function BookingPageContent() {
   const returnDateRaw = searchParams.get('returnDate') || searchParams.get('dropoffDate') || searchParams.get('return_date') || searchParams.get('endDate')
   const pickupDate = pickupDateRaw?.trim() || null
   const returnDate = returnDateRaw?.trim() || null
+  const location = searchParams.get('location') || 'Tetouan'
   const totalPrice = searchParams.get('totalPrice') || searchParams.get('total_price')
   const duration = searchParams.get('duration')
   
@@ -215,32 +216,21 @@ function BookingPageContent() {
       // Create FormData to handle file upload
       const formData = new FormData()
       formData.append('listing', validCarId)
-      formData.append('listing_id', validCarId) // Also add listing_id for compatibility
       
-      // Add dates in multiple formats for compatibility
-      if (pickupDate) {
-        formData.append('pickup_date', pickupDate)
-        formData.append('pickupDate', pickupDate)
-        // Extract date from startTime if it's a full datetime
-        const pickupDateOnly = pickupDate.includes('T') ? pickupDate.split('T')[0] : pickupDate
-        formData.append('pickup_date', pickupDateOnly)
-      }
-      
-      if (returnDate) {
-        formData.append('return_date', returnDate)
-        formData.append('returnDate', returnDate)
-        // Extract date from endTime if it's a full datetime
-        const returnDateOnly = returnDate.includes('T') ? returnDate.split('T')[0] : returnDate
-        formData.append('return_date', returnDateOnly)
-      }
+      // Add required dates (YYYY-MM-DD) for backend validation
+      const pickupDateStr = startTime.toISOString().split('T')[0]
+      const returnDateStr = endTime.toISOString().split('T')[0]
+      formData.append('pickup_date', pickupDateStr)
+      formData.append('return_date', returnDateStr)
       
       // Add times
-      formData.append('start_time', startTime.toISOString())
-      formData.append('end_time', endTime.toISOString())
-      formData.append('pickup_time', startTime.toISOString())
-      formData.append('return_time', endTime.toISOString())
+      formData.append('pickup_time', pickupTime)
+      formData.append('return_time', returnTime)
       
-      formData.append('price', totalPrice || 0)
+      // Add locations (required by backend)
+      formData.append('pickup_location', location)
+      formData.append('return_location', location)
+      
       formData.append('total_amount', totalPrice || 0)
       formData.append('request_message', specialRequest || 'Booking request from website')
       formData.append('payment_method', paymentMethod || 'online') // 'online' or 'cash'
