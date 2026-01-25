@@ -3,6 +3,17 @@ import { useRouter } from 'next/navigation'
 export default function BookingSuccess({ bookingData }) {
   const router = useRouter()
 
+  // Support both shapes:
+  // - booking object directly
+  // - wrapper { data: booking, message }
+  const booking = bookingData?.data || bookingData
+
+  const pickupDateValue = booking?.start_time || booking?.pickup_date || booking?.pickupDate
+  const returnDateValue = booking?.end_time || booking?.return_date || booking?.returnDate
+  const pickupTimeValue = booking?.pickup_time || booking?.pickupTime
+  const returnTimeValue = booking?.return_time || booking?.returnTime
+  const totalAmountValue = booking?.price || booking?.total_amount || booking?.totalAmount
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -41,7 +52,7 @@ export default function BookingSuccess({ bookingData }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Booking ID</p>
-                <p className="font-bold text-lg text-gray-900">#{bookingData?.id || 'PENDING'}</p>
+                <p className="font-bold text-lg text-gray-900">#{booking?.id || 'PENDING'}</p>
               </div>
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Status</p>
@@ -51,50 +62,58 @@ export default function BookingSuccess({ bookingData }) {
                 </div>
               </div>
             </div>
-            {bookingData?.start_time && bookingData?.end_time && (
+            {pickupDateValue && returnDateValue && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Pickup Date</p>
                   <p className="font-semibold text-gray-900">
-                    {new Date(bookingData.start_time).toLocaleDateString('en-US', { 
+                    {new Date(pickupDateValue).toLocaleDateString('en-US', { 
                       weekday: 'long', 
                       year: 'numeric', 
                       month: 'long', 
                       day: 'numeric' 
                     })}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(bookingData.start_time).toLocaleTimeString('en-US', { 
-                      hour: 'numeric', 
-                      minute: '2-digit',
-                      hour12: true 
-                    })}
-                  </p>
+                  {(booking?.start_time || pickupTimeValue) && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {booking?.start_time
+                        ? new Date(booking.start_time).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                        : pickupTimeValue}
+                    </p>
+                  )}
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Return Date</p>
                   <p className="font-semibold text-gray-900">
-                    {new Date(bookingData.end_time).toLocaleDateString('en-US', { 
+                    {new Date(returnDateValue).toLocaleDateString('en-US', { 
                       weekday: 'long', 
                       year: 'numeric', 
                       month: 'long', 
                       day: 'numeric' 
                     })}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(bookingData.end_time).toLocaleTimeString('en-US', { 
-                      hour: 'numeric', 
-                      minute: '2-digit',
-                      hour12: true 
-                    })}
-                  </p>
+                  {(booking?.end_time || returnTimeValue) && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {booking?.end_time
+                        ? new Date(booking.end_time).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })
+                        : returnTimeValue}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
-            {bookingData?.price && (
+            {totalAmountValue && (
               <div className="mt-4 bg-orange-50 rounded-lg p-4 border border-orange-200">
                 <p className="text-xs text-gray-600 mb-1">Total Amount</p>
-                <p className="text-2xl font-bold text-orange-600">{bookingData.price} MAD</p>
+                <p className="text-2xl font-bold text-orange-600">{totalAmountValue} MAD</p>
               </div>
             )}
           </div>

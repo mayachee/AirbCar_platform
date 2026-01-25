@@ -1,6 +1,7 @@
 """
 Booking-related views.
 """
+from decimal import Decimal
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Q, F, DecimalField, Avg, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-from django.db import transaction, OperationalError
+from django.db import transaction, OperationalError, IntegrityError
 from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
@@ -20,6 +21,9 @@ from ..serializers import (
     ReviewSerializer, UserSerializer,
 )
 from ..supabase_storage import upload_file_to_supabase
+
+
+SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
 
 
 class BookingListView(APIView):
@@ -99,10 +103,20 @@ class BookingListView(APIView):
     def post(self, request):
         """Create a new booking."""
         try:
-            listing_id = request.data.get('listing_id') or request.data.get('listing')
-            if not listing_id:
+            listing_id = request.data.get('listing_id') or request.data.get('listing') or request.data.get('listingId')
+            if listing_id in (None, '', 'null', 'None'):
                 return Response({
                     'error': 'listing_id is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Normalize listing_id to int when possible
+            try:
+                if isinstance(listing_id, str):
+                    listing_id = listing_id.strip()
+                listing_id = int(listing_id)
+            except (TypeError, ValueError):
+                return Response({
+                    'error': 'Invalid listing_id'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             try:
@@ -123,6 +137,11 @@ class BookingListView(APIView):
             
             # Get partner
             partner = listing.partner
+
+            if not partner:
+                return Response({
+                    'error': 'Listing does not have an owner (partner)'
+                }, status=status.HTTP_400_BAD_REQUEST)
             
             # Validate and parse dates
             pickup_date_str = request.data.get('pickup_date')
@@ -152,6 +171,34 @@ class BookingListView(APIView):
                 return Response({
                     'error': 'Return date must be after pickup date'
                 }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate optional times (if provided)
+            pickup_time = request.data.get('pickup_time')
+            return_time = request.data.get('return_time')
+            time_format = '%H:%M'
+            if pickup_time not in (None, '', 'null', 'None'):
+                try:
+                    datetime.strptime(str(pickup_time), time_format)
+                except ValueError:
+                    return Response({
+                        'error': 'Invalid pickup_time format. Use HH:MM'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            if return_time not in (None, '', 'null', 'None'):
+                try:
+                    datetime.strptime(str(return_time), time_format)
+                except ValueError:
+                    return Response({
+                        'error': 'Invalid return_time format. Use HH:MM'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate payment method
+            payment_method = request.data.get('payment_method')
+            if payment_method in (None, '', 'null', 'None'):
+                payment_method = 'online'
+            if str(payment_method) not in ('online', 'cash'):
+                return Response({
+                    'error': 'Invalid payment_method. Use online or cash'
+                }, status=status.HTTP_400_BAD_REQUEST)
             
             # Check for date conflicts
             conflicting_bookings = Booking.objects.filter(
@@ -167,8 +214,9 @@ class BookingListView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Calculate total amount
-            days = (return_date - pickup_date).days + 1
-            total_amount = listing.price_per_day * days
+            # return_date is treated as checkout date (exclusive), so day-count is the difference
+            days = (return_date - pickup_date).days
+            total_amount = (listing.price_per_day * days) + SAFE_DEPOSIT_AMOUNT
             
             # Determine booking status based on instant_booking setting
             booking_status = 'confirmed' if listing.instant_booking else 'pending'
@@ -190,6 +238,13 @@ class BookingListView(APIView):
             booking_data['total_amount'] = total_amount
             booking_data['status'] = booking_status
             booking_data['payment_status'] = 'pending'
+            booking_data['payment_method'] = payment_method
+
+            # Ensure required location fields are present (some clients don't send them)
+            if booking_data.get('pickup_location') in (None, '', 'null', 'None'):
+                booking_data['pickup_location'] = listing.location
+            if booking_data.get('return_location') in (None, '', 'null', 'None'):
+                booking_data['return_location'] = listing.location
             
             # Use serializer to create booking (handles document uploads to Supabase)
             serializer = BookingSerializer(data=booking_data, context={'request': request})
@@ -228,20 +283,33 @@ class BookingListView(APIView):
                     with transaction.atomic():
                         # Prepare arguments for save()
                         # CRITICAL: We pass customer explicitly because it is read_only in serializer
-                        save_kwargs = {'customer': request.user}
+                        # CRITICAL: listing and partner are also read_only in serializer
+                        save_kwargs = {
+                            'customer': request.user,
+                            'listing': listing,
+                            'partner': partner,
+                        }
                         
                         # Add license URLs if uploaded
                         if license_front_url:
                             save_kwargs['license_front_document'] = license_front_url
-                            # Update user profile
-                            request.user.license_front_document = license_front_url
-                            request.user.save(update_fields=['license_front_document', 'updated_at'])
+                            # Best-effort update user profile (don't fail booking if this fails)
+                            try:
+                                request.user.license_front_document = license_front_url
+                                request.user.save(update_fields=['license_front_document', 'updated_at'])
+                            except Exception as e:
+                                if settings.DEBUG:
+                                    print(f"User license_front_document update failed (non-blocking): {e}")
                             
                         if license_back_url:
                             save_kwargs['license_back_document'] = license_back_url
-                            # Update user profile
-                            request.user.license_back_document = license_back_url
-                            request.user.save(update_fields=['license_back_document', 'updated_at'])
+                            # Best-effort update user profile (don't fail booking if this fails)
+                            try:
+                                request.user.license_back_document = license_back_url
+                                request.user.save(update_fields=['license_back_document', 'updated_at'])
+                            except Exception as e:
+                                if settings.DEBUG:
+                                    print(f"User license_back_document update failed (non-blocking): {e}")
 
                         # Save booking
                         booking = serializer.save(**save_kwargs)
@@ -268,6 +336,11 @@ class BookingListView(APIView):
                             'data': BookingSerializer(booking, context={'request': request}).data,
                             'message': 'Booking created successfully'
                         }, status=status.HTTP_201_CREATED)
+                except IntegrityError as ie:
+                    return Response({
+                        'error': 'Database constraint error',
+                        'message': str(ie)
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 except ValueError as ve:
                     # Supabase upload errors
                     return Response({

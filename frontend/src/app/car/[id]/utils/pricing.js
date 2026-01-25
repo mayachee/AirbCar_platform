@@ -1,10 +1,12 @@
 export const calculateTotalPrice = (price, duration) => {
   const basePrice = price * duration
   const serviceFee = 25
+  const securityDeposit = 5000
   return {
     basePrice,
     serviceFee,
-    total: basePrice + serviceFee
+    securityDeposit,
+    total: basePrice + serviceFee + securityDeposit
   }
 }
 

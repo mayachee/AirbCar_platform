@@ -46,6 +46,16 @@ function BookingPageContent() {
   const location = searchParams.get('location') || 'Tetouan'
   const totalPrice = searchParams.get('totalPrice') || searchParams.get('total_price')
   const duration = searchParams.get('duration')
+
+  // Keep editable dates in local state (avoid full reload when user changes dates)
+  const [pickupDateState, setPickupDateState] = useState(pickupDate)
+  const [returnDateState, setReturnDateState] = useState(returnDate)
+
+  // Keep state in sync if URL params change (e.g. navigation back/forward)
+  useEffect(() => {
+    setPickupDateState(pickupDate)
+    setReturnDateState(returnDate)
+  }, [pickupDate, returnDate])
   
   // Debug: Log URL parameters
   useEffect(() => {
@@ -53,14 +63,14 @@ function BookingPageContent() {
       console.log('Booking page URL params:', {
         carId: validCarId,
         rawCarId: carId,
-        pickupDate,
-        returnDate,
+        pickupDate: pickupDateState,
+        returnDate: returnDateState,
         totalPrice,
         duration,
         allParams: Object.fromEntries(searchParams.entries())
       })
     }
-  }, [validCarId, carId, pickupDate, returnDate, totalPrice, duration, searchParams])
+  }, [validCarId, carId, pickupDateState, returnDateState, totalPrice, duration, searchParams])
 
   // Fetch full user profile with identity documents
   useEffect(() => {
@@ -143,6 +153,36 @@ function BookingPageContent() {
     }
   }, [authUser, authLoading, router])
 
+  const formatBookingError = (err) => {
+    const status = err?.status
+    const data = err?.data
+
+    if (err?.isTimeoutError) {
+      return 'Request timed out. Please try again. (Render can be slow on free tier.)'
+    }
+    if (err?.isNetworkError || err?.isConnectionError) {
+      return err?.message || 'Unable to connect to the server. Please try again.'
+    }
+    if (status === 409) {
+      return 'This vehicle is not available for the selected dates. Please choose different dates.'
+    }
+    if (status === 400) {
+      // Backend often returns { error, message } or { error, errors }
+      if (data?.errors && typeof data.errors === 'object') {
+        const firstField = Object.keys(data.errors)[0]
+        const firstValue = data.errors[firstField]
+        const firstMessage = Array.isArray(firstValue) ? firstValue[0] : String(firstValue)
+        return `${firstField}: ${firstMessage}`
+      }
+      if (data?.message && data?.error) {
+        return `${data.error}: ${data.message}`
+      }
+      return data?.error || data?.detail || data?.message || 'Invalid booking data. Please check your inputs.'
+    }
+
+    return err?.message || 'Failed to create booking. Please try again.'
+  }
+
   const handleCreateBooking = async (specialRequest = '', licenseFiles = null, paymentMethod = 'online') => {
     if (!validCarId) {
       setError('Car ID is missing. Please go back and select a vehicle.')
@@ -164,7 +204,7 @@ function BookingPageContent() {
     }
 
     // Validate dates - provide helpful error message
-    if (!pickupDate || !returnDate) {
+    if (!pickupDateState || !returnDateState) {
       setError('Please select pickup and return dates. If you came from a car listing page, please go back and select dates first.')
       // Scroll to top to show error
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -172,8 +212,8 @@ function BookingPageContent() {
     }
     
     // Validate date format
-    const pickupDateObj = new Date(pickupDate)
-    const returnDateObj = new Date(returnDate)
+    const pickupDateObj = new Date(pickupDateState)
+    const returnDateObj = new Date(returnDateState)
     
     if (isNaN(pickupDateObj.getTime()) || isNaN(returnDateObj.getTime())) {
       setError('Invalid date format. Please select valid pickup and return dates.')
@@ -195,6 +235,20 @@ function BookingPageContent() {
       return
     }
 
+    // Validate time format (HH:MM)
+    const timeRe = /^\d{2}:\d{2}$/
+    if (!timeRe.test(pickupTime) || !timeRe.test(returnTime)) {
+      setError('Invalid time format. Please use HH:MM.')
+      return
+    }
+
+    // Validate location
+    const bookingLocation = String(location || vehicle?.location || '').trim()
+    if (!bookingLocation) {
+      setError('Pickup/return location is required.')
+      return
+    }
+
     // License files are optional but recommended
     if (!licenseFiles || (!licenseFiles.front && !licenseFiles.back)) {
       console.warn('No license files provided - booking will proceed without them')
@@ -205,16 +259,18 @@ function BookingPageContent() {
       setError(null)
 
       // Format dates properly for backend with selected times
-      const startTime = new Date(pickupDate)
+      const startTime = new Date(pickupDateState)
       const [pickupHour, pickupMinute] = pickupTime.split(':').map(Number)
       startTime.setHours(pickupHour || 10, pickupMinute || 0, 0, 0)
       
-      const endTime = new Date(returnDate)
+      const endTime = new Date(returnDateState)
       const [returnHour, returnMinute] = returnTime.split(':').map(Number)
       endTime.setHours(returnHour || 18, returnMinute || 0, 0, 0)
 
       // Create FormData to handle file upload
       const formData = new FormData()
+      // Send both naming conventions for maximum backend compatibility
+      formData.append('listing_id', validCarId)
       formData.append('listing', validCarId)
       
       // Add required dates (YYYY-MM-DD) for backend validation
@@ -228,10 +284,18 @@ function BookingPageContent() {
       formData.append('return_time', returnTime)
       
       // Add locations (required by backend)
-      formData.append('pickup_location', location)
-      formData.append('return_location', location)
+      formData.append('pickup_location', bookingLocation)
+      formData.append('return_location', bookingLocation)
       
-      formData.append('total_amount', totalPrice || 0)
+      // Total amount: prefer query param, otherwise compute a best-effort fallback
+      let totalAmount = Number(totalPrice)
+      if (!Number.isFinite(totalAmount)) {
+        const days = Math.max(1, Math.ceil((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60 * 24)))
+        const pricePerDay = Number(vehicle?.price_per_day ?? vehicle?.pricePerDay ?? vehicle?.dailyRate ?? 0)
+        const securityDeposit = 5000
+        totalAmount = Number.isFinite(pricePerDay) ? (pricePerDay * days) + securityDeposit : securityDeposit
+      }
+      formData.append('total_amount', String(totalAmount))
       formData.append('request_message', specialRequest || 'Booking request from website')
       formData.append('payment_method', paymentMethod || 'online') // 'online' or 'cash'
       
@@ -248,21 +312,15 @@ function BookingPageContent() {
       // Don't set Content-Type - let the browser set it with the boundary
       // Increase timeout to 90 seconds for booking creation (backend may be slow on Render free tier)
       const response = await apiClient.post('/bookings/', formData, { timeout: 90000 })
-      
-      setBookingData(response.data)
+
+      // Backend may return { data: booking, message } or booking directly
+      const responseData = response?.data
+      const booking = responseData?.data || responseData
+      setBookingData(booking)
       setBookingCreated(true)
     } catch (err) {
       console.error('Error creating booking:', err)
-      // Provide more specific error messages
-      if (err.message?.includes('timeout')) {
-        setError('Request timed out. Please try again or contact support if the problem persists.')
-      } else if (err.message?.includes('400') || err.message?.includes('Bad Request')) {
-        setError('Invalid booking data. Please check your dates and try again.')
-      } else if (err.message?.includes('409') || err.message?.includes('Conflict')) {
-        setError('This vehicle is not available for the selected dates. Please choose different dates.')
-      } else {
-        setError(err.message || 'Failed to create booking. Please try again.')
-      }
+      setError(formatBookingError(err))
     } finally {
       setLoading(false)
     }
@@ -330,7 +388,7 @@ function BookingPageContent() {
           />
 
           {/* Warning if dates are missing */}
-          {(!pickupDate || !returnDate) && (
+          {(!pickupDateState || !returnDateState) && (
             <div className="bg-yellow-500/10 border-l-4 border-yellow-500 rounded-md p-4 mb-6 backdrop-blur-sm">
               <div className="flex items-start">
                 <svg className="w-5 h-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -356,23 +414,21 @@ function BookingPageContent() {
 
           {/* Multi-Step Booking Flow */}
           <BookingFlow
-            pickupDate={pickupDate}
-            returnDate={returnDate}
+            pickupDate={pickupDateState}
+            returnDate={returnDateState}
             pickupTime={pickupTime}
             returnTime={returnTime}
             onDatesChange={(type, date) => {
               if (type === 'pickup') {
-                // Update URL params
+                setPickupDateState(date)
                 const newUrl = new URL(window.location.href)
                 newUrl.searchParams.set('pickupDate', date)
                 window.history.pushState({}, '', newUrl)
-                // Reload to update state from URL params
-                window.location.reload()
               } else {
+                setReturnDateState(date)
                 const newUrl = new URL(window.location.href)
                 newUrl.searchParams.set('returnDate', date)
                 window.history.pushState({}, '', newUrl)
-                window.location.reload()
               }
             }}
             onTimeChange={(type, time) => {
