@@ -256,6 +256,15 @@ export default function BookingFlow({
     return 'pending'
   }
 
+  const parsedDays = Math.max(1, parseInt(duration, 10) || 1)
+  const dailyRate = Number(vehicle?.price_per_day ?? vehicle?.pricePerDay ?? vehicle?.dailyRate ?? 0)
+  const rentalSubtotal = Number.isFinite(dailyRate) ? dailyRate * parsedDays : 0
+  const serviceFee = 25
+  const safetyDeposit = 5000
+  const computedTotal = rentalSubtotal + serviceFee + safetyDeposit
+  const totalNumeric = Number(totalPrice)
+  const displayTotal = Number.isFinite(totalNumeric) ? totalNumeric : computedTotal
+
   return (
     <div className="w-full relative">
 
@@ -775,9 +784,27 @@ export default function BookingFlow({
                 </div>
                 <div className="text-right">
                   <span className="block text-2xl md:text-3xl font-bold text-orange-500">
-                    {totalPrice} <span className="text-sm font-medium text-orange-500/70">MAD</span>
+                    {displayTotal} <span className="text-sm font-medium text-orange-500/70">MAD</span>
                   </span>
                 </div>
+              </div>
+
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Rental ({parsedDays} {parsedDays === 1 ? 'day' : 'days'})</span>
+                  <span className="text-white/90 font-medium">{rentalSubtotal} MAD</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Service fee</span>
+                  <span className="text-white/90 font-medium">{serviceFee} MAD</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Safety deposit</span>
+                  <span className="text-white/90 font-medium">{safetyDeposit} MAD</span>
+                </div>
+                <p className="text-xs text-white/40 pt-1">
+                  Safety deposit is refundable after return.
+                </p>
               </div>
             </div>
           )}

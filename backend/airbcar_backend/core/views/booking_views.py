@@ -25,6 +25,7 @@ from ..supabase_storage import upload_file_to_supabase
 
 
 SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
+SERVICE_FEE_AMOUNT = Decimal('25.00')
 
 
 def _create_notification_safe(**kwargs):
@@ -233,7 +234,7 @@ class BookingListView(APIView):
             # Calculate total amount
             # return_date is treated as checkout date (exclusive), so day-count is the difference
             days = (return_date - pickup_date).days
-            total_amount = (listing.price_per_day * days) + SAFE_DEPOSIT_AMOUNT
+            total_amount = (listing.price_per_day * days) + SAFE_DEPOSIT_AMOUNT + SERVICE_FEE_AMOUNT
             
             # Determine booking status based on instant_booking setting
             booking_status = 'confirmed' if listing.instant_booking else 'pending'

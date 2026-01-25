@@ -10,7 +10,7 @@ export default function BookingPricingBreakdown({
   totalPrice 
 }) {
   const subtotal = parseFloat(basePrice) || 0;
-  const serviceFee = fees.serviceFee || subtotal * 0.10; // 10% service fee
+  const serviceFee = fees.serviceFee || 25; // Fixed service fee
   const securityFee = fees.securityFee || 5000; // Fixed security deposit
   const insuranceFee = fees.insuranceFee || 0; // Optional insurance
   

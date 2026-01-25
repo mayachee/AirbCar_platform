@@ -293,7 +293,8 @@ function BookingPageContent() {
         const days = Math.max(1, Math.ceil((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60 * 24)))
         const pricePerDay = Number(vehicle?.price_per_day ?? vehicle?.pricePerDay ?? vehicle?.dailyRate ?? 0)
         const securityDeposit = 5000
-        totalAmount = Number.isFinite(pricePerDay) ? (pricePerDay * days) + securityDeposit : securityDeposit
+        const serviceFee = 25
+        totalAmount = Number.isFinite(pricePerDay) ? (pricePerDay * days) + securityDeposit + serviceFee : (securityDeposit + serviceFee)
       }
       formData.append('total_amount', String(totalAmount))
       formData.append('request_message', specialRequest || 'Booking request from website')
