@@ -602,7 +602,8 @@ class BookingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'listing', 'customer', 'partner', 'pickup_date', 'return_date',
             'pickup_time', 'return_time', 'pickup_location', 'return_location',
-            'total_amount', 'status', 'payment_status', 'payment_method', 'special_requests',
+            'total_amount', 'status', 'payment_status', 'payment_method', 'request_message',
+            'license_front_document', 'license_back_document',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
