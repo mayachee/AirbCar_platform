@@ -7,10 +7,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='booking',
-            name='special_requests',
-        ),
         migrations.AddField(
             model_name='booking',
             name='request_message',
