@@ -12,6 +12,8 @@ class User(AbstractUser):
     license_number = models.TextField(blank=True, null=True)
     id_front_document_url = models.URLField(blank=True, null=True)
     id_back_document_url = models.URLField(blank=True, null=True)
+    license_front_document = models.URLField(blank=True, null=True)
+    license_back_document = models.URLField(blank=True, null=True)
     id_verification_status = models.CharField(max_length=20, default='pending')
     license_origin_country = models.CharField(max_length=75, blank=True, null=True)
     nationality = models.CharField(max_length=75, null=True, blank=True)

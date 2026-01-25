@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import viewsets, status
@@ -10,6 +11,8 @@ from listings.models import Listing
 from .models import Booking
 from .serializers import BookingSerializer
 
+
+from common.utils import upload_file_to_supabase
 
 class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
@@ -36,14 +39,85 @@ class BookingViewSet(viewsets.ModelViewSet):
         ).filter(query).distinct().order_by('-requested_at')
 
     def perform_create(self, serializer):
-        listing_id = self.request.data.get('listing')
+        data = self.request.data
+        listing_id = data.get('listing')
         try:
             listing = Listing.objects.get(id=listing_id)
         except Listing.DoesNotExist:
             raise ValidationError({'listing': 'Listing not found'})
         
-        request_message = self.request.data.get('request_message', '')
-        serializer.save(user=self.request.user, listing=listing, request_message=request_message)
+        request_message = data.get('request_message', '')
+        
+        # Handle start/end times from separate date/time fields
+        pickup_date = data.get('pickup_date')
+        pickup_time = data.get('pickup_time', '10:00')
+        return_date = data.get('return_date')
+        return_time = data.get('return_time', '10:00')
+        
+        start_time = timezone.now()
+        end_time = timezone.now()
+
+        if pickup_date:
+            try:
+                p_date = datetime.strptime(pickup_date, '%Y-%m-%d').date()
+                p_time = datetime.strptime(str(pickup_time).split('.')[0], '%H:%M').time()
+                combo = datetime.combine(p_date, p_time)
+                start_time = timezone.make_aware(combo) if timezone.is_naive(combo) else combo
+            except (ValueError, TypeError):
+                pass 
+
+        if return_date:
+            try:
+                r_date = datetime.strptime(return_date, '%Y-%m-%d').date()
+                r_time = datetime.strptime(str(return_time).split('.')[0], '%H:%M').time()
+                combo = datetime.combine(r_date, r_time)
+                end_time = timezone.make_aware(combo) if timezone.is_naive(combo) else combo
+            except (ValueError, TypeError):
+                pass
+                
+        price = data.get('total_amount') or data.get('price', 0.0)
+
+        # Handle license file uploads
+        license_front_url = None
+        license_back_url = None
+        
+        license_front_file = self.request.FILES.get('license_front_document')
+        if license_front_file:
+            try:
+                license_front_url = upload_file_to_supabase(license_front_file, folder="licenses", bucket="pics")
+            except Exception as e:
+                print(f"Error uploading license front: {e}")
+                
+        license_back_file = self.request.FILES.get('license_back_document')
+        if license_back_file:
+            try:
+                license_back_url = upload_file_to_supabase(license_back_file, folder="licenses", bucket="pics")
+            except Exception as e:
+                print(f"Error uploading license back: {e}")
+
+        # Update user profile with latest license docs if provided
+        user = self.request.user
+        user_updated = False
+        if license_front_url:
+            user.license_front_document = license_front_url # Store directly as URL string
+            user_updated = True
+        if license_back_url:
+            user.license_back_document = license_back_url # Store directly as URL string
+            user_updated = True
+            
+        if user_updated:
+            user.save()
+
+        serializer.save(
+            user=self.request.user, 
+            listing=listing, 
+            request_message=request_message,
+            start_time=start_time,
+            end_time=end_time,
+            price=price,
+            license_front_document=license_front_url,
+            license_back_document=license_back_url
+        )
 
     @action(detail=True, methods=['post'], url_path='accept')
     def accept_booking(self, request, pk=None):

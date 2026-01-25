@@ -12,7 +12,7 @@ class Booking(models.Model):
         ('completed', 'Completed'),
     ]
     
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_column='customer_id')
     listing = models.ForeignKey('listings.Listing', on_delete=models.CASCADE)
     start_time = models.DateTimeField(default=timezone.now)
     end_time = models.DateTimeField(default=timezone.now)
@@ -29,6 +29,10 @@ class Booking(models.Model):
     # Optional message from renter to car owner
     request_message = models.TextField(blank=True, null=True)
     rejection_reason = models.TextField(blank=True, null=True)
+    
+    # License documents for this specific booking
+    license_front_document = models.URLField(blank=True, null=True)
+    license_back_document = models.URLField(blank=True, null=True)
 
     class Meta:
         db_table = 'core_booking'  # Use existing table name from core app
