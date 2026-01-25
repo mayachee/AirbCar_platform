@@ -10,6 +10,7 @@ from django.db.models import Q, F, DecimalField, Avg, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.db import transaction, OperationalError, IntegrityError
+from django.db.utils import ProgrammingError, DatabaseError
 from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
@@ -24,6 +25,22 @@ from ..supabase_storage import upload_file_to_supabase
 
 
 SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
+
+
+def _create_notification_safe(**kwargs):
+    """Best-effort notification creation.
+
+    Production sometimes runs with migrations not applied (e.g. missing
+    `core_notification` table). Notifications should never block booking flows.
+    """
+    try:
+        Notification.objects.create(**kwargs)
+    except (ProgrammingError, OperationalError, DatabaseError) as e:
+        if settings.DEBUG:
+            print(f"Notification creation skipped (non-blocking): {e}")
+    except Exception as e:
+        if settings.DEBUG:
+            print(f"Notification creation failed (non-blocking): {e}")
 
 
 class BookingListView(APIView):
@@ -319,8 +336,8 @@ class BookingListView(APIView):
                             booking.payment_status = 'paid'
                             booking.save()
                         
-                        # Create notification for partner
-                        Notification.objects.create(
+                        # Create notification for partner (non-blocking)
+                        _create_notification_safe(
                             user=listing.partner.user,
                             title="New Booking Request",
                             message=f"You have a new booking request for {listing.make} {listing.model} from {request.user.username}.",
@@ -468,7 +485,7 @@ class BookingCancelView(APIView):
             notify_user = booking.partner.user if request.user == booking.customer else booking.customer
             notify_user_role = "Customer" if request.user == booking.partner.user else "Partner"
             
-            Notification.objects.create(
+            _create_notification_safe(
                 user=notify_user,
                 title="Booking Cancelled",
                 message=f"Booking #{booking.id} for {booking.listing.make} {booking.listing.model} has been cancelled by {notify_user_role}.",
@@ -541,7 +558,7 @@ class BookingAcceptView(APIView):
             booking.save()
             
             # Notify customer
-            Notification.objects.create(
+            _create_notification_safe(
                 user=booking.customer,
                 title="Booking Accepted",
                 message=f"Your booking request for {booking.listing.make} {booking.listing.model} has been accepted!",
@@ -613,7 +630,7 @@ class BookingRejectView(APIView):
             booking.save()
             
             # Notify customer
-            Notification.objects.create(
+            _create_notification_safe(
                 user=booking.customer,
                 title="Booking Rejected",
                 message=f"Your booking request for {booking.listing.make} {booking.listing.model} has been rejected.",
