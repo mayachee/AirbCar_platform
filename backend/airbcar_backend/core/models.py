@@ -228,9 +228,14 @@ class Booking(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='online', help_text='Payment method: online or cash')
     
-    # Additional
-    special_requests = models.TextField(blank=True, null=True)
+    # Optional message from renter to car owner
+    request_message = models.TextField(blank=True, null=True)
+    rejection_reason = models.TextField(blank=True, null=True)
     
+    # License documents for this specific booking
+    license_front_document = models.URLField(max_length=500, blank=True, null=True)
+    license_back_document = models.URLField(max_length=500, blank=True, null=True)
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

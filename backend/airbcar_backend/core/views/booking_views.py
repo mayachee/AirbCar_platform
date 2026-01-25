@@ -19,6 +19,7 @@ from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
 )
+from ..supabase_storage import upload_file_to_supabase
 
 
 class BookingListView(APIView):
@@ -195,8 +196,55 @@ class BookingListView(APIView):
             
             if serializer.is_valid():
                 try:
+                    # Handle License Uploads
+                    license_front_url = None
+                    license_back_url = None
+                    
+                    if 'license_front_document' in request.FILES:
+                        try:
+                            # Use timestamp to ensure unique filenames
+                            ts = int(datetime.now().timestamp())
+                            license_front_url = upload_file_to_supabase(
+                                request.FILES['license_front_document'], 
+                                bucket_name='pics', 
+                                file_path=f"licenses/user_{request.user.id}_{ts}_front"
+                            )
+                        except Exception as e:
+                            if settings.DEBUG:
+                                print(f"License front upload failed: {e}")
+                    
+                    if 'license_back_document' in request.FILES:
+                        try:
+                            ts = int(datetime.now().timestamp())
+                            license_back_url = upload_file_to_supabase(
+                                request.FILES['license_back_document'], 
+                                bucket_name='pics', 
+                                file_path=f"licenses/user_{request.user.id}_{ts}_back"
+                            )
+                        except Exception as e:
+                            if settings.DEBUG:
+                                print(f"License back upload failed: {e}")
+
                     with transaction.atomic():
-                        booking = serializer.save()
+                        # Prepare arguments for save()
+                        # CRITICAL: We pass customer explicitly because it is read_only in serializer
+                        save_kwargs = {'customer': request.user}
+                        
+                        # Add license URLs if uploaded
+                        if license_front_url:
+                            save_kwargs['license_front_document'] = license_front_url
+                            # Update user profile
+                            request.user.license_front_document = license_front_url
+                            request.user.save(update_fields=['license_front_document', 'updated_at'])
+                            
+                        if license_back_url:
+                            save_kwargs['license_back_document'] = license_back_url
+                            # Update user profile
+                            request.user.license_back_document = license_back_url
+                            request.user.save(update_fields=['license_back_document', 'updated_at'])
+
+                        # Save booking
+                        booking = serializer.save(**save_kwargs)
                         
                         # If instant booking, mark payment as paid (assuming payment is processed)
                         if listing.instant_booking and request.data.get('payment_status') == 'paid':
