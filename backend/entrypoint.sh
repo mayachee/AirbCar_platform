@@ -23,7 +23,14 @@ fi
 # Run migrations
 echo "Running database migrations..."
 cd /app/airbcar_backend
+# Try normal migrate
 python manage.py migrate --noinput || echo "Migrations completed or skipped"
+
+# Run manual fix script to ensure columns exist if migration failed
+if [ -f "fix_db_manually.py" ]; then
+    echo "Running manual DB fix script to repair schema..."
+    python fix_db_manually.py || echo "Manual fix script failed"
+fi
 
 # Create superuser if environment variables are set
 if [ -n "$DJANGO_SUPERUSER_EMAIL" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then

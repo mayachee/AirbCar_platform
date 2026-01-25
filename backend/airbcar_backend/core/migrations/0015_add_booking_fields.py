@@ -7,6 +7,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Removed special_requests removal to avoid crashes if it doesn't exist
+        # migrations.RemoveField(
+        #     model_name='booking',
+        #     name='special_requests',
+        # ),
         migrations.AddField(
             model_name='booking',
             name='request_message',
