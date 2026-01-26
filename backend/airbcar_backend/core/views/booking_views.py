@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
 import json
+import os
 
 from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, Notification
 from ..serializers import (
@@ -35,7 +36,12 @@ def _create_notification_safe(**kwargs):
     `core_notification` table). Notifications should never block booking flows.
     """
     try:
-        Notification.objects.create(**kwargs)
+        # IMPORTANT: database errors inside an outer transaction.atomic() will
+        # mark the whole transaction as broken, even if caught.
+        # Using a nested atomic() creates a savepoint so failures roll back
+        # cleanly without aborting the outer transaction.
+        with transaction.atomic():
+            Notification.objects.create(**kwargs)
     except (ProgrammingError, OperationalError, DatabaseError) as e:
         if settings.DEBUG:
             print(f"Notification creation skipped (non-blocking): {e}")
@@ -277,9 +283,10 @@ class BookingListView(APIView):
                         try:
                             # Use timestamp to ensure unique filenames
                             ts = int(datetime.now().timestamp())
+                            pics_bucket = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'pics')
                             license_front_url = upload_file_to_supabase(
                                 request.FILES['license_front_document'], 
-                                bucket_name='pics', 
+                                bucket_name=pics_bucket, 
                                 file_path=f"licenses/user_{request.user.id}_{ts}_front"
                             )
                         except Exception as e:
@@ -289,9 +296,10 @@ class BookingListView(APIView):
                     if 'license_back_document' in request.FILES:
                         try:
                             ts = int(datetime.now().timestamp())
+                            pics_bucket = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'pics')
                             license_back_url = upload_file_to_supabase(
                                 request.FILES['license_back_document'], 
-                                bucket_name='pics', 
+                                bucket_name=pics_bucket, 
                                 file_path=f"licenses/user_{request.user.id}_{ts}_back"
                             )
                         except Exception as e:
