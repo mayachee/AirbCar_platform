@@ -10,27 +10,38 @@ export class BookingService {
   get client() {
     return enhancedApiClient || apiClient;
   }
+
+  _extractList(payload) {
+    // Supports shapes like:
+    // - [ ... ]
+    // - { data: [ ... ] }
+    // - { data: { data: [ ... ], ... } }
+    // - { data: { results: [ ... ] } }
+    // - axios-like response { data: ... }
+    if (!payload) return []
+
+    // If caller passed axios response, unwrap once
+    const root = payload?.data !== undefined ? payload.data : payload
+
+    if (Array.isArray(root)) return root
+
+    // Backend common: { data: [...] }
+    if (Array.isArray(root?.data)) return root.data
+
+    // Nested wrapper: { data: { data: [...] } }
+    if (Array.isArray(root?.data?.data)) return root.data.data
+
+    // DRF pagination style: { results: [...] }
+    if (Array.isArray(root?.results)) return root.results
+    if (Array.isArray(root?.data?.results)) return root.data.results
+
+    return []
+  }
+
   async getBookings() {
     // Enhanced client handles retries and timeouts automatically
     const response = await this.client.get('/bookings/', undefined, { timeout: 120000 })
-    // Client returns { data, success, message }
-    // Backend returns { data: [...], count, total_count, page, page_size }
-    // So response.data is { data: [...], count, ... }
-    // We need to return response.data.data (the actual array) or response.data
-    console.log('📡 BookingService.getBookings response:', response);
-    if (response && response.data) {
-      // If response.data has a 'data' property, return that (backend structure)
-      if (Array.isArray(response.data.data)) {
-        return response.data.data;
-      }
-      // If response.data is already an array, return it
-      if (Array.isArray(response.data)) {
-        return response.data;
-      }
-      // Otherwise return the whole response.data object
-      return response.data;
-    }
-    return response.data || [];
+    return this._extractList(response)
   }
 
   async getBooking(bookingId) {
@@ -63,20 +74,16 @@ export class BookingService {
 
   async getPendingRequests() {
     const response = await this.client.get('/bookings/pending-requests/')
-    return response.data
+    // Preserve backward compat: some call sites expect array, some expect object.
+    // Return array when possible.
+    const list = this._extractList(response)
+    return list.length > 0 ? list : (response?.data ?? [])
   }
 
   async getUpcomingBookings() {
     try {
       const response = await this.client.get('/bookings/upcoming/', undefined, { timeout: 120000 })
-      // Handle different response structures
-      if (Array.isArray(response)) {
-        return response
-      }
-      if (response.data) {
-        return Array.isArray(response.data) ? response.data : []
-      }
-      return []
+      return this._extractList(response)
     } catch (error) {
       console.warn('Error fetching upcoming bookings:', error)
       return []
