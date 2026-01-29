@@ -22,8 +22,8 @@ from .serializers import (
     UserSerializer, CustomTokenObtainPairSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
-from bookings.serializers import BookingSerializer
-from bookings.models import Booking
+from core.serializers import BookingSerializer
+from core.models import Booking
 
 logger = logging.getLogger(__name__)
 

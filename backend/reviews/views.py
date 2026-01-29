@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
 from listings.models import Listing
-from bookings.models import Booking
+from core.models import Booking
 
 from .models import Review, ReviewVote, ReviewReport
 from .serializers import ReviewSerializer

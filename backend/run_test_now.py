@@ -104,7 +104,7 @@ try:
     from users.models import User
     from partners.models import Partner
     from listings.models import Listing
-    from bookings.models import Booking
+    from core.models import Booking
     from reviews.models import Review, ReviewVote, ReviewReport
     from favorites.models import Favorite
     
