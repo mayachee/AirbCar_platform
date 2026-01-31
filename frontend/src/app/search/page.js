@@ -70,6 +70,32 @@ function SearchContent() {
   // Ensure filteredCars is always an array
   const safeFilteredCars = Array.isArray(filteredCars) ? filteredCars : [];
   
+  // Sync URL params with filters when URL changes
+  useEffect(() => {
+    const newFilters = {};
+    
+    // Only update if URL params are different from current filters
+    const locationFromUrl = searchParams.get('location');
+    const pickupDateFromUrl = searchParams.get('pickupDate');
+    const returnDateFromUrl = searchParams.get('dropoffDate') || searchParams.get('returnDate');
+    
+    if (locationFromUrl !== null && locationFromUrl !== filters.location) {
+      newFilters.location = locationFromUrl;
+    }
+    if (pickupDateFromUrl !== null && pickupDateFromUrl !== filters.pickupDate) {
+      newFilters.pickupDate = pickupDateFromUrl;
+    }
+    if (returnDateFromUrl !== null && returnDateFromUrl !== filters.returnDate) {
+      newFilters.returnDate = returnDateFromUrl;
+    }
+    
+    // Only update if there are changes
+    if (Object.keys(newFilters).length > 0) {
+      console.log('📍 Syncing URL params to filters:', newFilters);
+      updateFilters(newFilters);
+    }
+  }, [searchParams, filters, updateFilters]);
+  
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(6);

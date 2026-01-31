@@ -148,8 +148,8 @@ DATABASES = {
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
         'OPTIONS': db_options,
-        # Connection pooling - disable persistent connections to avoid stale pooler connections
-        'CONN_MAX_AGE': 0,  # Always create fresh connections to avoid SSL connection closed errors
+        # Connection pooling - Performance optimization: reuse connections instead of creating new ones
+        'CONN_MAX_AGE': 600,  # Reuse connections for 10 minutes (faster than creating new connections each time)
         'ATOMIC_REQUESTS': False,  # Disable to avoid long-running transactions with pooler
     }
 }
@@ -203,6 +203,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'MAX_PAGE_SIZE': 100,  # Security: Prevent DoS attacks from huge page requests
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 
