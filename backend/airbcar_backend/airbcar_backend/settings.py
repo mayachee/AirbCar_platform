@@ -15,13 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
-    # Use a fallback key for development/build environments if not set
-    # WARN: This is not secure for production
-    if os.environ.get('CI') or os.environ.get('BUILD_ENV') or True: # Fallback enabled for now
-        print("WARNING: SECRET_KEY not set, using insecure fallback key.")
-        SECRET_KEY = 'django-insecure-fallback-key-for-dev-and-build-only'
-    else:
-        raise ValueError('SECRET_KEY environment variable must be set')
+    raise ValueError('CRITICAL: SECRET_KEY environment variable must be set. Set it to a 50+ character random string.')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
@@ -48,6 +42,7 @@ else:
         '.onrender.com',  # Allow any Render subdomain (wildcard subdomain)
         'localhost',
         '127.0.0.1',
+        'testserver',  # Django test client
     ]
 
 # Always add the explicit Render domain as a fallback
@@ -55,6 +50,25 @@ if 'airbcar-backend.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('airbcar-backend.onrender.com')
 if '.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('.onrender.com')
+
+# ===== SECURITY SETTINGS FOR PRODUCTION =====
+# These are applied based on DEBUG setting and environment
+IS_PRODUCTION = not DEBUG and os.environ.get('ENVIRONMENT', 'development') == 'production'
+
+if IS_PRODUCTION:
+    # HTTPS/SSL Settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    # Development settings - allow non-HTTPS
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # Application definition
 INSTALLED_APPS = [
