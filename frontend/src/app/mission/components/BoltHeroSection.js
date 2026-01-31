@@ -5,81 +5,57 @@ import { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 
 const cards = [
-  { 
+  {
     id: 1,
-    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg", 
-    alt: "Premium Fleet", 
-    angle: -12, 
-    x: '-38%', 
-    y: '-28%',
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg",
+    alt: "Premium Fleet",
+    position: { left: '5%', top: '20%' },
+    angle: -12,
     zIndex: 10,
     scale: 0.95
   },
-  { 
+  {
     id: 2,
-    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/marina_malkova-nIOK_GnEGeU-unsplash.jpg", 
-    alt: "Our Partners", 
-    angle: 15, 
-    x: '35%',
-    y: '-32%',
+    src: "https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_n7ip3xn7ip3xn7ip.png",
+    alt: "Our Partners",
+    position: { right: '5%', top: '18%' },
+    angle: 15,
     zIndex: 20,
     scale: 0.85
   },
-  { 
+  {
     id: 3,
-    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/danijel-skabic--GNdBb4WkDU-unsplash.jpg", 
-    alt: "Comfort", 
-    angle: -5, 
-    x: '-8%',
-    y: '5%',
+    src: "https://ik.imagekit.io/szcfr7vth/gettyimages-1359860570-612x612-Picsart-AiImageEnhancer.jpg",
+    alt: "Comfort",
+    position: { left: '50%', top: '35%', transform: 'translate(-50%, 0)' },
+    angle: -5,
     zIndex: 40,
     scale: 1.1
   },
-  { 
+  {
     id: 4,
-    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/helena-lopes-e3OUQGT9bWU-unsplash.jpg", 
-    alt: "Community", 
-    angle: 20, 
-    x: '42%',
-    y: '15%',
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/helena-lopes-e3OUQGT9bWU-unsplash.jpg",
+    alt: "Community",
+    position: { left: '10%', bottom: '10%' },
+    angle: 20,
     zIndex: 15,
     scale: 0.9
   },
-  { 
+  {
     id: 5,
-    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg", 
-    alt: "Performance", 
-    angle: -25, 
-    x: '-42%',
-    y: '25%',
+    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg",
+    alt: "Performance",
+    position: { right: '10%', bottom: '12%' },
+    angle: -25,
     zIndex: 5,
     scale: 1.05
-  },
-   { 
-    id: 6,
-    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/martin-katler-h9g8CdsDG7Q-unsplash.jpg", 
-    alt: "Adventure", 
-    angle: 8, 
-    x: '18%',
-    y: '35%',
-    zIndex: 35,
-    scale: 0.9
-  },
-  { 
-    id: 7,
-    src: "https://ik.imagekit.io/szcfr7vth/New%20folder/marina_malkova-nIOK_GnEGeU-unsplash.jpg", 
-    alt: "Future", 
-    angle: -10, 
-    x: '-22%',
-    y: '-38%',
-    zIndex: 1,
-    scale: 0.8
   }
 ];
 
 export default function BoltHeroSection() {
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [shuffledCards, setShuffledCards] = useState([]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -88,6 +64,19 @@ export default function BoltHeroSection() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Shuffle cards on mount
+  useEffect(() => {
+    function shuffle(array) {
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+    setShuffledCards(shuffle(cards));
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -128,7 +117,7 @@ export default function BoltHeroSection() {
       </div>
 
       {/* Main Cluster */}
-      <div className="relative z-[-10] w-full h-[600px] flex items-center justify-center mt-10 md:mt-0 perspective-1000">
+      <div className="absolute left-0 top-0 w-full h-[600px] z-[-10] mt-10 md:mt-0 perspective-1000 pointer-events-none">
         {cards.map((card, index) => (
           <Card 
             key={card.id} 
@@ -160,53 +149,23 @@ export default function BoltHeroSection() {
 }
 
 function Card({ card, index, mouseX, mouseY, scrollYProgress, isMobile }) {
-  // 1. Mouse Parallax (pixel offset)
-  const mouseXOffset = useTransform(mouseX, [-0.5, 0.5], [-25, 25]);
-  const mouseYOffset = useTransform(mouseY, [-0.5, 0.5], [-25, 25]);
-
-  // 2. Scroll Parallax Vertical (pixel offset)
-  // Higher zIndex = closer to camera = moves more
-  const dist = card.zIndex * 8 + 50; // Increased movement for more dramatic effect
-  const scrollYOffset = useTransform(scrollYProgress, [0, 1], [0, -dist]);
-  
-  // 3. Scroll Parallax Horizontal (spread effect)
-  // Cards on left move left, cards on right move right
-  const isLeft = String(card.x).startsWith('-');
-  const spread = isMobile ? 30 : 80; // Reduce spread on mobile
-  const scrollXOffset = useTransform(scrollYProgress, [0, 1], [0, isLeft ? -spread : spread]);
-
-  // 4. Combine all into CSS calc
-  // We utilize the useTransform hook to combine multiple motion values
-  // Squeeze width on mobile to fit screen
-  const xPosition = useTransform(
-    [mouseXOffset, scrollXOffset],
-    ([m, s]) => isMobile 
-      ? `calc(${card.x} * 0.6 + ${m + s}px)`
-      : `calc(${card.x} + ${m + s}px)`
-  );
-
-  const yPosition = useTransform(
-    [mouseYOffset, scrollYOffset],
-    ([m, s]) => `calc(${card.y} + ${m + s}px)`
-  );
+  const style = {
+    zIndex: card.zIndex,
+    position: 'absolute',
+    ...card.position,
+    transform: card.position.transform || undefined
+  };
 
   return (
     <motion.div
-      style={{
-        zIndex: card.zIndex,
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        x: xPosition, 
-        y: yPosition,
-      }}
-      initial={{ 
-        opacity: 0, 
+      style={style}
+      initial={{
+        opacity: 0,
         scale: 0,
         rotate: card.angle + (index % 2 === 0 ? 10 : -10)
       }}
-      animate={{ 
-        opacity: 1, 
+      animate={{
+        opacity: 1,
         scale: card.scale * (isMobile ? 1 : 1),
         rotate: card.angle,
         transition: {
@@ -215,22 +174,24 @@ function Card({ card, index, mouseX, mouseY, scrollYProgress, isMobile }) {
           delay: index * 0.08
         }
       }}
-      whileHover={{ 
-        scale: card.scale * (isMobile ? 1.05 : 1.15), 
-        rotate: 0, 
+      whileHover={{
+        scale: card.scale * (isMobile ? 1.05 : 1.15),
+        rotate: 0,
         zIndex: 100,
         transition: { duration: 0.3 }
       }}
-      className="absolute w-40 h-56 md:w-56 md:h-80 p-1 shadow-xl origin-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2"
+      className="w-64 h-96 md:w-[340px] md:h-[480px] p-0.5 shadow-2xl origin-center cursor-pointer rounded-3xl border-2 border-white/20 bg-white/5 backdrop-blur-sm"
     >
-      <div className="relative w-full h-full overflow-hidden">
-        <Image 
-          src={card.src} 
-          alt={card.alt} 
-          fill 
-          sizes="(max-width: 768px) 128px, 224px"
-          className="object-cover"
+      <div className="relative w-full h-full overflow-hidden rounded-3xl">
+        <Image
+          src={card.src}
+          alt={card.alt}
+          fill
+          sizes="(max-width: 768px) 256px, 480px"
+          className="object-cover scale-105 transition-transform duration-500 hover:scale-110"
+          style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.18)' }}
         />
+        <div className="absolute inset-0 rounded-3xl border-2 border-white/20 pointer-events-none" />
       </div>
     </motion.div>
   );

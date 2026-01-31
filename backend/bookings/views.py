@@ -40,6 +40,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         data = self.request.data
+        user = self.request.user
         listing_id = data.get('listing')
         try:
             listing = Listing.objects.get(id=listing_id)
@@ -47,6 +48,18 @@ class BookingViewSet(viewsets.ModelViewSet):
             raise ValidationError({'listing': 'Listing not found'})
         
         request_message = data.get('request_message', '')
+
+        # Phone number supplied during booking flow
+        phone_number = (
+            data.get('phone_number')
+            or data.get('phoneNumber')
+            or data.get('phone')
+            or getattr(user, 'phone_number', '')
+            or ''
+        ).strip()
+
+        if not phone_number:
+            raise ValidationError({'phone_number': 'Phone number is required'})
         
         # Handle start/end times from separate date/time fields
         pickup_date = data.get('pickup_date')
@@ -96,13 +109,18 @@ class BookingViewSet(viewsets.ModelViewSet):
                 print(f"Error uploading license back: {e}")
 
         # Update user profile with latest license docs if provided
-        user = self.request.user
         user_updated = False
-        if license_front_url:
-            user.license_front_document = license_front_url # Store directly as URL string
+
+        # If user profile has no phone yet, persist the booking phone into the profile
+        if phone_number and not getattr(user, 'phone_number', ''):
+            user.phone_number = phone_number
             user_updated = True
-        if license_back_url:
-            user.license_back_document = license_back_url # Store directly as URL string
+        # If user profile is missing license docs, persist the booking uploads into the profile
+        if license_front_url and not getattr(user, 'license_front_document', None):
+            user.license_front_document = license_front_url  # Store directly as URL string
+            user_updated = True
+        if license_back_url and not getattr(user, 'license_back_document', None):
+            user.license_back_document = license_back_url  # Store directly as URL string
             user_updated = True
             
         if user_updated:
@@ -115,6 +133,7 @@ class BookingViewSet(viewsets.ModelViewSet):
             start_time=start_time,
             end_time=end_time,
             price=price,
+            phone_number=phone_number or None,
             license_front_document=license_front_url,
             license_back_document=license_back_url
         )
@@ -183,6 +202,8 @@ class BookingViewSet(viewsets.ModelViewSet):
         
         booking.status = 'accepted'
         booking.accepted_at = timezone.now()
+        booking.rejected_at = None
+        booking.rejection_reason = None
         booking.save()
         
         serializer = self.get_serializer(booking)
@@ -239,6 +260,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         booking.status = 'rejected'
         booking.rejected_at = timezone.now()
         booking.rejection_reason = rejection_reason
+        booking.accepted_at = None
         booking.save()
         
         serializer = self.get_serializer(booking)

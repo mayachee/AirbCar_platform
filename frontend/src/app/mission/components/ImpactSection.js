@@ -15,9 +15,10 @@ export default function ImpactSection() {
 
   const tabContent = {
     'Boosting partner earning opportunities': {
-      image: 'https://cdn.cosmos.so/58c90d1e-9c45-46b4-9b50-4d6819f074a0?format=jpeg',
+      image: 'https://ik.imagekit.io/szcfr7vth/software.png',
       dataNote: '*Data: Thailand, Nigeria, South Africa, Netherlands, UK',
       facts: [
+        "AirbCar's advanced software empowers partners with real-time insights, flexible work options, and seamless earnings management.",
         "3.5 million+ drivers and couriers worldwide, including 1 million+ partners in Africa",
         "Up to 80% of drivers on AirbCar's platform have a tenure longer than 5 years *",
         "Up to 90% of drivers agree that AirbCar platform offers autonomy and flexibility *",
@@ -25,21 +26,27 @@ export default function ImpactSection() {
       ]
     },
     'Community Driven': {
-      image: 'https://cdn.cosmos.so/7f5dee4d-6636-4cf2-ac21-8ad6e0a569d1?format=jpeg',
+      image: 'https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_1w7h0z1w7h0z1w7h.png',
       dataNote: '*Data: Various regions',
       facts: [
         "Committed to creating equal opportunities for all",
         "Supporting diverse communities across all markets",
-        "Inclusive platform design and policies"
+        "Inclusive platform design and policies",
+        "As a young startup, we actively listen to our community to shape our platform and services.",
+        "We organize local events and feedback sessions to ensure every voice is heard.",
+        "Our team is dedicated to building partnerships with grassroots organizations and local leaders."
       ]
     },
     'Eco-Friendly': {
-      image: 'https://cdn.cosmos.so/fcec19cc-9c31-41a9-9aa9-10c96574577a?format=jpeg',
+      image: 'https://ik.imagekit.io/szcfr7vth/image1.png',
       dataNote: '*Data: Global impact',
       facts: [
         "Reducing carbon footprint through shared mobility",
         "Supporting sustainable urban development",
-        "Contributing to cleaner cities worldwide"
+        "Contributing to cleaner cities worldwide",
+        "As a new startup, we are committed to integrating eco-friendly practices from day one.",
+        "We invest in technology and partnerships that promote electric vehicles and green mobility.",
+        "Our long-term vision is to help cities achieve net-zero emissions through innovative transport solutions."
       ]
     }
   };
@@ -86,7 +93,7 @@ export default function ImpactSection() {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 <img
-                  src="https://cdn.cosmos.so/254a1555-de9c-4ed5-95ab-ab8317465c39?format=jpeg"
+                  src="https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_jl7bnojl7bnojl7b.png"
                   alt="The impact"
                   className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
@@ -201,7 +208,7 @@ export default function ImpactSection() {
                   <img
                     src={currentContent.image}
                     alt={activeTab}
-                    className="w-full h-[420px] object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

@@ -183,7 +183,7 @@ function BookingPageContent() {
     return err?.message || 'Failed to create booking. Please try again.'
   }
 
-  const handleCreateBooking = async (specialRequest = '', licenseFiles = null, paymentMethod = 'online') => {
+  const handleCreateBooking = async (specialRequest = '', licenseFiles = null, paymentMethod = 'online', phoneNumber = '') => {
     if (!validCarId) {
       setError('Car ID is missing. Please go back and select a vehicle.')
       // Try to redirect to search if no vehicle ID
@@ -254,6 +254,8 @@ function BookingPageContent() {
       console.warn('No license files provided - booking will proceed without them')
     }
 
+    const phoneValue = String(phoneNumber || currentUser?.phone_number || currentUser?.phoneNumber || currentUser?.phone || '').trim()
+
     try {
       setLoading(true)
       setError(null)
@@ -299,6 +301,12 @@ function BookingPageContent() {
       formData.append('total_amount', String(totalAmount))
       formData.append('request_message', specialRequest || 'Booking request from website')
       formData.append('payment_method', paymentMethod || 'online') // 'online' or 'cash'
+
+      if (phoneValue) {
+        // Support both conventions
+        formData.append('phone_number', phoneValue)
+        formData.append('phoneNumber', phoneValue)
+      }
       
       // Append license files if provided
       if (licenseFiles) {
@@ -443,10 +451,10 @@ function BookingPageContent() {
             vehicle={vehicle}
             totalPrice={totalPrice}
             duration={duration}
-            onConfirm={(specialRequest, licenseFiles, paymentMethod) => {
+            onConfirm={(specialRequest, licenseFiles, paymentMethod, phoneNumber) => {
               // This is called from step 3's confirm button
               // All form data is collected and passed to handleCreateBooking
-              handleCreateBooking(specialRequest, licenseFiles, paymentMethod)
+              handleCreateBooking(specialRequest, licenseFiles, paymentMethod, phoneNumber)
             }}
             loading={loading}
             error={error}

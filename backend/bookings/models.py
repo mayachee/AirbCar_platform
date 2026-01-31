@@ -29,6 +29,9 @@ class Booking(models.Model):
     # Optional message from renter to car owner
     request_message = models.TextField(blank=True, null=True)
     rejection_reason = models.TextField(blank=True, null=True)
+
+    # Phone number provided at booking time (may differ from profile)
+    phone_number = models.CharField(max_length=30, blank=True, null=True)
     
     # License documents for this specific booking
     license_front_document = models.URLField(blank=True, null=True)

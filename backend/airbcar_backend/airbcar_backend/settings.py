@@ -12,19 +12,20 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
     # Use a fallback key for development/build environments if not set
     # WARN: This is not secure for production
-    if os.environ.get('CI') or os.environ.get('BUILD_ENV') or True: # Fallback enabled for now
-        print("WARNING: SECRET_KEY not set, using insecure fallback key.")
+    if DEBUG or os.environ.get('CI') or os.environ.get('BUILD_ENV'):
+        if DEBUG:
+            print("WARNING: SECRET_KEY not set, using insecure fallback key (development only).")
         SECRET_KEY = 'django-insecure-fallback-key-for-dev-and-build-only'
     else:
         raise ValueError('SECRET_KEY environment variable must be set')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # ALLOWED_HOSTS - Allow Render domain and any custom domain
 ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '')
@@ -66,6 +67,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'core',
 ]
@@ -85,6 +87,33 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'airbcar_backend.urls'
+
+# --- Security hardening (production-safe defaults) ---
+# Render/Reverse proxy support: trust X-Forwarded-Proto for HTTPS detection.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+# Redirect HTTP->HTTPS in production (can be disabled if handled upstream).
+SECURE_SSL_REDIRECT = (not DEBUG) and (os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true')
+
+# Cookies
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+CSRF_COOKIE_SAMESITE = os.environ.get('CSRF_COOKIE_SAMESITE', 'Lax')
+
+# Browser security headers
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+# HSTS (enable only in production)
+SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000' if not DEBUG else '0'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
 
 TEMPLATES = [
     {
@@ -194,6 +223,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework configuration
+ENABLE_THROTTLING = os.environ.get('ENABLE_THROTTLING', 'False' if DEBUG else 'True').lower() == 'true'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -206,10 +236,20 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 
+if ENABLE_THROTTLING:
+    REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = (
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    )
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+        'anon': os.environ.get('THROTTLE_ANON', '100/hour'),
+        'user': os.environ.get('THROTTLE_USER', '1000/hour'),
+    }
+
 # CORS settings
 # Always allow all origins in development (including Docker)
 # This ensures CORS works even if DEBUG is not properly set
-CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for development
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Never allow-all in production
 CORS_ALLOW_CREDENTIALS = True
 
 # Also explicitly allow common development origins and production URLs
@@ -223,12 +263,17 @@ CORS_ALLOWED_ORIGINS = [
     # Production domains
     "https://www.airbcar.com",
     "https://airbcar.com",
-    "http://www.airbcar.com",
-    "http://airbcar.com",
     # Docker network IPs (common Docker bridge network IPs)
     "http://172.18.240.1:3001",
     "http://172.18.240.1:3000",
 ]
+
+if DEBUG:
+    # Allow http origins for local dev only
+    CORS_ALLOWED_ORIGINS += [
+        "http://www.airbcar.com",
+        "http://airbcar.com",
+    ]
 
 # Add production frontend URL from environment if provided
 FRONTEND_URL_ENV = os.environ.get('FRONTEND_URL', '')
@@ -276,6 +321,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 # Email Configuration
@@ -293,6 +339,35 @@ FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3001')
 
 # Backend URL for media files and API
 BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8000')
+
+# CSRF trusted origins (required for secure cross-site POSTs when using cookies)
+def _url_to_origin(url: str) -> str:
+    url = (url or '').strip().rstrip('/')
+    if not url:
+        return ''
+    # If scheme is missing, assume https for production safety.
+    if '://' not in url:
+        url = f"https://{url}"
+    # Keep only scheme + host[:port]
+    try:
+        scheme, rest = url.split('://', 1)
+        host = rest.split('/', 1)[0]
+        return f"{scheme}://{host}"
+    except ValueError:
+        return ''
+
+CSRF_TRUSTED_ORIGINS = []
+for _candidate in [FRONTEND_URL, BACKEND_URL, os.environ.get('CSRF_TRUSTED_ORIGIN', '')]:
+    origin = _url_to_origin(_candidate)
+    if origin and origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
+extra_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if extra_csrf:
+    for item in extra_csrf.split(','):
+        origin = _url_to_origin(item)
+        if origin and origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Supabase Configuration for File Storage
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '')

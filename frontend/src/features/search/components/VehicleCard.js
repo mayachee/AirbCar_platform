@@ -9,6 +9,8 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
   // Use the image utility to fix URLs
   const imageUrl = getVehicleImageUrl(car);
 
+  const carId = car?.id;
+
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-xl shadow-sm border border-white/10 hover:bg-white/10 hover:shadow-md transition-all overflow-hidden group">
       {/* Car Image */}
@@ -139,7 +141,11 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
         {/* Action Buttons - Enhanced */}
         <div className="flex gap-3">
           <button 
-            onClick={() => onViewDetails(car)}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onViewDetails(car);
+            }}
             className="flex-1 bg-orange-600 text-white py-3 px-4 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +155,13 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
             View Details
           </button>
           <button 
-            onClick={() => onToggleFavorite(car.id)}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (carId == null) return;
+              onToggleFavorite(carId);
+            }}
             disabled={favoritesLoading}
             className={`px-4 py-3 rounded-lg transition-all duration-200 border-2 ${
               isFavorite 

@@ -32,15 +32,30 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
 
+    # Frontend compatibility aliases
+    license_front_document_url = serializers.SerializerMethodField()
+    license_back_document_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ['id', 'email', 'phone_number', 'default_currency',
             'is_partner', 'is_verified', 'password', 'profile_picture', 'email_verified',
             'license_number', 'address', 'role', 'first_name', 'last_name', 'issue_date', 
             'license_origin_country', 'nationality', 'country_of_residence', 'city', 'postal_code',
-            'date_of_birth', 'id_verification_status', 'id_front_document_url', 'id_back_document_url', 'is_staff']
+                'date_of_birth', 'id_verification_status', 'id_front_document_url', 'id_back_document_url',
+                'license_front_document', 'license_back_document',
+                'license_front_document_url', 'license_back_document_url',
+                'is_staff']
         read_only_fields = ['id', 'is_partner', 'is_verified', 'email_verified', 
-            'id_front_document_url', 'id_back_document_url', 'profile_picture']
+                'id_front_document_url', 'id_back_document_url', 'profile_picture',
+                'license_front_document', 'license_back_document',
+                'license_front_document_url', 'license_back_document_url']
+
+    def get_license_front_document_url(self, obj):
+        return getattr(obj, 'license_front_document', None)
+
+    def get_license_back_document_url(self, obj):
+        return getattr(obj, 'license_back_document', None)
 
     def create(self, validated_data):
         password = validated_data.pop('password')

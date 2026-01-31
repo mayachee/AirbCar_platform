@@ -45,12 +45,23 @@ export default function BookingFlow({
   const [returnTime, setReturnTime] = useState(initialReturnTime)
   const [validationErrors, setValidationErrors] = useState({})
   const [formData, setFormData] = useState({
+    phoneNumber: '',
     specialRequest: '',
     licenseFiles: null,
     paymentMethod: 'online',
     agreedToTerms: false
   })
   const [formReady, setFormReady] = useState(false)
+
+  // Prefill phone number from user profile if present
+  useEffect(() => {
+    const userPhone = String(user?.phone_number || user?.phoneNumber || user?.phone || '').trim()
+    const currentPhone = String(formData.phoneNumber || '').trim()
+    if (userPhone && !currentPhone) {
+      setFormData((prev) => ({ ...prev, phoneNumber: userPhone }))
+      setFormReady(true)
+    }
+  }, [user?.phone_number, user?.phoneNumber, user?.phone, formData.phoneNumber])
 
   // Style constants for glassmorphism
   const heroBlurFieldClass =
@@ -170,8 +181,18 @@ export default function BookingFlow({
       return false
     }
     
-    const frontUrl = user.license_front_document_url || user.licenseFrontDocumentUrl || null
-    const backUrl = user.license_back_document_url || user.licenseBackDocumentUrl || null
+    const frontUrl =
+      user.license_front_document_url ||
+      user.licenseFrontDocumentUrl ||
+      user.license_front_document ||
+      user.licenseFrontDocument ||
+      null
+    const backUrl =
+      user.license_back_document_url ||
+      user.licenseBackDocumentUrl ||
+      user.license_back_document ||
+      user.licenseBackDocument ||
+      null
     const hasCompleteLicense = !!(frontUrl && backUrl)
     
     // Also check if files were uploaded in the form
@@ -187,6 +208,16 @@ export default function BookingFlow({
     if (!formData.agreedToTerms) {
       setValidationErrors({
         terms: 'You must agree to the terms and conditions'
+      })
+      return false
+    }
+
+    const phoneValue = String(
+      formData.phoneNumber || user?.phone_number || user?.phoneNumber || user?.phone || ''
+    ).trim()
+    if (!phoneValue) {
+      setValidationErrors({
+        phone: 'Phone number is required'
       })
       return false
     }
@@ -366,7 +397,7 @@ export default function BookingFlow({
                         placeholder="Select pickup date"
                         contentProps={{ className: heroBlurContentClass }}
                         className={`${heroBlurFieldClass} ${validationErrors.pickupDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
-                        disabled={true}
+                        
                       />
                       {validationErrors.pickupDate && (
                         <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -405,7 +436,7 @@ export default function BookingFlow({
                         placeholder="Select return date"
                         contentProps={{ className: heroBlurContentClass }}
                         className={`${heroBlurFieldClass} ${validationErrors.returnDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
-                        disabled={true}
+                        
                       />
                       {validationErrors.returnDate && (
                         <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -445,6 +476,38 @@ export default function BookingFlow({
                       Please provide your driver's license for verification
                     </p>
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white/90 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={formData.phoneNumber || user?.phone_number || user?.phoneNumber || user?.phone || ''}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setFormData((prev) => ({ ...prev, phoneNumber: value }))
+                        setFormReady(true)
+                        if (validationErrors.phone) {
+                          setValidationErrors((prev) => ({ ...prev, phone: null }))
+                        }
+                      }}
+                      placeholder={'e.g. +212 6XX-XXXXXX'}
+                      className={`w-full px-4 py-3 rounded-lg ${heroBlurFieldClass} ${validationErrors.phone ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+                    />
+                    {validationErrors.phone && (
+                      <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {validationErrors.phone}
+                      </p>
+                    )}
+                    <p className="mt-2 text-xs text-white/50">
+                      Used to coordinate pickup/return if needed.
+                    </p>
+                  </div>
+
                   {validationErrors.license && (
                     <div className="bg-red-500/10 border-l-4 border-red-500 rounded-md p-4">
                       <p className="text-sm text-red-200">{validationErrors.license}</p>
@@ -591,8 +654,8 @@ export default function BookingFlow({
                         {user.first_name} {user.last_name}
                       </p>
                       <p className="text-sm text-white/60">{user.email}</p>
-                      {user.phone_number && (
-                        <p className="text-sm text-white/60">{user.phone_number}</p>
+                      {(user.phone_number || user.phone || formData.phoneNumber) && (
+                        <p className="text-sm text-white/60">{formData.phoneNumber || user.phone_number || user.phone}</p>
                       )}
                     </div>
                   )}
@@ -718,11 +781,16 @@ export default function BookingFlow({
                         front: null,
                         back: null
                       }
+
+                      const phoneValue = String(
+                        formData.phoneNumber || user?.phone_number || user?.phoneNumber || user?.phone || ''
+                      ).trim()
                       
                       onConfirm(
                         formData.specialRequest || '',
                         licenseFiles,
-                        formData.paymentMethod || 'online'
+                        formData.paymentMethod || 'online',
+                        phoneValue
                       )
                     }
                   }}

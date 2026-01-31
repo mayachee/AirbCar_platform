@@ -7,6 +7,11 @@ export const useFavorites = () => {
   const [favorites, setFavorites] = useState(new Set());
   const [loading, setLoading] = useState(false);
 
+  const normalizeId = (value) => {
+    if (value === null || value === undefined) return null;
+    return String(value);
+  };
+
   // Load favorites when user logs in
   useEffect(() => {
     const loadFavorites = async () => {
@@ -20,7 +25,9 @@ export const useFavorites = () => {
         const response = await listingsService.getFavorites();
         const favoriteList = response.data || response;
         const ids = Array.isArray(favoriteList)
-          ? favoriteList.map(item => item.id || item.vehicle_id || item.car_id)
+          ? favoriteList
+              .map(item => normalizeId(item?.id ?? item?.vehicle_id ?? item?.car_id))
+              .filter(Boolean)
           : [];
         setFavorites(new Set(ids));
       } catch (error) {
@@ -40,16 +47,19 @@ export const useFavorites = () => {
   }, [user]);
 
   const toggleFavorite = async (carId) => {
+    const normalizedCarId = normalizeId(carId);
+    if (!normalizedCarId) return;
+
     try {
       setLoading(true);
       
-      if (favorites.has(carId)) {
+      if (favorites.has(normalizedCarId)) {
         // Remove from favorites
         try {
-          await listingsService.removeFavorite(carId);
+          await listingsService.removeFavorite(normalizedCarId);
           setFavorites(prev => {
             const newFavorites = new Set(prev);
-            newFavorites.delete(carId);
+            newFavorites.delete(normalizedCarId);
             return newFavorites;
           });
         } catch (error) {
@@ -57,7 +67,7 @@ export const useFavorites = () => {
           if (error.message?.includes('404')) {
             setFavorites(prev => {
               const newFavorites = new Set(prev);
-              newFavorites.delete(carId);
+              newFavorites.delete(normalizedCarId);
               return newFavorites;
             });
           } else {
@@ -67,19 +77,19 @@ export const useFavorites = () => {
       } else {
         // Add to favorites
         try {
-          await listingsService.toggleFavorite(carId);
-          setFavorites(prev => new Set([...prev, carId]));
+          await listingsService.toggleFavorite(normalizedCarId);
+          setFavorites(prev => new Set([...prev, normalizedCarId]));
         } catch (error) {
           // If endpoint doesn't exist, just update local state
           if (error.message?.includes('404')) {
-            setFavorites(prev => new Set([...prev, carId]));
+            setFavorites(prev => new Set([...prev, normalizedCarId]));
           } else if (error.message?.includes('401') || error.message?.includes('403')) {
             // Authentication error - re-throw so UI can handle it
             throw error;
           } else {
             console.warn('Could not toggle favorite:', error.message);
             // Still update local state for better UX
-            setFavorites(prev => new Set([...prev, carId]));
+            setFavorites(prev => new Set([...prev, normalizedCarId]));
           }
         }
       }
@@ -91,7 +101,11 @@ export const useFavorites = () => {
     }
   };
 
-  const isFavorite = (carId) => favorites.has(carId);
+  const isFavorite = (carId) => {
+    const normalizedCarId = normalizeId(carId);
+    if (!normalizedCarId) return false;
+    return favorites.has(normalizedCarId);
+  };
 
   return {
     favorites,

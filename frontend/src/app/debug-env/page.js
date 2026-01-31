@@ -1,6 +1,15 @@
 'use client';
 
 export default function DebugEnvPage() {
+  // Avoid exposing deployment/config details on production.
+  if (process.env.NODE_ENV === 'production') {
+    return (
+      <div style={{ padding: '20px', fontFamily: 'monospace' }}>
+        <h1>Not Found</h1>
+      </div>
+    );
+  }
+
   const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   
   return (

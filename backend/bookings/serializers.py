@@ -14,7 +14,9 @@ class BookingSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'listing', 'start_time', 'end_time', 'price', 'status', 'date',
             'requested_at', 'accepted_at', 'rejected_at', 'cancelled_at',
-            'request_message', 'rejection_reason', 'car_owner'
+            'request_message', 'rejection_reason', 'phone_number',
+            'license_front_document', 'license_back_document',
+            'car_owner'
         ]
         read_only_fields = ['user', 'date', 'requested_at', 'accepted_at', 'rejected_at', 'cancelled_at', 'car_owner']
 

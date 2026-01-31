@@ -6,7 +6,7 @@ export default function HowItWorks() {
     {
       step: 'Step 1',
       title: "Enter your location and see what's available, you'll get a great price on every type of car rental.",
-      image: 'https://ik.imagekit.io/szcfr7vth/72c58263-9d32-4e95-9b10-c6b6173fe321.avif',
+      image: 'https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_n7ip3xn7ip3xn7ip.png',
       number: '01',
       href: '/search',
       cta: 'SEARCH NOW'

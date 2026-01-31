@@ -1,14 +1,12 @@
 const path = require('path');
 
+const isProd = process.env.NODE_ENV === 'production';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   distDir: '.next',
   reactStrictMode: true,
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
+  poweredByHeader: false,
   // Suppress hydration warnings during development
   onDemandEntries: {
     // Period (in ms) where the server will keep pages in the buffer
@@ -52,8 +50,36 @@ const nextConfig = {
     // Optimize images for Vercel
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
-    dangerouslyAllowSVG: true,
+    // Disable remote SVGs by default (defense-in-depth against scriptable SVG payloads)
+    dangerouslyAllowSVG: process.env.ALLOW_SVG_IMAGES === 'true',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+
+  async headers() {
+    const securityHeaders = [
+      // MIME sniffing + clickjacking protection
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'DENY' },
+
+      // Safer defaults; avoids breaking Next.js inline scripts
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+      { key: 'Content-Security-Policy', value: "base-uri 'self'; frame-ancestors 'none'; object-src 'none'" },
+    ];
+
+    if (isProd) {
+      securityHeaders.push({
+        key: 'Strict-Transport-Security',
+        value: 'max-age=31536000; includeSubDomains; preload',
+      });
+    }
+
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+    ];
   },
   // Custom webpack config - minimal changes to avoid breaking React 19 module resolution
   webpack: (config, { dev, isServer }) => {
