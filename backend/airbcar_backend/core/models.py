@@ -107,7 +107,6 @@ class Listing(models.Model):
     ]
     
     FUEL_TYPE_CHOICES = [
-        ('gasoline', 'Gasoline'),
         ('diesel', 'Diesel'),
         ('electric', 'Electric'),
         ('hybrid', 'Hybrid'),

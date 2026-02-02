@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
                 ('year', models.IntegerField()),
                 ('color', models.CharField(max_length=50)),
                 ('transmission', models.CharField(choices=[('manual', 'Manual'), ('automatic', 'Automatic')], max_length=20)),
-                ('fuel_type', models.CharField(choices=[('gasoline', 'Gasoline'), ('diesel', 'Diesel'), ('electric', 'Electric'), ('hybrid', 'Hybrid')], max_length=20)),
+                ('fuel_type', models.CharField(choices=[('diesel', 'Diesel'), ('electric', 'Electric'), ('hybrid', 'Hybrid')], max_length=20)),
                 ('seating_capacity', models.IntegerField()),
                 ('vehicle_style', models.CharField(choices=[('sedan', 'Sedan'), ('suv', 'SUV'), ('hatchback', 'Hatchback'), ('coupe', 'Coupe'), ('convertible', 'Convertible'), ('truck', 'Truck'), ('van', 'Van')], max_length=20)),
                 ('price_per_day', models.DecimalField(decimal_places=2, max_digits=10, validators=[django.core.validators.MinValueValidator(0)])),

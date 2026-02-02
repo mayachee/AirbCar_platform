@@ -49,6 +49,7 @@ else:
         '.onrender.com',  # Allow any Render subdomain (wildcard subdomain)
         'localhost',
         '127.0.0.1',
+        'testserver',  # Django test client
     ]
 
 # Always add the explicit Render domain as a fallback
@@ -56,6 +57,25 @@ if 'airbcar-backend.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('airbcar-backend.onrender.com')
 if '.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('.onrender.com')
+
+# ===== SECURITY SETTINGS FOR PRODUCTION =====
+# These are applied based on DEBUG setting and environment
+IS_PRODUCTION = not DEBUG and os.environ.get('ENVIRONMENT', 'development') == 'production'
+
+if IS_PRODUCTION:
+    # HTTPS/SSL Settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    # Development settings - allow non-HTTPS
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # Application definition
 INSTALLED_APPS = [
@@ -177,8 +197,8 @@ DATABASES = {
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
         'OPTIONS': db_options,
-        # Connection pooling - disable persistent connections to avoid stale pooler connections
-        'CONN_MAX_AGE': 0,  # Always create fresh connections to avoid SSL connection closed errors
+        # Connection pooling - Performance optimization: reuse connections instead of creating new ones
+        'CONN_MAX_AGE': 600,  # Reuse connections for 10 minutes (faster than creating new connections each time)
         'ATOMIC_REQUESTS': False,  # Disable to avoid long-running transactions with pooler
     }
 }
@@ -233,6 +253,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'MAX_PAGE_SIZE': 100,  # Security: Prevent DoS attacks from huge page requests
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }
 

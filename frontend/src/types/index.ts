@@ -35,7 +35,7 @@ export interface Vehicle {
   year: number;
   color: string;
   transmission: 'manual' | 'automatic';
-  fuelType: 'gasoline' | 'diesel' | 'electric' | 'hybrid';
+  fuelType: 'diesel' | 'electric' | 'hybrid';
   seats: number;
   style: 'sedan' | 'suv' | 'hatchback' | 'coupe' | 'convertible' | 'truck' | 'van';
   dailyRate: number;

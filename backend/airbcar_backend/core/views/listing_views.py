@@ -65,7 +65,8 @@ class ListingListView(APIView):
                 # Verify partner exists before filtering
                 try:
                     Partner.objects.get(pk=partner_id_int)
-                    queryset = Listing.objects.filter(partner_id=partner_id_int)
+                    # PERFORMANCE: Add select_related('partner') to fetch partner data in one query
+                    queryset = Listing.objects.filter(partner_id=partner_id_int).select_related('partner')
                 except Partner.DoesNotExist:
                     # Partner doesn't exist, return empty result with 200 status
                     # (not 404, as the endpoint itself exists)
@@ -79,9 +80,11 @@ class ListingListView(APIView):
                         'message': f'Partner with id {partner_id_int} not found'
                     }, status=status.HTTP_200_OK)
             except (ValueError, TypeError):
-                queryset = Listing.objects.filter(is_available=True)
+                # PERFORMANCE: Add select_related('partner') to fetch partner data in one query
+                queryset = Listing.objects.filter(is_available=True).select_related('partner')
         else:
-            queryset = Listing.objects.filter(is_available=True)
+            # PERFORMANCE: Add select_related('partner') to fetch partner data in one query
+            queryset = Listing.objects.filter(is_available=True).select_related('partner')
         
         # Apply filters
         if location:
@@ -253,7 +256,6 @@ class ListingListView(APIView):
             # page_size = min(page_size, 50) 
             if page_size > 1000:
                 page_size = 1000
-
             
             # Use exists() check first if we only need to know if there are results
             # For count, use a more efficient method if possible
@@ -492,7 +494,7 @@ class ListingListView(APIView):
             }
             # Add defaults for optional fields if missing
             if 'fuel_type' not in listing_data or not listing_data['fuel_type']:
-                listing_data['fuel_type'] = 'gasoline'
+                listing_data['fuel_type'] = 'diesel'
             if 'transmission' not in listing_data or not listing_data['transmission']:
                 listing_data['transmission'] = 'automatic'
             if 'seating_capacity' not in listing_data:
@@ -787,7 +789,7 @@ class ListingListView(APIView):
                         if 'is_available' not in listing_data:
                             listing_data['is_available'] = True
                         if 'fuel_type' not in listing_data:
-                            listing_data['fuel_type'] = 'gasoline'
+                            listing_data['fuel_type'] = 'diesel'
                         if 'transmission' not in listing_data:
                             listing_data['transmission'] = 'automatic'
                         if 'seating_capacity' not in listing_data:
@@ -929,7 +931,8 @@ class ListingDetailView(APIView):
             }, status=status.HTTP_401_UNAUTHORIZED)
         
         try:
-            listing = Listing.objects.get(pk=pk)
+            # PERFORMANCE: Add select_related('partner') to fetch partner data in one query
+            listing = Listing.objects.select_related('partner').get(pk=pk)
             
             # Check permissions
             try:

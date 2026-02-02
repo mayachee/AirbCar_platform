@@ -11,7 +11,7 @@ export const useSearch = (initialFilters = {}) => {
   const [filters, setFilters] = useState(initialFilters);
   const [sortBy, setSortBy] = useState('price_low');
 
-  // Load vehicles on mount
+  // Load vehicles on mount AND when location/date filters change
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
@@ -27,7 +27,8 @@ export const useSearch = (initialFilters = {}) => {
           dataType: typeof response?.data,
           dataIsArray: Array.isArray(response?.data),
           nestedData: response?.data?.data,
-          nestedDataIsArray: Array.isArray(response?.data?.data)
+          nestedDataIsArray: Array.isArray(response?.data?.data),
+          filters
         });
         
         // Handle different response structures from API client
@@ -80,7 +81,7 @@ export const useSearch = (initialFilters = {}) => {
     };
 
     fetchVehicles();
-  }, []);
+  }, [filters.location, filters.pickupDate, filters.returnDate]); // Re-fetch when these key filters change
 
   // Apply filters and sorting
   useEffect(() => {

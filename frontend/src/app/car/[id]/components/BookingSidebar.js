@@ -148,6 +148,13 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
               <span className="text-gray-400">Service fee</span>
               <span className="font-medium text-white">{formatPrice(serviceFee)}</span>
             </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-400">Security deposit</span>
+              <span className="font-medium text-white">{formatPrice(5000)}</span>
+            </div>
+            <div className="text-xs text-green-400/70 text-right mb-2">
+              Refunded after rental period
+            </div>
             <div className="flex justify-between items-center font-semibold text-lg pt-2 border-t border-white/10 mt-2 text-white">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
@@ -225,7 +232,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Free cancellation (48h)</span>
+                <span>Free cancellation (24h)</span>
               </div>
             </div>
           </motion.div>
