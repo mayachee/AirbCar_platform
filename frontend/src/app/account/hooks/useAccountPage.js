@@ -204,59 +204,38 @@ export const useAccountPage = () => {
   // Handle profile picture upload
   const handleProfilePictureUpload = async (file) => {
     try {
+      console.log('📤 Uploading profile picture...');
       const response = await authService.uploadProfilePicture(file);
+      console.log('📥 Upload response:', response);
+      
       // Unwrap ApiResponse - the actual data is in response.data
       const updatedUserData = response?.data || response;
+      console.log('📦 Updated user data from upload:', updatedUserData);
       
       // Also refresh full user data to sync everything
       const userResponse = await authService.getCurrentUser();
+      console.log('📥 Fresh user data from backend:', userResponse);
       const updatedData = userResponse?.data || userResponse;
       
-      // Map backend response to frontend format
+      // Map backend response to frontend format (this handles URL filtering properly)
       const mappedData = mapBackendToFrontend(updatedData);
-      
-      // Priority: base64 data URL > profile_picture_url (Supabase/external URLs) > default
-      // Base64 data URLs are stored directly in database and are always valid
-      // Note: Backend returns base64 through profile_picture_url field (starts with data:image/)
-      let profileImage = updatedUserData.profile_picture_url || 
-                        updatedUserData.profile_picture_base64 || 
-                        mappedData.profileImage;
-      
-      // If profile_picture_url is a base64 data URL, use it directly
-      if (profileImage && profileImage.startsWith('data:image/')) {
-        // Base64 data URL - always valid, use as is
-      } else if (profileImage) {
-        // Not base64 - validate that the URL is not a local file path
-        if (
-          profileImage.startsWith('/media/') ||
-          profileImage.startsWith('/profiles/') ||
-          profileImage.includes('/media/') ||
-          profileImage.includes('/profiles/') ||
-          (profileImage.startsWith('http') && (
-            profileImage.includes('/media/') ||
-            profileImage.includes('/profiles/') ||
-            profileImage.includes('airbcar-backend.onrender.com/media/') ||
-            profileImage.includes('localhost/media/')
-          ))
-        ) {
-          // This is a local file path, don't use it
-          profileImage = null;
-        }
-      }
-      
-      // Fallback to default avatar if no valid URL
-      profileImage = profileImage || '/default-avatar.svg';
+      console.log('🔄 Mapped profile data:', mappedData);
       
       updateAccountData({
         ...mappedData,
-        profileImage,
-        idFrontDocumentFile: null,
-        idBackDocumentFile: null,
-        idFrontDocumentPreview: '',
-        idBackDocumentPreview: ''
+        idFrontDocumentFile: accountData.idFrontDocumentFile,
+        idBackDocumentFile: accountData.idBackDocumentFile,
+        idFrontDocumentPreview: accountData.idFrontDocumentPreview,
+        idBackDocumentPreview: accountData.idBackDocumentPreview,
+        licenseFrontDocumentFile: accountData.licenseFrontDocumentFile,
+        licenseBackDocumentFile: accountData.licenseBackDocumentFile,
+        licenseFrontDocumentPreview: accountData.licenseFrontDocumentPreview,
+        licenseBackDocumentPreview: accountData.licenseBackDocumentPreview
       });
+      
+      console.log('✅ Profile picture uploaded successfully');
     } catch (error) {
-      console.error('Error uploading profile picture:', error);
+      console.error('❌ Error uploading profile picture:', error);
       throw error;
     }
   };

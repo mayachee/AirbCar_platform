@@ -331,39 +331,30 @@ export const mapBackendToFrontend = (userData) => {
         return url;
       }
       
-      // If not base64, validate that the URL is not a local file path
-      // Be very strict about filtering out local URLs
+      // If not base64, accept Supabase URLs and other external HTTPS URLs
+      // IMPORTANT: Don't filter out valid URLs - only filter obvious local file paths
       if (url) {
-        const urlLower = url.toLowerCase();
-        const isLocalUrl = (
-          url.startsWith('/media/') ||
-          url.startsWith('/profiles/') ||
-          urlLower.includes('/media/') ||
-          urlLower.includes('/profiles/') ||
-          urlLower.includes('airbcar-backend.onrender.com/media/') ||
-          urlLower.includes('airbcar-backend.onrender.com/profiles/') ||
-          urlLower.includes('localhost/media/') ||
-          urlLower.includes('localhost/profiles/') ||
-          urlLower.includes('127.0.0.1/media/') ||
-          urlLower.includes('127.0.0.1/profiles/')
-        );
-        
-        if (isLocalUrl) {
-          // This is a local file path, don't use it
-          console.warn('⚠️ Filtered out local profile picture URL:', url);
-          url = null;
-        } else if (url.startsWith('http://') || url.startsWith('https://')) {
-          // Only allow Supabase URLs or other external URLs (Google, CDNs, etc.)
-          // Double-check it's not a local URL
-          if (urlLower.includes('airbcar-backend.onrender.com') && 
-              (urlLower.includes('/media/') || urlLower.includes('/profiles/'))) {
-            console.warn('⚠️ Filtered out Render media URL:', url);
-            url = null;
-          }
+        // Accept https URLs from Supabase and other external services
+        if (url.startsWith('https://')) {
+          return url;
         }
+        
+        // Accept http URLs from localhost (for development)
+        if (url.startsWith('http://localhost') || url.startsWith('http://127.0.0.1')) {
+          return url;
+        }
+        
+        // Filter out relative local paths like /media/ or /profiles/
+        if (url.startsWith('/media/') || url.startsWith('/profiles/')) {
+          console.warn('⚠️ Filtered out local profile picture URL:', url);
+          return '/default-avatar.svg';
+        }
+        
+        // Accept everything else (relative paths from API, etc.)
+        return url;
       }
       
-      return url || '/default-avatar.svg';
+      return '/default-avatar.svg';
     })(),
     // Address Information removed
     licenseNumber: getValue(userData.license_number),

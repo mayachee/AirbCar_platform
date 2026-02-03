@@ -36,6 +36,9 @@ class User(AbstractUser):
     # License Documents (Front and Back)
     license_front_document = models.ImageField(upload_to='license_documents/', blank=True, null=True, help_text='Front side of driver license')
     license_back_document = models.ImageField(upload_to='license_documents/', blank=True, null=True, help_text='Back side of driver license')
+    # License Document URLs (Supabase Storage)
+    license_front_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for front license hosted on Supabase')
+    license_back_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for back license hosted on Supabase')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -39,12 +39,12 @@ export const useAccount = () => {
       console.log('📥 Response type:', typeof response);
       console.log('📥 Response keys:', Object.keys(response || {}));
       
-      // Handle different response structures
+      // Handle different response structures - be more robust
       let userData = null;
       
       // Check if response has a data property
       if (response && typeof response === 'object') {
-        if ('data' in response) {
+        if ('data' in response && response.data) {
           // Response is { data: { data: {...} } } or { data: {...} }
           const innerData = response.data;
           if (innerData && typeof innerData === 'object' && 'data' in innerData) {
@@ -82,14 +82,18 @@ export const useAccount = () => {
       const mappedData = mapBackendToFrontend(userData);
       console.log('🔄 Mapped data:', mappedData);
       
-      // Preserve file uploads and previews
+      // Preserve file uploads and previews from previous state
       setAccountData(prev => {
         const newData = {
           ...mappedData,
           idFrontDocumentFile: prev.idFrontDocumentFile,
           idBackDocumentFile: prev.idBackDocumentFile,
           idFrontDocumentPreview: prev.idFrontDocumentPreview,
-          idBackDocumentPreview: prev.idBackDocumentPreview
+          idBackDocumentPreview: prev.idBackDocumentPreview,
+          licenseFrontDocumentFile: prev.licenseFrontDocumentFile,
+          licenseBackDocumentFile: prev.licenseBackDocumentFile,
+          licenseFrontDocumentPreview: prev.licenseFrontDocumentPreview,
+          licenseBackDocumentPreview: prev.licenseBackDocumentPreview
         };
         console.log('✅ Updated accountData:', newData);
         return newData;
@@ -170,11 +174,14 @@ export const useAccount = () => {
     console.log('🔄 useAccount useEffect triggered', { user: user?.username, hasUser: !!user });
     if (user) {
       console.log('✅ User found, loading data...');
+      // Call loadUserData immediately without waiting for dependency changes
       loadUserData();
     } else {
       console.log('⚠️ No user found, skipping data load');
+      // Reset to default when no user
+      setAccountData(DEFAULT_ACCOUNT_DATA);
     }
-  }, [user, loadUserData]);
+  }, [user]);
 
   return {
     accountData,

@@ -43,6 +43,11 @@ services:
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
       PORT: 8000
+      # Supabase Storage Configuration (CRITICAL for file uploads)
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_STORAGE_BUCKET_PICS: ${SUPABASE_STORAGE_BUCKET_PICS:-pics}
       
     restart: unless-stopped
 

@@ -23,7 +23,9 @@ class UserSerializer(serializers.ModelSerializer):
             # Personal Information
             'date_of_birth', 'nationality',
             # License Information
-            'license_number', 'license_origin_country', 'issue_date', 'expiry_date'
+            'license_number', 'license_origin_country', 'issue_date', 'expiry_date',
+            # License Documents
+            'license_front_document_url', 'license_back_document_url'
         ]
         read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
 
@@ -123,7 +125,7 @@ class UserSerializer(serializers.ModelSerializer):
                     pic_file = request.FILES['profile_picture']
                     supabase_url = upload_file_to_supabase_storage(
                         file=pic_file,
-                        bucket_name='listings',
+                        bucket_name=settings.SUPABASE_STORAGE_BUCKET_PICS,
                         folder='user_documents/profiles',
                         user_id=instance.id
                     )
@@ -147,45 +149,40 @@ class UserSerializer(serializers.ModelSerializer):
                     if 'profile_picture' in validated_data:
                         validated_data.pop('profile_picture')
             
-            # Helper to handle document upload
-            def handle_document_upload(field_name, folder_name):
-                if field_name in request.FILES:
-                    try:
-                        doc_file = request.FILES[field_name]
-                        supabase_url = upload_file_to_supabase_storage(
-                            file=doc_file,
-                            bucket_name='listings',
-                            folder=f'user_documents/{folder_name}',
-                            user_id=instance.id
-                        )
-                        # Set the URL field based on field name (e.g., license_front_document -> license_front_document_url)
-                        # Note: User model uses ImageFields for simple storage, but on Render we need the URLs primarily
-                        # But wait, looking at User model, it has ImageFields: 
-                        # license_front_document = models.ImageField(...)
-                        # AND WE DON'T have url fields for these!
-                        # We must rely on the ImageField to store the path if Supabase URL is not stored separately.
-                        # Wait, User model definition:
-                        # license_front_document = models.ImageField(...)
-                        # license_back_document = models.ImageField(...)
-                        # IT DOES NOT HAVE dedicated URL fields like profile_picture_url.
-                        # So we can't store the Supabase URL easily unless we hijack the ImageField.
-                        # However, upload_file_to_supabase_storage returns a URL.
-                        # For now, let's just proceed. The file upload failure is the main issue.
-                        pass
-                    except Exception as e:
-                        if settings.DEBUG:
-                            print(f"❌ Failed to upload {field_name}: {str(e)}")
-                        # If file upload fails on Render (due to missing credentials or setup), 
-                        # we should probably catch it and ignore it if it's not critical, 
-                        # OR fix the underlying issue.
-                        # But "File upload failed" error blocks everything.
-                        # Let's wrap this in a way that doesn't block the whole update if upload fails.
-                        print(f"Warning: Failed to upload {field_name}, continuing update. Error: {e}")
-            
-            # Helper to handle document upload - call it safely
-            # Note: We are currently NOT calling handle_document_upload because the User model 
-            # doesn't have URL fields for license docs.
-            # If we wanted to, we would need to add URL fields to User model first.
+            # Handle license document uploads to Supabase
+            if 'license_front_document' in request.FILES:
+                try:
+                    license_front_file = request.FILES['license_front_document']
+                    supabase_url = upload_file_to_supabase_storage(
+                        file=license_front_file,
+                        bucket_name=settings.SUPABASE_STORAGE_BUCKET_PICS,
+                        folder='user_documents/license_documents',
+                        user_id=instance.id
+                    )
+                    instance.license_front_document_url = supabase_url
+                    if settings.DEBUG:
+                        print(f"✅ License front uploaded to: {supabase_url}")
+                except Exception as e:
+                    if settings.DEBUG:
+                        print(f"❌ License front upload failed: {e}")
+                    print(f"Warning: Failed to upload license front document. Error: {e}")
+
+            if 'license_back_document' in request.FILES:
+                try:
+                    license_back_file = request.FILES['license_back_document']
+                    supabase_url = upload_file_to_supabase_storage(
+                        file=license_back_file,
+                        bucket_name=settings.SUPABASE_STORAGE_BUCKET_PICS,
+                        folder='user_documents/license_documents',
+                        user_id=instance.id
+                    )
+                    instance.license_back_document_url = supabase_url
+                    if settings.DEBUG:
+                        print(f"✅ License back uploaded to: {supabase_url}")
+                except Exception as e:
+                    if settings.DEBUG:
+                        print(f"❌ License back upload failed: {e}")
+                    print(f"Warning: Failed to upload license back document. Error: {e}")
 
         # Handle profile picture deletion manually (as field is not in serializer)
         if request and 'profile_picture' in request.data:
@@ -331,10 +328,10 @@ class PartnerSerializer(serializers.ModelSerializer):
                     from core.utils.image_utils import upload_file_to_supabase_storage
                 except ImportError:
                     from ..utils.image_utils import upload_file_to_supabase_storage
-                # Upload logo to Supabase Storage in 'listings' bucket (or create 'partner_logos' bucket)
+                # Upload logo to Supabase Storage in 'pics' bucket (recommended for all media)
                 supabase_url = upload_file_to_supabase_storage(
                     file=logo_file,
-                    bucket_name='listings',  # Use listings bucket (or create separate 'partner_logos' bucket)
+                    bucket_name=settings.SUPABASE_STORAGE_BUCKET_PICS,
                     folder='partner_logos',
                     user_id=instance.user.id if instance.user else None
                 )
