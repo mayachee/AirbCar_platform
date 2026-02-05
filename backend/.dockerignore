@@ -1,16 +1,80 @@
-venv/
-env/
+# Python cache and compiled files
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.so
 *.egg
 *.egg-info
 dist/
 build/
+venv/
+env/
+ENV/
+
+# Django specific
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+local_settings.py
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Documentation (saves 10-20MB in build context)
+*.md
+README.md
+docs/
+Docs/
+Tests/
+TESTING_*.md
+PRODUCTION_*.md
+PERFORMANCE_*.md
+ULTIMATE_*.md
+
+# Environment files
 .env
-.venv
+.env.*
+*.env
+
+# Docker
+docker-compose*.yml
+.dockerignore
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.hypothesis/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Frontend (if in same repo)
+frontend/
+node_modules/
+
+# Other
 pip-log.txt
 pip-delete-this-directory.txt

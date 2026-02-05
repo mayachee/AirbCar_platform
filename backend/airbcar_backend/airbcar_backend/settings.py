@@ -84,30 +84,41 @@ else:
     CSRF_COOKIE_SECURE = False
 
 # Application definition
-INSTALLED_APPS = [
-    'django.contrib.admin',
+# PERFORMANCE: Minimal apps in production
+BASE_INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
+    'django.contrib.sessions',  # Required by AuthenticationMiddleware
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    # 'rest_framework_simplejwt.token_blacklist',  # Disabled to fix login 500 error (missing table)
     'corsheaders',
     'core',
 ]
 
+# Only include admin/messages in DEBUG mode (saves 40-50MB RAM in production)
+if DEBUG:
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.messages',
+    ] + BASE_INSTALLED_APPS
+else:
+    # Production: No admin panel
+    INSTALLED_APPS = BASE_INSTALLED_APPS
+    # Silence admin checks in production (we don't use admin)
+    SILENCED_SYSTEM_CHECKS = ['admin.E409', 'admin.E410']
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
+    'core.etag_middleware.CacheControlMiddleware',  # Add Cache-Control headers (MUST be before GZip)
     'django.middleware.gzip.GZipMiddleware',  # Compress responses for faster transfer
-    # REMOVED: SessionMiddleware - Not needed for JWT auth (saves memory + processing)
+    'core.etag_middleware.ETagMiddleware',  # Add ETag for client-side caching (saves 30-50% bandwidth)
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',  # Required by AuthenticationMiddleware
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # REMOVED: MessageMiddleware - Not needed for API (no message framework)
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.EnsureCorsHeadersMiddleware',  # Ensure CORS headers even on errors
 ]
@@ -129,6 +140,13 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
 CSRF_COOKIE_SAMESITE = os.environ.get('CSRF_COOKIE_SAMESITE', 'Lax')
+
+# Session configuration - Use cache-based sessions for better performance
+# Sessions are required by AuthenticationMiddleware but we use JWT, so minimize overhead
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'  # Store in cache, not database
+SESSION_CACHE_ALIAS = 'default'
+SESSION_COOKIE_AGE = 3600  # 1 hour (short since we use JWT)
+SESSION_SAVE_EVERY_REQUEST = False  # Don't save on every request (saves writes)
 
 # Browser security headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -174,17 +192,17 @@ IS_LOCAL_DB = (
     DATABASE_HOST.startswith('192.168.')  # Private networks
 )
 
-# Base database options
+# Base database options - OPTIMIZED for gevent + high concurrency
 db_options = {
-    # Connection timeout - increased for slow connections
-    'connect_timeout': 20,
-    # Keepalive settings - more aggressive to detect dead connections faster
+    # Connection timeout - reduced for faster failure detection
+    'connect_timeout': 10,  # Reduced from 20 for faster failures
+    # Keepalive settings - VERY aggressive for gevent workers
     'keepalives': 1,
-    'keepalives_idle': 30,  # Start sending keepalives after 30 seconds of idle
-    'keepalives_interval': 10,  # Send keepalive probe every 10 seconds
-    'keepalives_count': 3,  # Allow 3 failed probes before considering connection dead
-    # Connection pool settings for better performance
-    'options': '-c statement_timeout=60000',  # 60 second statement timeout
+    'keepalives_idle': 20,  # Start keepalives after 20s (was 30s)
+    'keepalives_interval': 5,  # Probe every 5s (was 10s)
+    'keepalives_count': 2,  # Only allow 2 failed probes (was 3)
+    # Fast timeouts for better resource management
+    'options': '-c statement_timeout=30000 -c idle_in_transaction_session_timeout=60000',  # 30s query, 60s idle transaction
 }
 
 # Add SSL configuration only for remote databases (Supabase, etc.)

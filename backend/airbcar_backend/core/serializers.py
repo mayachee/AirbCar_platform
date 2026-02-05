@@ -595,7 +595,6 @@ class ListingSerializer(serializers.ModelSerializer):
                     if fixed_url:
                         processed_images.append(fixed_url)
                 # Skip other types - we only want URL strings
-                    processed_images.append(img)
             
             # Only add fallback if truly empty
             if not processed_images:

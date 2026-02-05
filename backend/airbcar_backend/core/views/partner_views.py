@@ -101,32 +101,43 @@ class PartnerListView(APIView):
 
             validated = dict(serializer.validated_data)
 
-            # Address fields belong to the related User, not Partner
-            address = validated.pop('address', None)
-            city = validated.pop('city', None)
-            state = validated.pop('state', None)
+            # Extract user-related fields (these belong to User model, not Partner)
+            # Only extract fields that actually exist in the User model
+            address = validated.pop('address', None)  # Will be ignored - User model doesn't have this field
+            city = validated.pop('city', None)  # Will be ignored - User model doesn't have this field
+            state = validated.pop('state', None)  # Will be ignored - User model doesn't have this field
+            phone_number = validated.pop('phone_number', None)
+            first_name = validated.pop('first_name', None)
+            last_name = validated.pop('last_name', None)
 
             partner = Partner.objects.create(user=request.user, **validated)
 
-            # Promote role to partner
-            user_updated = False
+            # Update user fields that actually exist in User model
+            user_fields_to_update = []
+            
+            # Always promote to partner role
             if getattr(request.user, 'role', None) != 'partner':
                 request.user.role = 'partner'
-                user_updated = True
-
-            if address is not None:
-                request.user.address = address.strip() if address and address.strip() else None
-                user_updated = True
-            if city is not None:
-                request.user.city = city.strip() if city and city.strip() else None
-                user_updated = True
-            if state is not None:
-                # state maps to country
-                request.user.country = state.strip() if state and state.strip() else None
-                user_updated = True
-
-            if user_updated:
-                request.user.save(update_fields=['role', 'address', 'city', 'country'])
+                user_fields_to_update.append('role')
+            
+            # Update phone_number if provided (User model has this field)
+            if phone_number is not None:
+                request.user.phone_number = phone_number.strip() if phone_number and phone_number.strip() else None
+                user_fields_to_update.append('phone_number')
+            
+            # Update first_name if provided (AbstractUser has this field)
+            if first_name is not None:
+                request.user.first_name = first_name.strip() if first_name else ''
+                user_fields_to_update.append('first_name')
+            
+            # Update last_name if provided (AbstractUser has this field)
+            if last_name is not None:
+                request.user.last_name = last_name.strip() if last_name else ''
+                user_fields_to_update.append('last_name')
+            
+            # Save user with only the fields that were updated and exist in the model
+            if user_fields_to_update:
+                request.user.save(update_fields=user_fields_to_update)
 
             out = PartnerSerializer(partner, context={'request': request})
             return Response({
