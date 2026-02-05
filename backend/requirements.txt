@@ -7,9 +7,13 @@ django-cors-headers==4.2.0
 psycopg[binary]==3.2.13
 Pillow==10.4.0
 gunicorn==22.0.0
+gevent==24.2.1  # Async workers for 3x more concurrent users
 python-dotenv==1.0.1
 whitenoise==6.6.0
 supabase==2.6.0
 httpx[http2]
 requests==2.31.0
-setuptools>=56.0.0 
+setuptools>=56.0.0
+
+# Optional: Redis for production caching (requires external Redis service)
+# django-redis==5.4.0 

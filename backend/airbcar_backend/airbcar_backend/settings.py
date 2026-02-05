@@ -102,12 +102,12 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
     'django.middleware.gzip.GZipMiddleware',  # Compress responses for faster transfer
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    # REMOVED: SessionMiddleware - Not needed for JWT auth (saves memory + processing)
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
+    # REMOVED: MessageMiddleware - Not needed for API (no message framework)
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.EnsureCorsHeadersMiddleware',  # Ensure CORS headers even on errors
 ]
@@ -203,8 +203,9 @@ DATABASES = {
         'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
         'OPTIONS': db_options,
-        # Connection pooling - Performance optimization: reuse connections instead of creating new ones
-        'CONN_MAX_AGE': 600,  # Reuse connections for 10 minutes (faster than creating new connections each time)
+        # Connection pooling - Optimized for gevent workers
+        'CONN_MAX_AGE': 300,  # Reduced to 5 minutes (from 10) for better connection turnover with gevent
+        'CONN_HEALTH_CHECKS': True,  # Django 4.1+ - Validate connections before use (prevents stale connection errors)
         'ATOMIC_REQUESTS': False,  # Disable to avoid long-running transactions with pooler
     }
 }
@@ -276,9 +277,14 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'PAGE_SIZE': 15,  # Reduced from 20 to 15 for faster response times
     'MAX_PAGE_SIZE': 100,  # Security: Prevent DoS attacks from huge page requests
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
+    # Performance optimizations
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',  # Removed BrowsableAPIRenderer for production speed
+    ),
+    'COMPACT_JSON': not DEBUG,  # Remove whitespace from JSON in production
 }
 
 if ENABLE_THROTTLING:
