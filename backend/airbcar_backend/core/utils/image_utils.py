@@ -542,42 +542,47 @@ def is_local_media_url(url: str) -> bool:
     return False
 
 
-def combine_images(uploaded_images: List[Dict[str, Any]], existing_images: List[Any]) -> List[Dict[str, Any]]:
+def combine_images(uploaded_images: List[Any], existing_images: List[Any]) -> List[str]:
     """
-    Combine uploaded images with existing images, normalizing the format.
+    Combine uploaded images with existing images, normalizing to URL strings only.
     Filters out local media URLs that won't work on Render's ephemeral filesystem.
     
     Args:
-        uploaded_images: List of newly uploaded images (already processed)
+        uploaded_images: List of newly uploaded images (strings or dicts with 'url')
         existing_images: List of existing images (various formats)
         
     Returns:
-        Combined and normalized list of images (only Supabase/external URLs)
+        Combined and normalized list of image URL strings (only Supabase/external URLs)
     """
-    # Normalize existing images
-    normalized_existing = [normalize_image_entry(img) for img in existing_images]
-    
-    # Filter out local media URLs from existing images
-    filtered_existing = []
-    for img in normalized_existing:
-        if isinstance(img, dict) and 'url' in img:
+    # Normalize uploaded images to URL strings only
+    normalized_uploaded = []
+    for img in uploaded_images:
+        if isinstance(img, str):
+            if not is_local_media_url(img):
+                normalized_uploaded.append(img)
+        elif isinstance(img, dict) and 'url' in img:
             url = img['url']
             if not is_local_media_url(url):
-                filtered_existing.append(img)
-        elif isinstance(img, str):
-            if not is_local_media_url(img):
-                filtered_existing.append(img)
-        else:
-            # Keep non-URL entries (might be other metadata)
-            filtered_existing.append(img)
+                normalized_uploaded.append(url)
     
-    # Combine uploaded images (which should all be Supabase URLs) with filtered existing images
-    combined = uploaded_images + filtered_existing
+    # Normalize existing images to URL strings only
+    normalized_existing = []
+    for img in existing_images:
+        if isinstance(img, str):
+            if not is_local_media_url(img):
+                normalized_existing.append(img)
+        elif isinstance(img, dict) and 'url' in img:
+            url = img['url']
+            if not is_local_media_url(url):
+                normalized_existing.append(url)
+    
+    # Combine uploaded images with existing images (all as URL strings)
+    combined = normalized_uploaded + normalized_existing
     
     # Log if we filtered out any images
-    if settings.DEBUG and len(normalized_existing) > len(filtered_existing):
-        filtered_count = len(normalized_existing) - len(filtered_existing)
-        print(f"⚠️ Filtered out {filtered_count} local media URL(s) from existing images")
+    filtered_count = (len(uploaded_images) + len(existing_images)) - len(combined)
+    if settings.DEBUG and filtered_count > 0:
+        print(f"⚠️ Filtered out {filtered_count} local media URL(s) from images")
     
     return combined
 

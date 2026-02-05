@@ -583,21 +583,18 @@ class ListingSerializer(serializers.ModelSerializer):
                 # Skip other cases (return None for invalid)
                 return None
             
-            # Process images (optimized loop)
+            # Process images - extract URL strings only (no dict wrappers)
             for img in data['images']:
                 if isinstance(img, str):
                     fixed_url = fix_image_url(img)
                     if fixed_url:
                         processed_images.append(fixed_url)
                 elif isinstance(img, dict) and 'url' in img:
+                    # Extract URL from dict and add as string only
                     fixed_url = fix_image_url(img['url'])
                     if fixed_url:
-                        processed_images.append({**img, 'url': fixed_url})
-                elif isinstance(img, dict):
-                    # Dict without url, keep as-is
-                    processed_images.append(img)
-                else:
-                    # Other types, keep as-is
+                        processed_images.append(fixed_url)
+                # Skip other types - we only want URL strings
                     processed_images.append(img)
             
             # Only add fallback if truly empty

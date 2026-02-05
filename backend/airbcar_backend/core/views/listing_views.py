@@ -640,17 +640,23 @@ class ListingListView(APIView):
                             for file in pending_files:
                                 try:
                                     # Upload to Pics/listings/{listing_id}/
-                                    supabase_url = upload_file_to_supabase_storage(
+                                    # upload_file_to_supabase_storage returns a dict with url, name, size
+                                    # but we only need the URL string for storage
+                                    result = upload_file_to_supabase_storage(
                                         file=file,
                                         bucket_name=os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics'),
                                         folder='listings',
                                         listing_id=listing.id
                                     )
                                     
-                                    uploaded_images.append({
-                                        'url': supabase_url,
-                                        'name': file.name
-                                    })
+                                    # Extract just the URL string from the result
+                                    if isinstance(result, dict) and 'url' in result:
+                                        supabase_url = result['url']
+                                    else:
+                                        supabase_url = result
+                                    
+                                    # Store only the URL string, not a dict
+                                    uploaded_images.append(supabase_url)
                                     
                                     if settings.DEBUG:
                                         print(f"✓ Uploaded image to Supabase: {supabase_url}")
@@ -984,17 +990,23 @@ class ListingDetailView(APIView):
                             continue
                         
                         # Upload directly to Supabase to Pics/listings/{pk}/
-                        supabase_url = upload_file_to_supabase_storage(
+                        # upload_file_to_supabase_storage returns a dict with url, name, size
+                        # but we only need the URL string for storage
+                        result = upload_file_to_supabase_storage(
                             file=file,
                             bucket_name=os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics'),
                             folder='listings',
                             listing_id=pk
                         )
                         
-                        uploaded_images.append({
-                            'url': supabase_url,
-                            'name': file.name
-                        })
+                        # Extract just the URL string from the result
+                        if isinstance(result, dict) and 'url' in result:
+                            supabase_url = result['url']
+                        else:
+                            supabase_url = result
+                        
+                        # Store only the URL string, not a dict
+                        uploaded_images.append(supabase_url)
                         
                         if settings.DEBUG:
                             print(f"✓ Uploaded image to Supabase: {supabase_url}")
