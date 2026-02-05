@@ -294,3 +294,65 @@ class UserDetailView(APIView):
                 'error': 'An error occurred',
                 'message': error_msg if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserDocumentUploadView(APIView):
+    """Upload user documents (license, etc)."""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """Upload license front or back document."""
+        try:
+            if 'document' not in request.FILES:
+                return Response({
+                    'error': 'Missing document file',
+                    'message': 'Please provide a document file'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            document = request.FILES['document']
+            doc_type = request.data.get('type', 'license_front')  # license_front or license_back
+            
+            # Validate file type and size
+            MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+            if document.size > MAX_FILE_SIZE:
+                return Response({
+                    'error': 'File too large',
+                    'message': 'Maximum file size is 5MB'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Allowed MIME types
+            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+            if document.content_type not in allowed_types:
+                return Response({
+                    'error': 'Invalid file type',
+                    'message': 'Only JPEG, PNG, and PDF files are allowed'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Update user document
+            if doc_type == 'license_front':
+                request.user.license_front_document = document
+            elif doc_type == 'license_back':
+                request.user.license_back_document = document
+            else:
+                return Response({
+                    'error': 'Invalid document type',
+                    'message': 'Type must be license_front or license_back'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            request.user.save()
+            
+            serializer = UserSerializer(request.user, context={'request': request})
+            return Response({
+                'message': 'Document uploaded successfully',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in UserDocumentUploadView: {error_msg}")
+                import traceback
+                traceback.print_exc()
+            return Response({
+                'error': 'Upload failed',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

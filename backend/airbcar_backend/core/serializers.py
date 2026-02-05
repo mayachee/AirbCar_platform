@@ -236,6 +236,7 @@ class PartnerSerializer(serializers.ModelSerializer):
     min_price_per_day = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, allow_null=True)
     companyName = serializers.CharField(source='business_name', read_only=True)
     businessName = serializers.CharField(source='business_name', read_only=True)
+    company_name = serializers.CharField(required=False, write_only=True, allow_blank=True)
     
     # Address fields from related User model
     # These are writable fields that will be handled in update method
@@ -262,10 +263,11 @@ class PartnerSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'business_name', 'business_type', 'business_license',
                   'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
                   'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
-                   'phone_number', 'first_name', 'last_name']
+                   'phone_number', 'first_name', 'last_name', 'company_name']
         read_only_fields = ['id', 'created_at', 'logo_url']
         extra_kwargs = {
             'logo': {'write_only': True},
+            'business_name': {'required': False},
         }
     
     def get_logo_url(self, obj):
@@ -280,6 +282,25 @@ class PartnerSerializer(serializers.ModelSerializer):
             return obj.user.profile_picture_url
         
         return None
+    
+    def to_internal_value(self, data):
+        """Map alternative field names to canonical names and validate."""
+        # Create a mutable copy of data
+        if hasattr(data, '_mutable'):
+            data._mutable = True
+        
+        data = dict(data) if not isinstance(data, dict) else data
+        
+        # Map company_name to business_name if provided  
+        if 'company_name' in data and data['company_name']:
+            if 'business_name' not in data or not data['business_name']:
+                data['business_name'] = data.pop('company_name')
+            else:
+                data.pop('company_name')  # Remove company_name if business_name is also provided
+        elif 'company_name' in data:
+            data.pop('company_name')  # Remove empty company_name
+        
+        return super().to_internal_value(data)
     
     def update(self, instance, validated_data):
         """Update partner and related user address fields."""
@@ -594,6 +615,10 @@ class BookingSerializer(serializers.ModelSerializer):
     customer = UserSerializer(read_only=True)
     partner = PartnerSerializer(read_only=True)
     
+    # Alternative field names for start_date/end_date
+    start_date = serializers.DateField(source='pickup_date', required=False, write_only=True)
+    end_date = serializers.DateField(source='return_date', required=False, write_only=True)
+    
     class Meta:
         model = Booking
         fields = [
@@ -602,9 +627,24 @@ class BookingSerializer(serializers.ModelSerializer):
             'total_amount', 'status', 'payment_status', 'payment_method', 
             'request_message', 'rejection_reason',
             'license_front_document', 'license_back_document',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'start_date', 'end_date'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def to_internal_value(self, data):
+        """Map alternative field names to canonical names."""
+        # Create a mutable copy of data
+        data = dict(data)
+        
+        # Map start_date to pickup_date if provided
+        if 'start_date' in data and 'pickup_date' not in data:
+            data['pickup_date'] = data.pop('start_date')
+        
+        # Map end_date to return_date if provided
+        if 'end_date' in data and 'return_date' not in data:
+            data['return_date'] = data.pop('end_date')
+        
+        return super().to_internal_value(data)
     
     def create(self, validated_data):
         """Create booking."""

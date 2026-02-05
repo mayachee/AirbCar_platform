@@ -118,6 +118,8 @@ if views.UserStatsView is not None:
     urlpatterns.append(path('users/me/stats/', views.UserStatsView.as_view(), name='user-stats'))
 if views.ChangePasswordView is not None:
     urlpatterns.append(path('users/me/change-password/', views.ChangePasswordView.as_view(), name='change-password'))
+if views.UserDocumentUploadView is not None:
+    urlpatterns.append(path('users/me/upload-document/', views.UserDocumentUploadView.as_view(), name='user-document-upload'))
 if views.UserDetailView is not None:
     urlpatterns.append(path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'))
 

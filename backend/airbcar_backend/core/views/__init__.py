@@ -29,12 +29,12 @@ except Exception as e:
 
 try:
     from .user_views import (
-        UserListView, UserMeView, UserStatsView, ChangePasswordView, UserDetailView
+        UserListView, UserMeView, UserStatsView, ChangePasswordView, UserDetailView, UserDocumentUploadView
     )
 except Exception as e:
     print(f"Error importing user_views: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
-    UserListView = UserMeView = UserStatsView = ChangePasswordView = UserDetailView = None
+    UserListView = UserMeView = UserStatsView = ChangePasswordView = UserDetailView = UserDocumentUploadView = None
 
 try:
     from .favorite_views import FavoriteListView, MyFavoritesView, FavoriteDetailView
