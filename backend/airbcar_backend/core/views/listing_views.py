@@ -224,8 +224,11 @@ class ListingListView(APIView):
         
         try:
             # Optimize query with select_related and prefetch_related
-            # Only prefetch reviews if needed (they're used in serializer)
-            queryset = queryset.select_related('partner', 'partner__user').prefetch_related('reviews')
+            # Only prefetch reviews for rating calculation (limit to avoid loading too much data)
+            queryset = queryset.select_related('partner', 'partner__user')
+            
+            # Don't prefetch all reviews - they can be heavy. Only fetch when needed per listing.
+            # The serializer can handle this more efficiently if needed
             
             # Additional optimization: Use distinct() if there might be duplicates
             # (e.g., from joins or filters)

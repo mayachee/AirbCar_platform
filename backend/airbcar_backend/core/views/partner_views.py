@@ -363,35 +363,51 @@ class PartnerAnalyticsView(APIView):
                     'error': 'Partner profile not found'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Get listing stats
-            listings = Listing.objects.filter(partner=partner)
-            total_listings = listings.count()
-            available_listings = listings.filter(is_available=True).count()
+            # Optimize: Use aggregate and Count with filter to get all stats in fewer queries
+            from django.db.models import Case, When, IntegerField
             
-            # Get booking stats
-            bookings = Booking.objects.filter(partner=partner)
-            total_bookings = bookings.count()
-            pending_bookings = bookings.filter(status='pending').count()
-            confirmed_bookings = bookings.filter(status='confirmed').count()
-            active_bookings = bookings.filter(status='active').count()
-            completed_bookings = bookings.filter(status='completed').count()
-            cancelled_bookings = bookings.filter(status='cancelled').count()
+            # Get all listing stats in one query
+            listing_stats = Listing.objects.filter(partner=partner).aggregate(
+                total=Count('id'),
+                available=Count('id', filter=Q(is_available=True))
+            )
+            total_listings = listing_stats['total']
+            available_listings = listing_stats['available']
             
-            # Get review stats
-            reviews = Review.objects.filter(listing__partner=partner, is_published=True)
-            avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
-            review_count = reviews.count()
-            
-            # Get earnings stats
-            completed_paid = bookings.filter(status='completed', payment_status='paid')
-            total_earnings = completed_paid.aggregate(total=Sum('total_amount'))['total'] or 0
-            
-            # Monthly stats (last 30 days)
+            # Get all booking stats in one query
             thirty_days_ago = timezone.now() - timedelta(days=30)
-            monthly_bookings = bookings.filter(created_at__gte=thirty_days_ago).count()
-            monthly_earnings = completed_paid.filter(
-                created_at__gte=thirty_days_ago
-            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            booking_stats = Booking.objects.filter(partner=partner).aggregate(
+                total=Count('id'),
+                pending=Count('id', filter=Q(status='pending')),
+                confirmed=Count('id', filter=Q(status='confirmed')),
+                active=Count('id', filter=Q(status='active')),
+                completed=Count('id', filter=Q(status='completed')),
+                cancelled=Count('id', filter=Q(status='cancelled')),
+                monthly=Count('id', filter=Q(created_at__gte=thirty_days_ago)),
+                total_earnings=Sum('total_amount', filter=Q(status='completed', payment_status='paid')),
+                monthly_earnings=Sum('total_amount', filter=Q(status='completed', payment_status='paid', created_at__gte=thirty_days_ago))
+            )
+            
+            total_bookings = booking_stats['total']
+            pending_bookings = booking_stats['pending']
+            confirmed_bookings = booking_stats['confirmed']
+            active_bookings = booking_stats['active']
+            completed_bookings = booking_stats['completed']
+            cancelled_bookings = booking_stats['cancelled']
+            monthly_bookings = booking_stats['monthly']
+            total_earnings = booking_stats['total_earnings'] or 0
+            monthly_earnings = booking_stats['monthly_earnings'] or 0
+            
+            # Get review stats in one query
+            review_stats = Review.objects.filter(
+                listing__partner=partner, 
+                is_published=True
+            ).aggregate(
+                avg=Avg('rating'),
+                count=Count('id')
+            )
+            avg_rating = review_stats['avg'] or 0
+            review_count = review_stats['count']
             
             return Response({
                 'listings': {
@@ -451,10 +467,25 @@ class PartnerReviewsView(APIView):
                 is_published=True
             ).select_related('listing', 'user').order_by('-created_at')
             
+            # Pagination for better performance
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 20))
+            page_size = min(page_size, 100)
+            
+            total_count = reviews.count()
+            start = (page - 1) * page_size
+            end = start + page_size
+            
+            reviews = reviews[start:end]
+            
             serializer = ReviewSerializer(reviews, many=True, context={'request': request})
             return Response({
                 'data': serializer.data,
-                'count': len(serializer.data)
+                'count': len(serializer.data),
+                'total_count': total_count,
+                'page': page,
+                'page_size': page_size,
+                'total_pages': (total_count + page_size - 1) // page_size if total_count > 0 else 0
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

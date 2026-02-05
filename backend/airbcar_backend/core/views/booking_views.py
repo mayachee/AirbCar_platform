@@ -90,8 +90,9 @@ class BookingListView(APIView):
                 except ValueError:
                     pass
             
+            # Optimize: prefetch customer user data for partner bookings
             bookings = bookings.select_related(
-                'listing', 'listing__partner', 'partner'
+                'listing', 'listing__partner', 'listing__partner__user', 'partner', 'customer'
             ).order_by('-created_at')
             
             # Pagination

@@ -110,10 +110,23 @@ class MyFavoritesView(APIView):
     def get(self, request):
         """Get current user's favorites with listing details."""
         try:
+            # Optimize: Use select_related and prefetch_related to avoid N+1 queries
             favorites = Favorite.objects.filter(user=request.user).select_related(
-                'listing', 'listing__partner'
-            ).order_by('-created_at')
+                'listing', 'listing__partner', 'listing__partner__user'
+            ).prefetch_related('listing__reviews').order_by('-created_at')
             
+            # Pagination - important for performance with large favorite lists
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 20))
+            page_size = min(page_size, 100)
+            
+            total_count = favorites.count()
+            start = (page - 1) * page_size
+            end = start + page_size
+            
+            favorites = favorites[start:end]
+            
+            # Batch serialize for better performance
             favorites_data = []
             for favorite in favorites:
                 listing_serializer = ListingSerializer(
@@ -129,7 +142,11 @@ class MyFavoritesView(APIView):
             return Response({
                 'data': favorites_data,
                 'favorites': favorites_data,  # Alternative format
-                'count': len(favorites_data)
+                'count': len(favorites_data),
+                'total_count': total_count,
+                'page': page,
+                'page_size': page_size,
+                'total_pages': (total_count + page_size - 1) // page_size if total_count > 0 else 0
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

@@ -2,6 +2,11 @@
 
 echo "Starting AirbCar Backend..."
 
+# Create logs directory for Django logging
+echo "Creating logs directory..."
+mkdir -p /app/airbcar_backend/logs
+chmod 755 /app/airbcar_backend/logs
+
 # Wait for PostgreSQL to be available (useful for local docker-compose)
 if [ -n "$DATABASE_HOST" ] && [ -n "$DATABASE_PORT" ]; then
     echo "Waiting for PostgreSQL to be available at $DATABASE_HOST:$DATABASE_PORT..."
