@@ -341,7 +341,7 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         
         # Upload to Supabase Storage (REQUIRED - no fallback to local paths on Render)
         supabase_url = None
-        bucket_name = 'listings'  # Use 'listings' bucket for all images (MUST BE PUBLIC)
+        bucket_name = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics')  # Use 'Pics' bucket for all images (MUST BE PUBLIC)
         
         # Determine content type from file extension
         content_type = 'image/jpeg'  # default
@@ -356,16 +356,9 @@ def process_and_save_image(file: UploadedFile, upload_dir: str = 'listings') -> 
         
         # Try to upload to Supabase Storage (REQUIRED)
         try:
-            # For Supabase, use just the filename (bucket name already indicates folder)
-            # IMPORTANT: For 'listings' bucket, NEVER include 'listings/' in the path
-            # file_path is "listings/{uuid}.png" but bucket is "listings", so we use just "{uuid}.png"
-            supabase_file_path = unique_filename  # Just the filename, not the full path with folder
-            
-            # Safety check: Remove any 'listings/' prefix if it exists (shouldn't happen, but just in case)
-            if supabase_file_path.startswith('listings/'):
-                supabase_file_path = supabase_file_path.replace('listings/', '', 1)
-                if settings.DEBUG:
-                    print(f"⚠️ Removed 'listings/' prefix from file path: {supabase_file_path}")
+            # Upload to Pics bucket with listings/ folder prefix
+            # Path in bucket: listings/{uuid}.ext
+            supabase_file_path = f"listings/{unique_filename}"
             
             if settings.DEBUG:
                 print(f"📤 Uploading image to Supabase:")

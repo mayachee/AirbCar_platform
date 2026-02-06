@@ -69,20 +69,20 @@ class Command(BaseCommand):
                         
                         if os.path.exists(local_file_path):
                             if not dry_run:
-                                # Upload to Supabase
-                                bucket_name = 'listings'  # Or get from file_path
-                                if 'listings' in file_path:
-                                    bucket_name = 'listings'
-                                elif 'profiles' in file_path:
-                                    bucket_name = 'profiles'
+                                # Upload to Supabase - all media goes to 'Pics' bucket
+                                bucket_name = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics')
+                                
+                                # Determine folder within Pics bucket based on file path
+                                if 'profiles' in file_path:
+                                    folder = 'profiles'
                                 elif 'partner_logos' in file_path:
-                                    bucket_name = 'partner_logos'
+                                    folder = 'partner_logos'
                                 else:
-                                    bucket_name = 'listings'  # Default
+                                    folder = 'listings'
                                 
                                 # Extract just the filename for Supabase path
                                 filename = os.path.basename(file_path)
-                                supabase_path = f"listings/{filename}"
+                                supabase_path = f"{folder}/{filename}"
                                 
                                 try:
                                     with open(local_file_path, 'rb') as f:
@@ -143,7 +143,7 @@ class Command(BaseCommand):
                         
                         if os.path.exists(local_file_path):
                             if not dry_run:
-                                bucket_name = 'listings'
+                                bucket_name = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics')
                                 filename = os.path.basename(file_path)
                                 supabase_path = f"listings/{filename}"
                                 

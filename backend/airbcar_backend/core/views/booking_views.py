@@ -284,7 +284,7 @@ class BookingListView(APIView):
                         try:
                             # Use timestamp to ensure unique filenames
                             ts = int(datetime.now().timestamp())
-                            pics_bucket = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'pics')
+                            pics_bucket = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics')
                             license_front_url = upload_file_to_supabase(
                                 request.FILES['license_front_document'], 
                                 bucket_name=pics_bucket, 
@@ -297,7 +297,7 @@ class BookingListView(APIView):
                     if 'license_back_document' in request.FILES:
                         try:
                             ts = int(datetime.now().timestamp())
-                            pics_bucket = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'pics')
+                            pics_bucket = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics')
                             license_back_url = upload_file_to_supabase(
                                 request.FILES['license_back_document'], 
                                 bucket_name=pics_bucket, 
