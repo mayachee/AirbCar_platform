@@ -97,16 +97,32 @@ class BookingViewSet(viewsets.ModelViewSet):
         license_front_file = self.request.FILES.get('license_front_document')
         if license_front_file:
             try:
-                license_front_url = upload_file_to_supabase(license_front_file, folder="licenses", bucket="pics")
+                license_front_url = upload_file_to_supabase(license_front_file, folder="user_documents/license_documents", bucket="pics")
             except Exception as e:
                 print(f"Error uploading license front: {e}")
                 
         license_back_file = self.request.FILES.get('license_back_document')
         if license_back_file:
             try:
-                license_back_url = upload_file_to_supabase(license_back_file, folder="licenses", bucket="pics")
+                license_back_url = upload_file_to_supabase(license_back_file, folder="user_documents/license_documents", bucket="pics")
             except Exception as e:
                 print(f"Error uploading license back: {e}")
+
+        # Fall back to existing license documents from user profile if no new files uploaded
+        if not license_front_url:
+            existing_front = (
+                getattr(user, 'license_front_document_url', None)
+                or getattr(user, 'license_front_document', None)
+            )
+            if existing_front:
+                license_front_url = str(existing_front)
+        if not license_back_url:
+            existing_back = (
+                getattr(user, 'license_back_document_url', None)
+                or getattr(user, 'license_back_document', None)
+            )
+            if existing_back:
+                license_back_url = str(existing_back)
 
         # Update user profile with latest license docs if provided
         user_updated = False

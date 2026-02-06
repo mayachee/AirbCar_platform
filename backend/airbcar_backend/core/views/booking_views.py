@@ -288,7 +288,7 @@ class BookingListView(APIView):
                             license_front_url = upload_file_to_supabase(
                                 request.FILES['license_front_document'], 
                                 bucket_name=pics_bucket, 
-                                file_path=f"licenses/user_{request.user.id}_{ts}_front"
+                                file_path=f"user_documents/license_documents/user_{request.user.id}_{ts}_front"
                             )
                         except Exception as e:
                             if settings.DEBUG:
@@ -301,7 +301,7 @@ class BookingListView(APIView):
                             license_back_url = upload_file_to_supabase(
                                 request.FILES['license_back_document'], 
                                 bucket_name=pics_bucket, 
-                                file_path=f"licenses/user_{request.user.id}_{ts}_back"
+                                file_path=f"user_documents/license_documents/user_{request.user.id}_{ts}_back"
                             )
                         except Exception as e:
                             if settings.DEBUG:
