@@ -102,10 +102,6 @@ class PartnerListView(APIView):
             validated = dict(serializer.validated_data)
 
             # Extract user-related fields (these belong to User model, not Partner)
-            # Only extract fields that actually exist in the User model
-            address = validated.pop('address', None)  # Will be ignored - User model doesn't have this field
-            city = validated.pop('city', None)  # Will be ignored - User model doesn't have this field
-            state = validated.pop('state', None)  # Will be ignored - User model doesn't have this field
             phone_number = validated.pop('phone_number', None)
             first_name = validated.pop('first_name', None)
             last_name = validated.pop('last_name', None)
