@@ -85,9 +85,11 @@ else:
 
 # Application definition
 # PERFORMANCE: Minimal apps in production
-BASE_INSTALLED_APPS = [
+INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.messages',
     'django.contrib.sessions',  # Required by AuthenticationMiddleware
     'django.contrib.staticfiles',
     'rest_framework',
@@ -95,18 +97,6 @@ BASE_INSTALLED_APPS = [
     'corsheaders',
     'core',
 ]
-
-# Only include admin/messages in DEBUG mode (saves 40-50MB RAM in production)
-if DEBUG:
-    INSTALLED_APPS = [
-        'django.contrib.admin',
-        'django.contrib.messages',
-    ] + BASE_INSTALLED_APPS
-else:
-    # Production: No admin panel
-    INSTALLED_APPS = BASE_INSTALLED_APPS
-    # Silence admin checks in production (we don't use admin)
-    SILENCED_SYSTEM_CHECKS = ['admin.E409', 'admin.E410']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -119,6 +109,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',  # Required by AuthenticationMiddleware
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.EnsureCorsHeadersMiddleware',  # Ensure CORS headers even on errors
 ]
