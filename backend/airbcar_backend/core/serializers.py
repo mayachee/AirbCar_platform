@@ -244,6 +244,11 @@ class PartnerSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False, allow_blank=True, write_only=False)
     last_name = serializers.CharField(required=False, allow_blank=True, write_only=False)
     
+    # Address fields stored on Partner model
+    address = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    city = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    state = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
     def to_representation(self, instance):
         """Override to include address fields from user model."""
         ret = super().to_representation(instance)
@@ -263,7 +268,8 @@ class PartnerSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'business_name', 'business_type', 'business_license',
                   'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
                   'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
-                   'phone_number', 'first_name', 'last_name', 'company_name']
+                   'phone_number', 'first_name', 'last_name', 'company_name',
+                   'address', 'city', 'state']
         read_only_fields = ['id', 'created_at', 'logo_url']
         extra_kwargs = {
             'logo': {'write_only': True},
@@ -403,11 +409,6 @@ class PartnerDetailSerializer(PartnerSerializer):
     """Partner serializer with listings."""
     listings = SimpleListingSerializer(many=True, read_only=True)
     
-    # Add fields that are not in the model but expected by frontend
-    address = serializers.SerializerMethodField()
-    city = serializers.SerializerMethodField()
-    state = serializers.SerializerMethodField()
-    
     class Meta:
         model = Partner
         fields = [
@@ -421,18 +422,6 @@ class PartnerDetailSerializer(PartnerSerializer):
         extra_kwargs = {
             'logo': {'write_only': True},
         }
-
-    def get_address(self, obj):
-        """Return address - currently not stored in Partner or User model."""
-        return ""
-    
-    def get_city(self, obj):
-        """Return city - currently not stored in Partner or User model."""
-        return ""
-
-    def get_state(self, obj):
-        """Return state - currently not stored in Partner or User model."""
-        return ""
 
 
 class ListingSerializer(serializers.ModelSerializer):

@@ -11,7 +11,7 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
 
 # Supabase bucket names from environment
-SUPABASE_STORAGE_BUCKET_PICS = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'pics')
+SUPABASE_STORAGE_BUCKET_PICS = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics')
 SUPABASE_STORAGE_BUCKET_LISTINGS = os.environ.get('SUPABASE_STORAGE_BUCKET_LISTINGS', 'listings')
 
 # Initialize Supabase client with service role key if available (for server-side operations)

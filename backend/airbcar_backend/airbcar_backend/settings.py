@@ -442,10 +442,13 @@ if extra_csrf:
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
-SUPABASE_STORAGE_BUCKET_PICS = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'pics')
+SUPABASE_STORAGE_BUCKET_PICS = os.environ.get('SUPABASE_STORAGE_BUCKET_PICS', 'Pics')
 SUPABASE_STORAGE_BUCKET_LISTINGS = os.environ.get('SUPABASE_STORAGE_BUCKET_LISTINGS', 'listings')
 
 # Logging Configuration
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

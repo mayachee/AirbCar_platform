@@ -21,7 +21,11 @@ from ..serializers import (
 
 class ReviewListView(APIView):
     """List all reviews or create a new review."""
-    permission_classes = [AllowAny]  # GET is public
+    
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return [AllowAny()]
     
     def get(self, request):
         """List reviews, optionally filtered by listing."""

@@ -97,14 +97,14 @@ class BookingViewSet(viewsets.ModelViewSet):
         license_front_file = self.request.FILES.get('license_front_document')
         if license_front_file:
             try:
-                license_front_url = upload_file_to_supabase(license_front_file, folder="user_documents/license_documents", bucket="pics")
+                license_front_url = upload_file_to_supabase(license_front_file, folder="user_documents/license_documents", bucket="Pics")
             except Exception as e:
                 print(f"Error uploading license front: {e}")
                 
         license_back_file = self.request.FILES.get('license_back_document')
         if license_back_file:
             try:
-                license_back_url = upload_file_to_supabase(license_back_file, folder="user_documents/license_documents", bucket="pics")
+                license_back_url = upload_file_to_supabase(license_back_file, folder="user_documents/license_documents", bucket="Pics")
             except Exception as e:
                 print(f"Error uploading license back: {e}")
 

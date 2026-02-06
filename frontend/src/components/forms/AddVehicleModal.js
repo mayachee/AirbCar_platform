@@ -33,7 +33,6 @@ export default function AddVehicleModal({
     seating_capacity: '',
     vehicle_style: 'sedan',
     color: 'White',
-    vehicle_condition: 'excellent',
     pictures: []
   });
 
@@ -80,7 +79,6 @@ export default function AddVehicleModal({
         seating_capacity: vehicleData.seating_capacity || vehicleData.seats || '',
         vehicle_style: vehicleData.vehicle_style || vehicleData.style || 'sedan',
         color: vehicleData.color || 'White',
-        vehicle_condition: vehicleData.vehicle_condition || 'excellent',
         pictures: existingImages,
         is_available: vehicleData.is_available !== undefined ? vehicleData.is_available : true,
         instant_booking: vehicleData.instant_booking !== undefined ? vehicleData.instant_booking : false
@@ -100,7 +98,6 @@ export default function AddVehicleModal({
         seating_capacity: '',
         vehicle_style: 'sedan',
         color: 'White',
-        vehicle_condition: 'excellent',
         pictures: [],
         is_available: true,
         instant_booking: false
@@ -273,13 +270,13 @@ export default function AddVehicleModal({
         year: formData.year,
         price_per_day: formData.price_per_day,
         location: formData.location,
-        description: formData.description || '',
-        features: formData.features || [],
+        vehicle_description: formData.description || '',
+        available_features: formData.features || [],
         fuel_type: formData.fuel_type,
         transmission: formData.transmission,
         seating_capacity: formData.seating_capacity || 5,
-        vehicle_style: 'sedan',
-        color: 'White',
+        vehicle_style: formData.vehicle_style || 'sedan',
+        color: formData.color || 'White',
         is_available: true,
         instant_booking: false,
         images: imagesArray // Include existing image URLs (new file uploads not supported in bulk)
@@ -321,8 +318,11 @@ export default function AddVehicleModal({
         fuel_type: 'diesel',
         transmission: 'automatic',
         seating_capacity: '',
-        vehicle_condition: 'excellent',
-        pictures: []
+        vehicle_style: 'sedan',
+        color: 'White',
+        pictures: [],
+        is_available: true,
+        instant_booking: false
       });
       setErrors({});
       setBulkMode(false);
@@ -449,7 +449,6 @@ export default function AddVehicleModal({
     if (!formData.seating_capacity || isNaN(seats) || seats < 2 || seats > 8) {
       newErrors.seating_capacity = 'Valid seating capacity (2-8) is required';
     }
-    if (!formData.vehicle_condition) newErrors.vehicle_condition = 'Vehicle condition is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -498,7 +497,6 @@ export default function AddVehicleModal({
         seating_capacity: seatingValue,
         vehicle_style: formData.vehicle_style || 'sedan',
         color: formData.color || 'White',
-        vehicle_condition: formData.vehicle_condition,
         vehicle_description: formData.description?.trim() || '',
         available_features: formData.features || [], // Use available_features for backend
       };
@@ -511,7 +509,6 @@ export default function AddVehicleModal({
         location: vehicleData.location,
         price_per_day: vehicleData.price_per_day,
         seating_capacity: vehicleData.seating_capacity,
-        vehicle_condition: vehicleData.vehicle_condition,
       };
 
       const missingFields = Object.entries(requiredFields)
@@ -636,7 +633,6 @@ export default function AddVehicleModal({
         seating_capacity: '',
         vehicle_style: 'sedan',
         color: 'White',
-        vehicle_condition: 'excellent',
         pictures: [],
         is_available: true,
         instant_booking: false
@@ -953,28 +949,6 @@ export default function AddVehicleModal({
               {errors.seating_capacity && <p className="text-red-500 text-xs mt-1">{errors.seating_capacity}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                Vehicle Condition *
-              </label>
-              <SelectField
-                name="vehicle_condition"
-                value={formData.vehicle_condition}
-                onChange={handleInputChange}
-                required
-                options={[
-                  { value: 'excellent', label: 'Excellent' },
-                  { value: 'good', label: 'Good' },
-                  { value: 'fair', label: 'Fair' },
-                  { value: 'poor', label: 'Poor' },
-                ]}
-                className={`w-50 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
-                  errors.vehicle_condition ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-                }`}
-              />
-              {errors.vehicle_condition && <p className="text-red-500 text-xs mt-1">{errors.vehicle_condition}</p>}
-            </div>
-            
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Vehicle Style
