@@ -28,6 +28,7 @@ export default function ReviewList({
   const [showFilters, setShowFilters] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [isAddingReview, setIsAddingReview] = useState(false);
+  const [canReview, setCanReview] = useState(false);
   const [stats, setStats] = useState({
     averageRating: 0,
     totalReviews: 0,
@@ -92,6 +93,17 @@ export default function ReviewList({
       });
     }
   }, [listingId]); // Only depend on listingId to avoid loops
+
+  // Check if user can review this listing
+  useEffect(() => {
+    if (user && listingId) {
+      reviewService.canReview(listingId)
+        .then(response => setCanReview(response.can_review || false))
+        .catch(() => setCanReview(false));
+    } else {
+      setCanReview(false);
+    }
+  }, [user, listingId, refreshTrigger]);
 
   const loadStats = async () => {
     try {
@@ -444,7 +456,7 @@ export default function ReviewList({
       )}
 
       {/* Add Review Button */}
-      {!isAddingReview && !editingReview && (
+      {user && canReview && !isAddingReview && !editingReview && (
         <div className="flex justify-end">
           <button
             onClick={() => setIsAddingReview(true)}
