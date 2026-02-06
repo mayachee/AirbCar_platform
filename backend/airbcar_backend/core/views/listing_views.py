@@ -826,6 +826,21 @@ class ListingListView(APIView):
                         listing_data = vehicle_data.copy()
                         listing_data['partner_id'] = partner.id
                         
+                        # Map frontend field names to backend field names
+                        field_mapping = {
+                            'brand': 'make',
+                            'model_name': 'model',
+                            'dailyRate': 'price_per_day',
+                            'price': 'price_per_day',
+                            'features': 'available_features',
+                            'description': 'vehicle_description',
+                        }
+                        for frontend_key, backend_key in field_mapping.items():
+                            if frontend_key in listing_data:
+                                val = listing_data.pop(frontend_key)
+                                if backend_key not in listing_data:
+                                    listing_data[backend_key] = val
+                        
                         # Ensure defaults
                         if 'is_available' not in listing_data:
                             listing_data['is_available'] = True
