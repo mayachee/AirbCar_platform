@@ -20,7 +20,7 @@ import AdminReviewsManagement from '@/features/admin/components/AdminReviewsMana
 import { useToast } from '@/contexts/ToastContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { motion } from 'framer-motion';
-import { RefreshCw, Bell, X, Search, DollarSign, TrendingUp, Album, Calendar, CheckCircle, AlertCircle, Clock, Info } from 'lucide-react';
+import { RefreshCw, Bell, X, Search, DollarSign, TrendingUp, Album, Calendar, CheckCircle, AlertCircle, Clock, Info, Star, MessageSquare, ShieldCheck, ShieldAlert, UserPlus } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
                   >
                     <Bell className="h-5 w-5 text-gray-600" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg shadow-red-500/30">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -235,55 +235,93 @@ export default function AdminDashboard() {
                   {isNotifOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-                      <div className="absolute right-0 top-12 z-50 w-96 max-h-[70vh] bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                          <h3 className="text-sm font-bold text-gray-900">Admin Notifications</h3>
+                      <div className="fixed left-3 right-3 top-16 z-50 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[420px] bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden">
+                        <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                           <div className="flex items-center gap-2">
+                            <h3 className="text-base font-bold text-gray-900">Admin Notifications</h3>
                             {unreadCount > 0 && (
-                              <button onClick={() => markAllAsRead()} className="text-xs text-blue-600 hover:text-blue-800">
-                                Mark all read
+                              <span className="bg-orange-100 text-orange-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                                {unreadCount} new
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {unreadCount > 0 && (
+                              <button onClick={() => markAllAsRead()} className="text-xs font-medium text-blue-600 hover:text-blue-800 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors">
+                                Read all
                               </button>
                             )}
-                            <button onClick={() => setIsNotifOpen(false)} className="text-gray-400 hover:text-gray-600">
+                            <button onClick={() => setIsNotifOpen(false)} className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                               <X className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
-                        <div className="overflow-y-auto max-h-80 divide-y divide-gray-100">
+                        <div className="overflow-y-auto max-h-[55vh] sm:max-h-80 divide-y divide-gray-100">
                           {notifications.length === 0 ? (
-                            <div className="p-8 text-center">
-                              <Bell className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                              <p className="text-sm text-gray-500">No notifications</p>
+                            <div className="py-12 px-6 text-center">
+                              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 mb-4">
+                                <Bell className="w-7 h-7 text-gray-400" />
+                              </div>
+                              <p className="text-gray-500 font-medium">No notifications</p>
+                              <p className="text-gray-400 text-sm mt-1">You're all caught up!</p>
                             </div>
                           ) : (
                             notifications.map((n) => {
-                              const icon = n.type === 'success' || n.type === 'booking_accepted'
-                                ? <CheckCircle className="w-4 h-4 text-green-500" />
-                                : n.type === 'error' || n.type === 'booking_rejected'
-                                ? <AlertCircle className="w-4 h-4 text-red-500" />
-                                : n.type === 'new_booking'
-                                ? <Clock className="w-4 h-4 text-blue-500" />
-                                : n.type === 'warning'
-                                ? <AlertCircle className="w-4 h-4 text-yellow-500" />
-                                : <Info className="w-4 h-4 text-gray-400" />;
+                              const iconMap = {
+                                'new_booking': <Clock className="w-5 h-5 text-blue-500" />,
+                                'booking_confirmed': <CheckCircle className="w-5 h-5 text-green-500" />,
+                                'booking_accepted': <CheckCircle className="w-5 h-5 text-green-500" />,
+                                'booking_rejected': <AlertCircle className="w-5 h-5 text-red-500" />,
+                                'booking_cancelled': <X className="w-5 h-5 text-red-500" />,
+                                'new_review': <Star className="w-5 h-5 text-yellow-500" />,
+                                'review_reply': <MessageSquare className="w-5 h-5 text-purple-500" />,
+                                'partner_approved': <ShieldCheck className="w-5 h-5 text-green-500" />,
+                                'partner_rejected': <ShieldAlert className="w-5 h-5 text-red-500" />,
+                                'welcome': <UserPlus className="w-5 h-5 text-blue-500" />,
+                                'success': <CheckCircle className="w-5 h-5 text-green-500" />,
+                                'error': <AlertCircle className="w-5 h-5 text-red-500" />,
+                                'warning': <AlertCircle className="w-5 h-5 text-yellow-500" />,
+                              };
+                              const icon = iconMap[n.type] || <Info className="w-5 h-5 text-gray-400" />;
+                              const accentMap = {
+                                'new_booking': 'border-l-blue-500',
+                                'booking_confirmed': 'border-l-green-500',
+                                'booking_accepted': 'border-l-green-500',
+                                'booking_rejected': 'border-l-red-500',
+                                'booking_cancelled': 'border-l-red-500',
+                                'new_review': 'border-l-yellow-500',
+                                'review_reply': 'border-l-purple-500',
+                                'partner_approved': 'border-l-green-500',
+                                'partner_rejected': 'border-l-red-500',
+                                'welcome': 'border-l-blue-500',
+                                'success': 'border-l-green-500',
+                                'error': 'border-l-red-500',
+                                'warning': 'border-l-yellow-500',
+                              };
+                              const accent = accentMap[n.type] || 'border-l-gray-400';
+
                               return (
                                 <button
                                   key={n.id}
                                   onClick={() => { if (!n.is_read) markAsRead(n.id); setIsNotifOpen(false); }}
-                                  className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
-                                    !n.is_read ? 'bg-blue-50/50' : ''
+                                  className={`w-full text-left px-5 py-4 border-l-[3px] hover:bg-gray-50 transition-all ${accent} ${
+                                    !n.is_read ? 'bg-blue-50/40' : ''
                                   }`}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex-shrink-0">{icon}</div>
+                                    <div className="mt-0.5 flex-shrink-0 p-1.5 rounded-lg bg-gray-100">{icon}</div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 truncate">{n.title}</p>
-                                      <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{n.message}</p>
-                                      <p className="text-[10px] text-gray-400 mt-1">
+                                      <p className={`text-sm truncate ${!n.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>{n.title}</p>
+                                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                                      <p className="text-xs text-gray-400 mt-1.5">
                                         {(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? 'Just now' : d < 60 ? d + 'm ago' : d < 1440 ? Math.floor(d/60) + 'h ago' : Math.floor(d/1440) + 'd ago'; } catch { return ''; } })()}
                                       </p>
                                     </div>
-                                    {!n.is_read && <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />}
+                                    {!n.is_read && (
+                                      <div className="flex-shrink-0 mt-1">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                      </div>
+                                    )}
                                   </div>
                                 </button>
                               );

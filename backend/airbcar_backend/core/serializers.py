@@ -205,19 +205,29 @@ class SimpleListingSerializer(serializers.ModelSerializer):
     dailyRate = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
     price = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
     image = serializers.SerializerMethodField()
+    title = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+    seats = serializers.IntegerField(source='seating_capacity', read_only=True)
     
     class Meta:
         model = Listing
         fields = [
-            'id', 'make', 'brand', 'model', 'model_name', 'year', 
+            'id', 'title', 'name', 'make', 'brand', 'model', 'model_name', 'year', 
             'price_per_day', 'dailyRate', 'price', 'location', 
-            'rating', 'review_count', 'image', 'images', 'is_available'
+            'rating', 'review_count', 'image', 'images', 'is_available', 'is_verified',
+            'fuel_type', 'transmission', 'seats',
         ]
         
     def get_image(self, obj):
         if obj.images and len(obj.images) > 0:
             return obj.images[0]
         return None
+
+    def get_title(self, obj):
+        return f"{obj.make} {obj.model} {obj.year}".strip()
+
+    def get_name(self, obj):
+        return f"{obj.make} {obj.model} {obj.year}".strip()
 
 
 class PartnerSerializer(serializers.ModelSerializer):

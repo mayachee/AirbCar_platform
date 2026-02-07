@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg, Sum, Count, Min
+from django.db.models import Q, F, DecimalField, Avg, Sum, Count, Min, Prefetch
 from django.utils import timezone
 from django.db import transaction, OperationalError
 from datetime import datetime, timedelta
@@ -290,7 +290,10 @@ class PartnerDetailView(APIView):
     def get(self, request, pk):
         """Get partner detail by ID."""
         try:
-            partner = Partner.objects.select_related('user').prefetch_related('listings').get(pk=pk)
+            # Use explicit Prefetch to ensure ALL listings are returned (no filtering)
+            partner = Partner.objects.select_related('user').prefetch_related(
+                Prefetch('listings', queryset=Listing.objects.all().order_by('-created_at'))
+            ).get(pk=pk)
             serializer = PartnerDetailSerializer(partner, context={'request': request})
             if settings.DEBUG:
                 print(f"PartnerDetailView: Partner {partner.id} has {partner.listings.count()} listings")

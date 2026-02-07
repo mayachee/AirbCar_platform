@@ -102,22 +102,11 @@ export default function DashboardHeader({
           </motion.button>
 
           <ComponentLoader>
-            <div className="relative">
-              <NotificationCenter
-                notifications={notifications}
-                onMarkAsRead={onMarkAsRead}
-                onClearAll={onClearAll}
-              />
-              {unreadCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"
-                >
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </motion.span>
-              )}
-            </div>
+            <NotificationCenter
+              notifications={notifications}
+              onMarkAsRead={onMarkAsRead}
+              onClearAll={onClearAll}
+            />
           </ComponentLoader>
 
           <ComponentLoader>

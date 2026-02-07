@@ -339,8 +339,13 @@ export function useOptimizedDashboard() {
 
   // Notification handlers — delegate to NotificationContext
   const handleMarkAsRead = useCallback((id) => {
-    markAsRead(id);
-  }, [markAsRead]);
+    if (id) {
+      markAsRead(id);
+    } else {
+      // Called without ID means "mark all as read"
+      markAllAsRead();
+    }
+  }, [markAsRead, markAllAsRead]);
 
   const handleClearAllNotifications = useCallback(() => {
     markAllAsRead();
