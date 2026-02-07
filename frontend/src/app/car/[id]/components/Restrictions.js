@@ -140,65 +140,6 @@ export default function Restrictions({ vehicle }) {
               </div>
             )}
 
-            {/* Contact Information */}
-            {(owner.phone || owner.email || owner.phone_number) && (
-              <div className="pt-3">
-                <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Contact Information</p>
-                <div className="space-y-2">
-                  {(owner.phone || owner.phone_number) && (
-                    <div className="flex items-center space-x-3">
-                      <Phone className="w-4 h-4 text-orange-600" />
-                      <a 
-                        href={`tel:${owner.phone || owner.phone_number}`}
-                        className="text-sm text-gray-700 hover:text-orange-600 transition-colors"
-                      >
-                        {owner.phone || owner.phone_number}
-                      </a>
-                    </div>
-                  )}
-                  {owner.email && (
-                    <div className="flex items-center space-x-3">
-                      <Mail className="w-4 h-4 text-orange-600" />
-                      <a 
-                        href={`mailto:${owner.email}`}
-                        className="text-sm text-gray-700 hover:text-orange-600 transition-colors"
-                      >
-                        {owner.email}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Location */}
-            {(owner.city || owner.address || owner.location) && (
-              <div className="pt-3">
-                <div className="flex items-start space-x-3">
-                  <MapPin className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500 mb-1">Location</p>
-                    <p className="text-sm text-gray-700">
-                      {[owner.city, owner.address, owner.location].filter(Boolean).join(', ')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Response Time */}
-            {owner.responseTime && (
-              <div className="pt-3">
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-4 h-4 text-orange-600" />
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Response Time</p>
-                    <p className="text-sm font-medium text-gray-700">{owner.responseTime}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Verified Badge */}
             {owner.verified && (
               <div className="pt-3">
