@@ -370,7 +370,7 @@ class PartnerEarningsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """Get partner earnings statistics."""
+        """Get partner earnings statistics with time-series data."""
         try:
             try:
                 partner = Partner.objects.get(user=request.user)
@@ -379,29 +379,125 @@ class PartnerEarningsView(APIView):
                     'error': 'Partner profile not found'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Calculate earnings from completed bookings
-            completed_bookings = Booking.objects.filter(
-                partner=partner,
-                status='completed',
-                payment_status='paid'
+            now = timezone.now()
+            thirty_days_ago = now - timedelta(days=30)
+            sixty_days_ago = now - timedelta(days=60)
+            seven_days_ago = now - timedelta(days=7)
+            
+            # All partner bookings
+            all_bookings = Booking.objects.filter(listing__partner=partner)
+            completed_bookings = all_bookings.filter(status='completed')
+            
+            # Total & monthly earnings
+            total_earnings = completed_bookings.aggregate(
+                total=Sum('price')
+            )['total'] or 0
+            
+            monthly_earnings = completed_bookings.filter(
+                start_time__gte=thirty_days_ago
+            ).aggregate(total=Sum('price'))['total'] or 0
+            
+            # Previous month for growth calculation
+            prev_month_earnings = completed_bookings.filter(
+                start_time__gte=sixty_days_ago,
+                start_time__lt=thirty_days_ago
+            ).aggregate(total=Sum('price'))['total'] or 0
+            
+            weekly_earnings = completed_bookings.filter(
+                start_time__gte=seven_days_ago
+            ).aggregate(total=Sum('price'))['total'] or 0
+            
+            # Growth rate
+            growth_rate = 0
+            if prev_month_earnings > 0:
+                growth_rate = round(((float(monthly_earnings) - float(prev_month_earnings)) / float(prev_month_earnings)) * 100, 1)
+            
+            # Average per booking
+            completed_count = completed_bookings.count()
+            avg_per_booking = round(float(total_earnings) / completed_count, 2) if completed_count > 0 else 0
+            
+            # Pending earnings (accepted but not completed)
+            pending_earnings = all_bookings.filter(
+                status='accepted'
+            ).aggregate(total=Sum('price'))['total'] or 0
+            
+            # Daily earnings for last 30 days
+            from django.db.models.functions import TruncDate
+            daily_earnings = (
+                completed_bookings
+                .filter(start_time__gte=thirty_days_ago)
+                .annotate(day=TruncDate('start_time'))
+                .values('day')
+                .annotate(
+                    revenue=Sum('price'),
+                    count=Count('id')
+                )
+                .order_by('day')
             )
             
-            total_earnings = completed_bookings.aggregate(
-                total=Sum('total_amount')
-            )['total'] or 0
+            # Fill in missing days with 0
+            daily_data = []
+            for i in range(30):
+                day = (thirty_days_ago + timedelta(days=i)).date()
+                entry = next((d for d in daily_earnings if d['day'] == day), None)
+                daily_data.append({
+                    'date': day.isoformat(),
+                    'revenue': float(entry['revenue']) if entry else 0,
+                    'bookings': entry['count'] if entry else 0,
+                })
             
-            # Monthly earnings (last 30 days)
-            thirty_days_ago = timezone.now() - timedelta(days=30)
-            monthly_earnings = completed_bookings.filter(
-                created_at__gte=thirty_days_ago
-            ).aggregate(
-                total=Sum('total_amount')
-            )['total'] or 0
+            # Per-vehicle earnings
+            from django.db.models.functions import Coalesce
+            vehicle_earnings = (
+                completed_bookings
+                .values(
+                    'listing__id', 'listing__make', 'listing__model', 'listing__year'
+                )
+                .annotate(
+                    revenue=Coalesce(Sum('price'), 0),
+                    booking_count=Count('id')
+                )
+                .order_by('-revenue')[:10]
+            )
+            
+            vehicle_earnings_data = [
+                {
+                    'id': v['listing__id'],
+                    'name': f"{v['listing__make']} {v['listing__model']} {v['listing__year']}",
+                    'revenue': float(v['revenue']),
+                    'bookings': v['booking_count'],
+                }
+                for v in vehicle_earnings
+            ]
+            
+            # Recent completed bookings (payout history)
+            recent_completed = completed_bookings.select_related(
+                'listing', 'user'
+            ).order_by('-start_time')[:10]
+            
+            payout_history = [
+                {
+                    'id': b.id,
+                    'date': b.start_time.date().isoformat() if b.start_time else b.date.isoformat() if b.date else '',
+                    'amount': float(b.price),
+                    'vehicle': f"{b.listing.make} {b.listing.model}" if b.listing else 'Unknown',
+                    'customer': f"{b.user.first_name} {b.user.last_name}".strip() if b.user else 'Unknown',
+                    'status': 'completed',
+                }
+                for b in recent_completed
+            ]
             
             return Response({
                 'total_earnings': float(total_earnings),
                 'monthly_earnings': float(monthly_earnings),
-                'total_bookings': completed_bookings.count()
+                'weekly_earnings': float(weekly_earnings),
+                'pending_earnings': float(pending_earnings),
+                'average_per_booking': avg_per_booking,
+                'growth_rate': growth_rate,
+                'total_bookings': completed_count,
+                'daily_earnings': daily_data,
+                'vehicle_earnings': vehicle_earnings_data,
+                'payout_history': payout_history,
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -419,7 +515,7 @@ class PartnerAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """Get partner analytics."""
+        """Get partner analytics with time-series and breakdowns."""
         try:
             try:
                 partner = Partner.objects.get(user=request.user)
@@ -428,10 +524,17 @@ class PartnerAnalyticsView(APIView):
                     'error': 'Partner profile not found'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            # Optimize: Use aggregate and Count with filter to get all stats in fewer queries
-            from django.db.models import Case, When, IntegerField
+            range_param = request.query_params.get('range', '30d')
+            days = {'7d': 7, '30d': 30, '90d': 90}.get(range_param, 30)
             
-            # Get all listing stats in one query
+            now = timezone.now()
+            range_start = now - timedelta(days=days)
+            prev_range_start = now - timedelta(days=days * 2)
+            
+            from django.db.models import Case, When, IntegerField
+            from django.db.models.functions import TruncDate, Coalesce
+            
+            # Listing stats
             listing_stats = Listing.objects.filter(partner=partner).aggregate(
                 total=Count('id'),
                 available=Count('id', filter=Q(is_available=True))
@@ -439,40 +542,116 @@ class PartnerAnalyticsView(APIView):
             total_listings = listing_stats['total']
             available_listings = listing_stats['available']
             
-            # Get all booking stats in one query
-            thirty_days_ago = timezone.now() - timedelta(days=30)
-            booking_stats = Booking.objects.filter(partner=partner).aggregate(
+            # All bookings
+            all_bookings = Booking.objects.filter(listing__partner=partner)
+            
+            # Current & previous period bookings
+            current_bookings = all_bookings.filter(start_time__gte=range_start)
+            prev_bookings = all_bookings.filter(start_time__gte=prev_range_start, start_time__lt=range_start)
+            
+            # Aggregate stats
+            booking_stats = all_bookings.aggregate(
                 total=Count('id'),
                 pending=Count('id', filter=Q(status='pending')),
-                confirmed=Count('id', filter=Q(status='confirmed')),
-                active=Count('id', filter=Q(status='active')),
+                accepted=Count('id', filter=Q(status='accepted')),
                 completed=Count('id', filter=Q(status='completed')),
                 cancelled=Count('id', filter=Q(status='cancelled')),
-                monthly=Count('id', filter=Q(created_at__gte=thirty_days_ago)),
-                total_earnings=Sum('total_amount', filter=Q(status='completed', payment_status='paid')),
-                monthly_earnings=Sum('total_amount', filter=Q(status='completed', payment_status='paid', created_at__gte=thirty_days_ago))
+                rejected=Count('id', filter=Q(status='rejected')),
             )
             
-            total_bookings = booking_stats['total']
-            pending_bookings = booking_stats['pending']
-            confirmed_bookings = booking_stats['confirmed']
-            active_bookings = booking_stats['active']
-            completed_bookings = booking_stats['completed']
-            cancelled_bookings = booking_stats['cancelled']
-            monthly_bookings = booking_stats['monthly']
-            total_earnings = booking_stats['total_earnings'] or 0
-            monthly_earnings = booking_stats['monthly_earnings'] or 0
+            # Revenue calculations
+            completed_in_range = current_bookings.filter(status='completed')
+            total_revenue = completed_in_range.aggregate(total=Sum('price'))['total'] or 0
             
-            # Get review stats in one query
+            prev_revenue = prev_bookings.filter(status='completed').aggregate(total=Sum('price'))['total'] or 0
+            revenue_trend = 0
+            if prev_revenue > 0:
+                revenue_trend = round(((float(total_revenue) - float(prev_revenue)) / float(prev_revenue)) * 100, 1)
+            
+            current_booking_count = current_bookings.count()
+            prev_booking_count = prev_bookings.count()
+            bookings_trend = 0
+            if prev_booking_count > 0:
+                bookings_trend = round(((current_booking_count - prev_booking_count) / prev_booking_count) * 100, 1)
+            
+            # Average daily rate
+            avg_daily_rate = Listing.objects.filter(
+                partner=partner, is_available=True
+            ).aggregate(avg=Avg('price_per_day'))['avg'] or 0
+            
+            # Daily data for charts
+            daily_data_qs = (
+                all_bookings
+                .filter(start_time__gte=range_start)
+                .annotate(day=TruncDate('start_time'))
+                .values('day')
+                .annotate(
+                    revenue=Coalesce(Sum('price', filter=Q(status='completed')), 0),
+                    bookings=Count('id'),
+                    new_bookings=Count('id', filter=Q(status='pending')),
+                )
+                .order_by('day')
+            )
+            
+            daily_chart = []
+            for i in range(days):
+                day = (range_start + timedelta(days=i)).date()
+                entry = next((d for d in daily_data_qs if d['day'] == day), None)
+                daily_chart.append({
+                    'date': day.isoformat(),
+                    'revenue': float(entry['revenue']) if entry else 0,
+                    'bookings': entry['bookings'] if entry else 0,
+                })
+            
+            # Status distribution
+            status_distribution = [
+                {'status': s, 'count': booking_stats.get(s, 0)}
+                for s in ['pending', 'accepted', 'completed', 'cancelled', 'rejected']
+                if booking_stats.get(s, 0) > 0
+            ]
+            total_for_pct = sum(d['count'] for d in status_distribution) or 1
+            for d in status_distribution:
+                d['percentage'] = round((d['count'] / total_for_pct) * 100, 1)
+            
+            # Per-vehicle performance
+            vehicle_perf = (
+                all_bookings.filter(status='completed')
+                .values('listing__id', 'listing__make', 'listing__model', 'listing__year', 'listing__price_per_day')
+                .annotate(
+                    revenue=Coalesce(Sum('price'), 0),
+                    booking_count=Count('id'),
+                )
+                .order_by('-revenue')[:10]
+            )
+            vehicle_performance = [
+                {
+                    'id': v['listing__id'],
+                    'name': f"{v['listing__make']} {v['listing__model']} {v['listing__year']}",
+                    'revenue': float(v['revenue']),
+                    'bookings': v['booking_count'],
+                    'daily_rate': float(v['listing__price_per_day'] or 0),
+                    'utilization': round((v['booking_count'] / max(days, 1)) * 100, 1),
+                }
+                for v in vehicle_perf
+            ]
+            
+            # Review stats
             review_stats = Review.objects.filter(
-                listing__partner=partner, 
-                is_published=True
+                listing__partner=partner, is_published=True
             ).aggregate(
                 avg=Avg('rating'),
-                count=Count('id')
+                count=Count('id'),
+                five_star=Count('id', filter=Q(rating=5)),
+                four_star=Count('id', filter=Q(rating__gte=4, rating__lt=5)),
+                three_star=Count('id', filter=Q(rating__gte=3, rating__lt=4)),
+                two_star=Count('id', filter=Q(rating__gte=2, rating__lt=3)),
+                one_star=Count('id', filter=Q(rating__gte=1, rating__lt=2)),
             )
-            avg_rating = review_stats['avg'] or 0
-            review_count = review_stats['count']
+            
+            # Booking conversion rate
+            total_all = booking_stats['total'] or 1
+            conversion_rate = round((booking_stats['completed'] / total_all) * 100, 1)
+            acceptance_rate = round(((booking_stats['accepted'] + booking_stats['completed']) / total_all) * 100, 1)
             
             return Response({
                 'listings': {
@@ -480,26 +659,38 @@ class PartnerAnalyticsView(APIView):
                     'available': available_listings,
                     'unavailable': total_listings - available_listings
                 },
-                'bookings': {
-                    'total': total_bookings,
-                    'pending': pending_bookings,
-                    'confirmed': confirmed_bookings,
-                    'active': active_bookings,
-                    'completed': completed_bookings,
-                    'cancelled': cancelled_bookings
-                },
+                'bookings': booking_stats,
                 'reviews': {
-                    'average_rating': round(avg_rating, 2),
-                    'count': review_count
+                    'average_rating': round(review_stats['avg'] or 0, 2),
+                    'count': review_stats['count'],
+                    'distribution': {
+                        '5': review_stats['five_star'],
+                        '4': review_stats['four_star'],
+                        '3': review_stats['three_star'],
+                        '2': review_stats['two_star'],
+                        '1': review_stats['one_star'],
+                    }
                 },
                 'earnings': {
-                    'total': float(total_earnings),
-                    'monthly': float(monthly_earnings)
+                    'total': float(total_revenue),
+                    'monthly': float(total_revenue) if days == 30 else None,
                 },
-                'monthly_stats': {
-                    'bookings': monthly_bookings,
-                    'earnings': float(monthly_earnings)
-                }
+                'trends': {
+                    'revenue': revenue_trend,
+                    'bookings': bookings_trend,
+                },
+                'metrics': {
+                    'total_revenue': float(total_revenue),
+                    'total_bookings': current_booking_count,
+                    'active_vehicles': available_listings,
+                    'avg_daily_rate': round(float(avg_daily_rate), 2),
+                    'conversion_rate': conversion_rate,
+                    'acceptance_rate': acceptance_rate,
+                },
+                'daily_data': daily_chart,
+                'status_distribution': status_distribution,
+                'vehicle_performance': vehicle_performance,
+                'range': range_param,
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

@@ -12,8 +12,8 @@ export default function PartnerStats({ stats, loading }) {
       color: 'bg-blue-500',
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
-      change: '+2 this month',
-      changeType: 'positive'
+      change: `${stats?.totalVehicles || 0} listed`,
+      changeType: 'neutral'
     },
     {
       title: 'Active Bookings',
@@ -22,18 +22,18 @@ export default function PartnerStats({ stats, loading }) {
       color: 'bg-green-500',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600',
-      change: '+12% from last month',
-      changeType: 'positive'
+      change: stats?.activeBookings > 0 ? 'In progress' : 'None active',
+      changeType: stats?.activeBookings > 0 ? 'positive' : 'neutral'
     },
     {
       title: 'Monthly Earnings',
-      value: `$${stats?.monthlyEarnings?.toLocaleString() || 0}`,
+      value: `${(stats?.monthlyEarnings || 0).toLocaleString('fr-MA')} MAD`,
       icon: DollarSign,
       color: 'bg-purple-500',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
-      change: '+8% from last month',
-      changeType: 'positive'
+      change: 'This month',
+      changeType: 'neutral'
     },
     {
       title: 'Completed Rentals',
@@ -42,8 +42,8 @@ export default function PartnerStats({ stats, loading }) {
       color: 'bg-orange-500',
       bgColor: 'bg-orange-50',
       textColor: 'text-orange-600',
-      change: '+5 this week',
-      changeType: 'positive'
+      change: `${stats?.completedRentals || 0} total`,
+      changeType: stats?.completedRentals > 0 ? 'positive' : 'neutral'
     },
     {
       title: 'Pending Requests',
@@ -52,8 +52,8 @@ export default function PartnerStats({ stats, loading }) {
       color: 'bg-yellow-500',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600',
-      change: 'Needs attention',
-      changeType: 'neutral'
+      change: stats?.pendingRequests > 0 ? 'Needs attention' : 'All clear',
+      changeType: stats?.pendingRequests > 0 ? 'neutral' : 'positive'
     },
     {
       title: 'Average Rating',
@@ -62,8 +62,8 @@ export default function PartnerStats({ stats, loading }) {
       color: 'bg-indigo-500',
       bgColor: 'bg-indigo-50',
       textColor: 'text-indigo-600',
-      change: '+0.2 this month',
-      changeType: 'positive'
+      change: stats?.averageRating >= 4.0 ? 'Great score!' : stats?.averageRating > 0 ? 'Keep improving' : 'No reviews yet',
+      changeType: stats?.averageRating >= 4.0 ? 'positive' : 'neutral'
     }
   ];
 

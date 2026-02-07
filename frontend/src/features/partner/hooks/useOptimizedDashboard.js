@@ -73,22 +73,26 @@ export function useOptimizedDashboard() {
   const quickStats = useMemo(() => {
     if (!stats) return [];
     
+    // Determine real change values from earnings/analytics
+    const growthRate = earnings?.growth_rate || earnings?.growthRate || 0;
+    const monthlyEarningsVal = earnings?.monthly_earnings || earnings?.monthlyEarnings || stats.monthlyEarnings || 0;
+    
     return [
       {
         title: 'Total Vehicles',
         value: stats.totalVehicles || 0,
-        icon: null, // Will be handled by QuickStatsCard component
+        icon: null,
         color: 'blue',
-        change: stats.totalVehiclesChange || '+2 this month',
-        changeType: 'positive'
+        change: `${stats.totalVehicles || 0} listed`,
+        changeType: 'neutral'
       },
       {
         title: 'Active Bookings',
         value: stats.activeBookings || 0,
         icon: null,
         color: 'green',
-        change: stats.activeBookingsChange || '+12% from last month',
-        changeType: 'positive'
+        change: stats.activeBookings > 0 ? 'In progress' : 'None active',
+        changeType: stats.activeBookings > 0 ? 'positive' : 'neutral'
       },
       {
         title: 'Pending Requests',
@@ -100,14 +104,14 @@ export function useOptimizedDashboard() {
       },
       {
         title: 'Monthly Earnings',
-        value: `$${stats.monthlyEarnings || 0}`,
+        value: `${Number(monthlyEarningsVal).toLocaleString('fr-MA')} MAD`,
         icon: null,
         color: 'purple',
-        change: stats.monthlyEarningsChange || '+8% from last month',
-        changeType: 'positive'
+        change: growthRate !== 0 ? `${growthRate > 0 ? '+' : ''}${growthRate}% vs last month` : 'This month',
+        changeType: growthRate > 0 ? 'positive' : growthRate < 0 ? 'negative' : 'neutral'
       }
     ];
-  }, [stats, pendingRequests.length]);
+  }, [stats, pendingRequests.length, earnings]);
 
   // Partner status check
   const checkPartnerStatus = useCallback(async () => {

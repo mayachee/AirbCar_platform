@@ -1,254 +1,399 @@
 'use client';
 
-import { useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Car, BarChart3 } from 'lucide-react';
-import { SelectField } from '@/components/ui/select-field';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { TrendingUp, TrendingDown, DollarSign, Car, BarChart3, Target, Percent } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { partnerService } from '@/features/partner/services/partnerService';
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, Cell, PieChart, Pie
+} from 'recharts';
 
-export default function AdvancedAnalytics({ analytics, stats, bookings, vehicles }) {
-  const [timeRange, setTimeRange] = useState('30d');
-  const [chartType, setChartType] = useState('revenue');
+const formatCurrency = (v) => `${(Number(v) || 0).toLocaleString('fr-MA')} MAD`;
 
-  // Use analytics from backend if available
-  const chartData = analytics?.revenueByDay || [];
-  const revenueTrend = analytics?.revenueTrend || 0;
-  const bookingsTrend = analytics?.bookingsTrend || 0;
-  const totalRevenue = analytics?.totalRevenue || 0;
-  const totalBookings = analytics?.totalBookings || bookings?.length || 0;
-  const activeVehicles = analytics?.activeVehicles || vehicles?.filter(v => v.is_available)?.length || 0;
-  const averageDailyRate = analytics?.averageDailyRate || (vehicles?.length ? vehicles.reduce((sum, v) => sum + (v.price_per_day || 0), 0) / vehicles.length : 0);
-
-  // Trends from backend analytics
-  const trends = {
-    revenue: revenueTrend,
-    bookings: bookingsTrend,
-    vehicles: 0
-  };
-
-  // Use backend data if available, otherwise calculate from bookings/vehicles
-  const statusCounts = analytics?.statusDistribution
-    ? analytics.statusDistribution
-    : (bookings
-        ? bookings.reduce((acc, booking) => {
-            const status = booking?.status || 'unknown';
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-          }, {})
-        : {});
-
-  const statusDistribution = Array.isArray(statusCounts)
-    ? statusCounts
-        .filter(Boolean)
-        .map((item) => {
-          const status = item.status ?? item.name ?? item.label ?? 'unknown';
-          const count = Number(item.count ?? item.value ?? 0) || 0;
-          return {
-            status,
-            count,
-            percentage: totalBookings > 0 ? (count / totalBookings) * 100 : 0
-          };
-        })
-    : Object.entries(statusCounts || {}).map(([status, count]) => ({
-        status,
-        count,
-        percentage: totalBookings > 0 ? (count / totalBookings) * 100 : 0
-      }));
-
-  const vehiclePerformance = analytics?.vehiclePerformance || 
-    (vehicles && bookings ? vehicles.map(vehicle => {
-      const vehicleBookings = bookings.filter(b => b.listing?.id === vehicle.id);
-      const totalRevenue = vehicleBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
-      const bookingCount = vehicleBookings.length;
-      
-      return {
-        id: vehicle.id,
-        name: `${vehicle.make} ${vehicle.model}`,
-        revenue: totalRevenue,
-        bookings: bookingCount,
-        utilization: bookingCount > 0 ? (bookingCount / 30) * 100 : 0
-      };
-    }).sort((a, b) => b.revenue - a.revenue) : []);
-
-  const ChartBar = ({ data, maxValue, color = 'bg-blue-500' }) => (
-    <div className="flex items-end space-x-1 h-32">
-      {data.map((item, index) => (
-        <div key={index} className="flex flex-col items-center flex-1">
-          <div
-            className={`w-full ${color} rounded-t`}
-            style={{ height: `${(item.value / maxValue) * 100}%` }}
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.label}</span>
-        </div>
+const ChartTooltip = ({ active, payload, label, isCurrency = true }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+      {payload.map((entry, i) => (
+        <p key={i} className="text-sm font-semibold" style={{ color: entry.color }}>
+          {entry.name}: {isCurrency ? formatCurrency(entry.value) : entry.value}
+        </p>
       ))}
     </div>
   );
+};
+
+const STATUS_COLORS = {
+  pending: '#f59e0b',
+  accepted: '#3b82f6',
+  completed: '#10b981',
+  cancelled: '#ef4444',
+  rejected: '#6b7280',
+};
+
+export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, bookings, vehicles }) {
+  const [timeRange, setTimeRange] = useState('30d');
+  const [analytics, setAnalytics] = useState(initialAnalytics);
+  const [loadingRange, setLoadingRange] = useState(false);
+
+  // Re-fetch when time range changes
+  const handleRangeChange = useCallback(async (newRange) => {
+    setTimeRange(newRange);
+    setLoadingRange(true);
+    try {
+      const resp = await partnerService.getAnalytics(newRange);
+      const data = resp?.data?.data || resp?.data || null;
+      if (data) setAnalytics(data);
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+    } finally {
+      setLoadingRange(false);
+    }
+  }, []);
+
+  // Also update if initialAnalytics changes
+  useEffect(() => {
+    if (initialAnalytics) setAnalytics(initialAnalytics);
+  }, [initialAnalytics]);
+
+  // Map data from enhanced backend
+  const metrics = useMemo(() => analytics?.metrics || {}, [analytics]);
+  const trends = useMemo(() => analytics?.trends || {}, [analytics]);
+
+  const dailyData = useMemo(() => {
+    const raw = analytics?.daily_data || [];
+    return raw.map(d => ({
+      date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      revenue: Number(d.revenue) || 0,
+      bookings: d.bookings || 0,
+    }));
+  }, [analytics]);
+
+  const statusDistribution = useMemo(() => {
+    const raw = analytics?.status_distribution || [];
+    return raw.map(s => ({
+      name: s.status?.charAt(0).toUpperCase() + s.status?.slice(1),
+      value: s.count || 0,
+      percentage: s.percentage || 0,
+      status: s.status,
+      color: STATUS_COLORS[s.status] || '#6b7280',
+    }));
+  }, [analytics]);
+
+  const vehiclePerformance = useMemo(() => {
+    return analytics?.vehicle_performance || [];
+  }, [analytics]);
+
+  const reviewStats = useMemo(() => analytics?.reviews || {}, [analytics]);
+
+  const timeRangeLabel = { '7d': 'Last 7 Days', '30d': 'Last 30 Days', '90d': 'Last 90 Days' }[timeRange] || 'Last 30 Days';
+
+  const metricCards = [
+    {
+      title: 'Total Revenue',
+      value: formatCurrency(metrics.total_revenue),
+      trend: trends.revenue,
+      icon: DollarSign,
+      color: 'green',
+    },
+    {
+      title: 'Total Bookings',
+      value: metrics.total_bookings || 0,
+      trend: trends.bookings,
+      icon: BarChart3,
+      color: 'blue',
+    },
+    {
+      title: 'Active Vehicles',
+      value: metrics.active_vehicles || vehicles?.filter(v => v.is_available)?.length || 0,
+      trend: null,
+      icon: Car,
+      color: 'purple',
+    },
+    {
+      title: 'Conversion Rate',
+      value: `${metrics.conversion_rate || 0}%`,
+      trend: null,
+      icon: Target,
+      color: 'yellow',
+      subtitle: `${metrics.acceptance_rate || 0}% acceptance`,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <BarChart3 className="h-6 w-6 text-gray-600 dark:text-gray-300" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Advanced Analytics</h3>
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+            <BarChart3 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Analytics</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{timeRangeLabel}</p>
+          </div>
         </div>
-        
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-          <SelectField
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            options={[
-              { value: '7d', label: 'Last 7 days' },
-              { value: '30d', label: 'Last 30 days' },
-              { value: '90d', label: 'Last 90 days' },
-            ]}
-            className="w-60 sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          
-          <SelectField
-            value={chartType}
-            onChange={(e) => setChartType(e.target.value)}
-            options={[
-              { value: 'revenue', label: 'Revenue' },
-              { value: 'bookings', label: 'Bookings' },
-              { value: 'vehicles', label: 'Vehicles' },
-            ]}
-            className="w-60 sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+
+        <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          {[
+            { value: '7d', label: '7D' },
+            { value: '30d', label: '30D' },
+            { value: '90d', label: '90D' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => handleRangeChange(opt.value)}
+              disabled={loadingRange}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                timeRange === opt.value
+                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${totalRevenue.toLocaleString()}
-              </p>
-            </div>
-            <div className={`flex items-center space-x-1 ${
-              trends.revenue >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {trends.revenue >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-              <span className="text-sm font-medium">{Math.abs(trends.revenue).toFixed(1)}%</span>
-            </div>
-          </div>
-        </div>
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metricCards.map((card, i) => {
+          const Icon = card.icon;
+          const colorMap = {
+            green: { bg: 'bg-green-50 dark:bg-green-900/20', border: 'border-green-200 dark:border-green-800', icon: 'text-green-600 dark:text-green-400', iconBg: 'bg-green-100 dark:bg-green-900/40' },
+            blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', icon: 'text-blue-600 dark:text-blue-400', iconBg: 'bg-blue-100 dark:bg-blue-900/40' },
+            purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-200 dark:border-purple-800', icon: 'text-purple-600 dark:text-purple-400', iconBg: 'bg-purple-100 dark:bg-purple-900/40' },
+            yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', icon: 'text-yellow-600 dark:text-yellow-400', iconBg: 'bg-yellow-100 dark:bg-yellow-900/40' },
+          };
+          const c = colorMap[card.color];
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Bookings</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totalBookings}
-              </p>
-            </div>
-            <div className={`flex items-center space-x-1 ${
-              trends.bookings >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {trends.bookings >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-              <span className="text-sm font-medium">{Math.abs(trends.bookings).toFixed(1)}%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Vehicles</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{activeVehicles}</p>
-            </div>
-            <Car className="h-6 w-6 text-gray-400 dark:text-gray-500" />
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Daily Rate</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${Math.round(averageDailyRate)}
-              </p>
-            </div>
-            <DollarSign className="h-6 w-6 text-gray-400 dark:text-gray-500" />
-          </div>
-        </div>
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              className={`rounded-xl border p-5 ${c.bg} ${c.border}`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className={`p-2.5 rounded-lg ${c.iconBg}`}>
+                  <Icon className={`h-5 w-5 ${c.icon}`} />
+                </div>
+                {card.trend !== null && card.trend !== undefined && (
+                  <div className={`flex items-center gap-1 text-xs font-semibold ${
+                    card.trend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {card.trend >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                    {Math.abs(card.trend).toFixed(1)}%
+                  </div>
+                )}
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{card.title}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</p>
+              {card.subtitle && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{card.subtitle}</p>
+              )}
+            </motion.div>
+          );
+        })}
       </div>
 
-      {/* Charts */}
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">Revenue Trend</h4>
-          <ChartBar
-            data={chartData.length > 0 ? chartData.map(d => ({
-              label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              value: d.revenue || 0
-            })) : [{ label: 'No data', value: 0 }]}
-            maxValue={chartData.length > 0 ? Math.max(...chartData.map(d => d.revenue || 0), 1) : 1}
-            color="bg-green-500"
-          />
-        </div>
+        {/* Revenue Trend */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Revenue Trend</h4>
+          {dailyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={dailyData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="analyticsRevenueGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.4} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={Math.ceil(dailyData.length / 7)} />
+                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={50} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#analyticsRevenueGrad)" dot={false} activeDot={{ r: 4, fill: '#10b981' }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No revenue data for this period</div>
+          )}
+        </motion.div>
 
-        {/* Bookings Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">Bookings Trend</h4>
-          <ChartBar
-            data={chartData.length > 0 ? chartData.map(d => ({
-              label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-              value: d.bookings || 0
-            })) : [{ label: 'No data', value: 0 }]}
-            maxValue={chartData.length > 0 ? Math.max(...chartData.map(d => d.bookings || 0), 1) : 1}
-            color="bg-blue-500"
-          />
-        </div>
+        {/* Bookings Trend */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Bookings Trend</h4>
+          {dailyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={dailyData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.4} />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={Math.ceil(dailyData.length / 7)} />
+                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={30} allowDecimals={false} />
+                <Tooltip content={<ChartTooltip isCurrency={false} />} />
+                <Bar dataKey="bookings" name="Bookings" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No booking data for this period</div>
+          )}
+        </motion.div>
       </div>
 
       {/* Status Distribution & Vehicle Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Booking Status Distribution */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">Booking Status Distribution</h4>
-          <div className="space-y-3">
-            {statusDistribution.map((item) => (
-              <div key={item.status} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    item.status === 'accepted' ? 'bg-green-500' :
-                    item.status === 'pending' ? 'bg-yellow-500' :
-                    item.status === 'rejected' ? 'bg-red-500' :
-                    'bg-gray-500'
-                  }`} />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">{item.status}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">{item.count}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">({item.percentage.toFixed(1)}%)</span>
-                </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-5">Booking Status</h4>
+          {statusDistribution.length > 0 ? (
+            <div className="flex items-center gap-6">
+              {/* Donut Chart */}
+              <div className="w-40 h-40 flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusDistribution}
+                      innerRadius={40}
+                      outerRadius={65}
+                      paddingAngle={3}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {statusDistribution.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value, name) => [value, name]} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
-        </div>
+              {/* Legend */}
+              <div className="flex-1 space-y-2.5">
+                {statusDistribution.map((item) => (
+                  <div key={item.status} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{item.value}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">({item.percentage}%)</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No booking data</div>
+          )}
+        </motion.div>
 
         {/* Top Performing Vehicles */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">Top Performing Vehicles</h4>
-          <div className="space-y-3">
-            {vehiclePerformance.slice(0, 5).map((vehicle) => (
-              <div key={vehicle.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{vehicle.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{vehicle.bookings} bookings</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">${vehicle.revenue.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{vehicle.utilization.toFixed(1)}% utilization</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-5">Top Performing Vehicles</h4>
+          {vehiclePerformance.length > 0 ? (
+            <div className="space-y-3">
+              {vehiclePerformance.slice(0, 5).map((vehicle, i) => {
+                const maxRev = vehiclePerformance[0]?.revenue || 1;
+                const pct = Math.round((vehicle.revenue / maxRev) * 100);
+                return (
+                  <motion.div
+                    key={vehicle.id || i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 + i * 0.06 }}
+                    className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{vehicle.name}</p>
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">{formatCurrency(vehicle.revenue)}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.6, delay: 0.5 + i * 0.1 }}
+                          className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {vehicle.bookings} bookings · {vehicle.utilization}% util.
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No vehicle performance data</div>
+          )}
+        </motion.div>
       </div>
+
+      {/* Review Stats + Avg Daily Rate */}
+      {(reviewStats.count > 0 || metrics.avg_daily_rate > 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+        >
+          {reviewStats.count > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Average Rating</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{reviewStats.average_rating}</p>
+                <span className="text-yellow-500 text-lg">★</span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{reviewStats.count} reviews</p>
+            </div>
+          )}
+          {metrics.avg_daily_rate > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Daily Rate</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(metrics.avg_daily_rate)}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">across available vehicles</p>
+            </div>
+          )}
+          {metrics.acceptance_rate > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Acceptance Rate</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{metrics.acceptance_rate}%</p>
+                <Percent className="h-4 w-4 text-gray-400" />
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{metrics.conversion_rate}% conversion</p>
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }

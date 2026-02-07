@@ -344,7 +344,7 @@ export default function DashboardContent({
                           )}
                           {booking.price && (
                             <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-2">
-                              ${parseFloat(booking.price || booking.total_price || 0).toLocaleString()}
+                              {parseFloat(booking.price || booking.total_price || 0).toLocaleString('fr-MA')} MAD
                             </p>
                           )}
                         </div>
@@ -458,7 +458,7 @@ export default function DashboardContent({
           {/* Additional Dashboard Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ComponentLoader>
-              <VehiclePerformanceInsights vehicles={vehicles} />
+              <VehiclePerformanceInsights vehicles={vehicles} earnings={earnings} />
             </ComponentLoader>
             
             <ComponentLoader>
