@@ -37,8 +37,8 @@ const chartConfig = {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3">
-        <p className="font-semibold text-gray-900 mb-2">{label}</p>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3">
+        <p className="font-semibold text-gray-900 dark:text-white mb-2">{label}</p>
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center justify-between space-x-4 mb-1">
             <div className="flex items-center space-x-2">
@@ -46,9 +46,9 @@ const CustomTooltip = ({ active, payload, label }) => {
                 className="w-3 h-3 rounded-full" 
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-sm text-gray-600">{entry.name}:</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">{entry.name}:</span>
             </div>
-            <span className="text-sm font-bold text-gray-900">
+            <span className="text-sm font-bold text-gray-900 dark:text-white">
               {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
             </span>
           </div>
@@ -317,12 +317,12 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
   if (loading || loadingAnalytics) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
           <div className="h-[400px] flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
           <div className="h-[400px] flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
           </div>
@@ -336,21 +336,21 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-300"
+      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 hover:shadow-lg transition-shadow duration-300"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
             {analyticsData && (
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Data from backend API"></div>
             )}
           </div>
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
             <span>Total: {stats?.total?.toLocaleString() || 0}</span>
             {stats?.momGrowth !== null && (
-              <span className={`flex items-center space-x-1 ${stats.momGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`flex items-center space-x-1 ${stats.momGrowth >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {stats.momGrowth >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                 <span>MoM: {stats.momGrowth >= 0 ? '+' : ''}{stats.momGrowth?.toFixed(1)}%</span>
               </span>
@@ -365,22 +365,22 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-600 mb-1">Average</p>
-            <p className="text-lg font-bold text-blue-900">{stats.average?.toFixed(1)}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Average</p>
+            <p className="text-lg font-bold text-blue-900 dark:text-blue-300">{stats.average?.toFixed(1)}</p>
           </div>
-          <div className="bg-green-50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-600 mb-1">Peak</p>
-            <p className="text-lg font-bold text-green-900">{stats.max}</p>
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Peak</p>
+            <p className="text-lg font-bold text-green-900 dark:text-green-300">{stats.max}</p>
           </div>
-          <div className="bg-purple-50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-600 mb-1">Peak Month</p>
-            <p className="text-sm font-bold text-purple-900">{stats.peakMonth}</p>
+          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Peak Month</p>
+            <p className="text-sm font-bold text-purple-900 dark:text-purple-300">{stats.peakMonth}</p>
           </div>
           {stats.yoyGrowth !== null && (
-            <div className="bg-orange-50 rounded-lg p-3 text-center">
-              <p className="text-xs text-gray-600 mb-1">YoY Growth</p>
-              <p className={`text-sm font-bold ${stats.yoyGrowth >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 text-center">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">YoY Growth</p>
+              <p className={`text-sm font-bold ${stats.yoyGrowth >= 0 ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'}`}>
                 {stats.yoyGrowth >= 0 ? '+' : ''}{stats.yoyGrowth?.toFixed(1)}%
               </p>
             </div>
@@ -396,10 +396,10 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
   return (
     <div className="space-y-6 mb-8">
       {/* Period Filter and Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
         <div className="flex items-center space-x-3">
-          <Filter className="h-4 w-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Period:</span>
+          <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Period:</span>
           <div className="flex space-x-2">
             {['6', '12', '24', 'all'].map(period => (
               <button
@@ -408,7 +408,7 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   periodFilter === period
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
                 {period === 'all' ? 'All Time' : `${period}M`}
@@ -419,7 +419,7 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
         <div className="flex items-center space-x-2">
           <button
             onClick={handleExport}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
           >
             <Download className="h-4 w-4" />
             <span>Export</span>
@@ -438,11 +438,11 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
           {displayChartData.length > 0 ? (
             <div className="relative">
               {/* Chart Type Toggle */}
-              <div className="absolute top-0 right-0 z-10 flex space-x-1 bg-white rounded-lg border border-gray-200 p-1">
+              <div className="absolute top-0 right-0 z-10 flex space-x-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
                 <button
                   onClick={() => setBookingsChartType('bar')}
                   className={`p-1.5 rounded transition-colors ${
-                    bookingsChartType === 'bar' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'
+                    bookingsChartType === 'bar' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                   title="Bar Chart"
                 >
@@ -451,7 +451,7 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
                 <button
                   onClick={() => setBookingsChartType('line')}
                   className={`p-1.5 rounded transition-colors ${
-                    bookingsChartType === 'line' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'
+                    bookingsChartType === 'line' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                   title="Line Chart"
                 >
@@ -460,7 +460,7 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
                 <button
                   onClick={() => setBookingsChartType('area')}
                   className={`p-1.5 rounded transition-colors ${
-                    bookingsChartType === 'area' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'
+                    bookingsChartType === 'area' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                   title="Area Chart"
                 >
@@ -502,7 +502,7 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
                         <div className="flex justify-center items-center mt-2">
                           <div className="flex items-center space-x-2">
                             <div className="w-3 h-3 rounded bg-blue-500" />
-                            <span className="text-sm text-gray-600">Total Bookings</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Total Bookings</span>
                           </div>
                         </div>
                       )}
@@ -587,12 +587,12 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
             </div>
           )}
           
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 rounded bg-blue-500" />
               <span>Avg: {bookingsStats?.average?.toFixed(1) || 0} per month</span>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               {periodFilter === 'all' ? 'All time' : `Last ${periodFilter} months`}
             </div>
           </div>
@@ -648,7 +648,7 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
                     <div className="flex justify-center items-center mt-2">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 rounded bg-green-500" />
-                        <span className="text-sm text-gray-600">New Users</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">New Users</span>
                       </div>
                     </div>
                   )}
@@ -673,18 +673,18 @@ export default function AdminCharts({ chartData, bookings, users, loading }) {
                   ) : (
                     <TrendingDown className="h-4 w-4 text-red-600" />
                   )}
-                  <span className={`font-medium ${usersStats.overallGrowth > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`font-medium ${usersStats.overallGrowth > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {usersStats.overallGrowth > 0 ? '+' : ''}{usersStats.overallGrowth?.toFixed(1)}% trend
                   </span>
                 </>
               ) : (
                 <>
                   <TrendingUp className="h-4 w-4 text-green-600" />
-                  <span className="text-gray-600">Growing steadily</span>
+                  <span className="text-gray-600 dark:text-gray-400">Growing steadily</span>
                 </>
               )}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               {periodFilter === 'all' ? 'All time' : `Last ${periodFilter} months`}
             </div>
           </div>

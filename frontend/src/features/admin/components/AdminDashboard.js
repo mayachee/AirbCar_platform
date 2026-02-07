@@ -17,13 +17,15 @@ import CarsTable from '@/features/admin/components/CarsTable';
 import EarningsManagement from '@/features/admin/components/EarningsManagement';
 import DashboardOverview from '@/features/admin/components/DashboardOverview';
 import AdminReviewsManagement from '@/features/admin/components/AdminReviewsManagement';
+import { AdminThemeProvider, useAdminTheme } from '@/features/admin/contexts/AdminThemeContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { motion } from 'framer-motion';
-import { RefreshCw, Bell, X, Search, DollarSign, TrendingUp, Album, Calendar, CheckCircle, AlertCircle, Clock, Info, Star, MessageSquare, ShieldCheck, ShieldAlert, UserPlus } from 'lucide-react';
+import { RefreshCw, Bell, X, Sun, Moon, Menu, DollarSign, TrendingUp, Album, Calendar, CheckCircle, AlertCircle, Clock, Info, Star, MessageSquare, ShieldCheck, ShieldAlert, UserPlus } from 'lucide-react';
 
-export default function AdminDashboard() {
+function AdminDashboardInner() {
   const { user, loading } = useAuth();
+  const { isDark, toggleTheme } = useAdminTheme();
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentView, setCurrentView] = useState("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -49,15 +51,6 @@ export default function AdminDashboard() {
   const partnersHook = usePartners();
   const bookingsHook = useBookings();
   const listingsHook = useListings();
-  // const analyticsHook = useAnalytics(); // Commented out until backend endpoints are ready
-  
-  // Mock analytics data for now
-  const analyticsHook = { 
-    revenue: null, 
-    loading: false, 
-    analytics: null,
-    stats: null
-  };
 
   // Check admin status and redirect if not admin
   useEffect(() => {
@@ -138,20 +131,23 @@ export default function AdminDashboard() {
   const handleQuickAction = (actionId) => {
     switch (actionId) {
       case 'add-user':
-        addToast('Add user feature coming soon', 'info');
+        setCurrentView('users');
+        addToast('Navigated to Users management', 'success');
         break;
       case 'add-listing':
-        addToast('Add listing feature coming soon', 'info');
+        setCurrentView('cars');
+        addToast('Navigated to Vehicle listings', 'success');
         break;
       case 'export-data':
-        addToast('Export data feature coming soon', 'info');
+        addToast('Export feature coming soon', 'info');
         break;
       case 'generate-report':
-        addToast('Generate report feature coming soon', 'info');
+        setCurrentView('earnings');
+        addToast('Viewing Earnings report', 'success');
         break;
       case 'analytics':
         setCurrentView('earnings');
-        addToast('Viewing analytics', 'success');
+        addToast('Viewing Analytics', 'success');
         break;
       case 'settings':
         addToast('Settings feature coming soon', 'info');
@@ -163,10 +159,10 @@ export default function AdminDashboard() {
 
   if (loading || loadingData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -177,7 +173,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       
       {/* Sidebar */}
       <AdminSidebar 
@@ -188,18 +184,26 @@ export default function AdminDashboard() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-0">
+      <div className="flex-1 flex flex-col lg:ml-0 min-w-0">
         {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 capitalize">
+        <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-30">
+          <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+            <div className="flex items-center justify-between gap-3">
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setIsMobileOpen(!isMobileOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+              >
+                <Menu className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              </button>
+
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white capitalize truncate">
                   {currentView === 'dashboard' ? 'Dashboard Overview' : 
                    currentView === 'cars' ? 'Vehicle Information' :
                    currentView}
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 hidden sm:block">
                   {currentView === 'dashboard' 
                     ? 'Monitor your platform activity and metrics'
                     : currentView === 'cars'
@@ -209,22 +213,35 @@ export default function AdminDashboard() {
                 </p>
               </div>
               
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                {/* Theme toggle */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {isDark ? (
+                    <Sun className="h-5 w-5 text-amber-400" />
+                  ) : (
+                    <Moon className="h-5 w-5 text-gray-600" />
+                  )}
+                </button>
+
                 <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
                   title="Refresh data"
                 >
-                  <RefreshCw className={`h-5 w-5 text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`h-5 w-5 text-gray-600 dark:text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
                 
                 <div className="relative">
                   <button
                     onClick={() => setIsNotifOpen(!isNotifOpen)}
-                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
                   >
-                    <Bell className="h-5 w-5 text-gray-600" />
+                    <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     {unreadCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg shadow-red-500/30">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -235,35 +252,35 @@ export default function AdminDashboard() {
                   {isNotifOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-                      <div className="fixed left-3 right-3 top-16 z-50 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[420px] bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden">
-                        <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                      <div className="fixed left-2 right-2 top-14 z-50 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[420px] bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
+                        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-base font-bold text-gray-900">Admin Notifications</h3>
+                            <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">Notifications</h3>
                             {unreadCount > 0 && (
-                              <span className="bg-orange-100 text-orange-600 text-xs font-semibold px-2 py-0.5 rounded-full">
+                              <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-semibold px-2 py-0.5 rounded-full">
                                 {unreadCount} new
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-1">
                             {unreadCount > 0 && (
-                              <button onClick={() => markAllAsRead()} className="text-xs font-medium text-blue-600 hover:text-blue-800 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors">
+                              <button onClick={() => markAllAsRead()} className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
                                 Read all
                               </button>
                             )}
-                            <button onClick={() => setIsNotifOpen(false)} className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                            <button onClick={() => setIsNotifOpen(false)} className="p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                               <X className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
-                        <div className="overflow-y-auto max-h-[55vh] sm:max-h-80 divide-y divide-gray-100">
+                        <div className="overflow-y-auto max-h-[60vh] sm:max-h-80 divide-y divide-gray-100 dark:divide-gray-800">
                           {notifications.length === 0 ? (
                             <div className="py-12 px-6 text-center">
-                              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 mb-4">
+                              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
                                 <Bell className="w-7 h-7 text-gray-400" />
                               </div>
-                              <p className="text-gray-500 font-medium">No notifications</p>
-                              <p className="text-gray-400 text-sm mt-1">You're all caught up!</p>
+                              <p className="text-gray-500 dark:text-gray-400 font-medium">No notifications</p>
+                              <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">You're all caught up!</p>
                             </div>
                           ) : (
                             notifications.map((n) => {
@@ -304,16 +321,16 @@ export default function AdminDashboard() {
                                 <button
                                   key={n.id}
                                   onClick={() => { if (!n.is_read) markAsRead(n.id); setIsNotifOpen(false); }}
-                                  className={`w-full text-left px-5 py-4 border-l-[3px] hover:bg-gray-50 transition-all ${accent} ${
-                                    !n.is_read ? 'bg-blue-50/40' : ''
+                                  className={`w-full text-left px-4 sm:px-5 py-3 sm:py-4 border-l-[3px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-all ${accent} ${
+                                    !n.is_read ? 'bg-blue-50/40 dark:bg-blue-900/20' : ''
                                   }`}
                                 >
                                   <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex-shrink-0 p-1.5 rounded-lg bg-gray-100">{icon}</div>
+                                    <div className="mt-0.5 flex-shrink-0 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800">{icon}</div>
                                     <div className="flex-1 min-w-0">
-                                      <p className={`text-sm truncate ${!n.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>{n.title}</p>
-                                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                                      <p className="text-xs text-gray-400 mt-1.5">
+                                      <p className={`text-sm truncate ${!n.is_read ? 'font-semibold text-gray-900 dark:text-white' : 'font-medium text-gray-700 dark:text-gray-300'}`}>{n.title}</p>
+                                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{n.message}</p>
+                                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
                                         {(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? 'Just now' : d < 60 ? d + 'm ago' : d < 1440 ? Math.floor(d/60) + 'h ago' : Math.floor(d/1440) + 'd ago'; } catch { return ''; } })()}
                                       </p>
                                     </div>
@@ -339,7 +356,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8">
+          <div className="p-3 sm:p-4 md:p-6 lg:p-8">
 
             {/* Dashboard Content */}
             {currentView === 'dashboard' && (
@@ -357,6 +374,7 @@ export default function AdminDashboard() {
                   listings={listingsHook.listings}
                   loading={loadingData || bookingsHook.loading || usersHook.loading || partnersHook.loading || listingsHook.loading}
                   onRefresh={handleRefresh}
+                  onQuickAction={handleQuickAction}
                 />
               </motion.div>
             )}
@@ -447,5 +465,13 @@ export default function AdminDashboard() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <AdminThemeProvider>
+      <AdminDashboardInner />
+    </AdminThemeProvider>
   );
 }

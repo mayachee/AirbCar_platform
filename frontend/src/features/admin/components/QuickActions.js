@@ -6,28 +6,21 @@ import { Plus, Download, Upload, Settings, UserPlus, Car, TrendingUp, FileText }
 const quickActions = [
   { 
     id: 'add-user', 
-    label: 'Add User', 
+    label: 'Manage Users', 
     icon: UserPlus, 
     color: 'from-blue-500 to-blue-600',
     hoverColor: 'hover:from-blue-600 hover:to-blue-700'
   },
   { 
     id: 'add-listing', 
-    label: 'Add Listing', 
+    label: 'Manage Vehicles', 
     icon: Car, 
     color: 'from-green-500 to-green-600',
     hoverColor: 'hover:from-green-600 hover:to-green-700'
   },
   { 
-    id: 'export-data', 
-    label: 'Export Data', 
-    icon: Download, 
-    color: 'from-purple-500 to-purple-600',
-    hoverColor: 'hover:from-purple-600 hover:to-purple-700'
-  },
-  { 
     id: 'generate-report', 
-    label: 'Generate Report', 
+    label: 'Earnings Report', 
     icon: FileText, 
     color: 'from-orange-500 to-orange-600',
     hoverColor: 'hover:from-orange-600 hover:to-orange-700'
@@ -38,13 +31,6 @@ const quickActions = [
     icon: TrendingUp, 
     color: 'from-indigo-500 to-indigo-600',
     hoverColor: 'hover:from-indigo-600 hover:to-indigo-700'
-  },
-  { 
-    id: 'settings', 
-    label: 'Settings', 
-    icon: Settings, 
-    color: 'from-gray-500 to-gray-600',
-    hoverColor: 'hover:from-gray-600 hover:to-gray-700'
   },
 ];
 
@@ -57,15 +43,15 @@ export default function QuickActions({ onAction }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-          <p className="text-sm text-gray-600 mt-1">Frequently used admin tasks</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Frequently used admin tasks</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {quickActions.map((action, index) => {
           const Icon = action.icon;
           return (

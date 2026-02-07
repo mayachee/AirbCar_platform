@@ -27,42 +27,40 @@ const activityIcons = {
 };
 
 export default function RecentActivity({ activities = [] }) {
-  // Generate mock activities if none provided
-  const mockActivities = [
-    { id: 1, type: 'user', action: 'New user registered', user: 'john.doe@example.com', time: new Date(Date.now() - 1000 * 60 * 5), status: 'success' },
-    { id: 2, type: 'booking', action: 'Booking completed', user: 'jane.smith@example.com', time: new Date(Date.now() - 1000 * 60 * 15), status: 'success' },
-    { id: 3, type: 'car', action: 'New listing added', user: 'partner@example.com', time: new Date(Date.now() - 1000 * 60 * 30), status: 'info' },
-    { id: 4, type: 'booking', action: 'Booking pending approval', user: 'user@example.com', time: new Date(Date.now() - 1000 * 60 * 45), status: 'pending' },
-    { id: 5, type: 'payment', action: 'Payment received', user: 'customer@example.com', time: new Date(Date.now() - 1000 * 60 * 60), status: 'success' },
-  ];
-
-  const displayActivities = activities.length > 0 ? activities : mockActivities;
+  const displayActivities = activities;
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'success':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+        return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800';
       case 'info':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700';
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-          <p className="text-sm text-gray-600 mt-1">Latest platform activities</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Latest platform activities</p>
         </div>
-        <Clock className="h-5 w-5 text-gray-400" />
+        <Clock className="h-5 w-5 text-gray-400 dark:text-gray-500" />
       </div>
 
       <div className="space-y-4">
-        {displayActivities.map((activity, index) => {
+        {displayActivities.length === 0 ? (
+          <div className="text-center py-8">
+            <Clock className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">No recent activity</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Activity will appear here as events happen</p>
+          </div>
+        ) : (
+          displayActivities.map((activity, index) => {
           const Icon = activityIcons[activity.type] || AlertCircle;
           const StatusIcon = activityIcons[activity.status] || Clock;
           
@@ -72,18 +70,18 @@ export default function RecentActivity({ activities = [] }) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <div className={`p-2 rounded-lg bg-gray-100 ${getStatusColor(activity.status)}`}>
+              <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-800 ${getStatusColor(activity.status)}`}>
                 <Icon className="h-4 w-4" />
               </div>
               
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{activity.action}</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <p className="text-xs text-gray-500">{activity.user || 'System'}</p>
-                  <span className="text-gray-300">•</span>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{activity.user || 'System'}</p>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {activity.time ? formatTimeAgo(activity.time) : 'Just now'}
                   </p>
                 </div>
@@ -96,16 +94,9 @@ export default function RecentActivity({ activities = [] }) {
               )}
             </motion.div>
           );
-        })}
+        })
+        )}
       </div>
-
-      {displayActivities.length === 0 && (
-        <div className="text-center py-8">
-          <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">No recent activity</p>
-          <p className="text-gray-400 text-sm mt-1">Activity will appear here as things happen</p>
-        </div>
-      )}
     </div>
   );
 }

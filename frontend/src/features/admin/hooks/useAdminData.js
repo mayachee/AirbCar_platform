@@ -120,15 +120,35 @@ export function useAdminData() {
       setListings(listingsList);
       setStats(prev => ({ ...prev, totalListings: listingsList.length }));
 
-      // Handle stats data - backend returns stats directly
+      // Handle stats data - backend returns rich stats directly
       if (statsData && typeof statsData === 'object' && Object.keys(statsData).length > 0) {
-        // Map backend stats to frontend format
+        // Map backend stats to frontend format — includes growth rates, breakdowns, etc.
         const mappedStats = {
           totalUsers: statsData.totalUsers || 0,
           totalPartners: statsData.totalPartners || 0,
           totalListings: statsData.totalListings || 0,
           totalBookings: statsData.totalBookings || 0,
           totalEarnings: statsData.totalEarnings || 0,
+          monthlyRevenue: statsData.monthlyRevenue || 0,
+          weeklyRevenue: statsData.weeklyRevenue || 0,
+          avgBookingValue: statsData.avgBookingValue || 0,
+          recentUsers: statsData.recentUsers || 0,
+          recentBookings: statsData.recentBookings || 0,
+          recentPartners: statsData.recentPartners || 0,
+          recentListings: statsData.recentListings || 0,
+          revenueGrowth: statsData.revenueGrowth || 0,
+          usersGrowth: statsData.usersGrowth || 0,
+          bookingsGrowth: statsData.bookingsGrowth || 0,
+          partnersGrowth: statsData.partnersGrowth || 0,
+          pendingBookings: statsData.pendingBookings || 0,
+          activeBookings: statsData.activeBookings || 0,
+          completedBookings: statsData.completedBookings || 0,
+          statusBreakdown: statsData.statusBreakdown || {},
+          verifiedPartners: statsData.verifiedPartners || 0,
+          pendingPartnerApprovals: statsData.pendingPartnerApprovals || 0,
+          availableListings: statsData.availableListings || 0,
+          reviews: statsData.reviews || { count: 0, avgRating: 0 },
+          dailyBookings: statsData.dailyBookings || [],
         };
         setStats(prev => ({ ...prev, ...mappedStats }));
       }
