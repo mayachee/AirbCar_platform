@@ -97,7 +97,7 @@ export default function NotificationCenter({ notifications = [], onMarkAsRead, o
             </div>
           </div>
 
-          <div className="overflow-y-auto">
+          <div className="overflow-y-auto max-h-[50vh] sm:max-h-72">
             {notifications.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
