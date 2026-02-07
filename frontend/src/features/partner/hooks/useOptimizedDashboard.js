@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
 import { 
   LayoutDashboard, Car, Calendar, DollarSign, BarChart3, 
@@ -23,7 +24,7 @@ export function useOptimizedDashboard() {
   const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState('light');
-  const [notifications, setNotifications] = useState([]);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, refresh: refreshNotifications } = useNotifications();
   // Use activity from usePartnerData instead of separate state
   const [isOnline, setIsOnline] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
@@ -336,14 +337,14 @@ export function useOptimizedDashboard() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   }, []);
 
-  // Notification handlers
+  // Notification handlers — delegate to NotificationContext
   const handleMarkAsRead = useCallback((id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  }, []);
+    markAsRead(id);
+  }, [markAsRead]);
 
   const handleClearAllNotifications = useCallback(() => {
-    setNotifications([]);
-  }, []);
+    markAllAsRead();
+  }, [markAllAsRead]);
 
   // Effects
   useEffect(() => {
@@ -372,45 +373,8 @@ export function useOptimizedDashboard() {
 
   useEffect(() => {
     if (isPartner && !dataLoading && initialLoadComplete) {
-      // Initialize mock data only once
-      const mockNotifications = [
-        {
-          id: 1,
-          type: 'new_booking',
-          title: 'New Booking Request',
-          message: 'John Doe wants to book your Toyota Camry',
-          timestamp: new Date().toISOString(),
-          read: false,
-          priority: 'high'
-        },
-        {
-          id: 2,
-          type: 'payment_received',
-          title: 'Payment Received',
-          message: '$150 payment received for booking #123',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          read: false,
-          priority: 'medium'
-        }
-      ];
-
-      const mockActivity = [
-        {
-          id: 1,
-          type: 'booking_created',
-          message: 'New booking request for Toyota Camry',
-          timestamp: new Date().toISOString()
-        },
-        {
-          id: 2,
-          type: 'payment_received',
-          message: 'Payment of $150 received',
-          timestamp: new Date(Date.now() - 3600000).toISOString()
-        }
-      ];
-
-      setNotifications(mockNotifications);
-      // Activity is now fetched from backend via usePartnerData
+      // Notifications are now handled by NotificationContext (global provider)
+      // Activity is fetched from backend via usePartnerData
       
       Promise.allSettled([
         fetchPendingRequests(),

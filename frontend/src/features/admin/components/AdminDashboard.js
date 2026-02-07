@@ -18,8 +18,9 @@ import EarningsManagement from '@/features/admin/components/EarningsManagement';
 import DashboardOverview from '@/features/admin/components/DashboardOverview';
 import AdminReviewsManagement from '@/features/admin/components/AdminReviewsManagement';
 import { useToast } from '@/contexts/ToastContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { motion } from 'framer-motion';
-import { RefreshCw, Bell, Search, DollarSign, TrendingUp, Album, Calendar } from 'lucide-react';
+import { RefreshCw, Bell, X, Search, DollarSign, TrendingUp, Album, Calendar, CheckCircle, AlertCircle, Clock, Info } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -27,8 +28,10 @@ export default function AdminDashboard() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const router = useRouter();
   const { addToast } = useToast();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   
   const {
     users,
@@ -216,10 +219,81 @@ export default function AdminDashboard() {
                   <RefreshCw className={`h-5 w-5 text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </button>
                 
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative">
-                  <Bell className="h-5 w-5 text-gray-600" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setIsNotifOpen(!isNotifOpen)}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
+                  >
+                    <Bell className="h-5 w-5 text-gray-600" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {isNotifOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
+                      <div className="absolute right-0 top-12 z-50 w-96 max-h-[70vh] bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden">
+                        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                          <h3 className="text-sm font-bold text-gray-900">Admin Notifications</h3>
+                          <div className="flex items-center gap-2">
+                            {unreadCount > 0 && (
+                              <button onClick={() => markAllAsRead()} className="text-xs text-blue-600 hover:text-blue-800">
+                                Mark all read
+                              </button>
+                            )}
+                            <button onClick={() => setIsNotifOpen(false)} className="text-gray-400 hover:text-gray-600">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="overflow-y-auto max-h-80 divide-y divide-gray-100">
+                          {notifications.length === 0 ? (
+                            <div className="p-8 text-center">
+                              <Bell className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                              <p className="text-sm text-gray-500">No notifications</p>
+                            </div>
+                          ) : (
+                            notifications.map((n) => {
+                              const icon = n.type === 'success' || n.type === 'booking_accepted'
+                                ? <CheckCircle className="w-4 h-4 text-green-500" />
+                                : n.type === 'error' || n.type === 'booking_rejected'
+                                ? <AlertCircle className="w-4 h-4 text-red-500" />
+                                : n.type === 'new_booking'
+                                ? <Clock className="w-4 h-4 text-blue-500" />
+                                : n.type === 'warning'
+                                ? <AlertCircle className="w-4 h-4 text-yellow-500" />
+                                : <Info className="w-4 h-4 text-gray-400" />;
+                              return (
+                                <button
+                                  key={n.id}
+                                  onClick={() => { if (!n.is_read) markAsRead(n.id); setIsNotifOpen(false); }}
+                                  className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${
+                                    !n.is_read ? 'bg-blue-50/50' : ''
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="mt-0.5 flex-shrink-0">{icon}</div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">{n.title}</p>
+                                      <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{n.message}</p>
+                                      <p className="text-[10px] text-gray-400 mt-1">
+                                        {(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? 'Just now' : d < 60 ? d + 'm ago' : d < 1440 ? Math.floor(d/60) + 'h ago' : Math.floor(d/1440) + 'd ago'; } catch { return ''; } })()}
+                                      </p>
+                                    </div>
+                                    {!n.is_read && <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />}
+                                  </div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>

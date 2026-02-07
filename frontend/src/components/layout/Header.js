@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { useCurrency } from '@/contexts/CurrencyContext'
+import { useNotifications } from '@/contexts/NotificationContext'
 import Link from 'next/link'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
@@ -17,7 +18,9 @@ const navigationItems = [
 export default function Header({ theme = 'dark' }) {
   const { user, loading, logout } = useAuth()
   const { currency, setCurrency, currencies } = useCurrency() // Get currencies from context
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [language, setLanguage] = useState('en')
   const [isScrolled, setIsScrolled] = useState(false)
 
@@ -228,6 +231,75 @@ export default function Header({ theme = 'dark' }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </Link>
+
+              {/* Notification Bell */}
+              {!loading && user && (
+                <div className="relative">
+                  <button
+                    onClick={() => setIsNotifOpen(!isNotifOpen)}
+                    aria-label="Notifications"
+                    className={`group inline-flex items-center justify-center rounded-full p-3 transition-all duration-300 border ${buttonClassName}`}
+                  >
+                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Notification Dropdown */}
+                  {isNotifOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
+                      <div className="absolute right-0 top-14 z-50 w-80 sm:w-96 max-h-[70vh] bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                          <h3 className="text-sm font-bold text-gray-900 dark:text-white">Notifications</h3>
+                          <div className="flex items-center gap-2">
+                            {unreadCount > 0 && (
+                              <button onClick={() => markAllAsRead()} className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                Mark all read
+                              </button>
+                            )}
+                            <button onClick={() => setIsNotifOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </div>
+                        </div>
+                        <div className="overflow-y-auto max-h-80 divide-y divide-gray-100 dark:divide-gray-800">
+                          {notifications.length === 0 ? (
+                            <div className="p-8 text-center">
+                              <svg className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
+                            </div>
+                          ) : (
+                            notifications.map((n) => (
+                              <button
+                                key={n.id}
+                                onClick={() => { if (!n.is_read) markAsRead(n.id); setIsNotifOpen(false); }}
+                                className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                                  !n.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                                }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{n.title}</p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">{n.message}</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">{(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? 'Just now' : d < 60 ? d + 'm ago' : d < 1440 ? Math.floor(d/60) + 'h ago' : Math.floor(d/1440) + 'd ago'; } catch { return ''; } })()}</p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
 
               {!loading && isPartner && (
                 <Link

@@ -14,6 +14,12 @@ from .serializers import BookingSerializer
 
 from common.utils import upload_file_to_supabase
 
+# Notification helpers
+try:
+    from airbcar_backend.core.utils.notifications import notify_new_booking, notify_booking_confirmed, notify_booking_rejected
+except ImportError:
+    notify_new_booking = notify_booking_confirmed = notify_booking_rejected = None
+
 class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
@@ -142,7 +148,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         if user_updated:
             user.save()
 
-        serializer.save(
+        booking = serializer.save(
             user=self.request.user, 
             listing=listing, 
             request_message=request_message,
@@ -153,6 +159,13 @@ class BookingViewSet(viewsets.ModelViewSet):
             license_front_document=license_front_url,
             license_back_document=license_back_url
         )
+
+        # Notify the listing owner about the new booking
+        if notify_new_booking and hasattr(listing, 'partner') and hasattr(listing.partner, 'user'):
+            try:
+                notify_new_booking(listing.partner.user, booking)
+            except Exception as e:
+                print(f'[NOTIFICATION] Error sending new booking notification: {e}')
 
     @action(detail=True, methods=['post'], url_path='accept')
     def accept_booking(self, request, pk=None):
@@ -221,6 +234,13 @@ class BookingViewSet(viewsets.ModelViewSet):
         booking.rejected_at = None
         booking.rejection_reason = None
         booking.save()
+
+        # Notify the guest that their booking was confirmed
+        if notify_booking_confirmed:
+            try:
+                notify_booking_confirmed(booking.user, booking)
+            except Exception as e:
+                print(f'[NOTIFICATION] Error sending booking confirmed notification: {e}')
         
         serializer = self.get_serializer(booking)
         return Response(serializer.data)
@@ -278,6 +298,13 @@ class BookingViewSet(viewsets.ModelViewSet):
         booking.rejection_reason = rejection_reason
         booking.accepted_at = None
         booking.save()
+
+        # Notify the guest that their booking was declined
+        if notify_booking_rejected:
+            try:
+                notify_booking_rejected(booking.user, booking)
+            except Exception as e:
+                print(f'[NOTIFICATION] Error sending booking rejected notification: {e}')
         
         serializer = self.get_serializer(booking)
         return Response(serializer.data)

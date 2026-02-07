@@ -18,6 +18,12 @@ from ..serializers import (
     ReviewSerializer, UserSerializer, PartnerSerializer, PartnerDetailSerializer,
 )
 
+# Notification helpers
+try:
+    from ..utils.notifications import notify_partner_approved, notify_partner_rejected
+except ImportError:
+    notify_partner_approved = notify_partner_rejected = None
+
 
 class PartnerListView(APIView):
     """List all partners."""
@@ -301,6 +307,55 @@ class PartnerDetailView(APIView):
             error_msg = str(e)
             if settings.DEBUG:
                 print(f"Error in PartnerDetailView: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def patch(self, request, pk):
+        """Update partner (admin only — for approval/rejection)."""
+        try:
+            # Only admins/staff can update other partners
+            if not (request.user.is_staff or request.user.is_superuser or getattr(request.user, 'role', None) == 'admin'):
+                return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+            partner = Partner.objects.select_related('user').get(pk=pk)
+            
+            # Track verification status change for notifications
+            old_status = getattr(partner, 'verification_status', None)
+            
+            # Apply allowed fields
+            allowed_fields = ['is_verified', 'verification_status']
+            for field in allowed_fields:
+                if field in request.data:
+                    setattr(partner, field, request.data[field])
+            
+            partner.save()
+            
+            # Send notification based on status change
+            new_status = getattr(partner, 'verification_status', None)
+            if new_status != old_status and partner.user:
+                if new_status == 'approved' and notify_partner_approved:
+                    try:
+                        notify_partner_approved(partner.user)
+                    except Exception:
+                        pass
+                elif new_status == 'rejected' and notify_partner_rejected:
+                    try:
+                        notify_partner_rejected(partner.user)
+                    except Exception:
+                        pass
+            
+            serializer = PartnerSerializer(partner, context={'request': request})
+            return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+            
+        except Partner.DoesNotExist:
+            return Response({'error': 'Partner not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in PartnerDetailView.patch: {error_msg}")
+                traceback.print_exc()
             return Response({
                 'error': 'An error occurred',
                 'message': error_msg if settings.DEBUG else None

@@ -25,7 +25,7 @@ export default function DashboardHeader({
   onClearAll,
   onToggleSidebar
 }) {
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const unreadCount = notifications?.filter(n => !n.is_read && !n.read).length || 0;
   const currentNavItem = navigationItems.find(item => item.id === currentView);
   
   return (

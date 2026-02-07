@@ -13,6 +13,12 @@ import traceback
 from ..models import Listing, Booking, Review, ReviewVote, ReviewReport, ReviewReply, ReviewReaction, Partner
 from ..serializers import ReviewSerializer, ReviewReportSerializer, ReviewReplySerializer
 
+# Notification helpers
+try:
+    from ..utils.notifications import notify_new_review, notify_review_reply
+except ImportError:
+    notify_new_review = notify_review_reply = None
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -169,6 +175,14 @@ class ReviewListView(APIView):
                     is_published=True, is_verified=True,
                 )
                 _update_listing_rating(listing)
+
+                # Notify listing owner about the new review
+                if notify_new_review and hasattr(listing, 'partner') and hasattr(listing.partner, 'user'):
+                    try:
+                        notify_new_review(listing.partner.user, review)
+                    except Exception:
+                        pass
+
                 serializer = ReviewSerializer(review, context={'request': request})
                 return Response({'data': serializer.data, 'message': 'Review created successfully'}, status=status.HTTP_201_CREATED)
         except Exception as e:
@@ -534,6 +548,14 @@ class ReviewReplyListView(APIView):
             parent=parent,
             comment=comment,
         )
+
+        # Notify the original reviewer about the reply (unless replying to own review)
+        if notify_review_reply and review.user_id != request.user.id:
+            try:
+                notify_review_reply(review.user, reply)
+            except Exception:
+                pass
+
         serializer = ReviewReplySerializer(reply, context={'request': request})
         return Response({'data': serializer.data, 'message': 'Reply added'}, status=status.HTTP_201_CREATED)
 

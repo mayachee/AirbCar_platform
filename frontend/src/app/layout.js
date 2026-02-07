@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import CookieConsent from "@/components/layout/CookieConsent";
@@ -149,7 +150,9 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <CurrencyProvider>
             <ToastProvider>
-              {children}
+              <NotificationProvider>
+                {children}
+              </NotificationProvider>
             </ToastProvider>
           </CurrencyProvider>
         </AuthProvider>

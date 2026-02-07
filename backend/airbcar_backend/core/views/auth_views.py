@@ -26,6 +26,12 @@ from ..serializers import (
 )
 from ..utils import send_verification_email, send_password_reset_email
 
+# Notification helpers
+try:
+    from ..utils.notifications import notify_welcome
+except ImportError:
+    notify_welcome = None
+
 
 class LoginView(APIView):
     """User login endpoint."""
@@ -187,6 +193,13 @@ class RegisterView(APIView):
             email_thread = threading.Thread(target=send_email_async)
             email_thread.daemon = True
             email_thread.start()
+
+            # Send welcome notification
+            if notify_welcome:
+                try:
+                    notify_welcome(user)
+                except Exception:
+                    pass
             
             # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
