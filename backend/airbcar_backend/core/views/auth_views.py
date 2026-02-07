@@ -352,7 +352,7 @@ class PasswordResetRequestView(APIView):
     """Request password reset email endpoint."""
     permission_classes = [AllowAny]
     
-    def _send_email_resend(self, to_email, subject, body):
+    def _send_email_resend(self, to_email, subject, body, html=None):
         """Send email via Resend HTTP API (bypasses SMTP entirely)."""
         import json
         import urllib.request
@@ -362,21 +362,25 @@ class PasswordResetRequestView(APIView):
         if not api_key:
             raise RuntimeError('RESEND_API_KEY not configured')
         
-        # Use Resend's free test sender if no verified domain is configured
+        # Use verified domain sender, fall back to test sender
         from_email = getattr(settings, 'RESEND_FROM_EMAIL', '') or os.environ.get('RESEND_FROM_EMAIL', '')
         if not from_email:
             from_email = 'AirbCar <onboarding@resend.dev>'
         
-        payload = json.dumps({
+        payload = {
             'from': from_email,
             'to': [to_email],
             'subject': subject,
             'text': body,
-        }).encode('utf-8')
+        }
+        if html:
+            payload['html'] = html
+
+        data = json.dumps(payload).encode('utf-8')
         
         req = urllib.request.Request(
             'https://api.resend.com/emails',
-            data=payload,
+            data=data,
             headers={
                 'Authorization': f'Bearer {api_key}',
                 'Content-Type': 'application/json',
@@ -386,13 +390,16 @@ class PasswordResetRequestView(APIView):
         
         try:
             resp = urllib.request.urlopen(req, timeout=15)
-            return json.loads(resp.read().decode())
+            resp_data = json.loads(resp.read().decode())
+            print(f"Resend API success: {resp_data} (from={from_email}, to={to_email})")
+            return resp_data
         except urllib.error.HTTPError as e:
             error_body = ''
             try:
                 error_body = e.read().decode()
             except Exception:
                 pass
+            print(f"Resend API FAILED {e.code}: {error_body} (from={from_email}, to={to_email})")
             raise RuntimeError(
                 f'Resend API {e.code}: {error_body} '
                 f'(from={from_email}, to={to_email})'
@@ -441,12 +448,27 @@ class PasswordResetRequestView(APIView):
                 f"Your password will remain unchanged.\n\n"
                 f"Best regards,\nThe AirbCar Team"
             )
+            html_body = (
+                f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px">'
+                f'<h2 style="color:#1e40af">Reset Your Password</h2>'
+                f'<p>Hello {user.first_name or user.email},</p>'
+                f'<p>You requested to reset your password for your AirbCar account.</p>'
+                f'<p style="text-align:center;margin:32px 0">'
+                f'<a href="{reset_url}" style="background:#2563eb;color:#fff;padding:12px 32px;'
+                f'border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">'
+                f'Reset Password</a></p>'
+                f'<p style="font-size:13px;color:#6b7280">This link expires in 24 hours. '
+                f'If you didn\'t request this, ignore this email.</p>'
+                f'<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">'
+                f'<p style="font-size:12px;color:#9ca3af;text-align:center">AirbCar Team</p>'
+                f'</div>'
+            )
             
             try:
                 # Try Resend HTTP API first (works on Render which blocks SMTP)
                 resend_key = getattr(settings, 'RESEND_API_KEY', '') or os.environ.get('RESEND_API_KEY', '')
                 if resend_key:
-                    self._send_email_resend(user.email, subject, body)
+                    self._send_email_resend(user.email, subject, body, html=html_body)
                 else:
                     self._send_email_smtp(user.email, subject, body)
             except Exception as mail_err:
