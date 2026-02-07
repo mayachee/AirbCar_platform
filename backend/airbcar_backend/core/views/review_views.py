@@ -585,7 +585,7 @@ class ReviewReactionView(APIView):
     """Add or change reaction (POST) or remove reaction (DELETE)."""
     permission_classes = [IsAuthenticated]
 
-    VALID_REACTIONS = ['like', 'love', 'laugh', 'wow', 'sad', 'angry']
+    VALID_REACTIONS = ['like', 'dislike', 'love', 'laugh', 'wow', 'sad', 'angry']
 
     def post(self, request, pk):
         """Add or update reaction on a review."""

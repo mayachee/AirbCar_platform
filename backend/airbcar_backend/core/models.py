@@ -377,6 +377,7 @@ class ReviewReaction(models.Model):
     """Emoji reaction on a review."""
     REACTION_CHOICES = [
         ('like', '👍'),
+        ('dislike', '👎'),
         ('love', '❤️'),
         ('laugh', '😂'),
         ('wow', '😮'),

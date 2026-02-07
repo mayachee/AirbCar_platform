@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, Calendar, Verified, ThumbsUp, MessageSquare, Edit2, Trash2, Send, ChevronDown, ChevronUp, CornerDownRight, X } from 'lucide-react';
+import { Star, Calendar, Verified, ThumbsUp, ThumbsDown, Heart, MessageSquare, Edit2, Trash2, Send, ChevronDown, ChevronUp, CornerDownRight, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { reviewService } from '../services/reviewService';
@@ -9,6 +9,7 @@ import { useToast } from '@/contexts/ToastContext';
 
 const REACTIONS = [
   { key: 'like', emoji: '👍', label: 'Like' },
+  { key: 'dislike', emoji: '👎', label: 'Dislike' },
   { key: 'love', emoji: '❤️', label: 'Love' },
   { key: 'laugh', emoji: '😂', label: 'Haha' },
   { key: 'wow', emoji: '😮', label: 'Wow' },
@@ -330,22 +331,41 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
       {/* Actions Row */}
       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center space-x-3 flex-wrap gap-y-1">
-          {/* Helpful Vote */}
-          {canVote && (
-            <button
-              onClick={handleVote}
-              disabled={isVoting}
-              className={`flex items-center space-x-1 text-sm transition-colors ${
-                hasVoted ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
-              } disabled:opacity-50`}
-            >
-              <ThumbsUp className={`h-4 w-4 ${hasVoted ? 'fill-current' : ''}`} />
-              <span>Helpful</span>
-              {helpfulCount > 0 && <span className="text-xs">({helpfulCount})</span>}
-            </button>
-          )}
+          {/* Like / Dislike / Love */}
+          <button
+            onClick={() => handleReaction('like')}
+            className={`flex items-center space-x-1 text-sm transition-colors ${
+              userReaction === 'like' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
+            }`}
+          >
+            <ThumbsUp className={`h-4 w-4 ${userReaction === 'like' ? 'fill-current' : ''}`} />
+            <span>Like</span>
+            {(reactionCounts.like || 0) > 0 && <span className="text-xs">({reactionCounts.like})</span>}
+          </button>
 
-          {/* Reaction picker */}
+          <button
+            onClick={() => handleReaction('dislike')}
+            className={`flex items-center space-x-1 text-sm transition-colors ${
+              userReaction === 'dislike' ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+            }`}
+          >
+            <ThumbsDown className={`h-4 w-4 ${userReaction === 'dislike' ? 'fill-current' : ''}`} />
+            <span>Dislike</span>
+            {(reactionCounts.dislike || 0) > 0 && <span className="text-xs">({reactionCounts.dislike})</span>}
+          </button>
+
+          <button
+            onClick={() => handleReaction('love')}
+            className={`flex items-center space-x-1 text-sm transition-colors ${
+              userReaction === 'love' ? 'text-pink-600 dark:text-pink-400 font-medium' : 'text-gray-600 dark:text-gray-400 hover:text-pink-600 dark:hover:text-pink-400'
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${userReaction === 'love' ? 'fill-current' : ''}`} />
+            <span>Love</span>
+            {(reactionCounts.love || 0) > 0 && <span className="text-xs">({reactionCounts.love})</span>}
+          </button>
+
+          {/* More reactions picker */}
           <div className="relative">
             <button
               onClick={() => setShowReactionPicker(!showReactionPicker)}
