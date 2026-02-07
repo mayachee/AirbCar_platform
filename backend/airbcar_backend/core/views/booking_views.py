@@ -104,7 +104,7 @@ class BookingListView(APIView):
             # Pagination
             page = int(request.query_params.get('page', 1))
             page_size = int(request.query_params.get('page_size', 20))
-            page_size = min(page_size, 100)
+            page_size = min(page_size, 1000)
             
             total_count = bookings.count()
             start = (page - 1) * page_size

@@ -85,7 +85,13 @@ class ListingListView(APIView):
             except (ValueError, TypeError):
                 queryset = Listing.objects.filter(is_available=True).select_related('partner__user').only(*base_fields, 'partner__business_name', 'partner__user__first_name', 'partner__user__last_name')
         else:
-            queryset = Listing.objects.filter(is_available=True).select_related('partner__user').only(*base_fields, 'partner__business_name', 'partner__user__first_name', 'partner__user__last_name')
+            # Admin with all=true can see unavailable listings too
+            show_all = request.query_params.get('all') == 'true'
+            is_admin = request.user.is_authenticated and (getattr(request.user, 'role', None) == 'admin' or request.user.is_superuser or request.user.is_staff)
+            if show_all and is_admin:
+                queryset = Listing.objects.all().select_related('partner__user').only(*base_fields, 'partner__business_name', 'partner__user__first_name', 'partner__user__last_name')
+            else:
+                queryset = Listing.objects.filter(is_available=True).select_related('partner__user').only(*base_fields, 'partner__business_name', 'partner__user__first_name', 'partner__user__last_name')
         
         # Apply filters
         if location:

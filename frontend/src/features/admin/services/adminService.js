@@ -11,9 +11,8 @@ class AdminService {
    * @returns {Promise} Users list
    */
   async getUsers() {
-    // Increase timeout for large datasets (60 seconds)
-    // Same as getPartners - no params, let backend handle pagination
-    return apiClient.get('/users/', undefined, { timeout: 60000 });
+    // Request ALL users for admin dashboard (page_size=1000)
+    return apiClient.get('/users/', { page_size: 1000 }, { timeout: 60000 });
   }
 
   /**
@@ -59,8 +58,8 @@ class AdminService {
    * @returns {Promise} Partners list
    */
   async getPartners() {
-    // Increase timeout for large datasets (60 seconds)
-    return apiClient.get('/partners/', undefined, { timeout: 60000 });
+    // Request ALL partners for admin (page_size=1000, all=true includes unverified)
+    return apiClient.get('/partners/', { page_size: 1000, all: true }, { timeout: 60000 });
   }
 
   /**
@@ -136,9 +135,10 @@ class AdminService {
    * @param {Object} params - Optional query parameters (e.g., { page: 1, page_size: 100 })
    * @returns {Promise} Bookings list
    */
-  async getBookings(params = undefined) {
-    // Increase timeout to 90 seconds for bookings (Render free tier can be slow)
-    return apiClient.get('/bookings/', params, { timeout: 90000 });
+  async getBookings(params = {}) {
+    // Request ALL bookings for admin dashboard (page_size=1000)
+    const defaultParams = { page_size: 1000, ...params };
+    return apiClient.get('/bookings/', defaultParams, { timeout: 90000 });
   }
 
   /**
@@ -210,8 +210,8 @@ class AdminService {
    * @returns {Promise} Listings list
    */
   async getListings() {
-    // Increase timeout for large datasets (60 seconds)
-    return apiClient.get('/listings/', undefined, { timeout: 60000 });
+    // Request ALL listings for admin (page_size=1000, all=true includes unavailable)
+    return apiClient.get('/listings/', { page_size: 1000, all: true }, { timeout: 60000 });
   }
 
   /**

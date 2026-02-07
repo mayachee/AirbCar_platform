@@ -287,7 +287,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 15,  # Reduced from 20 to 15 for faster response times
-    'MAX_PAGE_SIZE': 100,  # Security: Prevent DoS attacks from huge page requests
+    'MAX_PAGE_SIZE': 1000,  # Allow admin to request large pages (individual views enforce own limits)
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
     # Performance optimizations
     'DEFAULT_RENDERER_CLASSES': (

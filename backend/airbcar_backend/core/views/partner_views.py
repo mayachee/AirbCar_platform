@@ -38,16 +38,20 @@ class PartnerListView(APIView):
     def get(self, request):
         """List all partners."""
         try:
-            partners = (
-                Partner.objects.filter(is_verified=True)
-                .select_related('user')
-                .annotate(
+            partners = Partner.objects.select_related('user')
+            
+            # Admin with all=true can see unverified partners too
+            show_all = request.query_params.get('all') == 'true'
+            is_admin = request.user.is_authenticated and (getattr(request.user, 'role', None) == 'admin' or request.user.is_superuser or request.user.is_staff)
+            if not (show_all and is_admin):
+                partners = partners.filter(is_verified=True)
+            
+            partners = partners.annotate(
                     min_price_per_day=Min(
                         'listings__price_per_day',
                         filter=Q(listings__is_available=True, listings__is_verified=True),
                     )
                 )
-            )
             
             # Filter by rating if provided
             min_rating = request.query_params.get('min_rating')
