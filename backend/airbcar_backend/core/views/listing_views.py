@@ -22,7 +22,7 @@ from pathlib import Path
 
 from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, Notification
 from ..serializers import (
-    ListingSerializer, BookingSerializer, FavoriteSerializer,
+    ListingSerializer, ListingCompactSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
 )
 from ..utils.image_utils import (
@@ -220,16 +220,9 @@ class ListingListView(APIView):
                 pass
         
         try:
-            # Optimize query with select_related and prefetch_related
-            # Only prefetch reviews for rating calculation (limit to avoid loading too much data)
-            queryset = queryset.select_related('partner', 'partner__user')
-            
-            # Don't prefetch all reviews - they can be heavy. Only fetch when needed per listing.
-            # The serializer can handle this more efficiently if needed
-            
-            # Additional optimization: Use distinct() if there might be duplicates
-            # (e.g., from joins or filters)
-            queryset = queryset.distinct()
+            # select_related already applied above with .only() — don't re-apply
+            # (re-applying without .only() would override the field restriction)
+            pass
             
             # Sorting - Enhanced with more options
             sort_by = request.query_params.get('sort', '-created_at')
@@ -319,7 +312,7 @@ class ListingListView(APIView):
             
             # OPTIMIZATION 3: Serialize without iterator for better performance on small result sets
             # iterator() is only beneficial for VERY large querysets (1000+) but adds overhead
-            serializer = ListingSerializer(queryset, many=True, context={'request': request})
+            serializer = ListingCompactSerializer(queryset, many=True, context={'request': request})
             
             # Calculate response metadata
             results_count = len(serializer.data)

@@ -30,26 +30,17 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
 
     def get_is_partner(self, obj):
-        """Check if user is a partner."""
+        """Check if user is a partner (no extra DB queries)."""
         try:
-            # Check for partner profile existence
-            if hasattr(obj, 'partner_profile'):
-                return True
-            
-            # Check role
+            # Check role field first (always available, no query)
             if obj.role == 'partner':
                 return True
-                
-            # Fallback: Exception-safe check using filer
-            # sometimes hasattr on OneToOneField can be tricky if related object missing
-            from .models import Partner
-            if Partner.objects.filter(user=obj).exists():
-                return True
-                
-            return False
-        except Exception as e:
-            if settings.DEBUG:
-                print(f"Error checking partner status for user {obj.id}: {e}")
+            # Check cached reverse relation (loaded via select_related)
+            try:
+                return obj.partner_profile is not None
+            except Exception:
+                return False
+        except Exception:
             return False
     
     def get_profile_picture_url(self, obj):
@@ -424,6 +415,86 @@ class PartnerDetailSerializer(PartnerSerializer):
         }
 
 
+class ListingCompactSerializer(serializers.ModelSerializer):
+    """Lightweight listing serializer for list views — avoids N+1 from nested serializers."""
+    brand = serializers.CharField(source='make', read_only=True)
+    model_name = serializers.CharField(source='model', read_only=True)
+    seats = serializers.IntegerField(source='seating_capacity', read_only=True)
+    style = serializers.CharField(source='vehicle_style', read_only=True)
+    dailyRate = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
+    price = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
+    fuelType = serializers.CharField(source='fuel_type', read_only=True)
+    verified = serializers.BooleanField(source='is_verified', read_only=True)
+    reviewCount = serializers.IntegerField(source='review_count', read_only=True)
+    isAvailable = serializers.BooleanField(source='is_available', read_only=True)
+    instantBooking = serializers.BooleanField(source='instant_booking', read_only=True)
+    name = serializers.SerializerMethodField()
+    partner_name = serializers.SerializerMethodField()
+    partner_logo = serializers.SerializerMethodField()
+    partner_verified = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Listing
+        fields = [
+            'id', 'make', 'brand', 'model', 'model_name', 'year', 'color',
+            'transmission', 'fuel_type', 'fuelType', 'seating_capacity', 'seats',
+            'vehicle_style', 'style', 'price_per_day', 'dailyRate', 'price',
+            'location', 'images', 'is_available', 'isAvailable', 'is_verified', 'verified',
+            'instant_booking', 'instantBooking', 'rating', 'review_count', 'reviewCount',
+            'created_at', 'updated_at', 'name', 'partner_id',
+            'partner_name', 'partner_logo', 'partner_verified',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'rating', 'review_count', 'is_verified']
+
+    def get_name(self, obj):
+        return f"{obj.make} {obj.model} {obj.year}"
+
+    def get_partner_name(self, obj):
+        try:
+            return obj.partner.business_name if obj.partner else None
+        except Exception:
+            return None
+
+    def get_partner_logo(self, obj):
+        try:
+            p = obj.partner
+            if not p:
+                return None
+            if p.logo_url:
+                return p.logo_url
+            if p.user and hasattr(p.user, 'profile_picture_url') and p.user.profile_picture_url:
+                url = str(p.user.profile_picture_url).strip()
+                if url.startswith(('http://', 'https://')) and '/media/' not in url:
+                    return url
+            return None
+        except Exception:
+            return None
+
+    def get_partner_verified(self, obj):
+        try:
+            return obj.partner.is_verified if obj.partner else False
+        except Exception:
+            return False
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Process images — same logic as ListingSerializer but without re-importing each time
+        if 'images' in data and data['images']:
+            processed = []
+            for img in data['images']:
+                url = img if isinstance(img, str) else (img.get('url') if isinstance(img, dict) else None)
+                if not url or not isinstance(url, str):
+                    continue
+                url = url.strip()
+                url_lower = url.lower()
+                if 'supabase.co' in url_lower and '/storage/v1/object/public/' in url_lower:
+                    processed.append(url)
+                elif url.startswith(('http://', 'https://')) and '/media/' not in url_lower and '/profiles/' not in url_lower:
+                    processed.append(url)
+            data['images'] = processed if processed else ['/carsymbol.jpg']
+        return data
+
+
 class ListingSerializer(serializers.ModelSerializer):
     """Listing serializer with all fields."""
     partner = PartnerSerializer(read_only=True)
@@ -653,14 +724,15 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Review serializer with vote & response info."""
-    listing = ListingSerializer(read_only=True)
     user = UserSerializer(read_only=True)
+    listing_id = serializers.IntegerField(source='listing.id', read_only=True)
+    listing_name = serializers.SerializerMethodField()
     user_has_voted = serializers.SerializerMethodField()
     
     class Meta:
         model = Review
         fields = [
-            'id', 'listing', 'user', 'rating', 'comment',
+            'id', 'listing_id', 'listing_name', 'user', 'rating', 'comment',
             'is_published', 'is_verified',
             'owner_response', 'owner_response_at',
             'helpful_count', 'user_has_voted',
@@ -668,9 +740,18 @@ class ReviewSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'helpful_count', 'is_verified']
     
+    def get_listing_name(self, obj):
+        try:
+            return f"{obj.listing.make} {obj.listing.model} {obj.listing.year}"
+        except Exception:
+            return None
+
     def get_user_has_voted(self, obj):
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
+            # Use prefetched votes if available
+            if hasattr(obj, '_prefetched_objects_cache') and 'votes' in obj._prefetched_objects_cache:
+                return any(v.user_id == request.user.id for v in obj.votes.all())
             return obj.votes.filter(user=request.user).exists()
         return False
 
