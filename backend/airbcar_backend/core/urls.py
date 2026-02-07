@@ -189,6 +189,10 @@ if views.MarkNotificationReadView is not None:
 if views.MarkAllNotificationsReadView is not None:
     urlpatterns.append(path('notifications/read-all/', views.MarkAllNotificationsReadView.as_view(), name='notification-read-all'))
 
+# Newsletter
+if views.NewsletterSubscribeView is not None:
+    urlpatterns.append(path('api/newsletter/subscribe/', views.NewsletterSubscribeView.as_view(), name='newsletter-subscribe'))
+
 # Admin endpoints
 if views.AdminStatsView is not None:
     urlpatterns.append(path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'))

@@ -451,3 +451,16 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.title} - {self.user.username}"
 
+
+class NewsletterSubscriber(models.Model):
+    """Newsletter email subscriber."""
+    email = models.EmailField(unique=True)
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-subscribed_at']
+
+    def __str__(self):
+        return self.email
+

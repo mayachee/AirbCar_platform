@@ -136,6 +136,14 @@ except Exception as e:
         from django.http import Http404
         raise Http404("Media serving unavailable")
 
+# Newsletter
+try:
+    from .newsletter_views import NewsletterSubscribeView
+except Exception as e:
+    print(f"Error importing newsletter_views: {e}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    NewsletterSubscribeView = None
+
 # Import admin views from existing admin_views.py
 try:
     from ..admin_views import AdminStatsView, AdminAnalyticsView, AdminRevenueView
@@ -168,6 +176,8 @@ __all__ = [
     'PasswordResetRequestView', 'PasswordResetConfirmView', 'GoogleAuthView',
     # Health & Root
     'RootView', 'HealthCheckView', 'serve_media',
+    # Newsletter
+    'NewsletterSubscribeView',
     # Admin
     'AdminStatsView', 'AdminAnalyticsView', 'AdminRevenueView',
 ]
