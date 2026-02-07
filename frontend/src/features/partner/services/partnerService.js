@@ -293,8 +293,15 @@ export const partnerService = {
         })
         .reduce((sum, b) => sum + (parseFloat(b.total_price) || parseFloat(b.total_amount) || 0), 0)
 
-      // Calculate average rating (mock for now)
-      const averageRating = 4.5
+      // Fetch real average rating from reviews analytics endpoint
+      let averageRating = 0
+      try {
+        const analyticsResp = await apiClient.get('/reviews/analytics/')
+        const analyticsData = analyticsResp?.data || analyticsResp
+        averageRating = parseFloat(analyticsData?.average_rating) || 0
+      } catch (ratingErr) {
+        console.warn('Could not fetch review analytics for average rating:', ratingErr)
+      }
 
       return {
         totalVehicles,

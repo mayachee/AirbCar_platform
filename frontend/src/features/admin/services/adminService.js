@@ -361,6 +361,51 @@ class AdminService {
   async updateSettings(settingsData) {
     return apiClient.patch('/admin/settings/', settingsData);
   }
+
+  // ============ REVIEWS API ============
+  /**
+   * Get all reviews (admin sees published + unpublished)
+   * @param {Object} params - Optional filters { rating, search, page, page_size }
+   * @returns {Promise} Reviews list
+   */
+  async getReviews(params = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.rating) queryParams.append('rating', params.rating);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.page) queryParams.append('page', params.page);
+    if (params.page_size) queryParams.append('page_size', params.page_size);
+    if (params.sort) queryParams.append('sort', params.sort);
+    const queryString = queryParams.toString();
+    const url = queryString ? `/reviews/?${queryString}` : '/reviews/';
+    return apiClient.get(url, undefined, { timeout: 60000 });
+  }
+
+  /**
+   * Delete a review (admin)
+   * @param {string|number} reviewId - Review ID
+   * @returns {Promise}
+   */
+  async deleteReview(reviewId) {
+    return apiClient.delete(`/reviews/${reviewId}/`);
+  }
+
+  /**
+   * Publish or unpublish a review (admin)
+   * @param {string|number} reviewId - Review ID
+   * @param {boolean} isPublished - Publish status
+   * @returns {Promise} Updated review
+   */
+  async publishReview(reviewId, isPublished = true) {
+    return apiClient.patch(`/reviews/${reviewId}/publish/`, { is_published: isPublished });
+  }
+
+  /**
+   * Get review analytics (admin gets platform-wide stats)
+   * @returns {Promise} Analytics data
+   */
+  async getReviewAnalytics() {
+    return apiClient.get('/reviews/analytics/', undefined, { timeout: 60000 });
+  }
 }
 
 export const adminService = new AdminService();

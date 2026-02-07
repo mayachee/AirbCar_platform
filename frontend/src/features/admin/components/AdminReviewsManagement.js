@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { reviewService } from '@/features/reviews';
+import { useState, useEffect, useCallback } from 'react';
+import { adminService } from '@/features/admin/services/adminService';
 import { ReviewCard } from '@/features/reviews';
 import { Star, Loader2, AlertTriangle, CheckCircle, XCircle, Search, Filter, TrendingUp, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -29,10 +29,13 @@ export default function AdminReviewsManagement() {
   const loadAllReviews = async () => {
     try {
       setLoading(true);
-      // For admin, fetch all reviews without filtering by listing
-      const response = await reviewService.getReviewsWithFilters(null, {});
-      const reviewsList = Array.isArray(response) ? response : (response?.results || response?.data || []);
-      
+      const response = await adminService.getReviews();
+      // adminService returns { data: { data: [...], count, ... } }
+      const responseData = response?.data || response;
+      const reviewsList = Array.isArray(responseData)
+        ? responseData
+        : (responseData?.data || responseData?.results || []);
+
       // Deduplicate reviews by ID
       const reviewsMap = new Map();
       reviewsList.forEach(review => {
@@ -53,47 +56,32 @@ export default function AdminReviewsManagement() {
 
   const loadAnalytics = async () => {
     try {
-      // Admin analytics endpoint - might need to create this
-      // For now, calculate from loaded reviews
-      const totalReviews = reviews.length;
-      const publishedReviews = reviews.filter(r => r.is_published).length;
-      const avgRating = reviews.length > 0
-        ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-        : '0.0';
-      
-      const ratingDist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-      reviews.forEach(r => {
-        ratingDist[r.rating] = (ratingDist[r.rating] || 0) + 1;
-      });
-
+      const response = await adminService.getReviewAnalytics();
+      const data = response?.data || response;
       setAnalytics({
-        totalReviews,
-        publishedReviews,
-        unpublishedReviews: totalReviews - publishedReviews,
-        averageRating: avgRating,
-        ratingDistribution: ratingDist,
-        reviewsWithResponses: reviews.filter(r => r.owner_response).length,
-        totalHelpfulVotes: reviews.reduce((sum, r) => sum + (r.helpful_count || 0), 0)
+        totalReviews: data.total_reviews || 0,
+        publishedReviews: data.published_count || data.total_reviews || 0,
+        unpublishedReviews: data.unpublished_count || 0,
+        averageRating: data.average_rating || '0.0',
+        ratingDistribution: data.rating_distribution || {},
+        reviewsWithResponses: data.reviews_with_responses || 0,
+        totalHelpfulVotes: data.total_helpful_votes || 0,
+        reportedCount: data.reported_count || 0,
       });
     } catch (err) {
       console.error('Error loading analytics:', err);
     }
   };
 
-  useEffect(() => {
-    if (reviews.length > 0) {
-      loadAnalytics();
-    }
-  }, [reviews]);
-
   const handlePublishToggle = async (reviewId, isPublished) => {
     try {
-      await reviewService.publishReview(reviewId, isPublished);
+      await adminService.publishReview(reviewId, isPublished);
       addToast(
         isPublished ? 'Review published' : 'Review unpublished',
         'success'
       );
       await loadAllReviews();
+      await loadAnalytics();
     } catch (err) {
       console.error('Error updating review:', err);
       addToast('Failed to update review', 'error');
@@ -106,9 +94,10 @@ export default function AdminReviewsManagement() {
     }
 
     try {
-      await reviewService.deleteReview(reviewId);
+      await adminService.deleteReview(reviewId);
       addToast('Review deleted successfully', 'success');
       await loadAllReviews();
+      await loadAnalytics();
     } catch (err) {
       console.error('Error deleting review:', err);
       addToast('Failed to delete review', 'error');
@@ -192,7 +181,9 @@ export default function AdminReviewsManagement() {
               <span className="text-sm text-gray-600 dark:text-gray-400">Unpublished</span>
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.unpublishedReviews}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Needs moderation</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {analytics.reportedCount > 0 ? `${analytics.reportedCount} reported` : 'Needs moderation'}
+            </p>
           </motion.div>
         </div>
       )}

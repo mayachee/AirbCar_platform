@@ -80,6 +80,8 @@ class ReviewListView(APIView):
 
             reviews = Review.objects.select_related('listing', 'user')
 
+            is_admin = request.user.is_authenticated and getattr(request.user, 'role', None) == 'admin'
+
             # Partner viewing their own listings' reviews (includes unpublished)
             if my_listings == 'true' and request.user.is_authenticated:
                 try:
@@ -88,9 +90,15 @@ class ReviewListView(APIView):
                 except Partner.DoesNotExist:
                     return Response({'data': [], 'count': 0, 'total_count': 0}, status=status.HTTP_200_OK)
             elif listing_id:
-                reviews = reviews.filter(listing_id=listing_id, is_published=True)
+                if is_admin:
+                    reviews = reviews.filter(listing_id=listing_id)
+                else:
+                    reviews = reviews.filter(listing_id=listing_id, is_published=True)
             elif user_filter:
                 reviews = reviews.filter(user_id=user_filter, is_published=True)
+            elif is_admin:
+                # Admin sees all reviews including unpublished
+                pass
             else:
                 reviews = reviews.filter(is_published=True)
 
@@ -187,16 +195,24 @@ class ReviewDetailView(APIView):
 
     def get(self, request, pk):
         try:
-            review = Review.objects.select_related('listing', 'user').get(pk=pk, is_published=True)
+            review = Review.objects.select_related('listing', 'user').get(pk=pk)
+            # Non-admin users can only see published reviews
+            is_admin = request.user.is_authenticated and getattr(request.user, 'role', None) == 'admin'
+            if not review.is_published and not is_admin:
+                return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
             serializer = ReviewSerializer(review, context={'request': request})
             return Response({'data': serializer.data}, status=status.HTTP_200_OK)
         except Review.DoesNotExist:
             return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def patch(self, request, pk):
-        """Owner updates their own review."""
+        """Owner updates their own review. Admin can also update."""
+        is_admin = getattr(request.user, 'role', None) == 'admin'
         try:
-            review = Review.objects.select_related('listing').get(pk=pk, user=request.user)
+            if is_admin:
+                review = Review.objects.select_related('listing').get(pk=pk)
+            else:
+                review = Review.objects.select_related('listing').get(pk=pk, user=request.user)
         except Review.DoesNotExist:
             return Response({'error': 'Review not found or not yours'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -213,11 +229,17 @@ class ReviewDetailView(APIView):
         return Response({'data': serializer.data, 'message': 'Review updated'}, status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
-        """Owner deletes their own review."""
+        """Owner or admin deletes a review."""
         try:
-            review = Review.objects.select_related('listing').get(pk=pk, user=request.user)
+            review = Review.objects.select_related('listing').get(pk=pk)
         except Review.DoesNotExist:
-            return Response({'error': 'Review not found or not yours'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        is_owner = review.user_id == request.user.id
+        is_admin = getattr(request.user, 'role', None) == 'admin'
+        if not (is_owner or is_admin):
+            return Response({'error': 'Not authorized to delete this review'}, status=status.HTTP_403_FORBIDDEN)
+
         listing = review.listing
         review.delete()
         _update_listing_rating(listing)
@@ -401,10 +423,46 @@ class ReviewReportView(APIView):
 # ---------------------------------------------------------------------------
 
 class ReviewAnalyticsView(APIView):
-    """Review analytics for a partner's listings."""
+    """Review analytics for a partner's listings or platform-wide for admin."""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        is_admin = getattr(request.user, 'role', None) == 'admin'
+
+        if is_admin:
+            # Platform-wide analytics for admin
+            reviews = Review.objects.all()
+            published_reviews = reviews.filter(is_published=True)
+            total = reviews.count()
+            published_count = published_reviews.count()
+            unpublished_count = total - published_count
+            agg = published_reviews.aggregate(avg_rating=Avg('rating'))
+            avg_rating = round(agg['avg_rating'] or 0, 2)
+
+            distribution = {str(i): 0 for i in range(1, 6)}
+            for entry in published_reviews.values('rating').annotate(count=Count('id')):
+                distribution[str(entry['rating'])] = entry['count']
+
+            with_responses = reviews.filter(owner_response__isnull=False).exclude(owner_response='').count()
+            total_helpful = reviews.aggregate(total=Count('votes'))['total'] or 0
+            reported_count = ReviewReport.objects.count()
+
+            recent = reviews.order_by('-created_at')[:5]
+            recent_serialized = ReviewSerializer(recent, many=True, context={'request': request}).data
+
+            return Response({
+                'total_reviews': total,
+                'published_count': published_count,
+                'unpublished_count': unpublished_count,
+                'average_rating': avg_rating,
+                'rating_distribution': distribution,
+                'reviews_with_responses': with_responses,
+                'total_helpful_votes': total_helpful,
+                'reported_count': reported_count,
+                'recent_reviews': recent_serialized,
+            }, status=status.HTTP_200_OK)
+
+        # Partner analytics
         try:
             partner = Partner.objects.get(user=request.user)
         except Partner.DoesNotExist:
