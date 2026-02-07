@@ -148,7 +148,7 @@ class ReviewListView(APIView):
                 return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
 
             # Prevent owners from reviewing their own listing
-            if listing.owner_id == request.user.id:
+            if listing.partner_id and listing.partner.user_id == request.user.id:
                 return Response({'error': 'You cannot review your own listing'},
                                 status=status.HTTP_403_FORBIDDEN)
 
@@ -262,7 +262,7 @@ class CanReviewView(APIView):
             return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
             has_review = Review.objects.filter(user=request.user, listing=listing).exists()
-            is_owner = listing.owner_id == request.user.id
+            is_owner = listing.partner_id and listing.partner.user_id == request.user.id
             return Response({
                 'can_review': not has_review and not is_owner,
                 'has_review': has_review,
