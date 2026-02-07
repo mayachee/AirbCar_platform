@@ -53,15 +53,11 @@ services:
           name: airbcar-backend
           property: host
       
-      # Email Configuration (Gmail SMTP with SSL on port 465)
+      # Email Configuration (Gmail SMTP — port 465/SSL auto-configured in settings.py)
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_PORT
-        value: 465
-      - key: EMAIL_USE_TLS
-        value: "False"
-      - key: EMAIL_USE_SSL
-        value: "True"
+        value: "465"
       - key: EMAIL_HOST_USER
         value: ayacheyassine2000@gmail.com
       - key: EMAIL_HOST_PASSWORD
