@@ -22,8 +22,9 @@ const formatDate = (dateString) => {
 };
 
 const formatCurrency = (amount) => {
-  if (!amount && amount !== 0) return 'N/A';
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  const num = parseFloat(amount);
+  if (isNaN(num) || num < 0) return 'N/A';
+  return new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num) + ' MAD';
 };
 
 export default function CarDetailsModal({ listing, isOpen, onClose, onEdit, onDelete, onToggleAvailability }) {
@@ -79,8 +80,8 @@ export default function CarDetailsModal({ listing, isOpen, onClose, onEdit, onDe
           make: listingData.make,
           model: listingData.model,
           hasPartner: !!listingData.partner,
-          hasPictures: !!listingData.pictures,
-          picturesCount: Array.isArray(listingData.pictures) ? listingData.pictures.length : (listingData.pictures ? 1 : 0)
+          hasImages: !!(listingData.images || listingData.pictures),
+          imagesCount: Array.isArray(listingData.images) ? listingData.images.length : (Array.isArray(listingData.pictures) ? listingData.pictures.length : 0)
         });
       }
       
@@ -117,9 +118,9 @@ export default function CarDetailsModal({ listing, isOpen, onClose, onEdit, onDe
     if (isOpen && listing?.id) {
       const currentDisplayData = fullListingData || listing;
       if (currentDisplayData) {
-        const picsArray = Array.isArray(currentDisplayData?.pictures) 
-          ? currentDisplayData.pictures.filter(Boolean)
-          : (currentDisplayData?.pictures ? [currentDisplayData.pictures] : []);
+        const picsArray = Array.isArray(currentDisplayData?.images) 
+          ? currentDisplayData.images.filter(Boolean)
+          : (Array.isArray(currentDisplayData?.pictures) ? currentDisplayData.pictures.filter(Boolean) : []);
         
         const featuresArray = Array.isArray(currentDisplayData?.features)
           ? currentDisplayData.features.filter(Boolean)
@@ -149,12 +150,12 @@ export default function CarDetailsModal({ listing, isOpen, onClose, onEdit, onDe
   const normalizeListingData = (data) => {
     if (!data) return {};
     
-    // Extract pictures/images with better handling
+    // Extract images - backend uses "images" field (JSONField array)
     let pictures = [];
-    if (data.pictures && Array.isArray(data.pictures)) {
-      pictures = data.pictures;
-    } else if (data.images && Array.isArray(data.images)) {
+    if (data.images && Array.isArray(data.images)) {
       pictures = data.images;
+    } else if (data.pictures && Array.isArray(data.pictures)) {
+      pictures = data.pictures;
     } else if (data.image_urls && Array.isArray(data.image_urls)) {
       pictures = data.image_urls;
     } else if (data.photo && Array.isArray(data.photo)) {
