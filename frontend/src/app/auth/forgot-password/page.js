@@ -30,52 +30,38 @@ export default function ForgotPassword() {
     setError('')
 
     try {
-      // First, check if backend is up and running
+      // First, wake up the backend (Render free tier sleeps after inactivity)
       try {
         const healthCheck = await apiClient.get('/api/health/', undefined, { 
           skipAuth: true,
-          timeout: 10000 // 10 seconds for health check
+          timeout: 60000 // 60 seconds - Render cold start can take up to 50s
         })
         if (!healthCheck.data || (healthCheck.data.status !== 'ok' && healthCheck.data.status !== 'error')) {
-          // If status is not 'ok' or 'error', something is wrong
           setError(
-            'The server is not responding correctly. This might be because:\n\n' +
-            '• The server is starting up (Render free tier services can be slow)\n' +
-            '• The server is temporarily unavailable\n\n' +
-            'Please wait a moment and try again. If the problem persists, the server may be down.'
+            'The server is not responding correctly. Please wait a moment and try again.'
           )
           setIsLoading(false)
           return
         }
-        // If status is 'error', server is running but has issues - still try to proceed
-        // The health check now returns 200 even with errors, so we can continue
       } catch (healthError) {
-        // Backend is not responding at all or returned 500
         if (healthError.status === 500 || healthError.isTimeoutError || healthError.isNetworkError || healthError.isConnectionError) {
           setError(
-            '⚠️ Backend server is not responding\n\n' +
-            'The server at https://airbcar-backend.onrender.com appears to be down, sleeping, or experiencing issues.\n\n' +
-            'This is common with Render free tier services which:\n' +
-            '• Sleep after inactivity (takes ~30 seconds to wake up)\n' +
-            '• May have slow database connections\n\n' +
-            'Please wait 30-60 seconds and try again - the server may be waking up.\n\n' +
-            'If the problem persists, contact support or check the server status.'
+            'The server is waking up or temporarily unavailable.\n\n' +
+            'Please wait 30-60 seconds and try again.'
           )
           setIsLoading(false)
           return
         }
-        // For other errors, log but continue (might be a temporary issue)
         console.warn('Health check returned non-critical error, proceeding anyway:', healthError)
       }
 
-      // Backend is up, proceed with password reset
-      // Use shorter timeout since email is now sent asynchronously on backend
+      // Backend is awake, proceed with password reset
       await apiClient.post(
         '/api/password-reset/', 
         { email: data.email }, 
         { 
           skipAuth: true,
-          timeout: 30000 // 30 seconds should be enough since email is async
+          timeout: 60000 // 60 seconds - SMTP can be slow
         }
       )
       setSuccess(true)
@@ -84,19 +70,10 @@ export default function ForgotPassword() {
       
       // Handle timeout errors specifically
       if (error.isTimeoutError || error.message?.includes('timeout') || error.message?.includes('did not respond')) {
-        // For timeout errors, show a helpful message
-        // The request might still be processing on the backend
         setError(
-          'The request is taking longer than expected. This might be because:\n\n' +
-          '• The server is starting up (Render free tier services can be slow)\n' +
-          '• The server is processing your request\n\n' +
-          'Please check your email inbox in a few minutes. If you don\'t receive an email, try again in a moment.'
+          'The request timed out. The server may still be processing your request.\n\n' +
+          'Please check your email inbox in a few minutes. If you don\'t receive an email, try again.'
         )
-        // Still show success since backend might have processed it
-        setTimeout(() => {
-          setSuccess(true)
-          setError('')
-        }, 2000)
         return
       }
       
