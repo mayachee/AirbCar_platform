@@ -62,7 +62,7 @@ export default function PartnerHero() {
             
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <motion.a 
-                href="#partner-form" 
+                href="/auth/signup?role=partner" 
                 className="w-full sm:w-auto px-8 py-4 rounded-xl bg-orange-700/80 text-white font-semibold hover:bg-orange-700/80 backdrop-blur flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 border border-orange-500/20 backdrop-blur-sm transition-all"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

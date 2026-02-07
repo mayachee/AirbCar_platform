@@ -119,7 +119,7 @@ export default function PartnerHowItWorks() {
                 
                 {index === 0 && (
                   <div className="pt-4">
-                    <a href="#partner-form" className="inline-flex items-center px-6 py-3 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors">
+                    <a href="/auth/signup?role=partner" className="inline-flex items-center px-6 py-3 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors">
                       Start configuration <ArrowRight className="w-4 h-4 ml-2" />
                     </a>
                   </div>
