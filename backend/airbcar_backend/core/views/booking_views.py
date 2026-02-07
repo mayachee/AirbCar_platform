@@ -55,21 +55,27 @@ class BookingListView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        """List user's bookings (as customer) or partner's bookings (as partner)."""
+        """List user's bookings (as customer) or partner's bookings (as partner).
+        Admin/staff users see ALL bookings on the platform.
+        """
         try:
             user = request.user
             
             # Filter by status if provided
             status_filter = request.query_params.get('status')
             
-            # Check if user is a partner
-            try:
-                partner = Partner.objects.get(user=user)
-                # If user is a partner, get bookings for their listings
-                bookings = Booking.objects.filter(listing__partner=partner)
-            except Partner.DoesNotExist:
-                # If user is not a partner, get bookings where they are the customer
-                bookings = Booking.objects.filter(customer=user)
+            # Admin/staff users see all bookings
+            if user.is_staff or user.is_superuser:
+                bookings = Booking.objects.all()
+            else:
+                # Check if user is a partner
+                try:
+                    partner = Partner.objects.get(user=user)
+                    # If user is a partner, get bookings for their listings
+                    bookings = Booking.objects.filter(listing__partner=partner)
+                except Partner.DoesNotExist:
+                    # If user is not a partner, get bookings where they are the customer
+                    bookings = Booking.objects.filter(customer=user)
             
             if status_filter:
                 bookings = bookings.filter(status=status_filter)
@@ -476,11 +482,12 @@ class BookingCancelView(APIView):
         try:
             booking = Booking.objects.get(pk=pk)
             
-            # Check permissions
-            if booking.customer != request.user and booking.partner.user != request.user:
-                return Response({
-                    'error': 'Permission denied'
-                }, status=status.HTTP_403_FORBIDDEN)
+            # Check permissions — admin/staff can cancel any booking
+            if not (request.user.is_staff or request.user.is_superuser):
+                if booking.customer != request.user and booking.partner.user != request.user:
+                    return Response({
+                        'error': 'Permission denied'
+                    }, status=status.HTTP_403_FORBIDDEN)
             
             # Only allow cancellation if not completed
             if booking.status == 'completed':
@@ -533,19 +540,23 @@ class BookingAcceptView(APIView):
         try:
             booking = Booking.objects.get(pk=pk)
             
-            # Check if user is the partner
-            try:
-                partner = Partner.objects.get(user=request.user)
-            except Partner.DoesNotExist:
-                return Response({
-                    'error': 'Partner profile not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            if booking.partner != partner:
-                return Response({
-                    'error': 'Permission denied'
-                }, status=status.HTTP_403_FORBIDDEN)
-            
+            # Admin/staff can accept any booking
+            if request.user.is_staff or request.user.is_superuser:
+                partner = booking.partner
+            else:
+                # Check if user is the partner
+                try:
+                    partner = Partner.objects.get(user=request.user)
+                except Partner.DoesNotExist:
+                    return Response({
+                        'error': 'Partner profile not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+                
+                if booking.partner != partner:
+                    return Response({
+                        'error': 'Permission denied'
+                    }, status=status.HTTP_403_FORBIDDEN)
+
             # Check booking status
             if booking.status == 'confirmed':
                 # Already confirmed - return success (idempotent operation)
@@ -606,19 +617,23 @@ class BookingRejectView(APIView):
         try:
             booking = Booking.objects.get(pk=pk)
             
-            # Check if user is the partner
-            try:
-                partner = Partner.objects.get(user=request.user)
-            except Partner.DoesNotExist:
-                return Response({
-                    'error': 'Partner profile not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            if booking.partner != partner:
-                return Response({
-                    'error': 'Permission denied'
-                }, status=status.HTTP_403_FORBIDDEN)
-            
+            # Admin/staff can reject any booking
+            if request.user.is_staff or request.user.is_superuser:
+                partner = booking.partner
+            else:
+                # Check if user is the partner
+                try:
+                    partner = Partner.objects.get(user=request.user)
+                except Partner.DoesNotExist:
+                    return Response({
+                        'error': 'Partner profile not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+                
+                if booking.partner != partner:
+                    return Response({
+                        'error': 'Permission denied'
+                    }, status=status.HTTP_403_FORBIDDEN)
+
             # Check booking status
             if booking.status == 'cancelled':
                 # Already cancelled - return success (idempotent operation)
@@ -680,11 +695,12 @@ class BookingDetailView(APIView):
                 'listing', 'customer', 'partner'
             ).get(pk=pk)
             
-            # Check permissions
-            if booking.customer != request.user and booking.partner.user != request.user:
-                return Response({
-                    'error': 'Permission denied'
-                }, status=status.HTTP_403_FORBIDDEN)
+            # Check permissions — admin/staff can view any booking
+            if not (request.user.is_staff or request.user.is_superuser):
+                if booking.customer != request.user and booking.partner.user != request.user:
+                    return Response({
+                        'error': 'Permission denied'
+                    }, status=status.HTTP_403_FORBIDDEN)
             
             serializer = BookingSerializer(booking, context={'request': request})
             return Response({

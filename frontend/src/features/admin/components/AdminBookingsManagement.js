@@ -424,10 +424,10 @@ export default function AdminBookingsManagement() {
 
   const formatCurrency = (amount) => {
     if (!amount && amount !== 0) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    return new Intl.NumberFormat('fr-MA', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount) + ' MAD';
   };
 
   const formatDate = (dateString) => {
@@ -482,7 +482,7 @@ export default function AdminBookingsManagement() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -499,31 +499,31 @@ export default function AdminBookingsManagement() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex-1">
           <div className="flex items-center space-x-3">
-            <h3 className="text-lg font-semibold text-gray-900">Bookings Management</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Bookings Management</h3>
             <div className="flex items-center space-x-2">
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Connected to backend"></div>
-              <span className="text-xs text-gray-500">API: {apiUrl}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">API: {apiUrl}</span>
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Showing {startIndex + 1}-{Math.min(endIndex, filteredBookings.length)} of {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
           </p>
-          <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500">
+          <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
             <LinkIcon className="h-3 w-3" />
             <span>Endpoint: </span>
-            <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">{bookingsApiUrl}</code>
+            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">{bookingsApiUrl}</code>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             title="Refresh bookings"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -547,17 +547,17 @@ export default function AdminBookingsManagement() {
             onClick={() => setStatusFilter(status)}
             className={`p-3 rounded-lg border-2 transition-all text-left ${
               statusFilter === status
-                ? 'border-blue-500 bg-blue-50 shadow-md'
-                : 'border-gray-200 hover:border-gray-300 bg-white'
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md'
+                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
             }`}
           >
-            <p className="text-xs font-medium text-gray-600 capitalize mb-1">{status}</p>
-            <p className="text-xl font-bold text-gray-900">{stats[status] || 0}</p>
+            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 capitalize mb-1">{status}</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{stats[status] || 0}</p>
           </button>
         ))}
-        <div className="p-3 rounded-lg border-2 border-gray-200 bg-gradient-to-br from-green-50 to-green-100">
-          <p className="text-xs font-medium text-gray-600 mb-1">Total Revenue</p>
-          <p className="text-xl font-bold text-green-900">{formatCurrency(calculateTotalRevenue())}</p>
+        <div className="p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Total Revenue</p>
+          <p className="text-xl font-bold text-green-900 dark:text-green-300">{formatCurrency(calculateTotalRevenue())}</p>
         </div>
       </div>
 
@@ -570,7 +570,7 @@ export default function AdminBookingsManagement() {
             placeholder="Search bookings, customers, vehicles..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
           />
         </div>
         
@@ -624,19 +624,19 @@ export default function AdminBookingsManagement() {
 
       {/* Bookings Table */}
       {filteredBookings.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">No bookings found</p>
-          <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
+        <div className="text-center py-12 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+          <Calendar className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400 font-medium">No bookings found</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Try adjusting your search or filters</p>
         </div>
       ) : (
         <>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => handleSort('id')}
                   >
                     <div className="flex items-center space-x-1">
@@ -645,7 +645,7 @@ export default function AdminBookingsManagement() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => handleSort('customer')}
                   >
                     <div className="flex items-center space-x-1">
@@ -654,7 +654,7 @@ export default function AdminBookingsManagement() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => handleSort('vehicle')}
                   >
                     <div className="flex items-center space-x-1">
@@ -663,7 +663,7 @@ export default function AdminBookingsManagement() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => handleSort('start_time')}
                   >
                     <div className="flex items-center space-x-1">
@@ -672,7 +672,7 @@ export default function AdminBookingsManagement() {
                     </div>
                   </th>
                   <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => handleSort('price')}
                   >
                     <div className="flex items-center space-x-1">
@@ -680,18 +680,18 @@ export default function AdminBookingsManagement() {
                       <ArrowUpDown className="h-3 w-3" />
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                 {paginatedBookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={booking.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                       #{booking.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -700,31 +700,31 @@ export default function AdminBookingsManagement() {
                           {booking.user?.first_name?.[0] || booking.user?.email?.[0] || 'U'}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {booking.user?.first_name && booking.user?.last_name
                               ? `${booking.user.first_name} ${booking.user.last_name}`
                               : booking.user?.email || 'Unknown'}
                           </div>
-                          <div className="text-xs text-gray-500">{booking.user?.email}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{booking.user?.email}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {booking.listing?.make} {booking.listing?.model}
                       </div>
-                      <div className="text-xs text-gray-500">{booking.listing?.year}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{booking.listing?.year}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{formatDate(booking.start_time || booking.start_date)}</div>
-                      <div className="text-xs text-gray-500">to {formatDate(booking.end_time || booking.end_date)}</div>
-                      {booking.requested_at && (
-                        <div className="text-xs text-gray-400 mt-1">Requested: {formatDate(booking.requested_at)}</div>
+                      <div className="text-sm text-gray-900 dark:text-white">{formatDate(booking.start_time || booking.start_date || booking.pickup_date)}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">to {formatDate(booking.end_time || booking.end_date || booking.return_date)}</div>
+                      {(booking.requested_at || booking.created_at) && (
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Requested: {formatDate(booking.requested_at || booking.created_at)}</div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">
-                        {formatCurrency(booking.price || booking.total_price)}
+                      <div className="text-sm font-bold text-gray-900 dark:text-white">
+                        {formatCurrency(booking.price || booking.total_price || booking.total_amount)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -792,9 +792,9 @@ export default function AdminBookingsManagement() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
+            <div className="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-800 pt-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Items per page:</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Items per page:</span>
                 <SelectField
                   value={String(itemsPerPage)}
                   onChange={(e) => {
@@ -815,21 +815,21 @@ export default function AdminBookingsManagement() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                 </button>
 
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   Page {currentPage} of {totalPages}
                 </div>
 
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                 </button>
               </div>
             </div>

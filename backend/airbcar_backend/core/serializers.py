@@ -679,21 +679,29 @@ class BookingSerializer(serializers.ModelSerializer):
     """Booking serializer."""
     listing = ListingSerializer(read_only=True)
     customer = UserSerializer(read_only=True)
+    user = UserSerializer(source='customer', read_only=True)
     partner = PartnerSerializer(read_only=True)
     
     # Alternative field names for start_date/end_date
     start_date = serializers.DateField(source='pickup_date', required=False, write_only=True)
     end_date = serializers.DateField(source='return_date', required=False, write_only=True)
+    # Read aliases so frontend can use either name
+    start_time = serializers.DateField(source='pickup_date', read_only=True)
+    end_time = serializers.DateField(source='return_date', read_only=True)
+    price = serializers.DecimalField(source='total_amount', max_digits=10, decimal_places=2, read_only=True)
+    requested_at = serializers.DateTimeField(source='created_at', read_only=True)
     
     class Meta:
         model = Booking
         fields = [
-            'id', 'listing', 'customer', 'partner', 'pickup_date', 'return_date',
+            'id', 'listing', 'customer', 'user', 'partner',
+            'pickup_date', 'return_date',
             'pickup_time', 'return_time', 'pickup_location', 'return_location',
-            'total_amount', 'status', 'payment_status', 'payment_method', 
+            'total_amount', 'price', 'status', 'payment_status', 'payment_method', 
             'request_message', 'rejection_reason',
             'license_front_document', 'license_back_document',
-            'created_at', 'updated_at', 'start_date', 'end_date'
+            'created_at', 'updated_at', 'requested_at',
+            'start_date', 'end_date', 'start_time', 'end_time',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
