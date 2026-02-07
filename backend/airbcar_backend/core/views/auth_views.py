@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
 import json
+import os
 import threading
 
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -351,6 +352,48 @@ class PasswordResetRequestView(APIView):
     """Request password reset email endpoint."""
     permission_classes = [AllowAny]
     
+    def _send_email_resend(self, to_email, subject, body):
+        """Send email via Resend HTTP API (bypasses SMTP entirely)."""
+        import json
+        import urllib.request
+        import urllib.error
+        
+        api_key = getattr(settings, 'RESEND_API_KEY', '') or os.environ.get('RESEND_API_KEY', '')
+        if not api_key:
+            raise RuntimeError('RESEND_API_KEY not configured')
+        
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '') or 'onboarding@resend.dev'
+        payload = json.dumps({
+            'from': from_email,
+            'to': [to_email],
+            'subject': subject,
+            'text': body,
+        }).encode('utf-8')
+        
+        req = urllib.request.Request(
+            'https://api.resend.com/emails',
+            data=payload,
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json',
+            },
+            method='POST',
+        )
+        
+        resp = urllib.request.urlopen(req, timeout=15)
+        return json.loads(resp.read().decode())
+    
+    def _send_email_smtp(self, to_email, subject, body):
+        """Send email via Django's SMTP backend."""
+        from django.core.mail import send_mail
+        send_mail(
+            subject=subject,
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[to_email],
+            fail_silently=False,
+        )
+    
     def post(self, request):
         """Send password reset email."""
         email = request.data.get('email')
@@ -371,11 +414,9 @@ class PasswordResetRequestView(APIView):
                 expires_at=timezone.now() + timedelta(hours=24)
             )
             
-            # Send email synchronously so we can report errors to the user
-            from django.core.mail import send_mail
             reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
             subject = 'Reset your AirbCar password'
-            message = (
+            body = (
                 f"Hello {user.first_name or user.email},\n\n"
                 f"You requested to reset your password for your AirbCar account.\n\n"
                 f"Click the link below to reset your password:\n\n"
@@ -387,21 +428,19 @@ class PasswordResetRequestView(APIView):
             )
             
             try:
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
+                # Try Resend HTTP API first (works on Render which blocks SMTP)
+                resend_key = getattr(settings, 'RESEND_API_KEY', '') or os.environ.get('RESEND_API_KEY', '')
+                if resend_key:
+                    self._send_email_resend(user.email, subject, body)
+                else:
+                    self._send_email_smtp(user.email, subject, body)
             except Exception as mail_err:
-                print(f"SMTP error sending password reset email to {user.email}: {mail_err}")
+                print(f"Email send error to {user.email}: {mail_err}")
                 print(traceback.format_exc())
-                # Delete the unused token so it doesn't clutter the DB
                 password_reset.delete()
                 return Response({
                     'error': 'Failed to send password reset email. Please try again later.',
-                    'detail': str(mail_err) if settings.DEBUG else None,
+                    'detail': str(mail_err),
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             return Response({
@@ -410,7 +449,6 @@ class PasswordResetRequestView(APIView):
             }, status=status.HTTP_200_OK)
             
         except User.DoesNotExist:
-            # Don't reveal if email exists or not (security best practice)
             return Response({
                 'message': 'If an account with this email exists, a password reset link has been sent.'
             }, status=status.HTTP_200_OK)
