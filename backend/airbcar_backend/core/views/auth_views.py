@@ -469,6 +469,22 @@ class PasswordResetConfirmView(APIView):
     """Confirm password reset endpoint."""
     permission_classes = [AllowAny]
     
+    def get(self, request):
+        """Validate a password reset token (called by frontend before showing form)."""
+        token = request.query_params.get('token')
+        if not token:
+            return Response({'valid': False, 'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            PasswordReset.objects.get(
+                token=token,
+                expires_at__gt=timezone.now(),
+                is_used=False
+            )
+            return Response({'valid': True}, status=status.HTTP_200_OK)
+        except PasswordReset.DoesNotExist:
+            return Response({'valid': False, 'error': 'Invalid or expired reset token'}, status=status.HTTP_400_BAD_REQUEST)
+    
     def post(self, request):
         """Reset password using token."""
         token = request.data.get('token')
@@ -501,7 +517,8 @@ class PasswordResetConfirmView(APIView):
             password_reset.save()
             
             return Response({
-                'message': 'Password reset successfully'
+                'message': 'Password reset successfully',
+                'reset': True
             }, status=status.HTTP_200_OK)
             
         except PasswordReset.DoesNotExist:

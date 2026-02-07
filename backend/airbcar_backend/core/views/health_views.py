@@ -92,6 +92,7 @@ class HealthCheckView(APIView):
                     'use_tls': getattr(settings, 'EMAIL_USE_TLS', 'not set'),
                     'host_user': getattr(settings, 'EMAIL_HOST_USER', 'not set'),
                     'has_password': bool(getattr(settings, 'EMAIL_HOST_PASSWORD', '')),
+                    'has_resend_key': bool(getattr(settings, 'RESEND_API_KEY', '')),
                     'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'not set'),
                     'frontend_url': getattr(settings, 'FRONTEND_URL', 'not set'),
                 },
