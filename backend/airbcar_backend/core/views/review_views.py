@@ -10,8 +10,8 @@ from django.utils import timezone
 from django.conf import settings
 import traceback
 
-from ..models import Listing, Booking, Review, ReviewVote, ReviewReport, Partner
-from ..serializers import ReviewSerializer, ReviewReportSerializer
+from ..models import Listing, Booking, Review, ReviewVote, ReviewReport, ReviewReply, ReviewReaction, Partner
+from ..serializers import ReviewSerializer, ReviewReportSerializer, ReviewReplySerializer
 
 
 # ---------------------------------------------------------------------------
@@ -481,4 +481,158 @@ class ReviewAnalyticsView(APIView):
             'average_rating': avg_rating,
             'rating_distribution': distribution,
             'recent_reviews': recent_serialized,
+        }, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Replies on reviews
+# ---------------------------------------------------------------------------
+
+class ReviewReplyListView(APIView):
+    """List replies for a review (GET) or add a reply (POST)."""
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
+    def get(self, request, pk):
+        """Get all replies for a review (top-level, children nested)."""
+        try:
+            review = Review.objects.get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        replies = ReviewReply.objects.filter(review=review, parent__isnull=True).select_related('user')
+        serializer = ReviewReplySerializer(replies, many=True, context={'request': request})
+        return Response({'data': serializer.data, 'count': replies.count()}, status=status.HTTP_200_OK)
+
+    def post(self, request, pk):
+        """Add a reply to a review."""
+        try:
+            review = Review.objects.get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        comment = (request.data.get('comment') or '').strip()
+        if not comment:
+            return Response({'error': 'Comment is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(comment) < 2:
+            return Response({'error': 'Comment is too short'}, status=status.HTTP_400_BAD_REQUEST)
+
+        parent_id = request.data.get('parent')
+        parent = None
+        if parent_id:
+            try:
+                parent = ReviewReply.objects.get(pk=parent_id, review=review)
+            except ReviewReply.DoesNotExist:
+                return Response({'error': 'Parent reply not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        reply = ReviewReply.objects.create(
+            review=review,
+            user=request.user,
+            parent=parent,
+            comment=comment,
+        )
+        serializer = ReviewReplySerializer(reply, context={'request': request})
+        return Response({'data': serializer.data, 'message': 'Reply added'}, status=status.HTTP_201_CREATED)
+
+
+class ReviewReplyDetailView(APIView):
+    """Edit or delete a reply (owner or admin only)."""
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk, reply_id):
+        """Edit own reply."""
+        try:
+            reply = ReviewReply.objects.get(pk=reply_id, review_id=pk)
+        except ReviewReply.DoesNotExist:
+            return Response({'error': 'Reply not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        is_admin = getattr(request.user, 'role', None) == 'admin'
+        if reply.user_id != request.user.id and not is_admin:
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        comment = (request.data.get('comment') or '').strip()
+        if not comment:
+            return Response({'error': 'Comment is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        reply.comment = comment
+        reply.save(update_fields=['comment', 'updated_at'])
+        serializer = ReviewReplySerializer(reply, context={'request': request})
+        return Response({'data': serializer.data, 'message': 'Reply updated'}, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk, reply_id):
+        """Delete own reply."""
+        try:
+            reply = ReviewReply.objects.get(pk=reply_id, review_id=pk)
+        except ReviewReply.DoesNotExist:
+            return Response({'error': 'Reply not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        is_admin = getattr(request.user, 'role', None) == 'admin'
+        if reply.user_id != request.user.id and not is_admin:
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        reply.delete()
+        return Response({'message': 'Reply deleted'}, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Reactions on reviews
+# ---------------------------------------------------------------------------
+
+class ReviewReactionView(APIView):
+    """Add or change reaction (POST) or remove reaction (DELETE)."""
+    permission_classes = [IsAuthenticated]
+
+    VALID_REACTIONS = ['like', 'love', 'laugh', 'wow', 'sad', 'angry']
+
+    def post(self, request, pk):
+        """Add or update reaction on a review."""
+        try:
+            review = Review.objects.get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        reaction = request.data.get('reaction', '').strip()
+        if reaction not in self.VALID_REACTIONS:
+            valid = ', '.join(self.VALID_REACTIONS)
+            return Response(
+                {'error': f'Invalid reaction. Choose from: {valid}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        obj, created = ReviewReaction.objects.update_or_create(
+            review=review, user=request.user,
+            defaults={'reaction': reaction},
+        )
+
+        # Return updated summary
+        counts_qs = review.reactions.values('reaction').annotate(count=Count('id'))
+        reaction_counts = {r['reaction']: r['count'] for r in counts_qs}
+        total = sum(reaction_counts.values())
+
+        return Response({
+            'message': 'Reaction added' if created else 'Reaction updated',
+            'reaction_counts': reaction_counts,
+            'user_reaction': reaction,
+            'total': total,
+        }, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        """Remove reaction from a review."""
+        deleted, _ = ReviewReaction.objects.filter(review_id=pk, user=request.user).delete()
+        if not deleted:
+            return Response({'error': 'No reaction to remove'}, status=status.HTTP_404_NOT_FOUND)
+
+        review = Review.objects.get(pk=pk)
+        counts_qs = review.reactions.values('reaction').annotate(count=Count('id'))
+        reaction_counts = {r['reaction']: r['count'] for r in counts_qs}
+        total = sum(reaction_counts.values())
+
+        return Response({
+            'message': 'Reaction removed',
+            'reaction_counts': reaction_counts,
+            'user_reaction': None,
+            'total': total,
         }, status=status.HTTP_200_OK)

@@ -195,6 +195,65 @@ export class ReviewService {
     });
     return response.data;
   }
+
+  // ---- Replies ----
+
+  /**
+   * Get replies for a review
+   */
+  async getReplies(reviewId) {
+    const response = await apiClient.get(`/reviews/${reviewId}/replies/`);
+    return response.data;
+  }
+
+  /**
+   * Add a reply to a review
+   * @param {number} reviewId
+   * @param {string} comment
+   * @param {number|null} parentId - for nested replies
+   */
+  async addReply(reviewId, comment, parentId = null) {
+    const payload = { comment };
+    if (parentId) payload.parent = parentId;
+    const response = await apiClient.post(`/reviews/${reviewId}/replies/`, payload);
+    return response.data;
+  }
+
+  /**
+   * Edit a reply
+   */
+  async editReply(reviewId, replyId, comment) {
+    const response = await apiClient.patch(`/reviews/${reviewId}/replies/${replyId}/`, { comment });
+    return response.data;
+  }
+
+  /**
+   * Delete a reply
+   */
+  async deleteReply(reviewId, replyId) {
+    const response = await apiClient.delete(`/reviews/${reviewId}/replies/${replyId}/`);
+    return response.data;
+  }
+
+  // ---- Reactions ----
+
+  /**
+   * Add or change reaction on a review
+   * @param {number} reviewId
+   * @param {string} reaction - like|love|laugh|wow|sad|angry
+   */
+  async addReaction(reviewId, reaction) {
+    const response = await apiClient.post(`/reviews/${reviewId}/react/`, { reaction });
+    return response.data;
+  }
+
+  /**
+   * Remove reaction from a review
+   */
+  async removeReaction(reviewId) {
+    const response = await apiClient.delete(`/reviews/${reviewId}/react/`);
+    return response.data;
+  }
 }
 
 // Export singleton instance

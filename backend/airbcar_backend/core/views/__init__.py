@@ -59,6 +59,7 @@ try:
         ReviewListView, CanReviewView, ReviewDetailView,
         ReviewVoteView, ReviewRespondView, ReviewPublishView,
         ReviewReportView, ReviewAnalyticsView,
+        ReviewReplyListView, ReviewReplyDetailView, ReviewReactionView,
     )
 except Exception as e:
     print(f"Error importing review_views: {e}", file=sys.stderr)
@@ -66,6 +67,7 @@ except Exception as e:
     ReviewListView = CanReviewView = ReviewDetailView = None
     ReviewVoteView = ReviewRespondView = ReviewPublishView = None
     ReviewReportView = ReviewAnalyticsView = None
+    ReviewReplyListView = ReviewReplyDetailView = ReviewReactionView = None
 
 try:
     from .notification_views import NotificationListView, MarkNotificationReadView, MarkAllNotificationsReadView

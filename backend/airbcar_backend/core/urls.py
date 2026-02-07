@@ -174,6 +174,12 @@ if views.ReviewPublishView is not None:
     urlpatterns.append(path('reviews/<int:pk>/publish/', views.ReviewPublishView.as_view(), name='review-publish'))
 if views.ReviewReportView is not None:
     urlpatterns.append(path('reviews/<int:pk>/report/', views.ReviewReportView.as_view(), name='review-report'))
+if views.ReviewReplyListView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/replies/', views.ReviewReplyListView.as_view(), name='review-replies'))
+if views.ReviewReplyDetailView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/replies/<int:reply_id>/', views.ReviewReplyDetailView.as_view(), name='review-reply-detail'))
+if views.ReviewReactionView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/react/', views.ReviewReactionView.as_view(), name='review-react'))
 
 # Notification endpoints
 if views.NotificationListView is not None:

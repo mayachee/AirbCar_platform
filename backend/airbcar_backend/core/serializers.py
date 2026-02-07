@@ -728,6 +728,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     listing_id = serializers.IntegerField(source='listing.id', read_only=True)
     listing_name = serializers.SerializerMethodField()
     user_has_voted = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+    reactions = serializers.SerializerMethodField()
+    reply_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Review
@@ -736,6 +739,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             'is_published', 'is_verified',
             'owner_response', 'owner_response_at',
             'helpful_count', 'user_has_voted',
+            'replies', 'reply_count', 'reactions',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'helpful_count', 'is_verified']
@@ -749,11 +753,59 @@ class ReviewSerializer(serializers.ModelSerializer):
     def get_user_has_voted(self, obj):
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
-            # Use prefetched votes if available
             if hasattr(obj, '_prefetched_objects_cache') and 'votes' in obj._prefetched_objects_cache:
                 return any(v.user_id == request.user.id for v in obj.votes.all())
             return obj.votes.filter(user=request.user).exists()
         return False
+
+    def get_replies(self, obj):
+        # Only return top-level replies (children are nested inside)
+        top_replies = obj.replies.filter(parent__isnull=True).select_related('user')[:10]
+        return ReviewReplySerializer(top_replies, many=True, context=self.context).data
+
+    def get_reply_count(self, obj):
+        return obj.replies.count()
+
+    def get_reactions(self, obj):
+        from django.db.models import Count
+        from .models import ReviewReaction
+        counts_qs = obj.reactions.values('reaction').annotate(count=Count('id'))
+        reaction_counts = {r['reaction']: r['count'] for r in counts_qs}
+        total = sum(reaction_counts.values())
+        user_reaction = None
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            ur = obj.reactions.filter(user=request.user).first()
+            if ur:
+                user_reaction = ur.reaction
+        return {
+            'reaction_counts': reaction_counts,
+            'user_reaction': user_reaction,
+            'total': total,
+        }
+
+
+class ReviewReplySerializer(serializers.ModelSerializer):
+    """Serializer for review replies with nested children."""
+    user = UserSerializer(read_only=True)
+    children = serializers.SerializerMethodField()
+
+    class Meta:
+        from .models import ReviewReply
+        model = ReviewReply
+        fields = ['id', 'review', 'user', 'parent', 'comment', 'children', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_children(self, obj):
+        children = obj.children.select_related('user').all()
+        return ReviewReplySerializer(children, many=True, context=self.context).data
+
+
+class ReviewReactionSummarySerializer(serializers.Serializer):
+    """Summarises reactions on a review: counts per type + user's own reaction."""
+    reaction_counts = serializers.DictField(child=serializers.IntegerField())
+    user_reaction = serializers.CharField(allow_null=True)
+    total = serializers.IntegerField()
 
 
 class ReviewReportSerializer(serializers.ModelSerializer):

@@ -354,6 +354,50 @@ class ReviewReport(models.Model):
         return f"Report on review {self.review_id} by {self.user.username}"
 
 
+class ReviewReply(models.Model):
+    """Reply/comment on a review — supports threaded replies."""
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='replies')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_replies')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['review', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"Reply by {self.user.username} on review {self.review_id}"
+
+
+class ReviewReaction(models.Model):
+    """Emoji reaction on a review."""
+    REACTION_CHOICES = [
+        ('like', '👍'),
+        ('love', '❤️'),
+        ('laugh', '😂'),
+        ('wow', '😮'),
+        ('sad', '😢'),
+        ('angry', '😡'),
+    ]
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_reactions')
+    reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['review', 'user']  # One reaction per user per review
+        indexes = [
+            models.Index(fields=['review']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} reacted {self.reaction} on review {self.review_id}"
+
+
 class PasswordReset(models.Model):
     """Password reset token model."""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_resets')
