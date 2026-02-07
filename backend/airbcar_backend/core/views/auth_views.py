@@ -384,8 +384,19 @@ class PasswordResetRequestView(APIView):
             method='POST',
         )
         
-        resp = urllib.request.urlopen(req, timeout=15)
-        return json.loads(resp.read().decode())
+        try:
+            resp = urllib.request.urlopen(req, timeout=15)
+            return json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            error_body = ''
+            try:
+                error_body = e.read().decode()
+            except Exception:
+                pass
+            raise RuntimeError(
+                f'Resend API {e.code}: {error_body} '
+                f'(from={from_email}, to={to_email})'
+            )
     
     def _send_email_smtp(self, to_email, subject, body):
         """Send email via Django's SMTP backend."""
