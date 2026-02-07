@@ -84,7 +84,17 @@ class HealthCheckView(APIView):
                 'message': 'Backend is running',
                 'cors_enabled': True,
                 'database': db_status,
-                'timestamp': timezone.now().isoformat()
+                'timestamp': timezone.now().isoformat(),
+                'email_config': {
+                    'backend': getattr(settings, 'EMAIL_BACKEND', 'not set'),
+                    'host': getattr(settings, 'EMAIL_HOST', 'not set'),
+                    'port': getattr(settings, 'EMAIL_PORT', 'not set'),
+                    'use_tls': getattr(settings, 'EMAIL_USE_TLS', 'not set'),
+                    'host_user': getattr(settings, 'EMAIL_HOST_USER', 'not set'),
+                    'has_password': bool(getattr(settings, 'EMAIL_HOST_PASSWORD', '')),
+                    'from_email': getattr(settings, 'DEFAULT_FROM_EMAIL', 'not set'),
+                    'frontend_url': getattr(settings, 'FRONTEND_URL', 'not set'),
+                },
             }, status=status.HTTP_200_OK)
         except Exception as e:
             # Even if something goes wrong, return a response (don't crash)

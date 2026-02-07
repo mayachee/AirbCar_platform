@@ -353,8 +353,6 @@ class PasswordResetRequestView(APIView):
     
     def post(self, request):
         """Send password reset email."""
-        import threading
-        
         email = request.data.get('email')
         
         if not email:
@@ -373,47 +371,39 @@ class PasswordResetRequestView(APIView):
                 expires_at=timezone.now() + timedelta(hours=24)
             )
             
-            # Send email asynchronously
-            def send_email_async():
-                try:
-                    from django.core.mail import send_mail
-                    reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
-                    subject = 'Reset your AirbCar password'
-                    message = f"""
-Hello {user.first_name or user.email},
+            # Send email synchronously so we can report errors to the user
+            from django.core.mail import send_mail
+            reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
+            subject = 'Reset your AirbCar password'
+            message = (
+                f"Hello {user.first_name or user.email},\n\n"
+                f"You requested to reset your password for your AirbCar account.\n\n"
+                f"Click the link below to reset your password:\n\n"
+                f"{reset_url}\n\n"
+                f"This link will expire in 24 hours.\n\n"
+                f"If you didn't request a password reset, please ignore this email. "
+                f"Your password will remain unchanged.\n\n"
+                f"Best regards,\nThe AirbCar Team"
+            )
+            
+            try:
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as mail_err:
+                print(f"SMTP error sending password reset email to {user.email}: {mail_err}")
+                print(traceback.format_exc())
+                # Delete the unused token so it doesn't clutter the DB
+                password_reset.delete()
+                return Response({
+                    'error': 'Failed to send password reset email. Please try again later.',
+                    'detail': str(mail_err) if settings.DEBUG else None,
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-You requested to reset your password for your AirbCar account.
-
-Click the link below to reset your password:
-
-{reset_url}
-
-This link will expire in 24 hours.
-
-If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
-
-Best regards,
-The AirbCar Team
-"""
-                    send_mail(
-                        subject=subject,
-                        message=message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[user.email],
-                        fail_silently=False,
-                    )
-                except Exception as e:
-                    if settings.DEBUG:
-                        print(f"Error sending password reset email asynchronously: {e}")
-                        print(traceback.format_exc())
-
-            # Start email sending in background thread
-            email_thread = threading.Thread(target=send_email_async)
-            email_thread.daemon = True
-            email_thread.start()
-
-            # Return immediately - don't wait for email to be sent
-            # Don't reveal if email exists or not (security best practice)
             return Response({
                 'message': 'If an account with this email exists, a password reset link has been sent.',
                 'email_sent': True
@@ -426,9 +416,8 @@ The AirbCar Team
             }, status=status.HTTP_200_OK)
         except Exception as e:
             error_msg = str(e)
-            if settings.DEBUG:
-                print(f"Error in password reset request: {error_msg}")
-                print(traceback.format_exc())
+            print(f"Error in password reset request: {error_msg}")
+            print(traceback.format_exc())
             return Response({
                 'error': 'An error occurred while processing your request'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

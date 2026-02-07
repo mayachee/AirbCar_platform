@@ -44,9 +44,9 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: airbcar_backend.settings
       
-      # URLs - Update FRONTEND_URL after deploying your frontend to Vercel
+      # URLs
       - key: FRONTEND_URL
-        value: https://airbcar-platform.vercel.app  # Update this with your actual Vercel frontend URL after deployment
+        value: https://www.airbcar.com
       - key: BACKEND_URL
         fromService:
           type: web
@@ -63,8 +63,7 @@ services:
       - key: EMAIL_HOST_USER
         value: ayacheyassine2000@gmail.com
       - key: EMAIL_HOST_PASSWORD
-        sync: false  # Set this manually in Render dashboard for security
-        # Value: rmqjpvkmekdiugnz
+        value: rmqjpvkmekdiugnz
       - key: DEFAULT_FROM_EMAIL
         value: ayacheyassine2000@gmail.com
       
