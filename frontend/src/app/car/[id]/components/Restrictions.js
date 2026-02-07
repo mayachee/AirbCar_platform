@@ -71,7 +71,7 @@ export default function Restrictions({ vehicle }) {
           <div className="space-y-4">
             {/* Partner Logo and Company Name */}
             {companyName && (
-              <div className="flex items-start space-x-4 pb-4 border-b border-orange-500/20">
+              <div className="flex items-start space-x-4 pb-4">
                 {/* Logo */}
                 {partnerSlug ? (
                   <Link 

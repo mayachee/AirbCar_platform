@@ -147,11 +147,9 @@ class ReviewListView(APIView):
             except Listing.DoesNotExist:
                 return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            has_booking = Booking.objects.filter(
-                customer=request.user, listing=listing, status='completed'
-            ).exists()
-            if not has_booking:
-                return Response({'error': 'You can only review listings you have booked and completed'},
+            # Prevent owners from reviewing their own listing
+            if listing.owner_id == request.user.id:
+                return Response({'error': 'You cannot review your own listing'},
                                 status=status.HTTP_403_FORBIDDEN)
 
             existing = Review.objects.filter(user=request.user, listing=listing).first()
@@ -263,14 +261,12 @@ class CanReviewView(APIView):
         except Listing.DoesNotExist:
             return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
-            has_completed = Booking.objects.filter(
-                customer=request.user, listing=listing, status='completed'
-            ).exists()
             has_review = Review.objects.filter(user=request.user, listing=listing).exists()
+            is_owner = listing.owner_id == request.user.id
             return Response({
-                'can_review': has_completed and not has_review,
-                'has_completed_booking': has_completed,
+                'can_review': not has_review and not is_owner,
                 'has_review': has_review,
+                'is_owner': is_owner,
             }, status=status.HTTP_200_OK)
         except Exception as e:
             if settings.DEBUG:

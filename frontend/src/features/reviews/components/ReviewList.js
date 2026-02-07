@@ -468,6 +468,17 @@ export default function ReviewList({
         </div>
       )}
 
+
+
+      {/* Login prompt for guests */}
+      {!user && (
+        <div className="text-center py-3 px-4 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            <a href="/auth/signin" className="text-orange-500 hover:text-orange-600 font-medium">Sign in</a> to leave a review.
+          </p>
+        </div>
+      )}
+
       {/* Add Review Form */}
       <AnimatePresence>
         {isAddingReview && (
