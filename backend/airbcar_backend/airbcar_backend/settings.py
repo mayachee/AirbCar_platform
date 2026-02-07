@@ -101,16 +101,16 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
-    'core.etag_middleware.CacheControlMiddleware',  # Add Cache-Control headers (MUST be before GZip)
-    'django.middleware.gzip.GZipMiddleware',  # Compress responses for faster transfer
-    'core.etag_middleware.ETagMiddleware',  # Add ETag for client-side caching (saves 30-50% bandwidth)
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS must be early — before CommonMiddleware and any response-modifying middleware
+    'django.contrib.sessions.middleware.SessionMiddleware',  # MUST be before CsrfViewMiddleware and AuthenticationMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',  # Required by AuthenticationMiddleware
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.etag_middleware.CacheControlMiddleware',  # Add Cache-Control headers
+    'django.middleware.gzip.GZipMiddleware',  # Compress responses for faster transfer
+    'core.etag_middleware.ETagMiddleware',  # Add ETag for client-side caching (saves 30-50% bandwidth)
     'core.middleware.EnsureCorsHeadersMiddleware',  # Ensure CORS headers even on errors
 ]
 
