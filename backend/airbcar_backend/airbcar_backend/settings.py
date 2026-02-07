@@ -385,16 +385,25 @@ SIMPLE_JWT = {
 }
 
 # Email Configuration
-# Gmail SMTP: Use port 465 + SSL (more reliable on cloud providers that block port 587)
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+# Render free tier blocks outbound SMTP (ports 25, 465, 587).
+# Use Resend HTTP API in production, SMTP locally.
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+
+if RESEND_API_KEY:
+    # Production: Use Resend HTTP email API (free 100 emails/day)
+    EMAIL_BACKEND = 'core.email_backend.ResendEmailBackend'
+else:
+    # Local dev: Use SMTP (or console backend if no password)
+    EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'ayacheyassine2000@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 15))  # 15 second timeout to prevent hanging
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 15))  # 15 second timeout
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@airbcar.com')
 
-# SSL and TLS are mutually exclusive — pick based on port
+# SSL and TLS are mutually exclusive — pick based on port (for local SMTP only)
 if EMAIL_PORT == 465:
     EMAIL_USE_SSL = True
     EMAIL_USE_TLS = False

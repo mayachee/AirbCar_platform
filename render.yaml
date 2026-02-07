@@ -53,19 +53,12 @@ services:
           name: airbcar-backend
           property: host
       
-      # Email Configuration (Gmail SMTP — port 465/SSL auto-configured in settings.py)
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: "465"
-      - key: EMAIL_HOST_USER
-        value: ayacheyassine2000@gmail.com
-      - key: EMAIL_HOST_PASSWORD
-        value: rmqjpvkmekdiugnz
+      # Email Configuration (Resend HTTP API — Render blocks SMTP ports)
+      # Sign up free at https://resend.com, get API key
+      - key: RESEND_API_KEY
+        sync: false  # Set this manually in Render dashboard
       - key: DEFAULT_FROM_EMAIL
         value: ayacheyassine2000@gmail.com
-      - key: EMAIL_TIMEOUT
-        value: "15"
       
       # Supabase Storage Configuration (REQUIRED for image uploads)
       - key: SUPABASE_URL
