@@ -10,6 +10,7 @@ Setup:
 4. Set RESEND_API_KEY env var on Render
 """
 import json
+import os
 import urllib.request
 import urllib.error
 from django.conf import settings
@@ -45,8 +46,16 @@ class ResendEmailBackend(BaseEmailBackend):
         return sent
 
     def _send(self, message):
+        # Use Resend's free test sender if no verified domain
+        from_email = message.from_email
+        resend_from = getattr(settings, 'RESEND_FROM_EMAIL', '') or os.environ.get('RESEND_FROM_EMAIL', '')
+        if resend_from:
+            from_email = resend_from
+        elif not from_email or '@resend.dev' not in from_email:
+            from_email = 'AirbCar <onboarding@resend.dev>'
+        
         payload = {
-            'from': message.from_email,
+            'from': from_email,
             'to': list(message.to),
             'subject': message.subject,
             'text': message.body,

@@ -362,7 +362,11 @@ class PasswordResetRequestView(APIView):
         if not api_key:
             raise RuntimeError('RESEND_API_KEY not configured')
         
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '') or 'onboarding@resend.dev'
+        # Use Resend's free test sender if no verified domain is configured
+        from_email = getattr(settings, 'RESEND_FROM_EMAIL', '') or os.environ.get('RESEND_FROM_EMAIL', '')
+        if not from_email:
+            from_email = 'AirbCar <onboarding@resend.dev>'
+        
         payload = json.dumps({
             'from': from_email,
             'to': [to_email],
