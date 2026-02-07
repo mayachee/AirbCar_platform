@@ -55,11 +55,17 @@ except Exception as e:
     PartnerEarningsView = PartnerAnalyticsView = PartnerReviewsView = PartnerActivityView = None
 
 try:
-    from .review_views import ReviewListView, CanReviewView
+    from .review_views import (
+        ReviewListView, CanReviewView, ReviewDetailView,
+        ReviewVoteView, ReviewRespondView, ReviewPublishView,
+        ReviewReportView, ReviewAnalyticsView,
+    )
 except Exception as e:
     print(f"Error importing review_views: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
-    ReviewListView = CanReviewView = None
+    ReviewListView = CanReviewView = ReviewDetailView = None
+    ReviewVoteView = ReviewRespondView = ReviewPublishView = None
+    ReviewReportView = ReviewAnalyticsView = None
 
 try:
     from .notification_views import NotificationListView, MarkNotificationReadView, MarkAllNotificationsReadView
@@ -151,7 +157,9 @@ __all__ = [
     'PartnerListView', 'PartnerMeView', 'PartnerDetailView',
     'PartnerEarningsView', 'PartnerAnalyticsView', 'PartnerReviewsView', 'PartnerActivityView',
     # Reviews
-    'ReviewListView', 'CanReviewView',
+    'ReviewListView', 'CanReviewView', 'ReviewDetailView',
+    'ReviewVoteView', 'ReviewRespondView', 'ReviewPublishView',
+    'ReviewReportView', 'ReviewAnalyticsView',
     # Auth
     'LoginView', 'RegisterView', 'RefreshTokenView', 'VerifyTokenView',
     'VerifyEmailView', 'ResendVerificationEmailView',

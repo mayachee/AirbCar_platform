@@ -5,221 +5,426 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg, Sum, Count
+from django.db.models import Q, Avg, Count
 from django.utils import timezone
-from django.db import transaction, OperationalError
-from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
-from ..serializers import (
-    ListingSerializer, BookingSerializer, FavoriteSerializer,
-    ReviewSerializer, UserSerializer,
-)
+from ..models import Listing, Booking, Review, ReviewVote, ReviewReport, Partner
+from ..serializers import ReviewSerializer, ReviewReportSerializer
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _update_listing_rating(listing):
+    """Recalculate and persist a listing's aggregate rating."""
+    agg = Review.objects.filter(listing=listing, is_published=True).aggregate(
+        avg=Avg('rating'), cnt=Count('id')
+    )
+    listing.rating = round(agg['avg'] or 0, 2)
+    listing.review_count = agg['cnt'] or 0
+    listing.save(update_fields=['rating', 'review_count'])
+
+
+def _get_sorted_reviews(reviews, sort_param):
+    """Apply sorting to a review queryset."""
+    sort_map = {
+        'newest': '-created_at',
+        'oldest': 'created_at',
+        'highest': '-rating',
+        'lowest': 'rating',
+        'most_helpful': '-helpful_count',
+    }
+    ordering = sort_map.get(sort_param, '-created_at')
+    return reviews.order_by(ordering)
+
+
+def _paginate(queryset, request):
+    """Simple page/page_size pagination returning (page_qs, meta)."""
+    page = max(int(request.query_params.get('page', 1)), 1)
+    page_size = min(int(request.query_params.get('page_size',
+                        request.query_params.get('limit', 20))), 100)
+    total_count = queryset.count()
+    start = (page - 1) * page_size
+    page_qs = queryset[start:start + page_size]
+    return page_qs, {
+        'page': page,
+        'page_size': page_size,
+        'total_count': total_count,
+        'total_pages': (total_count + page_size - 1) // page_size if total_count > 0 else 0,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Review list / create
+# ---------------------------------------------------------------------------
 
 class ReviewListView(APIView):
-    """List all reviews or create a new review."""
-    
+    """List reviews (public) or create a new review (authenticated)."""
+
     def get_permissions(self):
         if self.request.method == 'POST':
             return [IsAuthenticated()]
         return [AllowAny()]
-    
+
     def get(self, request):
-        """List reviews, optionally filtered by listing."""
         try:
             listing_id = request.query_params.get('listing_id') or request.query_params.get('listing')
             rating_filter = request.query_params.get('rating')
-            
-            if listing_id:
-                reviews = Review.objects.filter(
-                    listing_id=listing_id,
-                    is_published=True
-                )
+            sort_param = request.query_params.get('sort')
+            search_param = request.query_params.get('search')
+            user_filter = request.query_params.get('user')
+            my_listings = request.query_params.get('my_listings')
+
+            reviews = Review.objects.select_related('listing', 'user')
+
+            # Partner viewing their own listings' reviews (includes unpublished)
+            if my_listings == 'true' and request.user.is_authenticated:
+                try:
+                    partner = Partner.objects.get(user=request.user)
+                    reviews = reviews.filter(listing__partner=partner)
+                except Partner.DoesNotExist:
+                    return Response({'data': [], 'count': 0, 'total_count': 0}, status=status.HTTP_200_OK)
+            elif listing_id:
+                reviews = reviews.filter(listing_id=listing_id, is_published=True)
+            elif user_filter:
+                reviews = reviews.filter(user_id=user_filter, is_published=True)
             else:
-                reviews = Review.objects.filter(is_published=True)
-            
-            # Filter by rating if provided
+                reviews = reviews.filter(is_published=True)
+
             if rating_filter:
                 try:
                     reviews = reviews.filter(rating=int(rating_filter))
-                except ValueError:
+                except (ValueError, TypeError):
                     pass
-            
-            reviews = reviews.select_related('listing', 'user').order_by('-created_at')
-            
-            # Pagination
-            page = int(request.query_params.get('page', 1))
-            page_size = int(request.query_params.get('page_size', 20))
-            page_size = min(page_size, 100)
-            
-            total_count = reviews.count()
-            start = (page - 1) * page_size
-            end = start + page_size
-            
-            reviews = reviews[start:end]
-            
-            serializer = ReviewSerializer(reviews, many=True, context={'request': request})
+
+            if search_param:
+                reviews = reviews.filter(comment__icontains=search_param)
+
+            reviews = _get_sorted_reviews(reviews, sort_param)
+
+            page_qs, meta = _paginate(reviews, request)
+            serializer = ReviewSerializer(page_qs, many=True, context={'request': request})
             return Response({
                 'data': serializer.data,
                 'count': len(serializer.data),
-                'total_count': total_count,
-                'page': page,
-                'page_size': page_size,
-                'total_pages': (total_count + page_size - 1) // page_size if total_count > 0 else 0,
+                **meta,
             }, status=status.HTTP_200_OK)
-            
         except Exception as e:
-            error_msg = str(e)
             if settings.DEBUG:
-                print(f"Error in ReviewListView.get: {error_msg}")
-            return Response({
-                'error': 'An error occurred',
-                'message': error_msg if settings.DEBUG else None
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+                print(f"Error in ReviewListView.get: {e}")
+                traceback.print_exc()
+            return Response({'error': 'An error occurred', 'message': str(e) if settings.DEBUG else None},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def post(self, request):
-        """Create a new review."""
         try:
             listing_id = request.data.get('listing_id') or request.data.get('listing')
             rating = request.data.get('rating')
             comment = request.data.get('comment', '')
-            
+
             if not listing_id:
-                return Response({
-                    'error': 'listing_id is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            if not rating or not (1 <= int(rating) <= 5):
-                return Response({
-                    'error': 'Rating is required and must be between 1 and 5'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'listing_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                rating = int(rating)
+            except (TypeError, ValueError):
+                return Response({'error': 'Rating must be an integer between 1 and 5'}, status=status.HTTP_400_BAD_REQUEST)
+            if not (1 <= rating <= 5):
+                return Response({'error': 'Rating must be between 1 and 5'}, status=status.HTTP_400_BAD_REQUEST)
+
             try:
                 listing = Listing.objects.get(pk=listing_id)
             except Listing.DoesNotExist:
-                return Response({
-                    'error': 'Listing not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Check if user has completed a booking for this listing
-            has_booking = Booking.objects.filter(
-                customer=request.user,
-                listing=listing,
-                status='completed'
-            ).exists()
-            
-            if not has_booking:
-                return Response({
-                    'error': 'You can only review listings you have booked and completed'
-                }, status=status.HTTP_403_FORBIDDEN)
-            
-            # Check if user already reviewed this listing
-            existing_review = Review.objects.filter(
-                user=request.user,
-                listing=listing
-            ).first()
-            
-            if existing_review:
-                # Update existing review
-                existing_review.rating = rating
-                existing_review.comment = comment
-                existing_review.is_published = True
-                existing_review.save()
-                
-                # Update listing rating
-                reviews = Review.objects.filter(listing=listing, is_published=True)
-                avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
-                listing.rating = round(avg_rating, 2)
-                listing.review_count = reviews.count()
-                listing.save()
-                
-                serializer = ReviewSerializer(existing_review, context={'request': request})
-                return Response({
-                    'data': serializer.data,
-                    'message': 'Review updated successfully'
-                }, status=status.HTTP_200_OK)
-            else:
-                # Create new review
-                review = Review.objects.create(
-                    user=request.user,
-                    listing=listing,
-                    rating=rating,
-                    comment=comment,
-                    is_published=True
-                )
-                
-                # Update listing rating
-                reviews = Review.objects.filter(listing=listing, is_published=True)
-                avg_rating = reviews.aggregate(avg=Avg('rating'))['avg'] or 0
-                listing.rating = round(avg_rating, 2)
-                listing.review_count = reviews.count()
-                listing.save()
-                
-                serializer = ReviewSerializer(review, context={'request': request})
-                return Response({
-                    'data': serializer.data,
-                    'message': 'Review created successfully'
-                }, status=status.HTTP_201_CREATED)
-                
-        except Exception as e:
-            error_msg = str(e)
-            if settings.DEBUG:
-                print(f"Error in ReviewListView.post: {error_msg}")
-                traceback.print_exc()
-            return Response({
-                'error': 'An error occurred',
-                'message': error_msg if settings.DEBUG else None
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
 
+            has_booking = Booking.objects.filter(
+                customer=request.user, listing=listing, status='completed'
+            ).exists()
+            if not has_booking:
+                return Response({'error': 'You can only review listings you have booked and completed'},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            existing = Review.objects.filter(user=request.user, listing=listing).first()
+            if existing:
+                existing.rating = rating
+                existing.comment = comment
+                existing.is_published = True
+                existing.is_verified = True
+                existing.save()
+                _update_listing_rating(listing)
+                serializer = ReviewSerializer(existing, context={'request': request})
+                return Response({'data': serializer.data, 'message': 'Review updated successfully'}, status=status.HTTP_200_OK)
+            else:
+                review = Review.objects.create(
+                    user=request.user, listing=listing,
+                    rating=rating, comment=comment,
+                    is_published=True, is_verified=True,
+                )
+                _update_listing_rating(listing)
+                serializer = ReviewSerializer(review, context={'request': request})
+                return Response({'data': serializer.data, 'message': 'Review created successfully'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"Error in ReviewListView.post: {e}")
+                traceback.print_exc()
+            return Response({'error': 'An error occurred', 'message': str(e) if settings.DEBUG else None},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ---------------------------------------------------------------------------
+# Single review detail (GET / PATCH / DELETE)
+# ---------------------------------------------------------------------------
+
+class ReviewDetailView(APIView):
+    """Retrieve, update, or delete a single review."""
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request, pk):
+        try:
+            review = Review.objects.select_related('listing', 'user').get(pk=pk, is_published=True)
+            serializer = ReviewSerializer(review, context={'request': request})
+            return Response({'data': serializer.data}, status=status.HTTP_200_OK)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def patch(self, request, pk):
+        """Owner updates their own review."""
+        try:
+            review = Review.objects.select_related('listing').get(pk=pk, user=request.user)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found or not yours'}, status=status.HTTP_404_NOT_FOUND)
+
+        if 'rating' in request.data:
+            try:
+                review.rating = int(request.data['rating'])
+            except (TypeError, ValueError):
+                return Response({'error': 'Invalid rating'}, status=status.HTTP_400_BAD_REQUEST)
+        if 'comment' in request.data:
+            review.comment = request.data['comment']
+        review.save()
+        _update_listing_rating(review.listing)
+        serializer = ReviewSerializer(review, context={'request': request})
+        return Response({'data': serializer.data, 'message': 'Review updated'}, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        """Owner deletes their own review."""
+        try:
+            review = Review.objects.select_related('listing').get(pk=pk, user=request.user)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found or not yours'}, status=status.HTTP_404_NOT_FOUND)
+        listing = review.listing
+        review.delete()
+        _update_listing_rating(listing)
+        return Response({'message': 'Review deleted'}, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Can review check
+# ---------------------------------------------------------------------------
 
 class CanReviewView(APIView):
-    """Check if user can review a listing."""
+    """Check if the authenticated user can review a listing."""
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
-        """Check if user can review a listing."""
         listing_id = request.query_params.get('listing_id') or request.query_params.get('listing')
-        
         if not listing_id:
-            return Response({
-                'error': 'listing_id is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'listing_id is required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             listing = Listing.objects.get(pk=listing_id)
         except Listing.DoesNotExist:
-            return Response({
-                'error': 'Listing not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
         try:
-            # Check if user has completed a booking
-            has_completed_booking = Booking.objects.filter(
-                customer=request.user,
-                listing=listing,
-                status='completed'
+            has_completed = Booking.objects.filter(
+                customer=request.user, listing=listing, status='completed'
             ).exists()
-            
-            # Check if user already reviewed
-            has_review = Review.objects.filter(
-                user=request.user,
-                listing=listing
-            ).exists()
-            
+            has_review = Review.objects.filter(user=request.user, listing=listing).exists()
             return Response({
-                'can_review': has_completed_booking and not has_review,
-                'has_completed_booking': has_completed_booking,
-                'has_review': has_review
+                'can_review': has_completed and not has_review,
+                'has_completed_booking': has_completed,
+                'has_review': has_review,
             }, status=status.HTTP_200_OK)
-            
         except Exception as e:
-            error_msg = str(e)
             if settings.DEBUG:
-                print(f"Error in CanReviewView: {error_msg}")
-            return Response({
-                'error': 'An error occurred',
-                'message': error_msg if settings.DEBUG else None
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                print(f"Error in CanReviewView: {e}")
+            return Response({'error': 'An error occurred', 'message': str(e) if settings.DEBUG else None},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ---------------------------------------------------------------------------
+# Helpful votes
+# ---------------------------------------------------------------------------
+
+class ReviewVoteView(APIView):
+    """Vote a review as helpful (POST) or remove vote (DELETE)."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            review = Review.objects.get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if review.user_id == request.user.id:
+            return Response({'error': 'Cannot vote on your own review'}, status=status.HTTP_400_BAD_REQUEST)
+
+        _, created = ReviewVote.objects.get_or_create(
+            review=review, user=request.user,
+            defaults={'is_helpful': request.data.get('is_helpful', True)}
+        )
+        if not created:
+            return Response({'message': 'Already voted'}, status=status.HTTP_200_OK)
+
+        review.helpful_count = review.votes.count()
+        review.save(update_fields=['helpful_count'])
+        serializer = ReviewSerializer(review, context={'request': request})
+        return Response({'data': serializer.data, 'message': 'Vote recorded'}, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, pk):
+        deleted, _ = ReviewVote.objects.filter(review_id=pk, user=request.user).delete()
+        if not deleted:
+            return Response({'error': 'No vote to remove'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            review = Review.objects.get(pk=pk)
+            review.helpful_count = review.votes.count()
+            review.save(update_fields=['helpful_count'])
+        except Review.DoesNotExist:
+            pass
+        return Response({'message': 'Vote removed'}, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Owner response
+# ---------------------------------------------------------------------------
+
+class ReviewRespondView(APIView):
+    """Partner responds to a review on their listing (POST) or clears it (PATCH)."""
+    permission_classes = [IsAuthenticated]
+
+    def _get_review_for_partner(self, request, pk):
+        try:
+            review = Review.objects.select_related('listing__partner').get(pk=pk)
+        except Review.DoesNotExist:
+            return None, Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+        if review.listing.partner.user_id != request.user.id:
+            return None, Response({'error': 'Not your listing'}, status=status.HTTP_403_FORBIDDEN)
+        return review, None
+
+    def post(self, request, pk):
+        review, err = self._get_review_for_partner(request, pk)
+        if err:
+            return err
+        response_text = request.data.get('owner_response', '').strip()
+        if not response_text:
+            return Response({'error': 'owner_response is required'}, status=status.HTTP_400_BAD_REQUEST)
+        review.owner_response = response_text
+        review.owner_response_at = timezone.now()
+        review.save(update_fields=['owner_response', 'owner_response_at'])
+        serializer = ReviewSerializer(review, context={'request': request})
+        return Response({'data': serializer.data, 'message': 'Response added'}, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        """Clear owner response."""
+        review, err = self._get_review_for_partner(request, pk)
+        if err:
+            return err
+        review.owner_response = None
+        review.owner_response_at = None
+        review.save(update_fields=['owner_response', 'owner_response_at'])
+        serializer = ReviewSerializer(review, context={'request': request})
+        return Response({'data': serializer.data, 'message': 'Response removed'}, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Publish / unpublish (partner or admin)
+# ---------------------------------------------------------------------------
+
+class ReviewPublishView(APIView):
+    """Publish or unpublish a review (listing owner or admin)."""
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            review = Review.objects.select_related('listing__partner').get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        is_partner = review.listing.partner.user_id == request.user.id
+        is_admin = request.user.role == 'admin'
+        if not (is_partner or is_admin):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        review.is_published = request.data.get('is_published', True)
+        review.save(update_fields=['is_published'])
+        _update_listing_rating(review.listing)
+        serializer = ReviewSerializer(review, context={'request': request})
+        return Response({'data': serializer.data, 'message': 'Publish status updated'}, status=status.HTTP_200_OK)
+
+
+# ---------------------------------------------------------------------------
+# Report review
+# ---------------------------------------------------------------------------
+
+class ReviewReportView(APIView):
+    """Report a review for moderation."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            review = Review.objects.get(pk=pk)
+        except Review.DoesNotExist:
+            return Response({'error': 'Review not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if ReviewReport.objects.filter(review=review, user=request.user).exists():
+            return Response({'error': 'You already reported this review'}, status=status.HTTP_400_BAD_REQUEST)
+
+        reason = request.data.get('reason', '')
+        if reason not in dict(ReviewReport.REASON_CHOICES):
+            return Response({'error': 'Invalid reason. Choose from: spam, inappropriate, harassment, false_info, other'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        report = ReviewReport.objects.create(
+            review=review, user=request.user,
+            reason=reason, description=request.data.get('description', '')
+        )
+        return Response({'message': 'Report submitted', 'report_id': report.id}, status=status.HTTP_201_CREATED)
+
+
+# ---------------------------------------------------------------------------
+# Analytics (partner)
+# ---------------------------------------------------------------------------
+
+class ReviewAnalyticsView(APIView):
+    """Review analytics for a partner's listings."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            partner = Partner.objects.get(user=request.user)
+        except Partner.DoesNotExist:
+            return Response({'error': 'Partner profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        reviews = Review.objects.filter(listing__partner=partner, is_published=True)
+        total = reviews.count()
+        agg = reviews.aggregate(avg_rating=Avg('rating'))
+        avg_rating = round(agg['avg_rating'] or 0, 2)
+
+        distribution = {str(i): 0 for i in range(1, 6)}
+        for entry in reviews.values('rating').annotate(count=Count('id')):
+            distribution[str(entry['rating'])] = entry['count']
+
+        recent = reviews.order_by('-created_at')[:5]
+        recent_serialized = ReviewSerializer(recent, many=True, context={'request': request}).data
+
+        return Response({
+            'total_reviews': total,
+            'average_rating': avg_rating,
+            'rating_distribution': distribution,
+            'recent_reviews': recent_serialized,
+        }, status=status.HTTP_200_OK)

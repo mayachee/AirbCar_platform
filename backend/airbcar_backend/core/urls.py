@@ -162,6 +162,18 @@ if views.ReviewListView is not None:
     urlpatterns.append(path('reviews/', views.ReviewListView.as_view(), name='review-list'))
 if views.CanReviewView is not None:
     urlpatterns.append(path('reviews/can_review/', views.CanReviewView.as_view(), name='can-review'))
+if views.ReviewAnalyticsView is not None:
+    urlpatterns.append(path('reviews/analytics/', views.ReviewAnalyticsView.as_view(), name='review-analytics'))
+if views.ReviewDetailView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/', views.ReviewDetailView.as_view(), name='review-detail'))
+if views.ReviewVoteView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/vote/', views.ReviewVoteView.as_view(), name='review-vote'))
+if views.ReviewRespondView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/respond/', views.ReviewRespondView.as_view(), name='review-respond'))
+if views.ReviewPublishView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/publish/', views.ReviewPublishView.as_view(), name='review-publish'))
+if views.ReviewReportView is not None:
+    urlpatterns.append(path('reviews/<int:pk>/report/', views.ReviewReportView.as_view(), name='review-report'))
 
 # Notification endpoints
 if views.NotificationListView is not None:

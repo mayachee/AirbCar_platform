@@ -4,7 +4,7 @@ DRF serializers for core app.
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from .models import User, Partner, Listing, Booking, Favorite, Review, Notification
+from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification
 
 User = get_user_model()
 
@@ -652,15 +652,35 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    """Review serializer."""
+    """Review serializer with vote & response info."""
     listing = ListingSerializer(read_only=True)
     user = UserSerializer(read_only=True)
+    user_has_voted = serializers.SerializerMethodField()
     
     class Meta:
         model = Review
-        fields = ['id', 'listing', 'user', 'rating', 'comment', 'is_published',
-                  'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = [
+            'id', 'listing', 'user', 'rating', 'comment',
+            'is_published', 'is_verified',
+            'owner_response', 'owner_response_at',
+            'helpful_count', 'user_has_voted',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'helpful_count', 'is_verified']
+    
+    def get_user_has_voted(self, obj):
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            return obj.votes.filter(user=request.user).exists()
+        return False
+
+
+class ReviewReportSerializer(serializers.ModelSerializer):
+    """Serializer for review reports."""
+    class Meta:
+        model = ReviewReport
+        fields = ['id', 'review', 'reason', 'description', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class NotificationSerializer(serializers.ModelSerializer):

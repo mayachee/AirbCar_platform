@@ -285,7 +285,16 @@ class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField()
-    is_published = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=False, help_text='True if user had a completed booking')
+    
+    # Owner response
+    owner_response = models.TextField(blank=True, null=True)
+    owner_response_at = models.DateTimeField(blank=True, null=True)
+    
+    # Helpful votes (denormalised count for performance)
+    helpful_count = models.IntegerField(default=0)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -293,13 +302,56 @@ class Review(models.Model):
         ordering = ['-created_at']
         unique_together = ['listing', 'user']  # One review per user per listing
         indexes = [
-            models.Index(fields=['listing', 'is_published', 'created_at']),  # For listing reviews
-            models.Index(fields=['user', 'created_at']),  # For user's reviews
-            models.Index(fields=['rating']),  # For rating filters
+            models.Index(fields=['listing', 'is_published', 'created_at']),
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['rating']),
         ]
 
     def __str__(self):
         return f"Review by {self.user.username} for {self.listing} - {self.rating} stars"
+
+
+class ReviewVote(models.Model):
+    """Tracks 'helpful' votes on reviews."""
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='votes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_votes')
+    is_helpful = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['review', 'user']
+        indexes = [
+            models.Index(fields=['review', 'user']),
+        ]
+
+    def __str__(self):
+        return f"Vote by {self.user.username} on review {self.review_id}"
+
+
+class ReviewReport(models.Model):
+    """Reports on reviews for moderation."""
+    REASON_CHOICES = [
+        ('spam', 'Spam'),
+        ('inappropriate', 'Inappropriate'),
+        ('harassment', 'Harassment'),
+        ('false_info', 'False Information'),
+        ('other', 'Other'),
+    ]
+    
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='reports')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_reports')
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
+    description = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['review', 'user']  # One report per user per review
+        indexes = [
+            models.Index(fields=['review']),
+        ]
+
+    def __str__(self):
+        return f"Report on review {self.review_id} by {self.user.username}"
 
 
 class PasswordReset(models.Model):
