@@ -1,28 +1,8 @@
-import { redirect } from 'next/navigation';
-import { routing } from '@/i18n/routing';
-
-// Fallback root page - redirects to the default locale
-// The proxy middleware should handle this, but this serves as a safety net
+// Root page - with 'as-needed' locale prefix, the middleware handles this
+// The middleware will serve the default locale content at '/' directly
+// This page should not be needed, but exists as a fallback
 export default function RootPage() {
-  try {
-    // Get default locale with fallback
-    const defaultLocale = routing?.defaultLocale || 'en';
-    
-    // Silently redirect to default locale
-    // Next.js redirect() uses a special error mechanism internally - this is expected
-    redirect(`/${defaultLocale}`);
-  } catch (error) {
-    // If redirect fails for any reason, return a simple redirect response
-    // This should rarely happen, but provides a fallback
-    return (
-      <html>
-        <head>
-          <meta httpEquiv="refresh" content={`0;url=/${routing?.defaultLocale || 'en'}`} />
-        </head>
-        <body>
-          <p>Redirecting...</p>
-        </body>
-      </html>
-    );
-  }
+  // Return null - the middleware should handle routing
+  // If this page is reached, something went wrong with the middleware
+  return null;
 }

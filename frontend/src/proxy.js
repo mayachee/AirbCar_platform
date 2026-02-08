@@ -5,11 +5,12 @@ export default createMiddleware(routing);
 
 export const config = {
   matcher: [
-    // Match root
-    '/',
-    // Match locale prefixes
-    '/(fr|ar)/:path*',
-    // Match all pathnames except API, Next internals, Vercel internals, and static files
+    // Match all pathnames except:
+    // - API routes (/api)
+    // - Next.js internals (_next)
+    // - Vercel internals (_vercel)
+    // - Static files (.*\\..*)
+    // - Debug pages (debug-env)
     '/((?!api|_next|_vercel|debug-env|.*\\..*).*)',
   ],
 };
