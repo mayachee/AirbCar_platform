@@ -10,7 +10,28 @@ import { useTranslations } from 'next-intl';
 export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
   const router = useRouter();
-  const t = useTranslations('cookies');
+  
+  // Get translations with error handling
+  let t;
+  try {
+    t = useTranslations('cookies');
+  } catch (error) {
+    // If translations fail, use fallback function
+    console.warn('CookieConsent: Translations not available, using fallbacks');
+    const fallbacks = {
+      'continue_without': 'Continue without accepting',
+      'heading': 'Cookie Consent',
+      'description': 'We use cookies to enhance your experience.',
+      'purpose_navigation': 'Navigation and user experience',
+      'purpose_audience': 'Audience measurement',
+      'purpose_performance': 'Performance optimization',
+      'purpose_ads': 'Advertising personalization',
+      'partner_notice': 'We work with partners to provide these services.',
+      'accept': 'Accept All',
+      'customize': 'Customize'
+    };
+    t = (key) => fallbacks[key] || key;
+  }
 
   useEffect(() => {
     // Check if user has already made a choice

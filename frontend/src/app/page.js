@@ -1,8 +1,10 @@
-// Root page - with 'as-needed' locale prefix, the middleware handles this
-// The middleware will serve the default locale content at '/' directly
-// This page should not be needed, but exists as a fallback
+import { redirect } from 'next/navigation';
+import { routing } from '@/i18n/routing';
+
+// Root page - explicitly redirect to default locale
+// This ensures the locale layout always has a valid locale parameter
 export default function RootPage() {
-  // Return null - the middleware should handle routing
-  // If this page is reached, something went wrong with the middleware
-  return null;
+  const defaultLocale = routing?.defaultLocale || 'en';
+  // Always redirect to the locale-prefixed version to ensure proper routing
+  redirect(`/${defaultLocale}`);
 }
