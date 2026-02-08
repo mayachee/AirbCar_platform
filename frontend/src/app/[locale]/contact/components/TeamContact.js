@@ -22,7 +22,7 @@ const teamMembers = [
         phone: "+212 600-333444",
         linkedin: "https://www.linkedin.com/in/amineza/",
         quote: "Code <span class='text-orange-500'>quality</span> and performance are our top priorities.",
-        image: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg" 
+        image: "https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_styomostyomostyo.png" 
       }
     ]
   },
