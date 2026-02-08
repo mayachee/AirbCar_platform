@@ -5,6 +5,7 @@ const CopyPlugin = require('copy-webpack-plugin');
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.js');
 
 const isProd = process.env.NODE_ENV === 'production';
+const isDev = !isProd;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -101,7 +102,7 @@ const nextConfig = {
     // This helps when building on systems with limited disk space
     if (process.env.DISABLE_WEBPACK_CACHE === 'true') {
       config.cache = false;
-    } else if (!dev && process.env.NODE_ENV === 'production') {
+    } else if (isProd) {
       // In production builds, use memory cache instead of filesystem to save disk space
       config.cache = {
         type: 'memory',
@@ -110,7 +111,7 @@ const nextConfig = {
     }
 
     // Optimize for development
-    if (dev && !isServer) {
+    if (isDev && !isServer) {
       // Enhanced watch options for Windows/OneDrive compatibility
       config.watchOptions = {
         poll: 1000,
@@ -127,7 +128,7 @@ const nextConfig = {
       config.plugins.push(
         new CopyPlugin({
           patterns: [
-            { from: './src/messages', to: 'messages' }
+            { from: './messages', to: 'messages' }
           ]
         })
       );
