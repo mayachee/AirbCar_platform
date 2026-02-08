@@ -47,6 +47,8 @@ else:
     ALLOWED_HOSTS = [
         'airbcar-backend.onrender.com',
         '.onrender.com',  # Allow any Render subdomain (wildcard subdomain)
+        'www.airbcar.com',  # Production frontend domain
+        'airbcar.com',  # Production frontend domain (without www)
         'localhost',
         '127.0.0.1',
         'testserver',  # Django test client
@@ -57,6 +59,11 @@ if 'airbcar-backend.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('airbcar-backend.onrender.com')
 if '.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('.onrender.com')
+# Always add production domains
+if 'www.airbcar.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('www.airbcar.com')
+if 'airbcar.com' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('airbcar.com')
 
 # ===== SECURITY SETTINGS FOR PRODUCTION =====
 # These are applied based on DEBUG setting and environment
