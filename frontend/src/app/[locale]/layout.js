@@ -8,6 +8,7 @@ import { NotificationProvider } from '@/contexts/NotificationContext';
 import { LocaleProvider } from '@/contexts/LocaleContext';
 import CookieConsent from '@/components/layout/CookieConsent';
 import { routing } from '@/i18n/routing';
+import { localeDirection } from '@/i18n/config';
 import enMessages from '../../../messages/en.json';
 import frMessages from '../../../messages/fr.json';
 import arMessages from '../../../messages/ar.json';
@@ -61,6 +62,7 @@ export default async function LocaleLayout({ children, params }) {
       }
     }
 
+    const dir = localeDirection[locale] || 'ltr';
 
     return (
       <div lang={locale} dir={dir}>
@@ -77,7 +79,7 @@ export default async function LocaleLayout({ children, params }) {
             </AuthProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
-        <CookieConsent />
+        {typeof window !== 'undefined' && <CookieConsent />}
       </div>
     );
   } catch (error) {

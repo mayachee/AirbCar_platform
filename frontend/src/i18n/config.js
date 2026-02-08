@@ -7,3 +7,9 @@ export const localeNames = {
   fr: 'Français',
   ar: 'العربية',
 };
+
+export const localeDirection = {
+  en: 'ltr',
+  fr: 'ltr',
+  ar: 'rtl',
+};
