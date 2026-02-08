@@ -402,12 +402,12 @@ export default function PartnerDashboard() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Partner Dashboard</h1>
-            <p className="text-gray-600">Manage your vehicles and bookings</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Partner Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-600">Manage your vehicles and bookings</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => {
                 refetch();
@@ -415,9 +415,10 @@ export default function PartnerDashboard() {
                 fetchUpcomingBookings();
                 fetchNotifications();
               }}
-              className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+              className="px-3 sm:px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
             >
-              Refresh Data
+              <span className="hidden sm:inline">Refresh Data</span>
+              <span className="sm:hidden">Refresh</span>
             </button>
             <NotificationCenter
               notifications={notifications}
@@ -429,13 +430,13 @@ export default function PartnerDashboard() {
         </div>
 
         {/* Navigation */}
-        <div className="mb-8">
-          <nav className="flex space-x-8">
+        <div className="mb-6 sm:mb-8 -mx-4 sm:mx-0 px-4 sm:px-0">
+          <nav className="flex gap-1 sm:gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
             {navigationItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setCurrentView(item.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex-shrink-0 text-sm sm:text-base ${
                   currentView === item.id
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'

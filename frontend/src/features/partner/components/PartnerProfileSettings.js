@@ -475,12 +475,12 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
           <div className="space-y-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-4 bg-gray-200 rounded"></div>
+              <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
             ))}
           </div>
         </div>
@@ -489,29 +489,31 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <Building2 className="h-6 w-6 text-gray-600 dark:text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Business Profile</h3>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className={`flex items-center space-x-1 ${verificationStatus.color}`}>
-            <StatusIcon className="h-4 w-4" />
-            <span className="text-sm font-medium">{verificationStatus.status}</span>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+      {/* Header — stacks on mobile */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="flex items-center justify-between sm:justify-start gap-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Business Profile</h3>
           </div>
+          <div className={`flex items-center gap-1 ${verificationStatus.color}`}>
+            <StatusIcon className="h-4 w-4" />
+            <span className="text-xs sm:text-sm font-medium">{verificationStatus.status}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+              className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
             >
               Edit Profile
             </button>
           ) : (
-            <div className="flex space-x-2">
+            <div className="flex w-full sm:w-auto gap-2">
               <button
                 onClick={() => {
-                  // Reset logo preview and file when canceling
                   if (partnerData?.logo) {
                     setLogoPreview(partnerData.logo);
                   } else {
@@ -521,17 +523,17 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                   setLogoRemoved(false);
                   setIsEditing(false);
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 transition-colors"
               >
                 <Save className="h-4 w-4" />
-                <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+                <span>{saving ? 'Saving...' : 'Save'}</span>
               </button>
             </div>
           )}
@@ -548,13 +550,13 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Company Logo
             </label>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               {logoPreview ? (
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <img
                     src={logoPreview}
                     alt="Company logo"
-                    className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700"
+                    className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700"
                   />
                   {isEditing && (
                     <button
@@ -563,20 +565,20 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                       className="absolute -top-2 -right-2 p-1 bg-red-500 dark:bg-red-600 text-white rounded-full hover:bg-red-600 dark:hover:bg-red-700 transition-colors"
                       title="Remove logo"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="w-24 h-24 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700">
-                  <ImageIcon className="h-8 w-8 text-gray-400 dark:text-gray-500" />
+                <div className="w-16 h-16 sm:w-24 sm:h-24 flex-shrink-0 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-700">
+                  <ImageIcon className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 dark:text-gray-500" />
                 </div>
               )}
               {isEditing && (
-                <div>
-                  <label className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer transition-colors">
-                    <Upload className="h-4 w-4" />
-                    <span>{logoPreview ? 'Change Logo' : 'Upload Logo'}</span>
+                <div className="min-w-0">
+                  <label className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer transition-colors">
+                    <Upload className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{logoPreview ? 'Change' : 'Upload'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -711,7 +713,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 City <span className="text-red-500 dark:text-red-400">*</span>
@@ -747,7 +749,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
       </div>
 
       {/* Description */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Business Description
         </label>
@@ -756,8 +758,8 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
           value={formData.description}
           onChange={handleInputChange}
           disabled={!isEditing}
-          rows={4}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
           placeholder="Describe your business and services..."
         />
       </div>
