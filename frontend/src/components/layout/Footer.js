@@ -20,26 +20,26 @@ export default function Footer() {
   
   const footerSections = [
     {
-      title: t('company'),
+      title: t('section_company'),
       links: [
-        { label: t('about_us'), href: '/mission#about-us', prefetch: true },
-        { label: t('mission'), href: '/mission', prefetch: true },
-        { label: t('the_impact'), href: '/mission#impact', prefetch: true },
+        { label: t('link_about_us'), href: '/mission#about-us', prefetch: true },
+        { label: t('link_mission'), href: '/mission', prefetch: true },
+        { label: t('link_the_impact'), href: '/mission#impact', prefetch: true },
       ]
     },
     {
-      title: t('services'),
+      title: t('section_services'),
       links: [
-        { label: t('car_rental'), href: '/search', prefetch: true },
-        { label: t('partner_program'), href: '/partner', prefetch: true },
+        { label: t('link_car_rental'), href: '/search', prefetch: true },
+        { label: t('link_partner_program'), href: '/partner', prefetch: true },
       ]
     },
     {
-      title: t('support'),
+      title: t('section_support'),
       links: [
-        { label: t('help_center'), href: '/help', prefetch: false },
-        { label: t('contact_us'), href: '/contact', prefetch: false },
-        { label: t('safety'), href: '/safety', prefetch: false },
+        { label: t('link_help_center'), href: '/help', prefetch: false },
+        { label: t('link_contact_us'), href: '/contact', prefetch: false },
+        { label: t('link_safety'), href: '/safety', prefetch: false },
       ]
     }
   ]
