@@ -5,12 +5,6 @@ import { useRouter, usePathname } from '@/i18n/navigation';
 import { locales, localeNames } from '@/i18n/config';
 import { SelectField } from '@/components/ui/select-field';
 
-const localeFlags = {
-  en: '🇬🇧',
-  fr: '🇫🇷',
-  ar: '🇲🇦',
-};
-
 export default function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
@@ -23,10 +17,10 @@ export default function LanguageSwitcher() {
     }
   };
 
-  // Format options with flags and names
+  // Format options with names only
   const languageOptions = locales.map((loc) => ({
     value: loc,
-    label: `${localeFlags[loc]} ${localeNames[loc]}`,
+    label: localeNames[loc],
   }));
 
   return (
