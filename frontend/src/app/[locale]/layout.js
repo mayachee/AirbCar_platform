@@ -13,37 +13,53 @@ import { localeDirection } from '@/i18n/config';
 export const dynamic = 'force-dynamic';
 
 export default async function LocaleLayout({ children, params }) {
-  const { locale } = await params;
+  try {
+    const { locale } = await params;
 
-  // Validate locale
-  if (!routing.locales.includes(locale)) {
-    notFound();
+    // Validate locale
+    if (!routing.locales.includes(locale)) {
+      notFound();
+    }
+
+    // Enable static rendering
+    setRequestLocale(locale);
+
+    // Fetch messages for the locale with error handling
+    let messages = {};
+    try {
+      messages = await getMessages();
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+      // Continue with empty messages to prevent crash
+    }
+
+    const dir = localeDirection[locale] || 'ltr';
+
+    return (
+      <div lang={locale} dir={dir}>
+        <NextIntlClientProvider messages={messages}>
+          <LocaleProvider locale={locale}>
+            <AuthProvider>
+              <CurrencyProvider>
+                <ToastProvider>
+                  <NotificationProvider>
+                    {children}
+                  </NotificationProvider>
+                </ToastProvider>
+              </CurrencyProvider>
+            </AuthProvider>
+          </LocaleProvider>
+        </NextIntlClientProvider>
+        <CookieConsent />
+      </div>
+    );
+  } catch (error) {
+    console.error('Error in LocaleLayout:', error);
+    // Return a minimal layout to prevent complete failure
+    return (
+      <div>
+        {children}
+      </div>
+    );
   }
-
-  // Enable static rendering
-  setRequestLocale(locale);
-
-  // Fetch messages for the locale
-  const messages = await getMessages();
-
-  const dir = localeDirection[locale] || 'ltr';
-
-  return (
-    <div lang={locale} dir={dir}>
-      <NextIntlClientProvider messages={messages}>
-        <LocaleProvider locale={locale}>
-          <AuthProvider>
-            <CurrencyProvider>
-              <ToastProvider>
-                <NotificationProvider>
-                  {children}
-                </NotificationProvider>
-              </ToastProvider>
-            </CurrencyProvider>
-          </AuthProvider>
-        </LocaleProvider>
-      </NextIntlClientProvider>
-      <CookieConsent />
-    </div>
-  );
 }
