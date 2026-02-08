@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTranslations } from 'next-intl';
 
 export default function CarTypes() {
   const { formatPrice } = useCurrency();
+  const t = useTranslations('home');
+  const tc = useTranslations('common');
   const carTypes = [
     {
-      name: "Economy",
-      title: "Budget Friendly",
+      name: t('car_economy'),
+      title: t('car_economy_title'),
       doors: "4 door",
       people: 4,
       bags: 3,
@@ -15,8 +18,8 @@ export default function CarTypes() {
       image: "https://ik.imagekit.io/szcfr7vth/kkkk.jpg"
     },
     {
-      name: "Compact",
-      title: "City Compact",
+      name: t('car_compact'),
+      title: t('car_compact_title'),
       doors: "4 door",
       people: 4,
       bags: 2,
@@ -24,8 +27,8 @@ export default function CarTypes() {
       image: "https://ik.imagekit.io/szcfr7vth/a0b5790230f74f0490b80a370f89805b.jpg"
     },
     {
-      name: "Intermediate",
-      title: "Comfort Cruiser",
+      name: t('car_intermediate'),
+      title: t('car_intermediate_title'),
       doors: "4 door",
       people: 5,
       bags: 4,
@@ -33,8 +36,8 @@ export default function CarTypes() {
       image: "https://ik.imagekit.io/szcfr7vth/2024-hyundai-sonata-n-line-102-66c61790321ef.avif"
     },
     {
-      name: "Mini",
-      title: "Easy Mini",
+      name: t('car_mini'),
+      title: t('car_mini_title'),
       doors: "4 door",
       people: 4,
       bags: 1,
@@ -42,8 +45,8 @@ export default function CarTypes() {
       image: "https://ik.imagekit.io/szcfr7vth/martin-katler-_0aPqIvfVko-unsplash.jpg"
     },
     {
-      name: "Full-size",
-      title: "Roomy Full Size",
+      name: t('car_fullsize'),
+      title: t('car_fullsize_title'),
       doors: "4 door",
       people: 5,
       bags: 4,
@@ -51,8 +54,8 @@ export default function CarTypes() {
       image: "https://ik.imagekit.io/szcfr7vth/lrds20mydynamicnd210519002.jpg"
     },
     {
-      name: "Premium",
-      title: "Premium Comfort",
+      name: t('car_premium'),
+      title: t('car_premium_title'),
       doors: "4 door",
       people: 5,
       bags: 2,
@@ -84,16 +87,16 @@ export default function CarTypes() {
           className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8"
         >
           <div>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">Car categories</p>
+            <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">{t('car_types_kicker')}</p>
             <h2 className="mt-3 text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
-              Find your perfect ride
+              {t('car_types_heading')}
             </h2>
             <p className="mt-4 md:hidden text-sm text-gray-600 leading-relaxed">
-              Pick a size that fits your trip. Compare capacity and typical daily price.
+              {t('car_types_description')}
             </p>
           </div>
           <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
-            Pick a size that fits your trip. Compare capacity and typical daily price.
+            {t('car_types_description')}
           </p>
         </motion.div>
 
@@ -158,7 +161,7 @@ export default function CarTypes() {
 
         {/* Big-Type List */}
         <div className="mt-14 md:mt-20 border-t border-gray-200 pt-8 md:pt-10">
-          <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">All types</p>
+          <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">{t('car_types_all_types')}</p>
           <div className="mt-6">
             {carTypes.map((car, index) => {
               const displayName = car.title ?? car.name;

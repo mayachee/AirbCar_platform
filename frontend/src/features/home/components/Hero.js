@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation';
 import { MOROCCAN_CITIES } from '@/constants';
 import { motion, useInView } from 'framer-motion';
 import { SelectField } from '@/components/ui/select-field';
+import { useTranslations } from 'next-intl';
 
 export default function Hero() {
+  const t = useTranslations('home');
   // Get current date and default drop-off date (2 days later)
   const today = new Date();
   const tomorrow = new Date(today);
@@ -142,9 +144,9 @@ export default function Hero() {
             className="text-left"
           >
             <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
-              Find the best car rental deals
+              {t('hero_heading')}
             </h1>
-            <p className="text-white/80 text-lg mt-3">Compare offers and book in seconds</p>
+            <p className="text-white/80 text-lg mt-3">{t('hero_subheading')}</p>
           </motion.div>
 
           {/* Search Form */}
@@ -159,12 +161,12 @@ export default function Hero() {
             {/* Pickup Location */}
             <div className="md:col-span-1">
               <label htmlFor="hero-location" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-                Pickup location
+                {t('hero_pickup_location')}
               </label>
               <SelectField
                 id="hero-location"
                 value={searchForm.location}
-                placeholder="Select a city"
+                placeholder={t('hero_select_city')}
                 onChange={(e) =>
                   setSearchForm((prev) => ({
                     ...prev,
@@ -181,7 +183,7 @@ export default function Hero() {
             {/* Pickup Date */}
             <div className="md:col-span-1">
               <label htmlFor="hero-pickup-date" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-                Pickup date
+                {t('hero_pickup_date')}
               </label>
               <SelectField
                 id="hero-pickup-date"
@@ -198,7 +200,7 @@ export default function Hero() {
             {/* Drop-off Date */}
             <div className="md:col-span-1">
               <label htmlFor="hero-dropoff-date" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-                Drop-off date
+                {t('hero_dropoff_date')}
               </label>
               <SelectField
                 id="hero-dropoff-date"
@@ -220,7 +222,7 @@ export default function Hero() {
                 type="submit"
                 className="w-full py-4 px-6 rounded-xl font-bold text-lg text-white border border-orange/20 bg-orange-500 shadow-lg hover:shadow-xl hover:bg-orange-700/[0.65] focus:outline-none focus:ring-4 focus:ring-orange-500/40 backdrop-blur-2xl backdrop-saturate-150 transition-colors"
               >
-                Search Cars
+                {t('hero_search_button')}
               </motion.button>
             </div>
             </div>

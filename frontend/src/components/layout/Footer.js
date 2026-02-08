@@ -4,8 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { APP_NAME } from '@/constants'
 import { apiClient } from '@/lib/api/client'
+import { useTranslations } from 'next-intl'
 
 export default function Footer() {
+  const t = useTranslations('footer')
+  const tc = useTranslations('common')
   const currentYear = new Date().getFullYear()
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -17,26 +20,26 @@ export default function Footer() {
   
   const footerSections = [
     {
-      title: 'Company',
+      title: t('company'),
       links: [
-        { label: 'About Us', href: '/mission#about-us', prefetch: true },
-        { label: 'Mission', href: '/mission', prefetch: true },
-        { label: 'The impact', href: '/mission#impact', prefetch: true },
+        { label: t('about_us'), href: '/mission#about-us', prefetch: true },
+        { label: t('mission'), href: '/mission', prefetch: true },
+        { label: t('the_impact'), href: '/mission#impact', prefetch: true },
       ]
     },
     {
-      title: 'Services',
+      title: t('services'),
       links: [
-        { label: 'Car Rental', href: '/search', prefetch: true },
-        { label: 'Partner Program', href: '/partner', prefetch: true },
+        { label: t('car_rental'), href: '/search', prefetch: true },
+        { label: t('partner_program'), href: '/partner', prefetch: true },
       ]
     },
     {
-      title: 'Support',
+      title: t('support'),
       links: [
-        { label: 'Help Center', href: '/help', prefetch: false },
-        { label: 'Contact Us', href: '/contact', prefetch: false },
-        { label: 'Safety', href: '/safety', prefetch: false },
+        { label: t('help_center'), href: '/help', prefetch: false },
+        { label: t('contact_us'), href: '/contact', prefetch: false },
+        { label: t('safety'), href: '/safety', prefetch: false },
       ]
     }
   ]
@@ -45,14 +48,14 @@ export default function Footer() {
     e.preventDefault()
     
     if (!email.trim()) {
-      setError('Please enter your email address')
+      setError(t('newsletter_error_empty'))
       return
     }
     
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address')
+      setError(t('newsletter_error_invalid'))
       return
     }
     
@@ -71,7 +74,7 @@ export default function Footer() {
     } catch (error) {
       console.error('Newsletter subscription error:', error)
       // Extract error message from different possible error structures
-      let errorMessage = 'Failed to subscribe. Please try again later.'
+      let errorMessage = t('newsletter_error_generic')
       if (error?.message) {
         errorMessage = error.message
       } else if (error?.data?.error) {
@@ -148,10 +151,10 @@ export default function Footer() {
           {/* Brand Section - Spans 5 columns */}
           <div className="lg:col-span-5 space-y-6 sm:space-y-8">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
-              Drive Your<br />Next Adventure
+              {t('heading')}
             </h2>
             <p className="text-gray-400 leading-relaxed max-w-md text-lg font-light">
-              Join thousands of travelers using {APP_NAME} to find the perfect ride for any journey.
+              {t('description')}
             </p>
             
             {/* Newsletter Form */}
@@ -159,7 +162,7 @@ export default function Footer() {
               <div className="relative">
                 <input 
                   type="email" 
-                  placeholder="Enter your email address" 
+                  placeholder={t('newsletter_placeholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-full py-3.5 pl-6 pr-36 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all backdrop-blur-sm"
@@ -169,11 +172,11 @@ export default function Footer() {
                   disabled={isLoading}
                   className="absolute right-1.5 top-1.5 bottom-1.5 px-6 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-full transition-all hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? '...' : 'Subscribe'}
+                  {isLoading ? '...' : t('newsletter_subscribe')}
                 </button>
               </div>
               {error && <p className="mt-2 text-xs text-red-400 pl-4 animate-in fade-in slide-in-from-top-1">{error}</p>}
-              {success && <p className="mt-2 text-xs text-green-400 pl-4 animate-in fade-in slide-in-from-top-1">Thanks for subscribing!</p>}
+              {success && <p className="mt-2 text-xs text-green-400 pl-4 animate-in fade-in slide-in-from-top-1">{t('newsletter_success')}</p>}
             </form>
 
             <div className="pt-6 flex gap-5">
@@ -217,7 +220,7 @@ export default function Footer() {
             {/* Contact Info */}
             <div>
                 <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-6">
-                  Contact
+                  {t('section_contact')}
                 </h3>
                 <ul className="space-y-4 text-sm text-gray-400">
                     <li>
@@ -236,11 +239,11 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-gray-500 mb-12 sm:mb-20">
-            <p className="text-center md:text-left">&copy; {currentYear} {APP_NAME}. All rights reserved.</p>
+            <p className="text-center md:text-left">&copy; {currentYear} {APP_NAME}. {tc('all_rights_reserved')}</p>
             <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
-                <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-                <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-                <Link href="/cookies" className="hover:text-white transition-colors">Cookie Settings</Link>
+                <Link href="/privacy" className="hover:text-white transition-colors">{t('privacy_policy')}</Link>
+                <Link href="/terms" className="hover:text-white transition-colors">{t('terms_of_service')}</Link>
+                <Link href="/cookies" className="hover:text-white transition-colors">{t('cookie_settings')}</Link>
             </div>
         </div>
 

@@ -2,8 +2,10 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function PopularDestinations() {
+  const t = useTranslations('home');
   const scrollContainerRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -282,13 +284,13 @@ export default function PopularDestinations() {
           className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8"
         >
           <div>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">Destinations</p>
+            <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">{t('destinations_kicker')}</p>
             <h2 className="mt-3 text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
-              Popular destinations
+              {t('destinations_heading')}
             </h2>
           </div>
           <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
-            Explore top cities. Drag to scroll or use the arrows.
+            {t('destinations_description')}
           </p>
         </motion.div>
 
@@ -382,7 +384,7 @@ export default function PopularDestinations() {
                         safeNavigate(d.destination);
                       }}
                       className="backdrop-blur-md bg-gery-700/20 hover:bg-white hover:text-black px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white">
-                      Explore Cars
+                      {t('destinations_explore_cars')}
                     </button>
                   </div>
 

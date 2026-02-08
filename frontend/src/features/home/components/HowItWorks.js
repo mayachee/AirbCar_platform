@@ -1,31 +1,33 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function HowItWorks() {
+  const t = useTranslations('home');
   const steps = [
     {
-      step: 'Step 1',
-      title: "Enter your location and see what's available, you'll get a great price on every type of car rental.",
+      step: t('step1_label'),
+      title: t('step1_description'),
       image: 'https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_n7ip3xn7ip3xn7ip.png',
       number: '01',
       href: '/search',
-      cta: 'SEARCH NOW'
+      cta: t('step1_cta')
     },
     {
-      step: 'Step 2',
-      title: 'We check prices from multiple rental locations for you. Pick your car and book directly with the provider, with no hidden costs.',
+      step: t('step2_label'),
+      title: t('step2_description'),
       image: 'https://ik.imagekit.io/szcfr7vth/6037a39caf6d7ad747c91a3989608259.jpg',
       number: '02',
       href: '/search',
-      cta: 'COMPARE NOW'
+      cta: t('step2_cta')
     },
     {
-      step: 'Step 3',
-      title: 'Compare prices, then book directly with the provider',
+      step: t('step3_label'),
+      title: t('step3_description'),
       image: 'https://ik.imagekit.io/szcfr7vth/ema_travel-by-car_rental_4096x2731.jpg',
       number: '03',
       href: '/search',
-      cta: 'BOOK NOW'
+      cta: t('step3_cta')
     }
   ];
 
@@ -39,13 +41,13 @@ export default function HowItWorks() {
           transition={{ duration: 0.6 }}
           className="mb-10 md:mb-16"
         >
-          <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">How It Works</p>
+          <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">{t('how_it_works_kicker')}</p>
           <div className="mt-4 flex items-end justify-between gap-8">
             <h2 className="text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
-              Three steps.
+              {t('how_it_works_heading')}
             </h2>
             <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
-              Search, compare, then book. Fast and transparent.
+              {t('how_it_works_description')}
             </p>
           </div>
         </motion.div>

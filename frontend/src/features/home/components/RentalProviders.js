@@ -4,9 +4,11 @@ import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api/client'
 import { motion } from 'framer-motion';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useTranslations } from 'next-intl';
 
 export default function RentalProviders() {
   const { formatPrice: formatCurrencyPrice } = useCurrency();
+  const t = useTranslations('home');
   const router = useRouter()
   const scrollContainerRef = useRef(null);
   const didInitLoopScrollRef = useRef(false)
@@ -67,15 +69,15 @@ export default function RentalProviders() {
       id: partner?.id,
       name,
       rating: Math.max(0, Math.min(5, rating)),
-      reviews: reviewCount > 0 ? `${reviewCount} review${reviewCount === 1 ? '' : 's'}` : 'New',
+      reviews: reviewCount > 0 ? `${reviewCount} review${reviewCount === 1 ? '' : 's'}` : t('providers_new'),
       logo: partner?.logo_url || null,
       price,
       city,
       isVerified,
       categories: [
-        { name: 'City', value: city || '—' },
-        { name: 'Type', value: businessType || '—' },
-        { name: 'Bookings', value: typeof partner?.total_bookings === 'number' ? String(partner.total_bookings) : '—' },
+        { name: t('providers_category_city'), value: city || '—' },
+        { name: t('providers_category_type'), value: businessType || '—' },
+        { name: t('providers_category_bookings'), value: typeof partner?.total_bookings === 'number' ? String(partner.total_bookings) : '—' },
       ]
     }
   }
@@ -364,14 +366,14 @@ export default function RentalProviders() {
             <div>
               <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gray-500">
                 <span className="h-px w-8 bg-orange-500/70" aria-hidden="true" />
-                <span>Providers</span>
+                <span>{t('providers_kicker')}</span>
               </div>
               <h2 className="mt-3 text-3xl sm:text-4xl md:text-6xl font-black text-gray-900 leading-tight sm:leading-[0.95] tracking-tight">
-                Top Profile Providers
+                {t('providers_heading')}
               </h2>
             </div>
             <p className="mt-4 md:mt-0 text-sm sm:text-base text-gray-600 max-w-2xl md:max-w-md md:text-right">
-              Compare trusted providers and find the best deals for your trip.
+              {t('providers_description')}
             </p>
           </div>
           <div className="mt-8 h-px bg-gray-100" aria-hidden="true" />
@@ -441,15 +443,15 @@ export default function RentalProviders() {
 
             {!isLoading && loadError && (
               <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
-                <div className="font-semibold text-gray-900">Unable to load providers</div>
+                <div className="font-semibold text-gray-900">{t('providers_unable_to_load')}</div>
                 <div className="mt-1 text-sm text-gray-600">{loadError}</div>
               </div>
             )}
 
             {!isLoading && !loadError && providers.length === 0 && (
               <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
-                <div className="font-semibold text-gray-900">No providers yet</div>
-                <div className="mt-1 text-sm text-gray-600">Check back soon for verified partners.</div>
+                <div className="font-semibold text-gray-900">{t('providers_no_providers')}</div>
+                <div className="mt-1 text-sm text-gray-600">{t('providers_no_providers_desc')}</div>
               </div>
             )}
 
@@ -507,7 +509,7 @@ export default function RentalProviders() {
                   <div className="mb-4">
                     <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium text-emerald-700 bg-emerald-50/50 backdrop-blur-sm rounded-full border border-emerald-100">
                       <svg className="mr-1 h-2.5 w-2.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      Verified partner
+                      {t('providers_verified_partner')}
                     </span>
                   </div>
                 ) : null}
@@ -527,7 +529,7 @@ export default function RentalProviders() {
                   <div>
                     {provider.price != null ? (
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Starting at</span>
+                        <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{t('providers_starting_at')}</span>
                         <div className="flex items-baseline gap-1">
                           <span className="text-xl sm:text-2xl font-bold text-gray-900">{provider.price}</span>
                           <span className="text-xs sm:text-sm text-gray-500 font-medium">/day</span>
@@ -535,8 +537,8 @@ export default function RentalProviders() {
                       </div>
                     ) : (
                       <div className="flex flex-col">
-                         <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Price</span>
-                         <span className="text-lg font-bold text-gray-900">Varies</span>
+                         <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{t('providers_starting_at')}</span>
+                         <span className="text-lg font-bold text-gray-900">{t('providers_price_varies')}</span>
                       </div>
                     )}
                   </div>
@@ -545,7 +547,7 @@ export default function RentalProviders() {
                     type="button"
                     onClick={() => safeNavigate(provider.id)}
                   >
-                    <span className="relative z-10">View Profile</span>
+                    <span className="relative z-10">{t('providers_view_profile')}</span>
                   </button>
                 </div>
               </motion.div>

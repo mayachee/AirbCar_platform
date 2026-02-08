@@ -1,12 +1,7 @@
 import { Outfit, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ToastProvider } from "@/contexts/ToastContext";
-import { CurrencyProvider } from "@/contexts/CurrencyContext";
-import { NotificationProvider } from "@/contexts/NotificationContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-import CookieConsent from "@/components/layout/CookieConsent";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -25,7 +20,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning={true}>
+    <html data-scroll-behavior="smooth" suppressHydrationWarning={true}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script
@@ -147,18 +142,9 @@ export default function RootLayout({ children }) {
         className={`${outfit.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning={true}
       >
-        <AuthProvider>
-          <CurrencyProvider>
-            <ToastProvider>
-              <NotificationProvider>
-                {children}
-              </NotificationProvider>
-            </ToastProvider>
-          </CurrencyProvider>
-        </AuthProvider>
+        {children}
         <SpeedInsights />
         <Analytics />
-        <CookieConsent />
       </body>
     </html>
   );
