@@ -1,8 +1,10 @@
 'use client';
 
 import { Calendar, DollarSign, Car, Star, X, FileText } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function RecentActivityFeed({ activities }) {
+  const t = useTranslations('partner');
   const getActivityIcon = (type) => {
     const iconProps = { className: "h-5 w-5" };
     switch (type) {
@@ -35,7 +37,7 @@ export default function RecentActivityFeed({ activities }) {
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now - time) / (1000 * 60));
     
-    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 1) return t('notifications_just_now');
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
@@ -44,7 +46,7 @@ export default function RecentActivityFeed({ activities }) {
   if (!activities || activities.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-gray-500 dark:text-gray-400">No recent activity</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('no_activity')}</p>
       </div>
     );
   }
@@ -74,7 +76,7 @@ export default function RecentActivityFeed({ activities }) {
       
       <div className="text-center pt-2">
         <button className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-          View all activity
+          {t('view_all')}
         </button>
       </div>
     </div>

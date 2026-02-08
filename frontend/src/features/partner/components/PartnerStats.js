@@ -2,67 +2,70 @@
 
 import { CarFront, Calendar, DollarSign, CheckCircle, TrendingUp, Clock, Star, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function PartnerStats({ stats, loading }) {
+  const t = useTranslations('partner');
+  
   const statCards = [
     {
-      title: 'Total Vehicles',
+      title: t('stat_total_vehicles'),
       value: stats?.totalVehicles || 0,
       icon: CarFront,
       color: 'bg-blue-500',
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
-      change: `${stats?.totalVehicles || 0} listed`,
+      change: t('stat_listed', { count: stats?.totalVehicles || 0 }),
       changeType: 'neutral'
     },
     {
-      title: 'Active Bookings',
+      title: t('stat_active_bookings'),
       value: stats?.activeBookings || 0,
       icon: Calendar,
       color: 'bg-green-500',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600',
-      change: stats?.activeBookings > 0 ? 'In progress' : 'None active',
+      change: stats?.activeBookings > 0 ? t('stat_in_progress') : t('stat_none_active'),
       changeType: stats?.activeBookings > 0 ? 'positive' : 'neutral'
     },
     {
-      title: 'Monthly Earnings',
+      title: t('stat_monthly_earnings'),
       value: `${(stats?.monthlyEarnings || 0).toLocaleString('fr-MA')} MAD`,
       icon: DollarSign,
       color: 'bg-purple-500',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
-      change: 'This month',
+      change: t('stat_this_month'),
       changeType: 'neutral'
     },
     {
-      title: 'Completed Rentals',
+      title: t('stat_completed_rentals'),
       value: stats?.completedRentals || 0,
       icon: CheckCircle,
       color: 'bg-orange-500',
       bgColor: 'bg-orange-50',
       textColor: 'text-orange-600',
-      change: `${stats?.completedRentals || 0} total`,
+      change: t('stat_total', { count: stats?.completedRentals || 0 }),
       changeType: stats?.completedRentals > 0 ? 'positive' : 'neutral'
     },
     {
-      title: 'Pending Requests',
+      title: t('stat_pending_requests'),
       value: stats?.pendingRequests || 0,
       icon: Clock,
       color: 'bg-yellow-500',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600',
-      change: stats?.pendingRequests > 0 ? 'Needs attention' : 'All clear',
+      change: stats?.pendingRequests > 0 ? t('stat_needs_attention') : t('stat_all_clear'),
       changeType: stats?.pendingRequests > 0 ? 'neutral' : 'positive'
     },
     {
-      title: 'Average Rating',
-      value: stats?.averageRating ? `${stats.averageRating.toFixed(1)}/5` : 'N/A',
+      title: t('stat_average_rating'),
+      value: stats?.averageRating ? `${stats.averageRating.toFixed(1)}/5` : t('not_available'),
       icon: Star,
       color: 'bg-indigo-500',
       bgColor: 'bg-indigo-50',
       textColor: 'text-indigo-600',
-      change: stats?.averageRating >= 4.0 ? 'Great score!' : stats?.averageRating > 0 ? 'Keep improving' : 'No reviews yet',
+      change: stats?.averageRating >= 4.0 ? t('great_score') : stats?.averageRating > 0 ? t('keep_improving') : t('no_reviews_yet'),
       changeType: stats?.averageRating >= 4.0 ? 'positive' : 'neutral'
     }
   ];

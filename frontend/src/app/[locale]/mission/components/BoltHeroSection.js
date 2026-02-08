@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform, useMotionValue, useMotionTemplate } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 const cards = [
   {
@@ -53,6 +54,7 @@ const cards = [
 ];
 
 export default function BoltHeroSection() {
+  const t = useTranslations('mission');
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
   const [shuffledCards, setShuffledCards] = useState([]);
@@ -109,9 +111,7 @@ export default function BoltHeroSection() {
       <div className="absolute  inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-0">
         <motion.div style={{ y: yText }} className="text-center">
             <h1 className="text-[13vw] leading-[0.8] font-bold text-orange-500 tracking-tight">
-              FEEL AT HOME<br/>
-              WHATEVER<br/>
-              YOU GO
+              {t('hero_heading')}
             </h1>
         </motion.div>
       </div>
@@ -135,7 +135,7 @@ export default function BoltHeroSection() {
       <div className="absolute bottom-12 left-0 w-full flex items-center justify-center z-50 px-4 text-center">
          <div className="flex items-center gap-4 px-6 py-3">
             <p className="text-[10px] md:text-sm uppercase tracking-[0.15em] md:tracking-[0.25em] font-semibold text-orange-500">
-              Airbcar is not just a ride, it's your comfort zone
+              {t('hero_tagline')}
             </p>
          </div>
       </div>

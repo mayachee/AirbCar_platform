@@ -5,6 +5,7 @@ import { CarFront, Edit, Trash2, Eye, Plus, Search, Filter, ArrowUpDown, MapPin,
 import { getVehicleImageUrl } from '@/utils/imageUtils';
 import { SelectField } from '@/components/ui/select-field';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ export default function VehiclesList({
   onRefresh
 }) {
   const { addToast } = useToast();
+  const t = useTranslations('partner');
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -285,7 +287,7 @@ export default function VehiclesList({
               className="flex items-center space-x-2 bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
             >
               <Plus className="h-4 w-4" />
-              <span>Add Vehicle</span>
+              <span>{t('add_vehicle')}</span>
             </button>
           </div>
         </div>
@@ -386,8 +388,8 @@ export default function VehiclesList({
         {/* Results count */}
         {filteredVehicles.length > 0 && (
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Showing {sortedVehicles.length} of {vehiclesList.length} vehicles
-            {searchTerm && ` matching "${searchTerm}"`}
+            {t('showing_results', { visible: sortedVehicles.length, total: vehiclesList.length })}
+            {searchTerm && ` ${t('matching_search', { term: searchTerm })}`}
           </p>
         )}
 
@@ -396,21 +398,21 @@ export default function VehiclesList({
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span className="font-medium text-blue-900 dark:text-blue-200">
-                {selectedVehicles.length} vehicle{selectedVehicles.length > 1 ? 's' : ''} selected
+                {t('vehicles_selected', { count: selectedVehicles.length })}
               </span>
               <button
                 onClick={selectAllVehicles}
                 className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
               >
-                {selectedVehicles.length === sortedVehicles.length ? 'Deselect All' : 'Select All'}
+                {selectedVehicles.length === sortedVehicles.length ? t('deselect_all') : t('select_all')}
               </button>
             </div>
             <div className="flex items-center gap-2">
               <button className="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30">
-                Bulk Edit
+                {t('bulk_edit')}
               </button>
               <button className="px-3 py-1 text-sm bg-red-500 dark:bg-red-600 text-white rounded hover:bg-red-600 dark:hover:bg-red-700">
-                Delete Selected
+                {t('delete_selected')}
               </button>
             </div>
           </div>
@@ -585,18 +587,18 @@ export default function VehiclesList({
                 <button
                   onClick={() => onViewVehicle(vehicle)}
                   className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
-                  title="View Details"
+                  title={t('view_details')}
                 >
                   <Eye className="h-4 w-4" />
-                  {viewMode === "grid" && <span>View</span>}
+                  {viewMode === "grid" && <span>{t('view')}</span>}
                 </button>
                 <button
                   onClick={() => onEditVehicle(vehicle)}
                   className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors font-medium"
-                  title="Edit Vehicle"
+                  title={t('edit')}
                 >
                   <Edit className="h-4 w-4" />
-                  {viewMode === "grid" && <span>Edit</span>}
+                  {viewMode === "grid" && <span>{t('edit')}</span>}
                 </button>
                 <button
                   onClick={(e) => {
@@ -605,17 +607,17 @@ export default function VehiclesList({
                   }}
                   disabled={deletingVehicleId === vehicle.id || loading}
                   className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed group/delete"
-                  title="Delete Vehicle"
+                  title={t('delete')}
                 >
                   {deletingVehicleId === vehicle.id ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      {viewMode === "grid" && <span>Deleting...</span>}
+                      {viewMode === "grid" && <span>{t('processing')}</span>}
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 transition-transform group-hover/delete:scale-110" />
-                      {viewMode === "grid" && <span>Delete</span>}
+                      {viewMode === "grid" && <span>{t('delete')}</span>}
                     </>
                   )}
                 </button>
@@ -624,13 +626,13 @@ export default function VehiclesList({
                     onClick={(e) => {
                       e.stopPropagation();
                       // Duplicate vehicle functionality
-                      if (window.confirm(`Duplicate ${vehicle.make} ${vehicle.model}?`)) {
+                      if (window.confirm(t('duplicate_vehicle', { make: vehicle.make, model: vehicle.model }))) {
                         // This would need to be implemented
                         console.log('Duplicate vehicle:', vehicle);
                       }
                     }}
                     className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    title="Duplicate Vehicle"
+                    title={t('duplicate_vehicle_title')}
                   >
                     <Copy className="h-4 w-4" />
                   </button>
@@ -648,20 +650,20 @@ export default function VehiclesList({
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               {vehiclesList.length === 0 
-                ? "No vehicles yet" 
-                : "No vehicles match your filters"}
+                ? t('no_vehicles_found')
+                : t('no_vehicles_found')}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
               {vehiclesList.length === 0 
-                ? "Get started by adding your first vehicle to start renting it out to customers."
-                : "Try adjusting your search or filter criteria to find what you're looking for."}
+                ? t('no_vehicles_message')
+                : t('no_vehicles_message')}
             </p>
             <button
               onClick={onAddVehicle}
               className="inline-flex items-center space-x-2 bg-blue-500 dark:bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg font-medium"
             >
               <Plus className="h-5 w-5" />
-              <span>{vehiclesList.length === 0 ? "Add Your First Vehicle" : "Add Vehicle"}</span>
+              <span>{vehiclesList.length === 0 ? t('add_first_vehicle') : t('add_vehicle')}</span>
             </button>
           </div>
         )}
@@ -672,14 +674,15 @@ export default function VehiclesList({
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
-              Delete Vehicle
+              {t('delete')}
             </DialogTitle>
             <DialogDescription className="text-base pt-2">
-              Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-gray-100">
-                {vehicleToDelete ? `${vehicleToDelete.make} ${vehicleToDelete.model}` : 'this vehicle'}
-              </span>?
+              {t('are_you_sure', { 
+                action: t('delete').toLowerCase(), 
+                count: 1 
+              }).replace('1 vehicles', 'this vehicle')}
               <br className="mb-2" />
-              This action cannot be undone and will permanently remove the vehicle from your listings.
+              {t('action_cannot_undo')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0 mt-4">
@@ -687,7 +690,7 @@ export default function VehiclesList({
               onClick={() => setVehicleToDelete(null)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               onClick={async () => {
@@ -698,17 +701,17 @@ export default function VehiclesList({
                 
                 try {
                   await onDeleteVehicle(vehicle, true);
-                  addToast(`${vehicle.make} ${vehicle.model} successfully deleted`, 'success');
+                  addToast(`${vehicle.make} ${vehicle.model} ${t('booking_success', { action: t('booking_cancelled') })}`, 'success');
                 } catch (error) {
                   console.error('Delete error:', error);
-                  addToast("Failed to delete vehicle. Please try again.", 'error');
+                  addToast(t('failed_to_delete'), 'error');
                 } finally {
                   setDeletingVehicleId(null);
                 }
               }}
               className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors shadow-sm"
             >
-              Delete Vehicle
+              {t('delete')}
             </button>
           </DialogFooter>
         </DialogContent>

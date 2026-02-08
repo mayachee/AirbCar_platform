@@ -3,6 +3,7 @@
 import { Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { AlertCircle, CheckCircle2, Clock, Calendar, TrendingUp, ArrowUpRight, Car, DollarSign, Lightbulb, Target, Zap } from 'lucide-react';
 
 // Lazy load components
@@ -121,6 +122,7 @@ export default function DashboardContent({
   setCurrentView
 }) {
   const router = useRouter();
+  const t = useTranslations('partner');
   
   // Ensure pendingRequests and upcomingBookings are always arrays
   const pendingRequests = Array.isArray(pendingRequestsProp) ? pendingRequestsProp : [];
@@ -139,14 +141,14 @@ export default function DashboardContent({
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold mb-2">
-                  Welcome back! 👋
+                  {t('welcome_back')}
                 </h2>
                 <p className="text-blue-100 dark:text-blue-200">
                   {pendingRequests.length > 0 
-                    ? `You have ${pendingRequests.length} pending ${pendingRequests.length === 1 ? 'request' : 'requests'} to review`
+                    ? t(pendingRequests.length === 1 ? 'welcome_pending_requests_single' : 'welcome_pending_requests_plural', { count: pendingRequests.length })
                     : upcomingBookings.length > 0
-                    ? `You have ${upcomingBookings.length} upcoming ${upcomingBookings.length === 1 ? 'booking' : 'bookings'}`
-                    : 'Everything looks good! Your dashboard is up to date.'}
+                    ? t(upcomingBookings.length === 1 ? 'welcome_upcoming_bookings_single' : 'welcome_upcoming_bookings_plural', { count: upcomingBookings.length })
+                    : t('welcome_all_good')}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -157,7 +159,7 @@ export default function DashboardContent({
                   className="px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center space-x-2"
                 >
                   <span>+</span>
-                  <span>Add Vehicle</span>
+                  <span>{t('add_vehicle')}</span>
                 </motion.button>
                 {pendingRequests.length > 0 && (
                   <motion.button
@@ -166,7 +168,7 @@ export default function DashboardContent({
                     onClick={() => setCurrentView('bookings')}
                     className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
                   >
-                    Review Requests ({pendingRequests.length})
+                    {t('review_requests')} ({pendingRequests.length})
                   </motion.button>
                 )}
               </div>
@@ -201,7 +203,7 @@ export default function DashboardContent({
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pending Requests</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('pending_requests')}</h3>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-semibold px-2.5 py-1 rounded-full">
@@ -223,8 +225,8 @@ export default function DashboardContent({
                 {pendingRequests.length === 0 ? (
                   <div className="text-center py-8">
                     <Clock className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400 mb-2">No pending requests</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">New booking requests will appear here</p>
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">{t('no_pending_requests')}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{t('new_requests_appear_here')}</p>
                   </div>
                 ) : (
                   pendingRequests.slice(0, 3).map((request, index) => (
@@ -245,7 +247,7 @@ export default function DashboardContent({
                           </p>
                           {request.user && (
                             <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
-                              Customer: {request.user.first_name} {request.user.last_name}
+                              {t('customer')}: {request.user.first_name} {request.user.last_name}
                             </p>
                           )}
                         </div>
@@ -296,7 +298,7 @@ export default function DashboardContent({
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Bookings</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('upcoming_bookings')}</h3>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-1 rounded-full">
@@ -318,7 +320,7 @@ export default function DashboardContent({
                 {upcomingBookings.length === 0 ? (
                   <div className="text-center py-8">
                     <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 dark:text-gray-400">No upcoming bookings</p>
+                    <p className="text-gray-500 dark:text-gray-400">{t('no_bookings_found')}</p>
                   </div>
                 ) : (
                   upcomingBookings.slice(0, 3).map((booking, index) => (
@@ -339,7 +341,7 @@ export default function DashboardContent({
                           </p>
                           {booking.user && (
                             <p className="text-xs text-gray-600 dark:text-gray-300">
-                              Customer: {booking.user.first_name} {booking.user.last_name}
+                              {t('customer')}: {booking.user.first_name} {booking.user.last_name}
                             </p>
                           )}
                           {booking.price && (
@@ -375,7 +377,7 @@ export default function DashboardContent({
             >
               <div className="flex items-center space-x-2 mb-4">
                 <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('recent_activity')}</h3>
               </div>
               <ComponentLoader>
                 <RecentActivityFeed activities={recentActivity} />

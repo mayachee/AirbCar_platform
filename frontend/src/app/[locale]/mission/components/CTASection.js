@@ -1,6 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+
 export default function CTASection() {
+  const t = useTranslations('mission');
+  
   return (
     <section className="py-20 bg-gradient-to-br from-orange-400 to-orange-600 text-white">
       <div className="max-w-6xl mx-auto px-4">
@@ -8,21 +13,17 @@ export default function CTASection() {
           {/* Left side - Text content */}
           <div className="text-center lg:text-left">
             <div className="mb-6">
-              <span className="text-white/80 text-lg">About us</span>
+              <span className="text-white/80 text-lg">{t('cta_about_us')}</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-              Airbcar is the first Moroccan<br />
-              mobility rental car app.
+              {t('cta_heading')}
             </h2>
             <p className="text-xl opacity-90 mb-8 max-w-2xl">
-              We're making cities for people, offering better alternatives for 
-              every purpose a private car serves — including 
-              ride-hailing, shared cars, scooters, 
-              and food and grocery delivery.
+              {t('cta_description')}
             </p>
-            <button className="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-colors duration-200 shadow-lg">
-              Be Partner
-            </button>
+            <Link href="/partner" className="inline-block bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-colors duration-200 shadow-lg">
+              {t('cta_button')}
+            </Link>
           </div>
           
           {/* Right side - Mobile app mockup */}

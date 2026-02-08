@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
+import { useTranslations } from 'next-intl';
 import { 
   LayoutDashboard, Car, Calendar, DollarSign, BarChart3, 
   CalendarDays, Star, FileText, User, Settings 
@@ -13,6 +14,7 @@ import {
 export function useOptimizedDashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useTranslations('partner');
   
   // State management
   const [isPartner, setIsPartner] = useState(false);
@@ -57,17 +59,17 @@ export function useOptimizedDashboard() {
 
   // Memoized navigation items
   const navigationItems = useMemo(() => [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, badge: null },
-    { id: 'vehicles', label: 'Vehicles', icon: <Car className="h-5 w-5" />, badge: vehicles?.length || 0 },
-    { id: 'bookings', label: 'Bookings', icon: <Calendar className="h-5 w-5" />, badge: bookings?.length || 0 },
-    { id: 'earnings', label: 'Earnings', icon: <DollarSign className="h-5 w-5" />, badge: null },
-    { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="h-5 w-5" />, badge: null },
-    { id: 'calendar', label: 'Calendar', icon: <CalendarDays className="h-5 w-5" />, badge: null },
-    { id: 'reviews', label: 'Reviews', icon: <Star className="h-5 w-5" />, badge: null },
-    { id: 'rental-policies', label: 'Rental Policies', icon: <FileText className="h-5 w-5" />, badge: null },
-    { id: 'profile', label: 'Profile', icon: <User className="h-5 w-5" />, badge: null },
-    { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" />, badge: null }
-  ], [vehicles?.length, bookings?.length]);
+    { id: 'dashboard', label: t('nav_dashboard'), icon: <LayoutDashboard className="h-5 w-5" />, badge: null },
+    { id: 'vehicles', label: t('nav_vehicles'), icon: <Car className="h-5 w-5" />, badge: vehicles?.length || 0 },
+    { id: 'bookings', label: t('nav_bookings'), icon: <Calendar className="h-5 w-5" />, badge: bookings?.length || 0 },
+    { id: 'earnings', label: t('nav_earnings'), icon: <DollarSign className="h-5 w-5" />, badge: null },
+    { id: 'analytics', label: t('nav_analytics'), icon: <BarChart3 className="h-5 w-5" />, badge: null },
+    { id: 'calendar', label: t('nav_calendar'), icon: <CalendarDays className="h-5 w-5" />, badge: null },
+    { id: 'reviews', label: t('nav_reviews'), icon: <Star className="h-5 w-5" />, badge: null },
+    { id: 'rental-policies', label: t('nav_rental_policies'), icon: <FileText className="h-5 w-5" />, badge: null },
+    { id: 'profile', label: t('nav_profile'), icon: <User className="h-5 w-5" />, badge: null },
+    { id: 'settings', label: t('nav_settings'), icon: <Settings className="h-5 w-5" />, badge: null }
+  ], [vehicles?.length, bookings?.length, t]);
 
   // Memoized quick stats
   const quickStats = useMemo(() => {
@@ -79,39 +81,39 @@ export function useOptimizedDashboard() {
     
     return [
       {
-        title: 'Total Vehicles',
+        title: t('stat_total_vehicles'),
         value: stats.totalVehicles || 0,
         icon: null,
         color: 'blue',
-        change: `${stats.totalVehicles || 0} listed`,
+        change: t('stat_listed', { count: stats.totalVehicles || 0 }),
         changeType: 'neutral'
       },
       {
-        title: 'Active Bookings',
+        title: t('stat_active_bookings'),
         value: stats.activeBookings || 0,
         icon: null,
         color: 'green',
-        change: stats.activeBookings > 0 ? 'In progress' : 'None active',
+        change: stats.activeBookings > 0 ? t('stat_in_progress') : t('stat_none_active'),
         changeType: stats.activeBookings > 0 ? 'positive' : 'neutral'
       },
       {
-        title: 'Pending Requests',
+        title: t('stat_pending_requests'),
         value: pendingRequests.length,
         icon: null,
         color: 'yellow',
-        change: pendingRequests.length > 0 ? 'Needs attention' : 'All clear',
+        change: pendingRequests.length > 0 ? t('stat_needs_attention') : t('stat_all_clear'),
         changeType: pendingRequests.length > 0 ? 'neutral' : 'positive'
       },
       {
-        title: 'Monthly Earnings',
+        title: t('stat_monthly_earnings'),
         value: `${Number(monthlyEarningsVal).toLocaleString('fr-MA')} MAD`,
         icon: null,
         color: 'purple',
-        change: growthRate !== 0 ? `${growthRate > 0 ? '+' : ''}${growthRate}% vs last month` : 'This month',
+        change: growthRate !== 0 ? `${growthRate > 0 ? '+' : ''}${growthRate}% vs last month` : t('stat_this_month'),
         changeType: growthRate > 0 ? 'positive' : growthRate < 0 ? 'negative' : 'neutral'
       }
     ];
-  }, [stats, pendingRequests.length, earnings]);
+  }, [stats, pendingRequests.length, earnings, t]);
 
   // Partner status check
   const checkPartnerStatus = useCallback(async () => {

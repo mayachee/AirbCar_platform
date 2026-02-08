@@ -20,6 +20,7 @@ import {
   Zap
 } from 'lucide-react';
 import { partnerService } from '@/features/partner/services/partnerService';
+import { useTranslations } from 'next-intl';
 
 export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
   const [selectedVehicles, setSelectedVehicles] = useState([]);
@@ -255,41 +256,43 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
     }
   };
 
+  const t = useTranslations('partner');
+  
   const operations = [
     { 
       value: 'activate', 
-      label: 'Activate Vehicles', 
+      label: t('activate_vehicles'), 
       icon: CheckCircle2,
       color: 'green',
-      description: 'Make selected vehicles available for booking'
+      description: t('make_available')
     },
     { 
       value: 'deactivate', 
-      label: 'Deactivate Vehicles', 
+      label: t('deactivate_vehicles'), 
       icon: XCircle,
       color: 'orange',
-      description: 'Temporarily hide vehicles from listings'
+      description: t('hide_vehicles')
     },
     { 
       value: 'update_pricing', 
-      label: 'Update Pricing', 
+      label: t('update_pricing'), 
       icon: DollarSign,
       color: 'blue',
-      description: 'Bulk update rental prices'
+      description: t('bulk_update_prices')
     },
     { 
       value: 'export_data', 
-      label: 'Export Data', 
+      label: t('export_data'), 
       icon: Download,
       color: 'purple',
-      description: 'Export vehicle data to CSV/Excel'
+      description: t('export_to_csv')
     },
     { 
       value: 'delete', 
-      label: 'Delete Vehicles', 
+      label: t('delete_vehicles'), 
       icon: Trash2,
       color: 'red',
-      description: 'Permanently remove vehicles (cannot be undone)'
+      description: t('permanently_remove')
     }
   ];
 
@@ -577,13 +580,15 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                 }`} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirm Operation</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('confirm_operation')}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('action_cannot_undo')}</p>
               </div>
             </div>
             <p className="text-gray-700 dark:text-gray-300 mb-6">
-              Are you sure you want to <span className="font-bold">{selectedOperation.label.toLowerCase()}</span> on{' '}
-              <span className="font-bold text-blue-600 dark:text-blue-400">{selectedVehicles.length}</span> vehicle{selectedVehicles.length !== 1 ? 's' : ''}?
+              {t('are_you_sure', { 
+                action: selectedOperation.label.toLowerCase(), 
+                count: selectedVehicles.length 
+              })}
             </p>
             <div className="flex space-x-3">
               <button
@@ -591,7 +596,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                 disabled={loading}
                 className="flex-1 px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={executeOperation}

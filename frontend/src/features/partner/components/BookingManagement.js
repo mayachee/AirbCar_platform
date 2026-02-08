@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Car, CheckCircle, XCircle, AlertCircle, Eye, Search, Filter, MessageSquare } from 'lucide-react';
 import { bookingService } from '@/services/api';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
+import { useTranslations } from 'next-intl';
 
 export default function BookingManagement({ bookings: propBookings, loading: propLoading, onBookingUpdate, acceptBooking, rejectBooking, cancelBooking }) {
+  const t = useTranslations('partner');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -179,7 +181,7 @@ export default function BookingManagement({ bookings: propBookings, loading: pro
                           setShowDetails(true);
                         }}
                         className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="View Details"
+                        title={t('view_details')}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -191,14 +193,14 @@ export default function BookingManagement({ bookings: propBookings, loading: pro
                             disabled={actionLoading}
                             className="px-3 py-1 bg-green-100 text-green-800 rounded-md hover:bg-green-200 transition-colors disabled:opacity-50"
                           >
-                            Accept
+                            {t('accept')}
                           </button>
                           <button
                             onClick={() => handleRejectBooking(booking.id, 'Not available')}
                             disabled={actionLoading}
                             className="px-3 py-1 bg-red-100 text-red-800 rounded-md hover:bg-red-200 transition-colors disabled:opacity-50"
                           >
-                            Reject
+                            {t('reject')}
                           </button>
                         </>
                       )}

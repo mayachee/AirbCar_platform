@@ -26,6 +26,7 @@ export default function Header({ theme = 'dark' }) {
   const [isScrolled, setIsScrolled] = useState(false)
   const t = useTranslations('header')
   const tc = useTranslations('common')
+  const tp = useTranslations('partner')
 
   const pathname = usePathname()
 
@@ -143,7 +144,7 @@ export default function Header({ theme = 'dark' }) {
           { label: t('nav_my_bookings'), href: '/account?tab=bookings' }
         )
 
-        if (isAdmin) items.push({ label: 'Admin Dashboard', href: '/admin/dashboard' })
+        if (isAdmin) items.push({ label: tp('admin_dashboard'), href: '/admin/dashboard' })
       } else {
         items.push(
           { label: tc('sign_in'), href: '/auth?mode=signin' },

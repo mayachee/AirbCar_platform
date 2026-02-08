@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslations } from 'next-intl';
 import PartnerStats from '@/features/partner/components/PartnerStats';
 import VehiclesList from '@/features/partner/components/VehiclesList';
 import BookingManagement from '@/features/partner/components/BookingManagement';
@@ -23,6 +24,7 @@ import { apiClient } from '@/lib/api/client';
 
 export default function PartnerDashboard() {
   const { user, loading } = useAuth();
+  const t = useTranslations('partner');
   const [isPartner, setIsPartner] = useState(false);
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -383,15 +385,15 @@ export default function PartnerDashboard() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-2xl font-bold text-gray-900">Partner profile required</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('partner_profile_required')}</h1>
           <p className="mt-2 text-gray-600">
-            {partnerError || 'Your account does not have a partner profile yet. Please complete your partner profile to access the dashboard.'}
+            {partnerError || t('no_partner_profile')}
           </p>
           <button
             onClick={() => setCurrentView('profile')}
             className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
-            Complete profile
+            {t('complete_profile')}
           </button>
         </div>
         <Footer />

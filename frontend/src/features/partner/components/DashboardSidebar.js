@@ -3,6 +3,7 @@
 import { Suspense, lazy } from 'react';
 import { ChevronLeft, ChevronRight, Wifi, WifiOff, Server, ServerOff, Building2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 const QuickActionsPanel = lazy(() => import('@/features/partner/components/QuickActionsPanel'));
 
@@ -24,6 +25,7 @@ export default function DashboardSidebar({
   onRefreshData,
   isMobile = false
 }) {
+  const t = useTranslations('partner');
   const mobileVariants = {
     open: { x: 0 },
     closed: { x: '-100%' }
@@ -55,7 +57,7 @@ export default function DashboardSidebar({
               className="flex items-center space-x-2"
             >
               <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white">Partner Hub</h2>
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">{t('partner_hub')}</h2>
             </motion.div>
           )}
           <motion.button
@@ -87,7 +89,7 @@ export default function DashboardSidebar({
             )}
             {!sidebarCollapsed && (
               <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('online') : t('offline')}
               </span>
             )}
           </motion.div>
@@ -104,7 +106,7 @@ export default function DashboardSidebar({
             )}
             {!sidebarCollapsed && (
               <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                {backendAvailable ? 'API Connected' : 'Demo Mode'}
+                {backendAvailable ? t('api_connected') : t('demo_mode')}
               </span>
             )}
           </motion.div>

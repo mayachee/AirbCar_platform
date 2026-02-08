@@ -1,40 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const faqs = [
-  {
-    question: "How do I book a car?",
-    answer: "To book a car, search for your destination and dates on our homepage. Browse the available listings, select the car that suits your needs, and click 'Book Now'. Follow the prompts to complete your payment and confirm your booking."
-  },
-  {
-    question: "What items do I need to rent a car?",
-    answer: "You will need a valid driver's license, a credit or debit card in your name, and proof of identity (like a passport or ID card). Some hosts may have additional requirements which will be listed on their car page."
-  },
-  {
-    question: "Can I cancel my booking?",
-    answer: "Yes, you can cancel your booking. Refunds depend on the host's cancellation policy and how far in advance you cancel. You can view the specific cancellation policy on your booking details page."
-  },
-  {
-    question: "How does insurance work?",
-    answer: "AirbCar provides basic insurance coverage for all trips. You can choose to upgrade to a protection plan for lower deductibles. In case of an accident, please contact our support team immediately."
-  },
-  {
-    question: "Is there a mileage limit?",
-    answer: "Mileage limits are set by the host. Some cars offer unlimited mileage, while others have a daily limit. If you exceed the limit, you may be charged an additional fee per kilometer/mile."
-  }
-];
+import { useTranslations } from 'next-intl';
 
 export default function FAQSection() {
+  const t = useTranslations('help');
   const [openIndex, setOpenIndex] = useState(0);
+  
+  const faqs = useMemo(() => [
+    {
+      question: t('faq_question_1'),
+      answer: t('faq_answer_1')
+    },
+    {
+      question: t('faq_question_2'),
+      answer: t('faq_answer_2')
+    },
+    {
+      question: t('faq_question_3'),
+      answer: t('faq_answer_3')
+    },
+    {
+      question: t('faq_question_4'),
+      answer: t('faq_answer_4')
+    },
+    {
+      question: t('faq_question_5'),
+      answer: t('faq_answer_5')
+    }
+  ], [t]);
 
   return (
     <section className="py-12 md:py-20 px-4">
       <div className="container mx-auto max-w-3xl">
         <div className="text-center mb-10 md:mb-16">
-            <h2 className="text-2xl md:text-5xl font-bold text-white mb-4 md:mb-6">Frequently Asked Questions</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-lg">Quick answers to common questions about using AirbCar.</p>
+            <h2 className="text-2xl md:text-5xl font-bold text-white mb-4 md:mb-6">{t('faq_heading')}</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-lg">{t('faq_description')}</p>
         </div>
 
         <div className="space-y-3 md:space-y-4">

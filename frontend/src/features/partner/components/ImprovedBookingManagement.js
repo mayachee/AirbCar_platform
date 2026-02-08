@@ -6,6 +6,7 @@ import { bookingService } from '@/features/booking/services/bookingService';
 import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
 import CustomerDocuments from '@/features/partner/components/CustomerDocuments';
+import { useTranslations } from 'next-intl';
 
 export default function ImprovedBookingManagement({ 
   bookings: propBookings = [], 
@@ -17,6 +18,7 @@ export default function ImprovedBookingManagement({
   hasPartnerProfile = true
 }) {
   const { user: currentUser } = useAuth();
+  const t = useTranslations('partner');
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(propLoading);
@@ -521,7 +523,7 @@ export default function ImprovedBookingManagement({
                             ) : (
                               <>
                                 <CheckCircle className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                                <span>Accept Booking</span>
+                                <span>{t('accept_booking')}</span>
                               </>
                             )}
                           </button>
@@ -533,12 +535,12 @@ export default function ImprovedBookingManagement({
                             {actionLoading ? (
                               <>
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Processing...</span>
+                                <span>{t('processing')}</span>
                               </>
                             ) : (
                               <>
                                 <XCircle className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                                <span>Reject Booking</span>
+                                <span>{t('reject_booking')}</span>
                               </>
                             )}
                           </button>
