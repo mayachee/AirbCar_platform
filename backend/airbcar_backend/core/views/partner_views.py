@@ -394,22 +394,22 @@ class PartnerEarningsView(APIView):
             
             # Total & monthly earnings
             total_earnings = completed_bookings.aggregate(
-                total=Sum('price')
+                total=Sum('total_amount')
             )['total'] or 0
             
             monthly_earnings = completed_bookings.filter(
-                start_time__gte=thirty_days_ago
-            ).aggregate(total=Sum('price'))['total'] or 0
+                pickup_date__gte=thirty_days_ago
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
             
             # Previous month for growth calculation
             prev_month_earnings = completed_bookings.filter(
-                start_time__gte=sixty_days_ago,
-                start_time__lt=thirty_days_ago
-            ).aggregate(total=Sum('price'))['total'] or 0
+                pickup_date__gte=sixty_days_ago,
+                pickup_date__lt=thirty_days_ago
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
             
             weekly_earnings = completed_bookings.filter(
-                start_time__gte=seven_days_ago
-            ).aggregate(total=Sum('price'))['total'] or 0
+                pickup_date__gte=seven_days_ago
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
             
             # Growth rate
             growth_rate = 0
@@ -423,17 +423,17 @@ class PartnerEarningsView(APIView):
             # Pending earnings (accepted but not completed)
             pending_earnings = all_bookings.filter(
                 status='accepted'
-            ).aggregate(total=Sum('price'))['total'] or 0
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
             
             # Daily earnings for last 30 days
             from django.db.models.functions import TruncDate
             daily_earnings = (
                 completed_bookings
-                .filter(start_time__gte=thirty_days_ago)
-                .annotate(day=TruncDate('start_time'))
+                .filter(pickup_date__gte=thirty_days_ago)
+                .annotate(day=TruncDate('pickup_date'))
                 .values('day')
                 .annotate(
-                    revenue=Sum('price'),
+                    revenue=Sum('total_amount'),
                     count=Count('id')
                 )
                 .order_by('day')
@@ -458,7 +458,7 @@ class PartnerEarningsView(APIView):
                     'listing__id', 'listing__make', 'listing__model', 'listing__year'
                 )
                 .annotate(
-                    revenue=Coalesce(Sum('price'), 0),
+                    revenue=Coalesce(Sum('total_amount'), 0),
                     booking_count=Count('id')
                 )
                 .order_by('-revenue')[:10]
@@ -476,16 +476,16 @@ class PartnerEarningsView(APIView):
             
             # Recent completed bookings (payout history)
             recent_completed = completed_bookings.select_related(
-                'listing', 'user'
-            ).order_by('-start_time')[:10]
+                'listing', 'customer'
+            ).order_by('-pickup_date')[:10]
             
             payout_history = [
                 {
                     'id': b.id,
-                    'date': b.start_time.date().isoformat() if b.start_time else b.date.isoformat() if b.date else '',
-                    'amount': float(b.price),
+                    'date': b.pickup_date.isoformat() if b.pickup_date else '',
+                    'amount': float(b.total_amount),
                     'vehicle': f"{b.listing.make} {b.listing.model}" if b.listing else 'Unknown',
-                    'customer': f"{b.user.first_name} {b.user.last_name}".strip() if b.user else 'Unknown',
+                    'customer': f"{b.customer.first_name} {b.customer.last_name}".strip() if b.customer else 'Unknown',
                     'status': 'completed',
                 }
                 for b in recent_completed
@@ -550,8 +550,8 @@ class PartnerAnalyticsView(APIView):
             all_bookings = Booking.objects.filter(listing__partner=partner)
             
             # Current & previous period bookings
-            current_bookings = all_bookings.filter(start_time__gte=range_start)
-            prev_bookings = all_bookings.filter(start_time__gte=prev_range_start, start_time__lt=range_start)
+            current_bookings = all_bookings.filter(pickup_date__gte=range_start)
+            prev_bookings = all_bookings.filter(pickup_date__gte=prev_range_start, pickup_date__lt=range_start)
             
             # Aggregate stats
             booking_stats = all_bookings.aggregate(
@@ -565,9 +565,9 @@ class PartnerAnalyticsView(APIView):
             
             # Revenue calculations
             completed_in_range = current_bookings.filter(status='completed')
-            total_revenue = completed_in_range.aggregate(total=Sum('price'))['total'] or 0
+            total_revenue = completed_in_range.aggregate(total=Sum('total_amount'))['total'] or 0
             
-            prev_revenue = prev_bookings.filter(status='completed').aggregate(total=Sum('price'))['total'] or 0
+            prev_revenue = prev_bookings.filter(status='completed').aggregate(total=Sum('total_amount'))['total'] or 0
             revenue_trend = 0
             if prev_revenue > 0:
                 revenue_trend = round(((float(total_revenue) - float(prev_revenue)) / float(prev_revenue)) * 100, 1)
@@ -586,11 +586,11 @@ class PartnerAnalyticsView(APIView):
             # Daily data for charts
             daily_data_qs = (
                 all_bookings
-                .filter(start_time__gte=range_start)
-                .annotate(day=TruncDate('start_time'))
+                .filter(pickup_date__gte=range_start)
+                .annotate(day=TruncDate('pickup_date'))
                 .values('day')
                 .annotate(
-                    revenue=Coalesce(Sum('price', filter=Q(status='completed')), 0),
+                    revenue=Coalesce(Sum('total_amount', filter=Q(status='completed')), 0),
                     bookings=Count('id'),
                     new_bookings=Count('id', filter=Q(status='pending')),
                 )
@@ -622,7 +622,7 @@ class PartnerAnalyticsView(APIView):
                 all_bookings.filter(status='completed')
                 .values('listing__id', 'listing__make', 'listing__model', 'listing__year', 'listing__price_per_day')
                 .annotate(
-                    revenue=Coalesce(Sum('price'), 0),
+                    revenue=Coalesce(Sum('total_amount'), 0),
                     booking_count=Count('id'),
                 )
                 .order_by('-revenue')[:10]
