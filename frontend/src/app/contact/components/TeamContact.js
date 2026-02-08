@@ -8,7 +8,7 @@ const teamMembers = [
     members: [
       {
         name: "Mohamed Yassine Ayache.",
-        role: "Lead Developer",
+        role: "Lead Developer & Software Engineer",
         email: "yassine@airbcar.com",
         phone: "+212696145103",
         linkedin: "https://www.linkedin.com/in/mayachee/",
@@ -16,11 +16,11 @@ const teamMembers = [
         image: "https://ik.imagekit.io/szcfr7vth/IMG_2867.png" 
       },
       {
-        name: "Amine S.",
-        role: "Full Stack Engineer",
+        name: "Amine Zaghloul",
+        role: "Software Engineer",
         email: "amine@airbcar.com",
         phone: "+212 600-333444",
-        linkedin: "#",
+        linkedin: "https://www.linkedin.com/in/amineza/",
         quote: "Code <span class='text-orange-500'>quality</span> and performance are our top priorities.",
         image: "https://ik.imagekit.io/szcfr7vth/New%20folder/x-x-kfmUTWbUP9Y-unsplash.jpg" 
       }

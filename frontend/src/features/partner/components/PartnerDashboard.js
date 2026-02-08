@@ -13,6 +13,7 @@ import EnhancedBookingManagement from '@/features/partner/components/EnhancedBoo
 import NotificationCenter from '@/features/partner/components/NotificationCenter';
 import PartnerProfileSettings from '@/features/partner/components/PartnerProfileSettings';
 import AdvancedAnalytics from '@/features/partner/components/AdvancedAnalytics';
+import PartnerEarnings from '@/features/partner/components/PartnerEarnings';
 import VehicleAvailabilityCalendar from '@/features/partner/components/VehicleAvailabilityCalendar';
 import AddVehicleModal from '@/components/forms/AddVehicleModal';
 import Header from '@/components/layout/Header';
@@ -44,6 +45,8 @@ export default function PartnerDashboard() {
     hasPartnerProfile,
     partnerError,
     stats,
+    earnings,
+    analytics,
     loading: dataLoading,
     addVehicle,
     updateVehicle,
@@ -216,6 +219,7 @@ export default function PartnerDashboard() {
     { id: 'bookings', label: 'Bookings', icon: '📅' },
     { id: 'calendar', label: 'Calendar', icon: '📆' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
+    { id: 'earnings', label: 'Earnings', icon: '💰' },
     { id: 'profile', label: 'Profile', icon: '👤' }
   ];
 
@@ -602,9 +606,17 @@ export default function PartnerDashboard() {
 
         {currentView === 'analytics' && (
           <AdvancedAnalytics
+            analytics={analytics}
             stats={stats}
             bookings={bookings}
             vehicles={vehicles}
+          />
+        )}
+
+        {currentView === 'earnings' && (
+          <PartnerEarnings
+            earnings={earnings}
+            loading={dataLoading}
           />
         )}
 
