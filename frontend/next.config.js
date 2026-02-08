@@ -1,5 +1,6 @@
 const path = require('path');
 const createNextIntlPlugin = require('next-intl/plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.js');
 
@@ -85,7 +86,7 @@ const nextConfig = {
     ];
   },
   // Custom webpack config - minimal changes to avoid breaking React 19 module resolution
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config, { isServer }) => {
     // Ensure '@' alias points to the src directory
     config.resolve = config.resolve || {};
     config.resolve.alias = {
@@ -120,6 +121,16 @@ const nextConfig = {
           '**/.git/**',
         ],
       };
+    }
+
+    if (!isServer) {
+      config.plugins.push(
+        new CopyPlugin({
+          patterns: [
+            { from: './src/messages', to: 'messages' }
+          ]
+        })
+      );
     }
 
     return config;
