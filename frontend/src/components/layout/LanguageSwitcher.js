@@ -1,19 +1,27 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { useRouter, usePathname } from '@/i18n/navigation';
 import { locales, localeNames } from '@/i18n/config';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
 
   const handleLanguageChange = (event) => {
     const newLocale = event.target.value;
     if (newLocale && newLocale !== locale) {
-      router.replace(pathname, { locale: newLocale });
+      // Get current path and extract the path without locale
+      const currentPath = window.location.pathname;
+      const pathWithoutLocale = currentPath.replace(/^\/(en|fr|ar)/, '') || '/';
+      const searchParams = window.location.search;
+      const hash = window.location.hash;
+      
+      // Construct the new URL with the new locale
+      const newUrl = `/${newLocale}${pathWithoutLocale}${searchParams}${hash}`;
+      
+      // Use full page navigation for all routes to ensure complete refresh
+      // This guarantees all components, contexts, and translations update properly
+      window.location.href = newUrl;
     }
   };
 
