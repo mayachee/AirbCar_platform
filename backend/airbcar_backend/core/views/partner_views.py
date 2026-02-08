@@ -452,13 +452,14 @@ class PartnerEarningsView(APIView):
             
             # Per-vehicle earnings
             from django.db.models.functions import Coalesce
+            from django.db.models import DecimalField
             vehicle_earnings = (
                 completed_bookings
                 .values(
                     'listing__id', 'listing__make', 'listing__model', 'listing__year'
                 )
                 .annotate(
-                    revenue=Coalesce(Sum('total_amount'), 0),
+                    revenue=Coalesce(Sum('total_amount'), 0, output_field=DecimalField()),
                     booking_count=Count('id')
                 )
                 .order_by('-revenue')[:10]
@@ -590,7 +591,7 @@ class PartnerAnalyticsView(APIView):
                 .annotate(day=TruncDate('pickup_date'))
                 .values('day')
                 .annotate(
-                    revenue=Coalesce(Sum('total_amount', filter=Q(status='completed')), 0),
+                    revenue=Coalesce(Sum('total_amount', filter=Q(status='completed')), 0, output_field=DecimalField()),
                     bookings=Count('id'),
                     new_bookings=Count('id', filter=Q(status='pending')),
                 )
@@ -622,7 +623,7 @@ class PartnerAnalyticsView(APIView):
                 all_bookings.filter(status='completed')
                 .values('listing__id', 'listing__make', 'listing__model', 'listing__year', 'listing__price_per_day')
                 .annotate(
-                    revenue=Coalesce(Sum('total_amount'), 0),
+                    revenue=Coalesce(Sum('total_amount'), 0, output_field=DecimalField()),
                     booking_count=Count('id'),
                 )
                 .order_by('-revenue')[:10]
