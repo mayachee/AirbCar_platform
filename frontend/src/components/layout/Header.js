@@ -205,10 +205,6 @@ export default function Header({ theme = 'dark' }) {
 
             {/* Right Side Actions */}
             <div className="flex items-center justify-end space-x-1.5 sm:space-x-3">
-              {/* Desktop Language Switcher */}
-              <div className="hidden md:block">
-                <LanguageSwitcher />
-              </div>
 
               <Link
                 href="/search"
