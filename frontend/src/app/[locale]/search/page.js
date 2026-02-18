@@ -3,6 +3,7 @@
 import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Search, SlidersHorizontal, Grid3x3, List, X, Filter, Car, MapPin, Calendar, TrendingUp, Shield, Clock, Star, Zap } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -12,6 +13,7 @@ import { SelectField } from '@/components/ui/select-field';
 import SearchPageSkeleton from './SearchPageSkeleton';
 
 function SearchContent() {
+  const t = useTranslations('search');
   const searchParams = useSearchParams();
   const router = useRouter();
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
@@ -198,12 +200,12 @@ function SearchContent() {
   const hasSearchCriteria = filters.location || filters.pickupDate || filters.returnDate;
 
   // Features to show when no search results
-  const features = [
-    { icon: Zap, title: 'Instant Booking', description: 'Book your car in seconds' },
-    { icon: Shield, title: 'Verified Cars', description: 'All vehicles are verified' },
-    { icon: Clock, title: '24/7 Support', description: 'Available anytime you need help' },
-    { icon: Star, title: 'Rated Drivers', description: 'Trusted by thousands of users' }
-  ];
+  const features = useMemo(() => [
+    { icon: Zap, title: t('feature_instant_booking'), description: t('feature_instant_booking_desc') },
+    { icon: Shield, title: t('feature_verified_cars'), description: t('feature_verified_cars_desc') },
+    { icon: Clock, title: t('feature_support'), description: t('feature_support_desc') },
+    { icon: Star, title: t('feature_rated_drivers'), description: t('feature_rated_drivers_desc') }
+  ], [t]);
 
   return (
     <div className="min-h-screen bg-[#0F172A] relative overflow-hidden">
@@ -225,10 +227,10 @@ function SearchContent() {
             <div className='flex flex-col gap-4 max-w-7xl mx-auto'>
               <h1 className="relative flex flex-col items-center justify-center">
                 <span className="text-4xl sm:text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tighter uppercase drop-shadow-sm">
-                  Find your
+                  {t('heading_line1')}
                 </span>
                 <span className="text-5xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 via-orange-500 to-orange-600 tracking-tighter uppercase drop-shadow-lg mt-[-10px] sm:mt-[-20px]">
-                  Perfect Car
+                  {t('heading_line2')}
                 </span>
               </h1>
               <SearchForm 
@@ -256,19 +258,19 @@ function SearchContent() {
                   {loading ? (
                     <span className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
-                      Searching...
+                      {t('searching')}
                     </span>
                   ) : (
                     <>
                       {safeFilteredCars.length > 0 ? (
                         <>
                           <span className="text-orange-500">{safeFilteredCars.length}</span>{' '}
-                          <span className="text-white">vehicles available</span>
+                          <span className="text-white">{t('vehicles_available').replace('{count}', '')}</span>
                         </>
                       ) : hasSearchCriteria ? (
-                        'No vehicles found'
+                        t('no_vehicles_found')
                       ) : (
-                        'Browse all vehicles'
+                        t('browse_all')
                       )}
                     </>
                   )}
@@ -277,10 +279,10 @@ function SearchContent() {
                   {hasSearchCriteria ? (
                     <>
                       <MapPin className="h-4 w-4 text-gray-500" />
-                      Matching your search criteria
+                      {t('matching_criteria')}
                     </>
                   ) : (
-                    'Find the perfect car for your next adventure'
+                    t('find_perfect_car')
                   )}
                 </p>
               </div>
@@ -295,7 +297,7 @@ function SearchContent() {
                   className="lg:hidden flex items-center gap-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl"
                 >
                   <SlidersHorizontal className="h-4 w-4" />
-                  <span className="font-medium">Filters</span>
+                  <span className="font-medium">{t('filters')}</span>
                   {activeFiltersCount > 0 && (
                     <span className="ml-1 px-2 py-0.5 bg-orange-500/20 text-orange-400 text-xs rounded-full font-bold">
                       {activeFiltersCount}
@@ -305,15 +307,15 @@ function SearchContent() {
             
                 {/* Sort Options */}
                 <div className="flex items-center gap-2 px-2">
-                  <span className="text-sm text-gray-400 font-medium hidden sm:inline">Sort by:</span>
+                  <span className="text-sm text-gray-400 font-medium hidden sm:inline">{t('sort_by')}</span>
                   <SelectField
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                     options={[
-                      { value: 'price_low', label: 'Price: Low to High' },
-                      { value: 'price_high', label: 'Price: High to Low' },
-                      { value: 'rating', label: 'Highest Rated' },
-                      { value: 'newest', label: 'Newest First' },
+                      { value: 'price_low', label: t('sort_price_low') },
+                      { value: 'price_high', label: t('sort_price_high') },
+                      { value: 'rating', label: t('sort_highest_rated') },
+                      { value: 'newest', label: t('sort_newest') },
                     ]}
                     className="border-none bg-transparent text-sm font-semibold text-white focus:ring-0 cursor-pointer py-1 pr-8 pl-2"
                     contentProps={{
@@ -327,7 +329,7 @@ function SearchContent() {
             {/* Active Filters Bar */}
             {activeFiltersCount > 0 && (
               <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-white/10">
-                <span className="text-sm font-medium text-gray-400">Active filters:</span>
+                <span className="text-sm font-medium text-gray-400">{t('active_filters')}</span>
                 {filters.location && (
                   <span className="inline-flex items-center px-3 py-1 bg-white/10 border border-white/10 rounded-full text-sm text-white shadow-sm backdrop-blur-sm">
                     <MapPin className="h-3 w-3 mr-1.5 text-orange-400" />
@@ -344,7 +346,7 @@ function SearchContent() {
                   onClick={clearFilters}
                   className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 font-medium text-sm ml-auto"
                 >
-                  Clear all
+                  {t('clear_all')}
                 </Button>
               </div>
             )}
@@ -361,7 +363,7 @@ function SearchContent() {
                 <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#0F172A] sticky top-0 z-10">
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
                     <SlidersHorizontal className="h-5 w-5 text-orange-500" />
-                    Filters
+                    {t('filters')}
                   </h3>
                   <button
                     onClick={() => setShowFiltersMobile(false)}
@@ -388,7 +390,7 @@ function SearchContent() {
                   <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                       <SlidersHorizontal className="h-5 w-5 text-orange-500" />
-                      Filters
+                      {t('filters')}
                     </h3>
                     {activeFiltersCount > 0 && (
                       <Button
@@ -397,7 +399,7 @@ function SearchContent() {
                         onClick={clearFilters}
                         className="text-xs text-gray-400 hover:text-white h-auto py-1 px-2"
                       >
-                        Reset
+                        {t('reset')}
                       </Button>
                     )}
                   </div>
@@ -429,9 +431,9 @@ function SearchContent() {
                           <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 shadow-sm backdrop-blur-md">
                             <Search className="h-10 w-10 text-orange-400" />
                           </div>
-                          <h3 className="text-2xl font-bold text-white mb-3">No vehicles found</h3>
+                          <h3 className="text-2xl font-bold text-white mb-3">{t('empty_heading')}</h3>
                           <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                            We couldn't find any cars matching your specific criteria. Try adjusting your filters or search for a different location.
+                            {t('empty_description')}
                           </p>
                           <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Button
@@ -439,13 +441,13 @@ function SearchContent() {
                               onClick={clearFilters}
                               className="border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent"
                             >
-                              Clear all filters
+                              {t('clear_all_filters')}
                             </Button>
                             <Button
                               onClick={() => router.push('/')}
                               className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20"
                             >
-                              Start new search
+                              {t('start_new_search')}
                             </Button>
                           </div>
                         </>
@@ -454,9 +456,9 @@ function SearchContent() {
                           <div className="w-20 h-20 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 -rotate-3 shadow-sm backdrop-blur-md">
                             <Car className="h-10 w-10 text-blue-400" />
                           </div>
-                          <h3 className="text-2xl font-bold text-white mb-3">Start your search</h3>
+                          <h3 className="text-2xl font-bold text-white mb-3">{t('start_heading')}</h3>
                           <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                            Enter a location, pickup date, and return date above to find available cars in your area.
+                            {t('start_description')}
                           </p>
                         </>
                       )}
@@ -466,7 +468,7 @@ function SearchContent() {
                   {/* Features Section - Modern Cards */}
                   {!hasSearchCriteria && (
                     <div>
-                      <h3 className="text-xl font-bold text-white mb-6">Why choose AirbCar</h3>
+                      <h3 className="text-xl font-bold text-white mb-6">{t('why_choose')}</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {features.map((feature, index) => {
                           const Icon = feature.icon;
@@ -508,7 +510,7 @@ function SearchContent() {
           {!loading && safeFilteredCars.length > 0 && (
             <div className="mt-16 pt-8 border-t border-white/10 text-center">
               <p className="text-base text-gray-400 mb-6">
-                Showing <span className="font-bold text-white">{Math.min(visibleCount, safeFilteredCars.length)}</span> of <span className="font-bold text-white">{safeFilteredCars.length}</span> results
+                {t('showing_results').replace('{visible}', Math.min(visibleCount, safeFilteredCars.length)).replace('{total}', safeFilteredCars.length)}
               </p>
               
               {visibleCount < safeFilteredCars.length && (
@@ -516,7 +518,7 @@ function SearchContent() {
                   onClick={handleLoadMore}
                   className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-2 rounded-xl text-lg font-medium transition-all duration-300 hover:scale-105"
                 >
-                  Load More Vehicles
+                  {t('load_more')}
                 </Button>
               )}
             </div>

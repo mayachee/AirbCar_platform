@@ -1,9 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Quote } from 'lucide-react';
 
 export default function PartnerTestimonial() {
+  const t = useTranslations('partner_testimonial');
   return (
     <section id="testimonials" className="relative py-24 scroll-mt-16 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 relative z-10">
@@ -41,10 +43,7 @@ export default function PartnerTestimonial() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
               >
-                "Getting our vehicle online was <span className="text-orange-500">quick</span>.
-                Managing all my reservations has been very
-                easy. Customer support is excellent, they
-                are always ready to help."
+                "{t('quote_start')} <span className="text-orange-500">{t('quote_highlight')}</span>{t('quote_middle')}"
               </motion.blockquote>
               
               <motion.div
@@ -55,8 +54,8 @@ export default function PartnerTestimonial() {
                 transition={{ delay: 0.4 }}
               >
                 <div>
-                  <div className="font-bold text-xl text-white">M. Yassine AYACHE</div>
-                  <div className="text-gray-400 font-medium">AirbCar Co-Founder</div>
+                  <div className="font-bold text-xl text-white">{t('author_name')}</div>
+                  <div className="text-gray-400 font-medium">{t('author_title')}</div>
                 </div>
               </motion.div>
             </div>

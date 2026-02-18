@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import {
   UploadCloud,
   Users,
@@ -11,50 +12,47 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-const steps = [
+const getSteps = (t) => [
   {
-    title: 'Configure your fleet in minutes',
-    description:
-      'Create your account, bulk import vehicles, and tailor pricing policies in the same flow. The Quick Actions panel, bulk operations, and Add Vehicle modal let you set availability, extras, and cancellation rules without leaving the dashboard.',
+    title: t('step_1_title'),
+    description: t('step_1_desc'),
     image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_9.png',
-    accent: 'Upload & Configure',
+    accent: t('step_1_accent'),
     icon: UploadCloud
   },
   {
-    title: 'Customers book on Airbcar.com',
-    description:
-      'Your fleet gains instant exposure to thousands of renters browsing every month. Live availability syncs with the Booking Calendar, so every listing reflects the latest schedule while secure pre-payments follow your configured rules.',
+    title: t('step_2_title'),
+    description: t('step_2_desc'),
     image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pci_8.png',
-    accent: 'Get Discovered',
+    accent: t('step_2_accent'),
     icon: Users
   },
   {
-    title: 'Own every booking decision',
-    description:
-      'Notification Center alerts and the Upcoming Bookings view keep you updated in real time. Accept, reject, or reschedule requests directly from Booking Management while processing states and automated messages keep riders informed.',
+    title: t('step_3_title'),
+    description: t('step_3_desc'),
     image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_7.png',
-    accent: 'Control & Automate',
+    accent: t('step_3_accent'),
     icon: CheckCircle2
   },
   {
-    title: 'Instant confirmation & operations',
-    description:
-      'Approve a trip and we trigger vouchers, reminders, and payment status updates immediately. Vehicle Availability Calendar, verification checks, and policy safeguards activate automatically so your team just shows up prepared.',
+    title: t('step_4_title'),
+    description: t('step_4_desc'),
     image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_6.png',
-    accent: 'We Handle The Rest',
+    accent: t('step_4_accent'),
     icon: Zap
   },
   {
-    title: 'Keep scaling with insights',
-    description:
-      'Advanced Analytics, earnings dashboards, review metrics, and smart forecasting surface the trends that matter. Pair them with Recent Activity feeds and customer profiles to uncover growth opportunities and keep riders coming back.',
+    title: t('step_5_title'),
+    description: t('step_5_desc'),
     image: 'https://ik.imagekit.io/szcfr7vth/partner_dashboard/pic_5.png',
-    accent: 'Scale With Insights',
+    accent: t('step_5_accent'),
     icon: BarChart3
   }
 ];
 
 export default function PartnerHowItWorks() {
+  const t = useTranslations('partner_how_it_works');
+  const steps = getSteps(t);
   return (
     <section id="how-it-works" className="py-24 relative scroll-mt-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 relative z-10">
@@ -66,7 +64,7 @@ export default function PartnerHowItWorks() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-orange-400 text-xs font-semibold mb-6 shadow-sm backdrop-blur-sm"
           >
             <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-            Simple Process
+            {t('badge')}
           </motion.div>
           <motion.h2 
             className="text-4xl md:text-5xl font-bold mb-6 text-white tracking-tight"
@@ -75,7 +73,7 @@ export default function PartnerHowItWorks() {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
           >
-            How it works
+            {t('heading')}
           </motion.h2>
           <motion.p
             className="text-lg md:text-xl text-gray-400 leading-relaxed"
@@ -84,7 +82,7 @@ export default function PartnerHowItWorks() {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            We've streamlined every step of the rental process so you can focus on growing your fleet while we handle the logistics.
+            {t('description')}
           </motion.p>
         </div>
 
@@ -120,7 +118,7 @@ export default function PartnerHowItWorks() {
                 {index === 0 && (
                   <div className="pt-4">
                     <a href="/auth/signup?role=partner" className="inline-flex items-center px-6 py-3 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors">
-                      Start configuration <ArrowRight className="w-4 h-4 ml-2" />
+                      {t('step_1_cta')} <ArrowRight className="w-4 h-4 ml-2" />
                     </a>
                   </div>
                 )}

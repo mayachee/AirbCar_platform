@@ -2,11 +2,13 @@
 
 import { motion, useInView } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { ArrowRight } from 'lucide-react';
 import { useRef } from 'react';
 
 export default function AboutUsSection() {
+  const t = useTranslations('mission_about');
   const router = useRouter();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
@@ -96,8 +98,7 @@ const itemVariants = {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight"
           >
-            Airbcar is the first Moroccan<br className="hidden sm:block" />
-            <span className="sm:hidden"> </span>mobility super-app.
+            {t('headline')}
           </motion.h2>
 
               <motion.p 
@@ -107,7 +108,7 @@ const itemVariants = {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                Planning a trip? Schedule a Airbcar ride in advance for even more convenient airport transfers, important meetings, or any occasion that requires punctuality. Simply enter your details and secure your ride up to 90 days ahead.
+                {t('description')}
               </motion.p>
           
               <motion.div
@@ -120,7 +121,7 @@ const itemVariants = {
                   onClick={() => router.push('/search')}
                   className="relative h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 text-lg font-bold shadow-xl hover:bg-white/10 hover:text-orange-600 transition-all flex items-center gap-3 group overflow-hidden rounded-xl"
                 >
-                  <span className="relative z-10">Book now</span>
+                  <span className="relative z-10">{t('button')}</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform relative z-10" />
                 </Button>
               </motion.div>

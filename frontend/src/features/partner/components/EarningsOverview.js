@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { DollarSign, Calendar, Clock, TrendingUp, TrendingDown, CheckCircle, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
@@ -25,6 +26,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function EarningsOverview({ earnings, stats, detailed = false }) {
+  const t = useTranslations('partner_dashboard');
   const earningsData = useMemo(() => ({
     totalEarnings: earnings?.total_earnings || earnings?.totalEarnings || 0,
     monthlyEarnings: earnings?.monthly_earnings || earnings?.monthlyEarnings || 0,
@@ -50,38 +52,38 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
 
   const earningsCards = [
     {
-      title: 'Total Earnings',
+      title: t('total_earnings'),
       value: formatCurrency(earningsData.totalEarnings),
       icon: DollarSign,
       color: 'green',
       change: `${growthPositive ? '+' : ''}${earningsData.growthRate}%`,
       changeType: growthPositive ? 'positive' : 'negative',
-      subtitle: `${earningsData.totalBookings} total bookings`
+      subtitle: `${earningsData.totalBookings} ${earningsData.totalBookings === 1 ? 'booking' : 'bookings'}`
     },
     {
-      title: 'This Month',
+      title: t('this_month'),
       value: formatCurrency(earningsData.monthlyEarnings),
       icon: Calendar,
       color: 'blue',
-      change: `${formatCurrency(earningsData.weeklyEarnings)} this week`,
+      change: `${formatCurrency(earningsData.weeklyEarnings)} ${t('this_week')}`,
       changeType: 'neutral',
       subtitle: null
     },
     {
-      title: 'Pending Payouts',
+      title: t('pending_payouts'),
       value: formatCurrency(earningsData.pendingEarnings),
       icon: Clock,
       color: 'yellow',
-      change: 'Awaiting completion',
+      change: t('awaiting_completion'),
       changeType: 'neutral',
       subtitle: null
     },
     {
-      title: 'Avg per Booking',
+      title: t('avg_per_booking'),
       value: formatCurrency(earningsData.averagePerBooking),
       icon: TrendingUp,
       color: 'purple',
-      change: `${earningsData.totalBookings} bookings`,
+      change: `${earningsData.totalBookings} ${earningsData.totalBookings === 1 ? 'booking' : 'bookings'}`,
       changeType: 'neutral',
       subtitle: null
     }
@@ -94,7 +96,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
         {/* Stats Cards */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Earnings Overview</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t('earnings_overview')}</h2>
             <div className={`flex items-center gap-1.5 text-sm font-medium ${growthPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               {growthPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
               {Math.abs(earningsData.growthRate)}% vs last month
@@ -145,7 +147,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
 
           {/* Revenue Chart */}
           <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Daily Revenue (Last 30 Days)</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{t('daily_revenue_last_30_days')}</h3>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>

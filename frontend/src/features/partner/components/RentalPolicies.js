@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Save, Plus, Trash2, Edit2, CheckCircle, FileText, Calendar, Shield, Car, CreditCard, Phone, FileEdit } from 'lucide-react';
 
 export default function RentalPolicies({ partnerData, onUpdate }) {
+  const t = useTranslations('partner_dashboard');
   const [activeSection, setActiveSection] = useState('general');
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,9 +16,9 @@ export default function RentalPolicies({ partnerData, onUpdate }) {
   const sections = [
     { 
       id: 'general', 
-      title: 'General Terms', 
+      title: t('general_terms'), 
       icon: FileText,
-      description: 'General rental terms and conditions that apply to all bookings.',
+      description: t('general_rental_terms'),
       content: `These are the fundamental terms and conditions that govern all vehicle rentals. This section covers basic rental requirements, age restrictions, driver qualifications, and general rules that customers must follow.
 
 **Age Requirements**
@@ -36,9 +38,9 @@ The vehicle may not be used for any illegal purposes, racing, towing, off-road d
     },
     { 
       id: 'booking', 
-      title: 'Booking & Cancellation', 
+      title: t('booking_cancellation'), 
       icon: Calendar,
-      description: 'Policies regarding bookings, modifications, and cancellations.',
+      description: t('booking_policies'),
       content: `This section outlines your booking policies, including reservation requirements, modification rules, cancellation deadlines, refund policies, and any fees associated with changes or cancellations.
 
 **Reservation Requirements**
@@ -58,9 +60,9 @@ If you fail to pick up your reserved vehicle within 2 hours of the scheduled pic
     },
     { 
       id: 'insurance', 
-      title: 'Insurance & Protection', 
+      title: t('insurance_protection'), 
       icon: Shield,
-      description: 'Insurance coverage options and protection plans available to renters.',
+      description: t('insurance_coverage'),
       content: `Details about insurance coverage, protection plans, deductibles, and what is covered under different insurance tiers. This helps customers understand their options and make informed decisions.
 
 **Basic Coverage Included**
@@ -83,9 +85,9 @@ Insurance coverage does not apply to damage caused by prohibited uses, driving u
     },
     { 
       id: 'vehicle', 
-      title: 'Vehicle Usage', 
+      title: t('vehicle_usage'), 
       icon: Car,
-      description: 'Rules and guidelines for vehicle usage during the rental period.',
+      description: t('vehicle_usage_rules'),
       content: `Guidelines for proper vehicle usage, including mileage limits, fuel policies, prohibited uses, maintenance responsibilities, and what to do in case of mechanical issues or accidents.
 
 **Mileage Limits**
@@ -108,9 +110,9 @@ The vehicle must not be used for racing, towing (unless equipped), off-road driv
     },
     { 
       id: 'payment', 
-      title: 'Payment & Fees', 
+      title: t('payment_fees'), 
       icon: CreditCard,
-      description: 'Payment methods, accepted forms of payment, and applicable fees.',
+      description: t('payment_methods'),
       content: `Information about payment methods, deposit requirements, security deposits, additional fees (late return, cleaning, etc.), and payment processing policies.
 
 **Accepted Payment Methods**
@@ -133,9 +135,9 @@ Refunds for eligible cancellations or overcharges will be processed within 5-10 
     },
     { 
       id: 'support', 
-      title: 'Support & Contact', 
+      title: t('support_contact'), 
       icon: Phone,
-      description: 'Customer support information and contact details.',
+      description: t('customer_support'),
       content: `Contact information for customer support, emergency assistance, business hours, and how to reach your team for questions, issues, or assistance during the rental period.
 
 **Customer Service Hours**
@@ -216,7 +218,7 @@ We value your feedback and strive to provide excellent service. If you have conc
   };
 
   const handleDeletePolicy = (id) => {
-    if (confirm('Are you sure you want to delete this policy?')) {
+    if (confirm(t('are_you_sure_delete'))) {
       setPolicies(policies.filter(p => p.id !== id));
     }
   };
@@ -231,10 +233,10 @@ We value your feedback and strive to provide excellent service. If you have conc
     try {
       // Save policies through the onUpdate callback
       await onUpdate({ policies });
-      alert('Rental policies saved successfully!');
+      alert(t('policies_saved'));
     } catch (error) {
       console.error('Error saving policies:', error);
-      alert('Error saving policies');
+      alert(t('error_saving_policies'));
     }
   };
 
@@ -244,7 +246,7 @@ We value your feedback and strive to provide excellent service. If you have conc
         {/* Sidebar Navigation */}
         <div className="lg:w-1/4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:sticky lg:top-24">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Policy Sections</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('policy_sections')}</h3>
             <nav className="space-y-2">
               {sections.map((section) => {
                 const IconComponent = section.icon;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { SearchFilters, SearchResults, LoadingSkeleton, SearchForm, useSearch, useFavorites } from '@/features/search';
@@ -10,21 +11,40 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // Initialize filters from URL params
-  const initialFilters = {
-    location: searchParams.get('location') || '',
-    pickupDate: searchParams.get('pickupDate') || '',
-    returnDate: searchParams.get('dropoffDate') || searchParams.get('returnDate') || '',
-    priceRange: [0, 5000],
-    transmission: [],
-    fuelType: [],
-    seats: [],
-    style: [],
-    brand: [],
-    features: [],
-    verified: false,
-    instantBooking: false
+  // Initialize filters from URL params and sessionStorage (for language switch recovery)
+  const getInitialFilters = () => {
+    // Try to recover filters from sessionStorage if available
+    let recoveredFilters = null;
+    try {
+      const stored = sessionStorage.getItem('searchFilters');
+      if (stored) {
+        recoveredFilters = JSON.parse(stored);
+        sessionStorage.removeItem('searchFilters'); // Clear after recovery
+      }
+    } catch (err) {
+      console.warn('Failed to recover filters from sessionStorage:', err);
+    }
+
+    // Merge URL params with recovered filters
+    const filters = {
+      location: searchParams.get('location') || recoveredFilters?.location || '',
+      pickupDate: searchParams.get('pickupDate') || recoveredFilters?.pickupDate || '',
+      returnDate: searchParams.get('dropoffDate') || searchParams.get('returnDate') || recoveredFilters?.returnDate || '',
+      priceRange: recoveredFilters?.priceRange || [0, 5000],
+      transmission: recoveredFilters?.transmission || [],
+      fuelType: recoveredFilters?.fuelType || [],
+      seats: recoveredFilters?.seats || [],
+      style: recoveredFilters?.style || [],
+      brand: recoveredFilters?.brand || [],
+      features: recoveredFilters?.features || [],
+      verified: recoveredFilters?.verified || false,
+      instantBooking: recoveredFilters?.instantBooking || false
+    };
+    
+    return filters;
   };
+  
+  const initialFilters = getInitialFilters();
 
   const {
     vehicles: filteredCars,
@@ -38,6 +58,15 @@ function SearchContent() {
 
   // Use favorites hook
   const { isFavorite, toggleFavorite, loading: favoritesLoading } = useFavorites();
+
+  // Save filters to sessionStorage to preserve them across language changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('searchFilters', JSON.stringify(filters));
+    } catch (err) {
+      console.warn('Failed to save filters to sessionStorage:', err);
+    }
+  }, [filters]);
 
   // Handle filter changes
   const handleFilterChange = (newFilters) => {

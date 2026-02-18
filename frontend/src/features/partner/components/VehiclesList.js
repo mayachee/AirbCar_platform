@@ -221,7 +221,7 @@ export default function VehiclesList({
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Total Vehicles</p>
+              <p className="text-blue-100 text-sm font-medium">{t('total_vehicles')}</p>
               <p className="text-3xl font-bold mt-1">{stats.total}</p>
             </div>
             <CarFront className="h-10 w-10 text-blue-200 opacity-80" />
@@ -231,7 +231,7 @@ export default function VehiclesList({
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm font-medium">Available</p>
+              <p className="text-green-100 text-sm font-medium">{t('available')}</p>
               <p className="text-3xl font-bold mt-1">{stats.available}</p>
             </div>
             <Users className="h-10 w-10 text-green-200 opacity-80" />
@@ -241,7 +241,7 @@ export default function VehiclesList({
         <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-100 text-sm font-medium">Average Rate</p>
+              <p className="text-yellow-100 text-sm font-medium">{t('average_rating')}</p>
               <p className="text-3xl font-bold mt-1">${stats.avgPrice.toFixed(0)}</p>
             </div>
             <DollarSign className="h-10 w-10 text-yellow-200 opacity-80" />
@@ -251,7 +251,7 @@ export default function VehiclesList({
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Rented</p>
+              <p className="text-purple-100 text-sm font-medium">{t('active_bookings')}</p>
               <p className="text-3xl font-bold mt-1">{stats.rented}</p>
             </div>
             <Calendar className="h-10 w-10 text-purple-200 opacity-80" />
@@ -264,9 +264,9 @@ export default function VehiclesList({
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">My Vehicles</h3>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{t('vehicles_list')}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Manage and track all your rental vehicles
+              {t('manage_and_track_vehicles')}
             </p>
           </div>
           <div className="flex gap-2">
@@ -274,10 +274,10 @@ export default function VehiclesList({
               <button
                 onClick={() => {
                   onRefresh();
-                  addToast("Refreshed vehicle list", 'info');
+                  addToast(t('refreshed_vehicle_list'), 'info');
                 }}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                title="Refresh"
+                title={t('refresh')}
               >
                 <RefreshCw className="h-4 w-4" />
               </button>

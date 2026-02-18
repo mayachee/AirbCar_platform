@@ -1,4 +1,7 @@
+import { useTranslations } from 'next-intl'
+
 export default function SearchSummary({ searchDetails, selectedDates, onModifySearch }) {
+  const t = useTranslations('car_details')
   if (!searchDetails.location) return null
 
   return (

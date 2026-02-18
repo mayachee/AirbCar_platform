@@ -1,4 +1,7 @@
+import { useTranslations } from 'next-intl'
+
 export default function PickupLocation({ vehicle }) {
+  const t = useTranslations('car_details')
   if (!vehicle) {
     return null
   }

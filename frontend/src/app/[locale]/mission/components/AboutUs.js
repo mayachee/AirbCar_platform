@@ -1,32 +1,36 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Shield, Zap, Users, Leaf } from 'lucide-react';
 
-const values = [
+const getValues = (t) => [
   {
     icon: Shield,
-    title: 'Safety First',
-    description: 'We prioritize the safety of our riders and drivers above all else, implementing rigorous standards and 24/7 support.'
+    title: t('value_safety'),
+    description: t('value_safety_desc')
   },
   {
     icon: Zap,
-    title: 'Innovation',
-    description: 'Leveraging cutting-edge technology to create seamless, efficient, and delightful transportation experiences for everyone.'
+    title: t('value_innovation'),
+    description: t('value_innovation_desc')
   },
   {
     icon: Users,
-    title: 'Community',
-    description: 'Building a supportive network where drivers thrive and passengers feel at home, fostering trust and real connection.'
+    title: t('value_community'),
+    description: t('value_community_desc')
   },
   {
     icon: Leaf,
-    title: 'Sustainability',
-    description: 'Committed to a greener future by promoting shared rides and strictly integrating electric vehicle options.'
+    title: t('value_sustainability'),
+    description: t('value_sustainability_desc')
   }
 ];
 
 export default function AboutUs() {
+  const t = useTranslations('about');
+  const values = getValues(t);
+
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Background decoration */}
@@ -44,16 +48,13 @@ export default function AboutUs() {
           className="w-full mx-auto text-center mb-16"
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-            About Us
+            {t('heading')}
           </h2>
           <p className="text-lg sm:text-xl text-slate-300 leading-relaxed mb-6">
-            We are dedicated to revolutionizing mobility in Morocco and beyond. 
-            Our mission is to provide safe, reliable, and accessible transportation for everyone, bridging the gap between convenience and quality.
+            {t('mission_intro')}
           </p>
           <p className="text-lg sm:text-xl text-slate-300 leading-relaxed">
-             From bustling city centers to remote destinations, Airbcar connects people through a platform built on trust. 
-             We aren't just a ride-hailing app; we are a movement towards smarter cities and empowered communities. 
-             We believe in moving people forward giving time back to our riders and new opportunities to our drivers.
+            {t('mission_vision')}
           </p>
         </motion.div>
 

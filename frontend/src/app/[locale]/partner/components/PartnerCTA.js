@@ -1,9 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { ArrowRight, Handshake, Rocket } from 'lucide-react';
 
 export default function PartnerCTA() {
+  const t = useTranslations('partner_cta');
   return (
     <section className="py-12 scroll-mt-16">
       <div className="max-w-6xl mx-auto px-4">
@@ -36,7 +38,7 @@ export default function PartnerCTA() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 }}
               >
-                REACH THE WORLD
+                {t('label')}
               </motion.div>
               <motion.h2
                 className="text-2xl md:text-4xl font-bold text-white mb-3 flex flex-wrap items-center justify-center md:justify-start gap-2"
@@ -45,7 +47,7 @@ export default function PartnerCTA() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.4 }}
               >
-                Ready to get more rentals?
+                {t('heading')}
               </motion.h2>
               <motion.p
                 className="text-base md:text-lg text-gray-400"
@@ -54,7 +56,7 @@ export default function PartnerCTA() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.5 }}
               >
-                Setting up takes <span className="font-bold text-white">less than 5 minutes</span> to complete, <span className="font-bold text-white">and its free!</span>
+                {t('description')}
               </motion.p>
             </div>
           </div>
@@ -71,7 +73,7 @@ export default function PartnerCTA() {
               whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4)' }}
               whileTap={{ scale: 0.95 }}
             >
-              SIGNUP NOW
+              {t('button')}
               <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
             </motion.a>
           </motion.div>

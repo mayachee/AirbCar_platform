@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, Calendar, Car, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
+  const t = useTranslations('vehicle_calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [viewMode, setViewMode] = useState('month'); // month, week, day
@@ -100,10 +102,10 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
 
   const days = getDaysInMonth(currentDate);
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    t('january'), t('february'), t('march'), t('april'), t('may'), t('june'),
+    t('july'), t('august'), t('september'), t('october'), t('november'), t('december')
   ];
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')];
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
@@ -111,7 +113,7 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
         <div className="flex items-center space-x-3">
           <Calendar className="h-6 w-6 text-gray-600 dark:text-gray-400" />
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white leading-tight">
-            Vehicle Availability Calendar
+            {t('heading')}
           </h3>
         </div>
         
@@ -120,9 +122,9 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
             options={[
-              { value: 'month', label: 'Month' },
-              { value: 'week', label: 'Week' },
-              { value: 'day', label: 'Day' },
+              { value: 'month', label: t('month') },
+              { value: 'week', label: t('week') },
+              { value: 'day', label: t('day') },
             ]}
             className="w-60 sm:w-auto h-11 sm:h-auto px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -191,7 +193,7 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
 
         {/* Vehicle List */}
         <div className="space-y-4">
-          <h4 className="text-md font-semibold text-gray-900 dark:text-white">Select Vehicle</h4>
+          <h4 className="text-md font-semibold text-gray-900 dark:text-white">{t('select_vehicle')}</h4>
           
           <div className="space-y-3">
             {vehicles?.map((vehicle) => {
@@ -220,11 +222,11 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
                   
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="text-gray-500 dark:text-gray-400">Bookings:</span>
+                      <span className="text-gray-500 dark:text-gray-400">{t('bookings')}:</span>
                       <span className="ml-1 font-medium text-gray-900 dark:text-white">{stats.totalBookings}</span>
                     </div>
                     <div>
-                      <span className="text-gray-500 dark:text-gray-400">Utilization:</span>
+                      <span className="text-gray-500 dark:text-gray-400">{t('utilization')}:</span>
                       <span className="ml-1 font-medium text-gray-900 dark:text-white">{stats.utilization.toFixed(1)}%</span>
                     </div>
                   </div>
@@ -235,25 +237,25 @@ export default function VehicleAvailabilityCalendar({ vehicles, bookings }) {
 
           {/* Legend */}
           <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Legend</h5>
+            <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">{t('legend')}</h5>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
                   <CheckCircle className="h-2 w-2 text-green-600 dark:text-green-400" />
                 </div>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Available</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">{t('available')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
                   <XCircle className="h-2 w-2 text-red-600 dark:text-red-400" />
                 </div>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Booked</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">{t('booked')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-100 dark:bg-yellow-900/50 rounded-full flex items-center justify-center">
                   <Clock className="h-2 w-2 text-yellow-600 dark:text-yellow-400" />
                 </div>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Maintenance</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">{t('maintenance')}</span>
               </div>
             </div>
           </div>

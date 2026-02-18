@@ -1,8 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function SafetyDriverSection() {
+  const t = useTranslations('safety');
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,18 +17,18 @@ export default function SafetyDriverSection() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-4xl md:text-5xl font-bold">
-              Driven by <span className="text-orange-500">Standards</span>
+              {t('driver_heading')} <span className="text-orange-500">{t('driver_highlight')}</span>
             </h2>
             <p className="text-lg text-gray-300 leading-relaxed">
-              We take driver vetting seriously. Before accepting a single trip, every partner on the AirbCar platform undergoes a multi-step safety screening.
+              {t('driver_subtitle')}
             </p>
             
             <ul className="space-y-4">
               {[
-                "Comprehensive criminal background checks",
-                "Driving record history review",
-                "Identity verification via facial recognition",
-                "Mandatory annual vehicle inspections"
+                t('driver_check_1'),
+                t('driver_check_2'),
+                t('driver_check_3'),
+                t('driver_check_4')
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-gray-200">
                   <span className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 text-sm">✓</span>
@@ -59,8 +61,8 @@ export default function SafetyDriverSection() {
                             A
                         </div>
                         <div>
-                            <div className="font-semibold text-white">Verified Partner</div>
-                            <div className="text-xs text-gray-300">4.98 ★ Rating</div>
+                            <div className="font-semibold text-white">{t('driver_badge_title')}</div>
+                            <div className="text-xs text-gray-300">{t('driver_badge_rating')}</div>
                         </div>
                     </div>
                 </div>

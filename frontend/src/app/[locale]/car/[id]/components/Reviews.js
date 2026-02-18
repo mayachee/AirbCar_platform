@@ -8,7 +8,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 
+import { useTranslations } from 'next-intl'
+
 export default function Reviews({ vehicle }) {
+  const t = useTranslations('car_details')
   const { user } = useAuth();
   const { addToast } = useToast();
   const [showForm, setShowForm] = useState(false);

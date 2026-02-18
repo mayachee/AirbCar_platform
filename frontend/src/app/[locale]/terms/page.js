@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ScrollText, CheckCircle, AlertTriangle, Scale, Gavel, FileText, Link as LinkIcon, MessageSquare, Copyright, RefreshCw, Mail } from 'lucide-react';
 
 export default function TermsPage() {
+  const t = useTranslations('terms');
   const lastUpdated = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -27,12 +29,12 @@ export default function TermsPage() {
         <div className="">
           {/* Header */}
           <div className="">
-            <h1 className="text-4xl font-bold text-center mb-4 text-white">Terms of Service</h1>
+            <h1 className="text-4xl font-bold text-center mb-4 text-white">{t('page_title')}</h1>
             <p className="text-center text-emerald-200 text-lg">
-              Please read these terms carefully before using our services.
+              {t('subtitle')}
             </p>
             <div className="text-center mt-4 text-sm font-medium text-gray-400">
-              Last Updated: {lastUpdated}
+              {t('last_updated', { date: lastUpdated })}
             </div>
           </div>
 
@@ -41,44 +43,42 @@ export default function TermsPage() {
             
             <div className="prose max-w-none text-gray-300 mb-12">
               <p className="text-lg leading-relaxed text-gray-300">
-                Welcome to AirbCar! These Terms of Service are like a contract between you and us. They explain your rights and responsibilities when using our platform. We've tried to make them as clear as possible, but please read them carefully.
+                {t('intro')}
               </p>
             </div>
 
             <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <ScrollText className="w-6 h-6 text-emerald-500" />
-                1. Agreement to Terms
+                {t('heading_1')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                <strong>Simply put:</strong> By using our site, you agree to follow these rules.
+                <strong>{t('simply_put_1')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                By accessing or using our Services, you agree to be bound by these Terms. If you do not agree to all of these Terms, 
-                then you may not access the Service. These Terms apply to all visitors, users, and others who access or use the Service.
+                {t('agreement_desc')}
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <CheckCircle className="w-6 h-6 text-emerald-500" />
-                2. User Accounts
+                {t('heading_2')}
               </h2>
               <div className="space-y-4">
                  <p className="leading-relaxed text-gray-300">
-                  <strong>Simply put:</strong> You are responsible for your account. Keep your password safe and tell us if the information changes.
+                  <strong>{t('simply_put_2')}</strong>
                 </p>
                 <div className="bg-emerald-900/20 p-4 rounded-lg border border-emerald-800/50">
-                  <h4 className="font-semibold text-emerald-300 mb-2">Your Responsibilities:</h4>
+                  <h4 className="font-semibold text-emerald-300 mb-2">{t('responsibilities_title')}</h4>
                   <ul className="list-disc pl-5 space-y-1 text-sm text-emerald-200/80">
-                    <li>Keep your password secret and secure.</li>
-                    <li>Provide real and accurate information about yourself.</li>
-                    <li>Let us know right away if you think someone else is using your account.</li>
+                    <li>{t('responsibility_1')}</li>
+                    <li>{t('responsibility_2')}</li>
+                    <li>{t('responsibility_3')}</li>
                   </ul>
                 </div>
                 <p className="leading-relaxed text-gray-400 text-sm">
-                  When you create an account with us, you must provide us information that is accurate, complete, and current at all times. 
-                  Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account on our Service.
+                  {t('account_desc')}
                 </p>
               </div>
             </section>
@@ -86,22 +86,22 @@ export default function TermsPage() {
             <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <AlertTriangle className="w-6 h-6 text-emerald-500" />
-                3. Prohibited Activities
+                {t('heading_3')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                 <strong>Simply put:</strong> Be nice, don't break the law, and don't try to break our website.
+                 <strong>{t('simply_put_3')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                You agree not to engage in any of the following prohibited activities:
+                {t('prohibited_desc')}
               </p>
               <ul className="grid md:grid-cols-2 gap-3">
                 {[
-                  "Breaking any laws or regulations",
-                  "Stealing or copying content that isn't yours",
-                  "Sending spam or unwanted messages",
-                  "Trying to hack or damage the website",
-                  "Reverse engineering our software",
-                  "Bullying, harassing, or threatening others"
+                  t('prohibited_1'),
+                  t('prohibited_2'),
+                  t('prohibited_3'),
+                  t('prohibited_4'),
+                  t('prohibited_5'),
+                  t('prohibited_6')
                 ].map((activity, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm bg-gray-800/50 p-3 rounded border border-gray-700/50">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 block" />
@@ -114,92 +114,88 @@ export default function TermsPage() {
             <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <Copyright className="w-6 h-6 text-emerald-500" />
-                4. Intellectual Property
+                {t('heading_4')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                <strong>Simply put:</strong> We own the brand, logo, and code. You own your personal content.
+                <strong>{t('simply_put_4')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                The Service and its original content (excluding Content provided by users), features, and functionality are and will remain the exclusive property of AirbCar and its licensors. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of AirbCar.
+                {t('ip_desc')}
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <MessageSquare className="w-6 h-6 text-emerald-500" />
-                5. Your Content
+                {t('heading_5')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                <strong>Simply put:</strong> You are responsible for what you post (like car listings and reviews).
+                <strong>{t('simply_put_5')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                Our Service allows you to post, link, store, share and otherwise make available certain information, text, graphics, videos, or other material ("Content"). You represent and warrant that: (i) the Content is yours (you own it) or you have the right to use it and grant us the rights and license as provided in these Terms, and (ii) the posting of your Content on or through the Service does not violate the privacy rights, publicity rights, copyrights, contract rights or any other rights of any person.
+                {t('content_desc')}
               </p>
             </section>
 
              <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <LinkIcon className="w-6 h-6 text-emerald-500" />
-                6. Links to Other Websites
+                {t('heading_6')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                <strong>Simply put:</strong> We aren't responsible for links that lead outside our website.
+                <strong>{t('simply_put_6')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                Our Service may contain links to third-party web sites or services that are not owned or controlled by AirbCar. 
-                AirbCar has no control over, and assumes no responsibility for, the content, privacy policies, or practices of any third party web sites or services.
+                {t('links_desc')}
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <Gavel className="w-6 h-6 text-emerald-500" />
-                7. Termination
+                {t('heading_7')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                <strong>Simply put:</strong> We can ban you if you break these rules.
+                <strong>{t('simply_put_7')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, 
-                including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease.
+                {t('termination_desc')}
               </p>
             </section>
 
             <section className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-               <h2 className="text-lg font-bold text-white mb-2">8. Disclaimers & Limitation of Liability</h2>
+               <h2 className="text-lg font-bold text-white mb-2">{t('heading_8')}</h2>
                <p className="text-gray-300 mb-2">
-                 <strong>Simply put:</strong> We do our best, but we aren't perfect. We provide the service "as is" and aren't liable for certain types of damages.
+                 <strong>{t('simply_put_8')}</strong>
                </p>
                <p className="text-sm text-gray-400">
-                 The service is provided on an "AS IS" and "AS AVAILABLE" basis. AirbCar expressly disclaims all warranties of any kind, whether express or implied.
-                 In no event shall AirbCar, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, 
-                 special, consequential or punitive damages.
+                 {t('disclaimer_desc')}
                </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <RefreshCw className="w-6 h-6 text-emerald-500" />
-                9. Changes to These Terms
+                {t('heading_9')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                <strong>Simply put:</strong> We might change these rules properly. If the changes are big, we'll tell you.
+                <strong>{t('simply_put_9')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                We reserve the right, at our sole discretion, to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days' notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.
+                {t('changes_desc')}
               </p>
             </section>
 
              <section>
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 mb-4">
                 <Mail className="w-6 h-6 text-emerald-500" />
-                10. Contact Us
+                {t('heading_10')}
               </h2>
               <p className="mb-4 leading-relaxed text-gray-300">
-                <strong>Simply put:</strong> If you have questions, just ask!
+                <strong>{t('simply_put_10')}</strong>
               </p>
               <p className="mb-4 leading-relaxed text-gray-400 text-sm">
-                If you have any questions about these Terms, please contact us at support@airbcar.com or via our contact page.
+                {t('contact_desc')} <a href={`mailto:${t('contact_email')}`} className="text-blue-400 hover:text-blue-300 hover:underline">{t('contact_email')}</a>.
               </p>
             </section>
           </div>

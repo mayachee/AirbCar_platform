@@ -1,9 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import SectionWrapper from './SectionWrapper';
 
 export default function ChallengeSection() {
+  const t = useTranslations('challenge');
   return (
     <div className="relative py-20 overflow-hidden">
       {/* Background decorative elements */}
@@ -36,7 +38,7 @@ export default function ChallengeSection() {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-white via-gray-200 to-white bg-clip-text text-transparent mb-6 leading-[56px] tracking-[-0.48px]">
-                The challenge
+                {t('heading')}
               </h2>
               <div className="text-xl text-gray-300 leading-7 space-y-10">
                 <motion.div
@@ -45,8 +47,7 @@ export default function ChallengeSection() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.1 }}
                 >
-                  <p>For decades, cities have been built for cars,
-                  neglecting pedestrians and light vehicles.</p>
+                  <p>{t('para_1')}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -54,13 +55,7 @@ export default function ChallengeSection() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.2 }}
                 >
-                  <p>Today, cities devote up to 60% of urban land to
-                  car infrastructure. Passenger transport accounts
-                  for almost half of global transport emissions. It is
-                  also the primary cause of air pollution that can
-                  lead to serious health problems. That's
-                  astonishing, given private cars sit idle for up to
-                  95% of the time.</p>
+                  <p>{t('para_2')}</p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -68,10 +63,7 @@ export default function ChallengeSection() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
                 >
-                  <p>As the global urban population is projected to
-                  double by 2050, cities, their citizens, and the
-                  transport sector must work together to drive
-                  positive change.</p>
+                  <p>{t('para_3')}</p>
                 </motion.div>
               </div>
             </motion.div>
@@ -93,7 +85,7 @@ export default function ChallengeSection() {
                 
                 <img
                   src="https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_kup2cukup2cukup2.png"
-                  alt="The challenge"
+                  alt={t('image_alt')}
                   className="w-full h-[450px] object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 {/* Gradient overlay */}

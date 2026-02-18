@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useRef, useState, useEffect } from 'react';
 
 // Animation variants for better performance and reusability
@@ -59,9 +60,10 @@ const phoneVariants = {
 };
 
 export default function DownloadAppsSection() {
+  const t = useTranslations('mission_downloads');
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
-  const [activeTab, setActiveTab] = useState('Rides');
+  const [activeTab, setActiveTab] = useState('iOS');
   const [isMobile, setIsMobile] = useState(false);
 
   // Check if mobile on mount and resize
@@ -138,10 +140,10 @@ export default function DownloadAppsSection() {
             className="text-center space-y-4"
           >
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
-              Download our apps
+              {t('heading')}
             </h2>
             <p className="text-lg sm:text-xl text-gray-300 font-light">
-              Available for iOS and Android devices.
+              {t('subtitle')}
             </p>
           </motion.div>
 
@@ -256,7 +258,7 @@ export default function DownloadAppsSection() {
               {/* Tabs with enhanced animations */}
               <div className="flex gap-8 mb-10">
                 <motion.button
-                  onClick={() => setActiveTab('Rides')}
+                  onClick={() => setActiveTab('iOS')}
                   className="relative text-white text-lg sm:text-xl font-medium pb-3 transition-all duration-300"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -265,13 +267,13 @@ export default function DownloadAppsSection() {
                   <motion.span
                     className="relative z-10 block"
                     animate={{ 
-                      color: activeTab === 'Rides' ? '#FF6B35' : '#ffffff'
+                      color: activeTab === 'iOS' ? '#FF6B35' : '#ffffff'
                     }}
                     transition={{ duration: 0.3 }}
                   >
-                    iOS
+                    {t('tab_ios')}
                   </motion.span>
-                  {activeTab === 'Rides' && (
+                  {activeTab === 'iOS' && (
                     <motion.div
                       layoutId="activeTab"
                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/50"
@@ -286,7 +288,7 @@ export default function DownloadAppsSection() {
                   )}
                 </motion.button>
                 <motion.button
-                  onClick={() => setActiveTab('Delivery')}
+                  onClick={() => setActiveTab('Android')}
                   className="relative text-white text-lg sm:text-xl font-medium pb-3 transition-all duration-300"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -295,13 +297,13 @@ export default function DownloadAppsSection() {
                   <motion.span
                     className="relative z-10 block"
                     animate={{ 
-                      color: activeTab === 'Delivery' ? '#FF6B35' : '#ffffff'
+                      color: activeTab === 'Android' ? '#FF6B35' : '#ffffff'
                     }}
                     transition={{ duration: 0.3 }}
                   >
-                    Android
+                    {t('tab_android')}
                   </motion.span>
-                  {activeTab === 'Delivery' && (
+                  {activeTab === 'Android' && (
                     <motion.div
                       layoutId="activeTab"
                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/50"
@@ -337,9 +339,9 @@ export default function DownloadAppsSection() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      {activeTab === 'Rides' 
-                        ? 'The fast, affordable way to ride.'
-                        : 'Deliver anything, anywhere, anytime.'}
+                      {activeTab === 'iOS' 
+                        ? t('ios_title')
+                        : t('android_title')}
                     </motion.h3>
                     
                     <motion.p 
@@ -348,9 +350,9 @@ export default function DownloadAppsSection() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      {activeTab === 'Rides'
-                        ? 'Available for iOS devices. Book rides, track your driver, and pay seamlessly.'
-                        : 'Available for Android devices. Order food, track deliveries, and enjoy fast service.'}
+                      {activeTab === 'iOS'
+                        ? t('ios_desc')
+                        : t('android_desc')}
                     </motion.p>
                   </motion.div>
                   
@@ -385,7 +387,7 @@ export default function DownloadAppsSection() {
                       whileHover={{ x: 2 }}
                       transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     >
-                      {activeTab === 'Rides' ? 'Get Airbcar' : 'Get Airbcar'}
+                      {t('cta_button')}
                     </motion.span>
                   </motion.button>
                 </motion.div>

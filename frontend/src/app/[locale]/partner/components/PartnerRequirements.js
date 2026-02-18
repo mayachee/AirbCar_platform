@@ -1,28 +1,30 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Building2, Car, CheckCircle2 } from 'lucide-react';
 
 export default function PartnerRequirements() {
+  const t = useTranslations('partner_requirements');
   const requirements = [
     { 
-      title: 'Business Requirements', 
+      title: t('business_title'), 
       icon: Building2,
       items: [
-        'Valid company registration and tax ID', 
-        'Active bank account for payouts', 
-        'Agreement to our Partner Terms',
-        'Professional liability insurance'
+        t('business_item_1'), 
+        t('business_item_2'), 
+        t('business_item_3'),
+        t('business_item_4')
       ] 
     },
     { 
-      title: 'Vehicle Standards', 
+      title: t('vehicle_title'), 
       icon: Car,
       items: [
-        'Roadworthy and insured vehicles', 
-        'Accurate photos and descriptions', 
-        'Regular maintenance records',
-        'Clean title with no major accidents'
+        t('vehicle_item_1'), 
+        t('vehicle_item_2'), 
+        t('vehicle_item_3'),
+        t('vehicle_item_4')
       ] 
     },
   ];
@@ -31,8 +33,8 @@ export default function PartnerRequirements() {
     <section id="requirements" className="relative scroll-mt-16 py-20">
       <div className="max-w-6xl mx-auto px-4 relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold mb-4 text-white">Partner Requirements</h2>
-          <p className="text-gray-400">We maintain high standards to ensure the best experience for both hosts and guests.</p>
+          <h2 className="text-3xl font-bold mb-4 text-white">{t('heading')}</h2>
+          <p className="text-gray-400">{t('description')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

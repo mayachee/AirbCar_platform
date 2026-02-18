@@ -1,6 +1,9 @@
 import { getAllVehicleImages, fixImageUrl } from '@/utils/imageUtils';
 
+import { useTranslations } from 'next-intl'
+
 export default function FullGalleryModal({ vehicle, currentImageIndex, onClose, onSelectImage }) {
+  const t = useTranslations('car_details')
   // Get all images using the utility function to fix URLs
   const allImages = getAllVehicleImages(vehicle);
   const hasImages = allImages.length > 0 && allImages[0] !== '/carsymbol.jpg';

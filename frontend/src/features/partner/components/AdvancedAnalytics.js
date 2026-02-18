@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Car, BarChart3, Target, Percent } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { partnerService } from '@/features/partner/services/partnerService';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -34,6 +35,7 @@ const STATUS_COLORS = {
 };
 
 export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, bookings, vehicles }) {
+  const t = useTranslations('partner_dashboard');
   const [timeRange, setTimeRange] = useState('30d');
   const [analytics, setAnalytics] = useState(initialAnalytics);
   const [loadingRange, setLoadingRange] = useState(false);

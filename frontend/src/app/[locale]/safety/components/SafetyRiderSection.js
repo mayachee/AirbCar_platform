@@ -1,8 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function SafetyRiderSection() {
+  const t = useTranslations('safety');
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,28 +17,28 @@ export default function SafetyRiderSection() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-4xl md:text-5xl font-bold">
-              Tools for your <span className="text-orange-500">Peace of Mind</span>
+              {t('rider_heading')} <span className="text-orange-500">{t('rider_highlight')}</span>
             </h2>
             <p className="text-lg text-gray-300 leading-relaxed">
-               AirbCar provides a suite of in-app features designed to keep you connected and secure throughout your journey.
+               {t('rider_subtitle')}
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
-                    <h3 className="text-xl font-semibold mb-2 text-white">Share Your Trip</h3>
-                    <p className="text-sm text-gray-400">Let loved ones see your route and ETA in real-time.</p>
+                    <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_1_title')}</h3>
+                    <p className="text-sm text-gray-400">{t('rider_feature_1_desc')}</p>
                 </div>
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
-                    <h3 className="text-xl font-semibold mb-2 text-white">Number Masking</h3>
-                    <p className="text-sm text-gray-400">Calls and texts are anonymized to protect your privacy.</p>
+                    <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_2_title')}</h3>
+                    <p className="text-sm text-gray-400">{t('rider_feature_2_desc')}</p>
                 </div>
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
-                    <h3 className="text-xl font-semibold mb-2 text-white">Trusted Contacts</h3>
-                    <p className="text-sm text-gray-400">Pre-select friends to enable 1-tap sharing.</p>
+                    <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_3_title')}</h3>
+                    <p className="text-sm text-gray-400">{t('rider_feature_3_desc')}</p>
                 </div>
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
-                    <h3 className="text-xl font-semibold mb-2 text-white">24/7 Support</h3>
-                    <p className="text-sm text-gray-400">Our team is available around the clock for urgent issues.</p>
+                    <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_4_title')}</h3>
+                    <p className="text-sm text-gray-400">{t('rider_feature_4_desc')}</p>
                 </div>
             </div>
           </motion.div>

@@ -1,15 +1,17 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDown } from 'lucide-react';
 
 export default function PartnerFAQs() {
+  const t = useTranslations('partner_faqs');
   const faqs = [
-    { q: 'How fast can I get verified?', a: 'Most partners are verified within 1–3 business days after submitting documents. We manually review all documents to ensure safety.' },
-    { q: 'When do I get paid?', a: 'Payouts are processed instantly after each completed booking to your bank account. You can withdraw your earnings at any time.' },
-    { q: 'Can I manage multiple vehicles?', a: 'Yes. Our dashboard supports multi-vehicle fleets with bulk editing and calendar tools. Many of our partners manage fleets of 10+ vehicles.' },
-    { q: 'Is there an insurance provided?', a: 'We provide comprehensive insurance coverage for all trips. You can also use your own commercial insurance if preferred.' },
+    { q: t('faq_1_q'), a: t('faq_1_a') },
+    { q: t('faq_2_q'), a: t('faq_2_a') },
+    { q: t('faq_3_q'), a: t('faq_3_a') },
+    { q: t('faq_4_q'), a: t('faq_4_a') },
   ];
 
   return (
@@ -21,8 +23,8 @@ export default function PartnerFAQs() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4 text-white">Frequently ask questions</h2>
-          <p className="text-gray-400">Have more questions? Contact our support team.</p>
+          <h2 className="text-3xl font-bold mb-4 text-white">{t('heading')}</h2>
+          <p className="text-gray-400">{t('description')}</p>
         </motion.div>
 
         <Accordion.Root type="single" collapsible className="space-y-4">

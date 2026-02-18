@@ -1,11 +1,13 @@
 'use client';
 
 import { useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import { locales, localeNames } from '@/i18n/config';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
+  const searchParams = useSearchParams();
 
   const handleLanguageChange = (event) => {
     const newLocale = event.target.value;
@@ -13,11 +15,27 @@ export default function LanguageSwitcher() {
       // Get current path and extract the path without locale
       const currentPath = window.location.pathname;
       const pathWithoutLocale = currentPath.replace(/^\/(en|fr|ar)/, '') || '/';
-      const searchParams = window.location.search;
+      
+      // Preserve all search parameters (filters, dates, location, etc)
+      const currentSearchParams = new URLSearchParams(searchParams);
+      const searchString = currentSearchParams.toString();
+      
+      // Save current filters to sessionStorage for recovery after page reload
+      // This helps preserve advanced filters (transmission, fuelType, etc)
+      try {
+        const storedFilters = sessionStorage.getItem('searchFilters');
+        if (storedFilters) {
+          // Preserve existing filters during language change
+          sessionStorage.setItem('searchFilters', storedFilters);
+        }
+      } catch (err) {
+        console.warn('Failed to preserve filters:', err);
+      }
+      
       const hash = window.location.hash;
       
-      // Construct the new URL with the new locale
-      const newUrl = `/${newLocale}${pathWithoutLocale}${searchParams}${hash}`;
+      // Construct the new URL with the new locale and preserved search params
+      const newUrl = `/${newLocale}${pathWithoutLocale}${searchString ? `?${searchString}` : ''}${hash}`;
       
       // Use full page navigation for all routes to ensure complete refresh
       // This guarantees all components, contexts, and translations update properly

@@ -2,51 +2,53 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import SectionWrapper from './SectionWrapper';
 
 export default function ImpactSection() {
-  const [activeTab, setActiveTab] = useState('Boosting partner earning opportunities');
+  const t = useTranslations('impact');
+  const [activeTab, setActiveTab] = useState(t('tab_1_title'));
 
   const tabs = [
-    'Boosting partner earning opportunities',
-    'Community Driven',
-    'Eco-Friendly'
+    t('tab_1_title'),
+    t('tab_2_title'),
+    t('tab_3_title')
   ];
 
   const tabContent = {
-    'Boosting partner earning opportunities': {
+    [t('tab_1_title')]: {
       image: 'https://ik.imagekit.io/szcfr7vth/software.png',
-      dataNote: '*Data: Thailand, Nigeria, South Africa, Netherlands, UK',
+      dataNote: t('tab_1_note'),
       facts: [
-        "AirbCar's advanced software empowers partners with real-time insights, flexible work options, and seamless earnings management.",
-        "3.5 million+ drivers and couriers worldwide, including 1 million+ partners in Africa",
-        "Up to 80% of drivers on AirbCar's platform have a tenure longer than 5 years *",
-        "Up to 90% of drivers agree that AirbCar platform offers autonomy and flexibility *",
-        "50% of drivers on AirbCar platform use ride-hailing to supplement their main source of income *"
+        t('tab_1_fact_1'),
+        t('tab_1_fact_2'),
+        t('tab_1_fact_3'),
+        t('tab_1_fact_4'),
+        t('tab_1_fact_5')
       ]
     },
-    'Community Driven': {
+    [t('tab_2_title')]: {
       image: 'https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_1w7h0z1w7h0z1w7h.png',
-      dataNote: '*Data: Various regions',
+      dataNote: t('tab_2_note'),
       facts: [
-        "Committed to creating equal opportunities for all",
-        "Supporting diverse communities across all markets",
-        "Inclusive platform design and policies",
-        "As a young startup, we actively listen to our community to shape our platform and services.",
-        "We organize local events and feedback sessions to ensure every voice is heard.",
-        "Our team is dedicated to building partnerships with grassroots organizations and local leaders."
+        t('tab_2_fact_1'),
+        t('tab_2_fact_2'),
+        t('tab_2_fact_3'),
+        t('tab_2_fact_4'),
+        t('tab_2_fact_5'),
+        t('tab_2_fact_6')
       ]
     },
-    'Eco-Friendly': {
+    [t('tab_3_title')]: {
       image: 'https://ik.imagekit.io/szcfr7vth/image1.png',
-      dataNote: '*Data: Global impact',
+      dataNote: t('tab_3_note'),
       facts: [
-        "Reducing carbon footprint through shared mobility",
-        "Supporting sustainable urban development",
-        "Contributing to cleaner cities worldwide",
-        "As a new startup, we are committed to integrating eco-friendly practices from day one.",
-        "We invest in technology and partnerships that promote electric vehicles and green mobility.",
-        "Our long-term vision is to help cities achieve net-zero emissions through innovative transport solutions."
+        t('tab_3_fact_1'),
+        t('tab_3_fact_2'),
+        t('tab_3_fact_3'),
+        t('tab_3_fact_4'),
+        t('tab_3_fact_5'),
+        t('tab_3_fact_6')
       ]
     }
   };
@@ -94,7 +96,7 @@ export default function ImpactSection() {
                 
                 <img
                   src="https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_jl7bnojl7bnojl7b.png"
-                  alt="The impact"
+                   alt={t('heading')}
                   className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 {/* Gradient overlay */}
@@ -111,17 +113,10 @@ export default function ImpactSection() {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6 leading-[56px] tracking-[-0.48px]">
-                The impact
+                {t('heading')}
               </h2>
               <div className="text-xl text-gray-300 leading-7  space-y-10">
-                <p>By offering a convenient alternative to every purpose a private car serves, AirbCar's shared
-                mobility platform can help reduce the number of trips made by private cars. This will ultimately lead
-                to better cities with less traffic congestion,
-                pollution, and land taken up by parking spaces.
-                People will still go wherever they need to go, but
-                will do so with a mix of ride-hailing, car-sharing,
-                public transport, micromobility, walking and
-                cycling, depending on a trip's purpose.</p>
+                <p>{t('description')}</p>
               </div>
             </motion.div>
           </div>
@@ -139,7 +134,7 @@ export default function ImpactSection() {
               transition={{ duration: 0.6 }}
             >
               <h3 className="text-4xl sm:text-5xl font-bold text-white leading-[48px] tracking-[-0.4px]">
-                Key facts of our impact
+                {t('facts_heading')}
               </h3>
             </motion.div>
 

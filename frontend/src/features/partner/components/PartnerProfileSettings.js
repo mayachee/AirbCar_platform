@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Save, Upload, Building2, FileText, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -8,6 +9,7 @@ import { MOROCCAN_CITIES } from '@/constants';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function PartnerProfileSettings({ partnerData, hasPartnerProfile = true, onUpdate, loading }) {
+  const t = useTranslations('partner');
   const { user } = useAuth();
   const { addToast } = useToast();
   const [formData, setFormData] = useState({
@@ -548,7 +550,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
           {/* Logo Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Company Logo
+              {t('upload_logo')}
             </label>
             <div className="flex items-center gap-3 sm:gap-4">
               {logoPreview ? (
@@ -596,7 +598,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
           
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Company Name *
+              {t('company_name')} *
             </label>
             <input
               type="text"
@@ -605,7 +607,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               onChange={handleInputChange}
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              placeholder={formData.company_name ? formData.company_name : "Enter company name"}
+              placeholder={t('company_name_placeholder')}
             />
             {!isEditing && !formData.company_name && (
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">Not set</p>
@@ -614,7 +616,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tax ID / License Number *
+              {t('tax_id')} *
             </label>
             <input
               type="text"
@@ -623,7 +625,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               onChange={handleInputChange}
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              placeholder={formData.tax_id ? formData.tax_id : "Enter tax ID or license number"}
+              placeholder={t('tax_id_placeholder')}
             />
             {!isEditing && !formData.tax_id && (
               <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">Not set</p>
@@ -632,12 +634,12 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Business Type
+              {t('business_type')}
             </label>
             <SelectField
               name="business_type"
               value={formData.business_type ?? ''}
-              placeholder="Select business type"
+              placeholder={t('business_type_placeholder')}
               showPlaceholderOption
               onChange={handleInputChange}
               disabled={!isEditing}
@@ -658,7 +660,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
           
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Phone Number <span className="text-red-500 dark:text-red-400">*</span>
+              {t('phone_number')}
             </label>
             <input
               type="tel"
@@ -670,7 +672,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 ${
                 phoneError ? 'border-red-500 dark:border-red-600 focus:ring-red-500' : 'border-gray-300 dark:border-gray-600'
               }`}
-              placeholder="+212 6XX-XXXXXX or 0X-XXXXXXX"
+              placeholder={t('phone_number_placeholder')}
             />
             {phoneError && isEditing && (
               <p className="mt-1 text-sm text-red-500 dark:text-red-400">{phoneError}</p>
@@ -700,7 +702,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Address
+              {t('address')}
             </label>
             <input
               type="text"
@@ -709,19 +711,19 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               onChange={handleInputChange}
               disabled={!isEditing}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              placeholder="Enter business address"
+              placeholder={t('address_placeholder')}
             />
           </div>
 
           <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                City <span className="text-red-500 dark:text-red-400">*</span>
+                {t('city')} <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <SelectField
                 name="city"
                 value={formData.city ?? ''}
-                placeholder="Select a city"
+                placeholder={t('city_placeholder')}
                 showPlaceholderOption
                 onChange={handleInputChange}
                 disabled={!isEditing}
@@ -732,7 +734,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                State
+                {t('state')}
               </label>
               <input
                 type="text"
@@ -741,7 +743,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                placeholder="State"
+                placeholder={t('state_placeholder')}
               />
             </div>
           </div>
@@ -751,7 +753,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
       {/* Description */}
       <div className="mt-4 sm:mt-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Business Description
+          {t('description')}
         </label>
         <textarea
           name="description"

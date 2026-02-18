@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -29,6 +30,7 @@ function CarDetailsContent() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const t = useTranslations('car_details')
   
   // Custom hooks for data fetching and search params
   const { vehicle, loading, error } = useVehicleData(params.id)
@@ -61,14 +63,14 @@ function CarDetailsContent() {
   // Navigation handlers
   const handleBooking = () => {
     if (!vehicle) {
-      showToast('Cannot book: vehicle data is not loaded', 'error')
+      showToast(t('error_vehicle_not_loaded'), 'error')
       return
     }
     
     // Get vehicle ID from multiple possible locations
     const vehicleId = vehicle.id || vehicle.listing_id || params.id
     if (!vehicleId) {
-      showToast('Cannot book: vehicle ID is missing', 'error')
+      showToast(t('error_vehicle_id_missing'), 'error')
       console.error('Cannot book: vehicle ID is missing', { vehicle, params })
       return
     }

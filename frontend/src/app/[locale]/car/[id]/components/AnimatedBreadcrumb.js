@@ -4,7 +4,10 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronRight, Home } from 'lucide-react'
 
+import { useTranslations } from 'next-intl'
+
 export default function AnimatedBreadcrumb({ vehicleName }) {
+  const t = useTranslations('car_details')
   return (
     <motion.nav
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 mt-24 relative z-20"

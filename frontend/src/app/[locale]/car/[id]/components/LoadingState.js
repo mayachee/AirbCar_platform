@@ -3,7 +3,10 @@
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
+import { useTranslations } from 'next-intl'
+
 export default function LoadingState() {
+  const t = useTranslations('car_details')
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />

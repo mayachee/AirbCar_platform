@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 import { motion } from 'framer-motion'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { calculateTotalPrice } from '../utils/pricing'
@@ -33,6 +35,7 @@ const itemVariants = {
 
 export default function BookingSidebar({ vehicle, searchDetails, selectedDates, onBookNow, onChangeDates }) {
   const { formatPrice } = useCurrency()
+  const t = useTranslations('car_details')
 
   if (!vehicle) {
     return null

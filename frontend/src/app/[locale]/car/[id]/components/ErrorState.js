@@ -4,7 +4,11 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
+import { useTranslations } from 'next-intl'
+import Link from 'next/link'
+
 export default function ErrorState({ error, vehicleId }) {
+  const t = useTranslations('car_details')
   const router = useRouter()
 
   return (

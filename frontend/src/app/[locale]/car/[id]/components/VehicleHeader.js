@@ -15,7 +15,10 @@ const itemVariants = {
   },
 }
 
+import { useTranslations } from 'next-intl'
+
 export default function VehicleHeader({ vehicle }) {
+  const t = useTranslations('car_details')
   return (
     <motion.div
       className="mb-6"

@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import { AlertTriangle, Shield, Phone, Mail, MapPin, Clock, CheckCircle, XCircle, Info } from 'lucide-react'
 
+import { useTranslations } from 'next-intl'
+
 export default function Restrictions({ vehicle }) {
+  const t = useTranslations('car_details')
   if (!vehicle) {
     return null
   }

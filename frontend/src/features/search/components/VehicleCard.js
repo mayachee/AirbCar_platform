@@ -1,11 +1,14 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { showPricePerDay } from '@/features/search';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFavorite, favoritesLoading }) {
   const { formatPrice } = useCurrency();
+  const t = useTranslations('search');
+  
   // Use the image utility to fix URLs
   const imageUrl = getVehicleImageUrl(car);
 
@@ -33,7 +36,7 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Verified Agency
+              {t('verified_agency')}
             </span>
           </div>
         )}
@@ -62,10 +65,10 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
                   {formatPrice(car.totalPrice)}
                 </div>
                 <div className="text-xs text-gray-400 font-medium">
-                  {car.rentalDuration} day{car.rentalDuration > 1 ? 's' : ''}
+                  {car.rentalDuration} {t(car.rentalDuration > 1 ? 'days' : 'day')}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {formatPrice(car.price_per_day)}/day
+                  {formatPrice(car.price_per_day)}{t('per_day')}
                 </div>
               </div>
             ) : (
@@ -87,7 +90,7 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
             </svg>
-            {car.seats} Seats
+            {car.seats} {t('seats')}
           </div>
           <div className="inline-flex items-center px-3 py-1.5 bg-purple-500/10 text-purple-400 rounded-lg text-sm font-medium border border-purple-500/20">
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +136,7 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
               <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Instant
+              {t('instant_booking')}
             </div>
           )}
         </div>
@@ -152,7 +155,7 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            View Details
+            {t('view_details')}
           </button>
           <button 
             type="button"
@@ -168,7 +171,7 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
                 ? 'border-red-500 text-red-500 bg-red-500/10 hover:bg-red-500/20 shadow-md' 
                 : 'border-white/10 text-gray-400 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-500/10 bg-transparent'
             } ${favoritesLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            title={isFavorite ? t('remove_from_favorites') : t('add_to_favorites')}
           >
             <svg 
               className="w-5 h-5" 

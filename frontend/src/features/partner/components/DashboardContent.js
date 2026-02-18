@@ -216,7 +216,7 @@ export default function DashboardContent({
                       onClick={() => setCurrentView('bookings')}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
-                      View All →
+                      {t('view_all')}
                     </motion.button>
                   )}
                 </div>
@@ -265,7 +265,7 @@ export default function DashboardContent({
                           }`}
                         >
                           <CheckCircle2 className="h-3 w-3" />
-                          <span>{processingBooking === request.id ? 'Processing...' : 'Accept'}</span>
+                          <span>{processingBooking === request.id ? t('processing') : t('accept')}</span>
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.02 }}
@@ -279,7 +279,7 @@ export default function DashboardContent({
                           }`}
                         >
                           <AlertCircle className="h-3 w-3" />
-                          <span>{processingBooking === request.id ? 'Processing...' : 'Reject'}</span>
+                          <span>{processingBooking === request.id ? t('processing') : t('reject')}</span>
                         </motion.button>
                       </div>
                     </motion.div>
@@ -311,7 +311,7 @@ export default function DashboardContent({
                       onClick={() => setCurrentView('bookings')}
                       className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
-                      View All →
+                      {t('view_all')}
                     </motion.button>
                   )}
                 </div>

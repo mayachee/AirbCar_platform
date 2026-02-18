@@ -3,7 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Grid } from 'lucide-react';
 import { getAllVehicleImages, fixImageUrl } from '@/utils/imageUtils';
 
+import { useTranslations } from 'next-intl'
+
 export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, onPrevImage, onSelectImage, onShowFullGallery }) {
+  const t = useTranslations('car_details')
   const [isImageLoading, setIsImageLoading] = useState(true);
   
   // Get all images using the utility function to fix URLs

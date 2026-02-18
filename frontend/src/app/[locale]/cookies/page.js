@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Cookie, Settings, ShieldCheck, BarChart3, Megaphone, Info, Globe } from 'lucide-react';
 
 export default function CookiesPage() {
+  const t = useTranslations('cookies');
   return (
     <div className="min-h-screen bg-[#0F172A] relative overflow-hidden font-sans text-gray-100">
       {/* Abstract Background Pattern */}
@@ -21,9 +23,9 @@ export default function CookiesPage() {
         <div className=" mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4">Cookie Policy</h1>
+            <h1 className="text-4xl font-bold text-white mb-4">{t('page_title')}</h1>
             <p className="text-lg text-white/60">
-              Transparency about how we use cookies to improve your experience.
+              {t('subtitle')}
             </p>
           </div>
 
@@ -37,14 +39,14 @@ export default function CookiesPage() {
                   <span className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
                     <Cookie className="w-6 h-6" />
                   </span>
-                  What are cookies?
+                  {t('heading_what')}
                 </h2>
                 <div className="pl-14 space-y-4">
                   <p className="text-base leading-relaxed text-white/70">
-                    Cookies are small digital text files that websites save on your computer or mobile device when you visit them. They act like a "memory" for the website, allowing it to recognize you when you come back or browse between pages.
+                    {t('what_desc_1')}
                   </p>
                   <p className="text-base leading-relaxed text-white/70">
-                    They are widely used to make websites work more efficiently and to provide information to the owners of the site. Without cookies, a website would forget you every time you open a new page (for example, it wouldn't be able to keep you logged in).
+                    {t('what_desc_2')}
                   </p>
                 </div>
               </section>
@@ -57,17 +59,17 @@ export default function CookiesPage() {
                    <span className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
                     <Info className="w-6 h-6" />
                   </span>
-                  How do we use cookies?
+                  {t('heading_how')}
                 </h2>
                 <div className="pl-14">
                   <p className="text-base leading-relaxed text-white/70 mb-4">
-                     At AirbCar, we use cookies to improve your experience and to make our services work as expected. Specifically, we use them for:
+                     {t('how_intro')}
                   </p>
                   <ul className="list-disc pl-5 space-y-2 text-white/70">
-                     <li><strong>Authentication:</strong> Keeping you signed in as you navigate.</li>
-                     <li><strong>Security:</strong> Detecting and preventing fraudulent activity.</li>
-                     <li><strong>Preferences:</strong> Remembering your settings (like language or currency).</li>
-                     <li><strong>Analytics:</strong> Understanding how users interact with our platform to improve it.</li>
+                     <li><strong>{t('how_auth')}:</strong> {t('how_auth_desc')}</li>
+                     <li><strong>{t('how_security')}:</strong> {t('how_security_desc')}</li>
+                     <li><strong>{t('how_preferences')}:</strong> {t('how_preferences_desc')}</li>
+                     <li><strong>{t('how_analytics')}:</strong> {t('how_analytics_desc')}</li>
                   </ul>
                 </div>
               </section>
@@ -80,7 +82,7 @@ export default function CookiesPage() {
                    <span className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
                     <Globe className="w-6 h-6" />
                   </span>
-                  Types of cookies we use
+                  {t('heading_types')}
                 </h2>
                 
                 <div className="grid gap-6 pl-2">
@@ -89,9 +91,9 @@ export default function CookiesPage() {
                       <ShieldCheck className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">Essential Cookies</h3>
+                        <h3 className="text-lg font-semibold text-white mb-1">{t('type_essential')}</h3>
                         <p className="text-white/60 text-sm leading-relaxed">
-                            These are strictly necessary for the website to function. They allow you to browse the website and use its features, such as accessing secure areas. The website cannot function properly without these.
+                            {t('type_essential_desc')}
                         </p>
                     </div>
                   </div>
@@ -101,9 +103,9 @@ export default function CookiesPage() {
                       <Settings className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">Functional Cookies</h3>
+                        <h3 className="text-lg font-semibold text-white mb-1">{t('type_functional')}</h3>
                         <p className="text-white/60 text-sm leading-relaxed">
-                             These allow the website to remember choices you make (such as your user name, language or the region you are in) and provide enhanced, more personal features.
+                             {t('type_functional_desc')}
                         </p>
                     </div>
                   </div>
@@ -113,9 +115,9 @@ export default function CookiesPage() {
                       <BarChart3 className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">Analytics Cookies</h3>
+                        <h3 className="text-lg font-semibold text-white mb-1">{t('type_analytics')}</h3>
                         <p className="text-white/60 text-sm leading-relaxed">
-                             These help us understand how visitors interact with the website. We use this information to improve the user experience and performance of our services. All information these cookies collect is aggregated and therefore anonymous.
+                             {t('type_analytics_desc')}
                         </p>
                     </div>
                   </div>
@@ -125,9 +127,9 @@ export default function CookiesPage() {
                       <Megaphone className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">Marketing Cookies</h3>
+                        <h3 className="text-lg font-semibold text-white mb-1">{t('type_marketing')}</h3>
                         <p className="text-white/60 text-sm leading-relaxed">
-                             These are used to track visitors across websites. The intention is to display ads that are relevant and engaging for the individual user.
+                             {t('type_marketing_desc')}
                         </p>
                     </div>
                   </div>
@@ -142,11 +144,11 @@ export default function CookiesPage() {
                    <span className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
                     <Settings className="w-6 h-6" />
                   </span>
-                  Managing Cookies
+                  {t('heading_managing')}
                 </h2>
                 <div className="pl-14">
                    <p className="text-base leading-relaxed text-white/70">
-                    Most web browsers allow you to control cookies through their settings preferences. However, if you limit the ability of websites to set cookies, you may worsen your overall user experience, since it will no longer be personalized to you. It may also stop you from saving customized settings like login information.
+                    {t('managing_desc')}
                    </p>
                 </div>
               </section>

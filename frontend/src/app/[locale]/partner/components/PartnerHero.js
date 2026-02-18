@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import { useInView } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { ArrowRight } from 'lucide-react';
 
 const fadeInUp = {
@@ -20,6 +21,7 @@ const staggerChildren = {
 };
 
 export default function PartnerHero() {
+  const t = useTranslations('partner_hero');
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true, amount: 0.3 });
 
@@ -45,19 +47,18 @@ export default function PartnerHero() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
               </span>
-              Now Accepting New Partners
+              {t('badge')}
             </motion.div>
             
             <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight">
-              Turn your vehicles into <br className="hidden lg:block"/>
+              {t('heading')} <br className="hidden lg:block"/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-500">
-                passive income
+                {t('heading_highlight')}
               </span>
             </h1>
             
             <p className="text-gray-400 text-lg md:text-xl max-w-xl mb-8 leading-relaxed">
-              Join thousands of hosts who are earning more by sharing their cars on AirbCar. 
-              We handle the insurance, payments, and verification so you can focus on scaling.
+              {t('description')}
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -67,7 +68,7 @@ export default function PartnerHero() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Start Earning Now
+                {t('cta_primary')}
                 <ArrowRight className="w-5 h-5" />
               </motion.a>
               <motion.a 
@@ -76,7 +77,7 @@ export default function PartnerHero() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                How it works
+                {t('cta_secondary')}
               </motion.a>
             </div>
 
@@ -85,16 +86,16 @@ export default function PartnerHero() {
               variants={staggerChildren}
             >
               <motion.div variants={fadeInUp}>
-                <div className="text-3xl font-bold text-white mb-1">48h</div>
-                <div className="text-sm text-gray-400 font-medium">Fast Verification</div>
+                <div className="text-3xl font-bold text-white mb-1">{t('stat_1_value')}</div>
+                <div className="text-sm text-gray-400 font-medium">{t('stat_1_label')}</div>
               </motion.div>
               <motion.div variants={fadeInUp}>
-                <div className="text-3xl font-bold text-white mb-1">$2.5k+</div>
-                <div className="text-sm text-gray-400 font-medium">Avg. Monthly/Car</div>
+                <div className="text-3xl font-bold text-white mb-1">{t('stat_2_value')}</div>
+                <div className="text-sm text-gray-400 font-medium">{t('stat_2_label')}</div>
               </motion.div>
               <motion.div variants={fadeInUp}>
-                <div className="text-3xl font-bold text-white mb-1">0%</div>
-                <div className="text-sm text-gray-400 font-medium">Listing Fees</div>
+                <div className="text-3xl font-bold text-white mb-1">{t('stat_3_value')}</div>
+                <div className="text-sm text-gray-400 font-medium">{t('stat_3_label')}</div>
               </motion.div>
             </motion.div>
           </motion.div>
@@ -108,7 +109,7 @@ export default function PartnerHero() {
               <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-blue-500/10 mix-blend-overlay z-10 pointer-events-none" />
               <img 
                 src="/bg_image.png" 
-                alt="Partner Dashboard showing earnings and fleet management" 
+                alt={t('image_alt')} 
                 className="w-full h-full object-cover opacity-90" 
               />
             </div>
@@ -125,8 +126,8 @@ export default function PartnerHero() {
                   $
                 </div>
                 <div>
-                  <div className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Weekly Payout</div>
-                  <div className="text-lg font-bold text-white">$1,240.50</div>
+                  <div className="text-xs text-gray-400 uppercase tracking-wide font-semibold">{t('card_1_label')}</div>
+                  <div className="text-lg font-bold text-white">{t('card_1_amount')}</div>
                 </div>
               </div>
             </motion.div>
@@ -140,7 +141,7 @@ export default function PartnerHero() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <div className="text-sm font-semibold text-white">New Booking Received</div>
+                <div className="text-sm font-semibold text-white">{t('card_2_text')}</div>
               </div>
             </motion.div>
           </motion.div>

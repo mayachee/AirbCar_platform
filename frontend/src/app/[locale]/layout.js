@@ -79,7 +79,7 @@ export default async function LocaleLayout({ children, params }) {
             </AuthProvider>
           </LocaleProvider>
         </NextIntlClientProvider>
-        {typeof window !== 'undefined' && <CookieConsent />}
+        <CookieConsent />
       </div>
     );
   } catch (error) {

@@ -1,8 +1,10 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Star, MapPin, Calendar, Shield, CheckCircle2, Car, TrendingUp, Award, Phone, Mail, Building2 } from 'lucide-react';
 
 export default function OwnerSpotlight({ partner }) {
+  const t = useTranslations('owner_spotlight');
   // Debug: Log partner data to see what's available
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.log('🔍 OwnerSpotlight - Partner Data:', {
@@ -86,13 +88,13 @@ export default function OwnerSpotlight({ partner }) {
              </h1>
              {isVerified && (
                 <span className="px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium">
-                  Verified
+                  {t('verified')}
                 </span>
              )}
            </div>
            
            <p className="text-gray-400 text-base mb-3 flex items-center gap-2">
-             {businessType || 'Car Rental Partner'} 
+             {businessType || t('car_rental_partner')} 
              {location && (
                <>
                  <span className="w-1 h-1 rounded-full bg-gray-600"></span>
@@ -105,14 +107,14 @@ export default function OwnerSpotlight({ partner }) {
              {memberSince && (
                <span className="flex items-center gap-1.5">
                  <Calendar className="h-4 w-4 text-gray-400" /> 
-                 Joined {memberSince}
+                 {t('joined')} {memberSince}
                </span>
              )}
              {rating > 0 && (
                 <span className="flex items-center gap-1.5">
                   <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                   <span className="text-white font-medium">{rating.toFixed(1)}</span>
-                  <span className="text-gray-500">({reviewCount} reviews)</span>
+                  <span className="text-gray-500">({reviewCount} {t('reviews')})</span>
                 </span>
              )}
            </div>
@@ -123,14 +125,14 @@ export default function OwnerSpotlight({ partner }) {
 
            {/* About Section */}
            <div className="mt-8 pt-6 border-t border-white/10">
-              <h2 className="text-xl font-bold text-white mb-4">About</h2>
+              <h2 className="text-xl font-bold text-white mb-4">{t('about')}</h2>
               {description ? (
                 <p className="text-gray-300 leading-relaxed whitespace-pre-line">
                   {description}
                 </p>
               ) : (
                 <p className="text-gray-500 italic">
-                  No description available for this partner yet.
+                  {t('no_description')}
                 </p>
               )}
            </div>
@@ -138,7 +140,7 @@ export default function OwnerSpotlight({ partner }) {
            {/* Contact Information */}
            {(email || phone) && (
              <div id="contact-info" className="mt-8 pt-6 border-t border-white/10">
-               <h2 className="text-xl font-bold text-white mb-4">Contact Information</h2>
+               <h2 className="text-xl font-bold text-white mb-4">{t('contact_information')}</h2>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  {email && (
                    <a href={`mailto:${email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/item">
@@ -146,7 +148,7 @@ export default function OwnerSpotlight({ partner }) {
                        <Mail className="h-5 w-5 text-orange-500" />
                      </div>
                      <div className="flex flex-col">
-                       <span className="text-xs text-gray-500 font-medium">Email Address</span>
+                       <span className="text-xs text-gray-500 font-medium">{t('email_address')}</span>
                        <span className="text-gray-200 text-sm break-all">{email}</span>
                      </div>
                    </a>
@@ -158,7 +160,7 @@ export default function OwnerSpotlight({ partner }) {
                        <Phone className="h-5 w-5 text-orange-500" />
                      </div>
                      <div className="flex flex-col">
-                       <span className="text-xs text-gray-500 font-medium">Phone Number</span>
+                       <span className="text-xs text-gray-500 font-medium">{t('phone_number')}</span>
                        <span className="text-gray-200 text-sm">{phone}</span>
                      </div>
                    </a>

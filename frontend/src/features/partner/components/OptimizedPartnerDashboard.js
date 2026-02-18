@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, lazy, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useOptimizedDashboard } from '@/features/partner/hooks/useOptimizedDashboard';
 import DashboardSidebar from '@/features/partner/components/DashboardSidebar';
 import DashboardHeader from '@/features/partner/components/DashboardHeader';
@@ -18,6 +19,7 @@ const ComponentLoader = ({ children, fallback = null }) => (
 );
 
 export default function OptimizedPartnerDashboard() {
+  const t = useTranslations('partner_dashboard');
   const {
     // State
     user,
@@ -189,17 +191,17 @@ export default function OptimizedPartnerDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">
-                      Backend Server Not Running
+                      {t('backend_server_not_running')}
                     </h3>
                     <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-                      Unable to connect to the backend server at <code className="px-1 py-0.5 bg-red-100 dark:bg-red-900/40 rounded text-xs">http://127.0.0.1:8000</code>
+                      {t('unable_to_connect')} <code className="px-1 py-0.5 bg-red-100 dark:bg-red-900/40 rounded text-xs">http://127.0.0.1:8000</code>
                     </p>
                     <div className="mt-2 text-sm text-red-700 dark:text-red-400">
-                      <p className="font-medium mb-1">To start the backend server:</p>
+                      <p className="font-medium mb-1">{t('to_start_backend')}:</p>
                       <div className="bg-red-100 dark:bg-red-900/40 rounded p-2 font-mono text-xs space-y-1">
-                        <div><strong>Option 1 - Docker Compose:</strong></div>
+                        <div><strong>{t('option_docker')}</strong></div>
                         <div className="pl-2">docker-compose up</div>
-                        <div className="mt-2"><strong>Option 2 - Manual Django:</strong></div>
+                        <div className="mt-2"><strong>{t('option_manual_django')}</strong></div>
                         <div className="pl-2">cd backend/airbcar_backend</div>
                         <div className="pl-2">python manage.py runserver</div>
                       </div>
@@ -211,7 +213,7 @@ export default function OptimizedPartnerDashboard() {
                         }}
                         className="mt-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
                       >
-                        Retry Connection
+                        {t('retry_connection')}
                       </button>
                     </div>
                   </div>

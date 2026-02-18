@@ -1,32 +1,34 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { FileText, Calendar, Shield, Car, CreditCard, Phone } from 'lucide-react';
 
 export default function RentalPoliciesTab() {
+  const t = useTranslations('partner_dashboard');
   const [activeSection, setActiveSection] = useState('general');
 
   const sections = [
-    { id: 'general', title: 'General Terms', icon: FileText },
-    { id: 'booking', title: 'Booking & Cancellation', icon: Calendar },
-    { id: 'insurance', title: 'Insurance & Protection', icon: Shield },
-    { id: 'vehicle', title: 'Vehicle Usage', icon: Car },
-    { id: 'payment', title: 'Payment & Fees', icon: CreditCard },
-    { id: 'support', title: 'Support & Contact', icon: Phone }
+    { id: 'general', title: t('general_terms'), icon: FileText },
+    { id: 'booking', title: t('booking_cancellation'), icon: Calendar },
+    { id: 'insurance', title: t('insurance_protection'), icon: Shield },
+    { id: 'vehicle', title: t('vehicle_usage'), icon: Car },
+    { id: 'payment', title: t('payment_fees'), icon: CreditCard },
+    { id: 'support', title: t('support_contact'), icon: Phone }
   ];
 
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
         <FileText className="h-5 w-5" />
-        <span>Rental Policies & Terms</span>
+        <span>{t('rental_policies')}</span>
       </h3>
       
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Navigation */}
         <div className="lg:w-1/4">
           <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 sticky top-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Policy Sections</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('policy_sections')}</h3>
             <nav className="space-y-2">
               {sections.map((section) => {
                 const Icon = section.icon;
@@ -54,7 +56,7 @@ export default function RentalPoliciesTab() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             {activeSection === 'general' && (
               <div className="space-y-4">
-                <h4 className="text-xl font-semibold text-gray-900 mb-4">General Terms</h4>
+                <h4 className="text-xl font-semibold text-gray-900 mb-4">{t('general_terms')}</h4>
                 <div className="space-y-4 text-sm text-gray-700">
                   <div>
                     <p className="font-medium mb-2">Age Requirements</p>
@@ -78,7 +80,7 @@ export default function RentalPoliciesTab() {
 
             {activeSection === 'booking' && (
               <div className="space-y-4">
-                <h4 className="text-xl font-semibold text-gray-900 mb-4">Booking & Cancellation</h4>
+                <h4 className="text-xl font-semibold text-gray-900 mb-4">{t('booking_cancellation')}</h4>
                 <div className="space-y-4 text-sm text-gray-700">
                   <div>
                     <p className="font-medium mb-2">Booking Confirmation</p>
@@ -107,7 +109,7 @@ export default function RentalPoliciesTab() {
 
             {activeSection === 'insurance' && (
               <div className="space-y-4">
-                <h4 className="text-xl font-semibold text-gray-900 mb-4">Insurance & Protection</h4>
+                <h4 className="text-xl font-semibold text-gray-900 mb-4">{t('insurance_protection')}</h4>
                 <div className="space-y-4 text-sm text-gray-700">
                   <div>
                     <p className="font-medium mb-2">Basic Coverage</p>
@@ -131,7 +133,7 @@ export default function RentalPoliciesTab() {
 
             {activeSection === 'vehicle' && (
               <div className="space-y-4">
-                <h4 className="text-xl font-semibold text-gray-900 mb-4">Vehicle Usage</h4>
+                <h4 className="text-xl font-semibold text-gray-900 mb-4">{t('vehicle_usage')}</h4>
                 <div className="space-y-4 text-sm text-gray-700">
                   <div>
                     <p className="font-medium mb-2">Authorized Drivers</p>
@@ -163,7 +165,7 @@ export default function RentalPoliciesTab() {
 
             {activeSection === 'payment' && (
               <div className="space-y-4">
-                <h4 className="text-xl font-semibold text-gray-900 mb-4">Payment & Fees</h4>
+                <h4 className="text-xl font-semibold text-gray-900 mb-4">{t('payment_fees')}</h4>
                 <div className="space-y-4 text-sm text-gray-700">
                   <div>
                     <p className="font-medium mb-2">Payment Methods</p>
@@ -194,7 +196,7 @@ export default function RentalPoliciesTab() {
 
             {activeSection === 'support' && (
               <div className="space-y-4">
-                <h4 className="text-xl font-semibold text-gray-900 mb-4">Support & Contact</h4>
+                <h4 className="text-xl font-semibold text-gray-900 mb-4">{t('support_contact')}</h4>
                 <div className="space-y-4 text-sm text-gray-700">
                   <div>
                     <p className="font-medium mb-2">24/7 Roadside Assistance</p>
