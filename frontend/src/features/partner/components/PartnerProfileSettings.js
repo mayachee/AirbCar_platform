@@ -497,11 +497,11 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
         <div className="flex items-center justify-between sm:justify-start gap-3">
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Business Profile</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">{t('business_profile')}</h3>
           </div>
           <div className={`flex items-center gap-1 ${verificationStatus.color}`}>
             <StatusIcon className="h-4 w-4" />
-            <span className="text-xs sm:text-sm font-medium">{verificationStatus.status}</span>
+            <span className="text-xs sm:text-sm font-medium">{t(verificationStatus.status.toLowerCase())}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -510,7 +510,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               onClick={() => setIsEditing(true)}
               className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
             >
-              Edit Profile
+              {t('edit_profile')}
             </button>
           ) : (
             <div className="flex w-full sm:w-auto gap-2">
@@ -527,7 +527,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                 }}
                 className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -535,7 +535,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                 className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 transition-colors"
               >
                 <Save className="h-4 w-4" />
-                <span>{saving ? 'Saving...' : 'Save'}</span>
+                <span>{saving ? t('saving') : t('save')}</span>
               </button>
             </div>
           )}
@@ -545,7 +545,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Basic Information */}
         <div className="space-y-4">
-          <h4 className="text-md font-medium text-gray-900 dark:text-white">Basic Information</h4>
+          <h4 className="text-md font-medium text-gray-900 dark:text-white">{t('basic_information')}</h4>
           
           {/* Logo Upload */}
           <div>
@@ -557,7 +557,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                 <div className="relative flex-shrink-0">
                   <img
                     src={logoPreview}
-                    alt="Company logo"
+                    alt={t('company_logo')}
                     className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700"
                   />
                   {isEditing && (
@@ -565,7 +565,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                       type="button"
                       onClick={handleRemoveLogo}
                       className="absolute -top-2 -right-2 p-1 bg-red-500 dark:bg-red-600 text-white rounded-full hover:bg-red-600 dark:hover:bg-red-700 transition-colors"
-                      title="Remove logo"
+                      title={t('remove_logo')}
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -580,7 +580,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                 <div className="min-w-0">
                   <label className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer transition-colors">
                     <Upload className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{logoPreview ? 'Change' : 'Upload'}</span>
+                    <span className="truncate">{logoPreview ? t('change') : t('upload')}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -589,7 +589,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                     />
                   </label>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    PNG, JPG up to 5MB
+                    {t('logo_upload_hint')}
                   </p>
                 </div>
               )}
@@ -610,7 +610,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               placeholder={t('company_name_placeholder')}
             />
             {!isEditing && !formData.company_name && (
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">Not set</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">{t('not_set')}</p>
             )}
           </div>
 
@@ -628,7 +628,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               placeholder={t('tax_id_placeholder')}
             />
             {!isEditing && !formData.tax_id && (
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">Not set</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 italic">{t('not_set')}</p>
             )}
           </div>
 
@@ -644,10 +644,10 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               onChange={handleInputChange}
               disabled={!isEditing}
               options={[
-                { value: 'individual', label: 'Individual' },
-                { value: 'company', label: 'Company' },
-                { value: 'fleet', label: 'Fleet Operator' },
-                { value: 'dealership', label: 'Dealership' },
+                { value: 'individual', label: t('individual') },
+                { value: 'company', label: t('company') },
+                { value: 'fleet', label: t('fleet_operator') },
+                { value: 'dealership', label: t('dealership') },
               ]}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
@@ -656,7 +656,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
 
         {/* Contact Information */}
         <div className="space-y-4">
-          <h4 className="text-md font-medium text-gray-900 dark:text-white">Contact Information</h4>
+          <h4 className="text-md font-medium text-gray-900 dark:text-white">{t('contact_information')}</h4>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -678,13 +678,13 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               <p className="mt-1 text-sm text-red-500 dark:text-red-400">{phoneError}</p>
             )}
             {!phoneError && formData.phone_number && isEditing && (
-              <p className="mt-1 text-xs text-green-600 dark:text-green-400">✓ Valid phone number</p>
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">✓ {t('valid_phone_number')}</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email <span className="text-xs text-gray-500 dark:text-gray-400">(from account)</span>
+              {t('email')} <span className="text-xs text-gray-500 dark:text-gray-400">({t('from_account')})</span>
             </label>
             <input
               type="email"
@@ -693,10 +693,10 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
               readOnly
               disabled
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 cursor-not-allowed"
-              placeholder="Loading email..."
+              placeholder={t('loading_email')}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Email cannot be changed here. Contact support to update your email address.
+              {t('email_cannot_change_here')}
             </p>
           </div>
 
@@ -728,7 +728,8 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 required
-                options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
+                options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -762,7 +763,7 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
           disabled={!isEditing}
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm sm:text-base"
-          placeholder="Describe your business and services..."
+          placeholder={t('description_placeholder')}
         />
       </div>
     </div>

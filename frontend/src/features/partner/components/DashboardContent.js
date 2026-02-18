@@ -394,7 +394,7 @@ export default function DashboardContent({
           >
             <div className="flex items-center space-x-2 mb-4">
               <Lightbulb className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Performance Insights</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('performance_insights')}</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {vehicles?.length === 0 && (
@@ -404,15 +404,15 @@ export default function DashboardContent({
                   className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700"
                 >
                   <Target className="h-5 w-5 text-purple-600 dark:text-purple-400 mb-2" />
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Get Started</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">Add your first vehicle to start earning</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t('get_started')}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{t('add_first_vehicle')}</p>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleAddVehicle}
                     className="mt-3 w-full px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    Add Vehicle
+                    {t('add_vehicle')}
                   </motion.button>
                 </motion.div>
               )}
@@ -423,15 +423,15 @@ export default function DashboardContent({
                   className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-yellow-200 dark:border-yellow-700"
                 >
                   <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mb-2" />
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Action Required</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">You have {pendingRequests.length} pending {pendingRequests.length === 1 ? 'request' : 'requests'}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t('action_required')}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{t('pending_requests_count', { count: pendingRequests.length })}</p>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setCurrentView('bookings')}
                     className="mt-3 w-full px-3 py-1.5 bg-yellow-600 text-white text-xs font-medium rounded-lg hover:bg-yellow-700 transition-colors"
                   >
-                    Review Now
+                    {t('review_now')}
                   </motion.button>
                 </motion.div>
               )}
@@ -442,15 +442,15 @@ export default function DashboardContent({
                   className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-700"
                 >
                   <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400 mb-2" />
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Boost Visibility</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">Optimize your listings to attract more bookings</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t('boost_visibility')}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{t('optimize_listings')}</p>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setCurrentView('vehicles')}
                     className="mt-3 w-full px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    Manage Vehicles
+                    {t('manage_vehicles')}
                   </motion.button>
                 </motion.div>
               )}

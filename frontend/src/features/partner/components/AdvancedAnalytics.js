@@ -212,7 +212,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
           transition={{ delay: 0.2 }}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
         >
-          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Revenue Trend</h4>
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">{t('revenue_trend')}</h4>
           {dailyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <AreaChart data={dailyData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -230,7 +230,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No revenue data for this period</div>
+            <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">{t('no_revenue_data')}</div>
           )}
         </motion.div>
 
@@ -241,7 +241,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
           transition={{ delay: 0.3 }}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
         >
-          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Bookings Trend</h4>
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">{t('bookings_trend')}</h4>
           {dailyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={dailyData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -253,7 +253,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No booking data for this period</div>
+            <div className="h-[240px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">{t('no_booking_data')}</div>
           )}
         </motion.div>
       </div>
@@ -267,7 +267,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
           transition={{ delay: 0.35 }}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
         >
-          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-5">Booking Status</h4>
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-5">{t('booking_status')}</h4>
           {statusDistribution.length > 0 ? (
             <div className="flex items-center gap-6">
               {/* Donut Chart */}
@@ -307,7 +307,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
               </div>
             </div>
           ) : (
-            <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No booking data</div>
+            <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">{t('no_booking_data')}</div>
           )}
         </motion.div>
 
@@ -318,7 +318,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
           transition={{ delay: 0.4 }}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
         >
-          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-5">Top Performing Vehicles</h4>
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-5">{t('top_performing_vehicles')}</h4>
           {vehiclePerformance.length > 0 ? (
             <div className="space-y-3">
               {vehiclePerformance.slice(0, 5).map((vehicle, i) => {
@@ -354,7 +354,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
               })}
             </div>
           ) : (
-            <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">No vehicle performance data</div>
+            <div className="h-40 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">{t('no_vehicle_performance_data')}</div>
           )}
         </motion.div>
       </div>
@@ -369,29 +369,29 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
         >
           {reviewStats.count > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Average Rating</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('average_rating')}</p>
               <div className="flex items-baseline gap-2">
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{reviewStats.average_rating}</p>
                 <span className="text-yellow-500 text-lg">★</span>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{reviewStats.count} reviews</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{reviewStats.count} {t('reviews')}</p>
             </div>
           )}
           {metrics.avg_daily_rate > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Daily Rate</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('avg_daily_rate')}</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(metrics.avg_daily_rate)}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">across available vehicles</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('across_available_vehicles')}</p>
             </div>
           )}
           {metrics.acceptance_rate > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Acceptance Rate</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('acceptance_rate')}</p>
               <div className="flex items-baseline gap-2">
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{metrics.acceptance_rate}%</p>
                 <Percent className="h-4 w-4 text-gray-400" />
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{metrics.conversion_rate}% conversion</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{metrics.conversion_rate}% {t('conversion')}</p>
             </div>
           )}
         </motion.div>

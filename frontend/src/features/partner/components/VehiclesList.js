@@ -300,7 +300,7 @@ export default function VehiclesList({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
-                placeholder="Search by make, model, location..."
+                placeholder={t('search_by_make_model_location')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
@@ -314,10 +314,10 @@ export default function VehiclesList({
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: 'All Vehicles' },
-                  { value: 'available', label: 'Available' },
-                  { value: 'rented', label: 'Rented' },
-                  { value: 'maintenance', label: 'Maintenance' },
+                  { value: 'all', label: t('all_vehicles') },
+                  { value: 'available', label: t('available') },
+                  { value: 'rented', label: t('rented') },
+                  { value: 'maintenance', label: t('maintenance') },
                 ]}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -330,12 +330,12 @@ export default function VehiclesList({
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 options={[
-                  { value: 'newest', label: 'Newest First' },
-                  { value: 'oldest', label: 'Oldest First' },
-                  { value: 'price-high', label: 'Price: High to Low' },
-                  { value: 'price-low', label: 'Price: Low to High' },
-                  { value: 'name-asc', label: 'Name: A to Z' },
-                  { value: 'name-desc', label: 'Name: Z to A' },
+                  { value: 'newest', label: t('newest_first') },
+                  { value: 'oldest', label: t('oldest_first') },
+                  { value: 'price-high', label: t('price_high_to_low') },
+                  { value: 'price-low', label: t('price_low_to_high') },
+                  { value: 'name-asc', label: t('name_a_to_z') },
+                  { value: 'name-desc', label: t('name_z_to_a') },
                 ]}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -352,7 +352,7 @@ export default function VehiclesList({
                     ? "bg-blue-500 dark:bg-blue-600 text-white" 
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
-                title="Grid View"
+                title={t('grid_view')}
               >
                 <Grid3x3 className="h-4 w-4" />
               </button>
@@ -363,7 +363,7 @@ export default function VehiclesList({
                     ? "bg-blue-500 dark:bg-blue-600 text-white" 
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
-                title="List View"
+                title={t('list_view')}
               >
                 <List className="h-4 w-4" />
               </button>
@@ -372,13 +372,13 @@ export default function VehiclesList({
             {selectedVehicles.length > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedVehicles.length} selected
+                  {t('selected_count', { count: selectedVehicles.length })}
                 </span>
                 <button
                   onClick={() => setSelectedVehicles([])}
                   className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 >
-                  Clear
+                  {t('clear_selection')}
                 </button>
               </div>
             )}
@@ -479,22 +479,22 @@ export default function VehiclesList({
                   {vehicle.is_available === true || vehicle.availability === true || vehicle.availability === 'available' ? (
                     <>
                       <CheckCircle2 className="h-3 w-3" />
-                      <span>Available</span>
+                      <span>{t('available')}</span>
                     </>
                   ) : vehicle.availability === 'rented' ? (
                     <>
                       <Calendar className="h-3 w-3" />
-                      <span>Rented</span>
+                      <span>{t('rented')}</span>
                     </>
                   ) : vehicle.availability === 'maintenance' ? (
                     <>
                       <Wrench className="h-3 w-3" />
-                      <span>Maintenance</span>
+                      <span>{t('maintenance')}</span>
                     </>
                   ) : (
                     <>
                       <XCircle className="h-3 w-3" />
-                      <span>Unavailable</span>
+                      <span>{t('unavailable')}</span>
                     </>
                   )}
                 </div>
@@ -530,14 +530,14 @@ export default function VehiclesList({
                     </div>
                     {vehicle.instant_booking && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full font-medium">
-                        Instant
+                        {t('instant')}
                       </span>
                     )}
                   </div>
                   
                   <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                     <MapPin className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
-                    <span className="truncate">{vehicle.location || 'Location not set'}</span>
+                    <span className="truncate">{vehicle.location || t('location_not_set')}</span>
                   </div>
                   
                   <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 flex-wrap">
@@ -550,7 +550,7 @@ export default function VehiclesList({
                     {vehicle.seating_capacity && (
                       <div className="flex items-center bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded">
                         <Users className="h-4 w-4 mr-1 text-purple-600 dark:text-purple-400" />
-                        <span className="text-xs">{vehicle.seating_capacity} seats</span>
+                        <span className="text-xs">{vehicle.seating_capacity} {t('seats')}</span>
                       </div>
                     )}
                     {vehicle.transmission && (
@@ -566,13 +566,13 @@ export default function VehiclesList({
                       {vehicle.review_count > 0 && (
                         <div className="flex items-center gap-1">
                           <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                          <span>{vehicle.review_count} reviews</span>
+                          <span>{vehicle.review_count} {t('reviews')}</span>
                         </div>
                       )}
                       {vehicle.total_bookings > 0 && (
                         <div className="flex items-center gap-1">
                           <TrendingUp className="h-3 w-3 text-green-500 dark:text-green-400" />
-                          <span>{vehicle.total_bookings} bookings</span>
+                          <span>{vehicle.total_bookings} {t('bookings')}</span>
                         </div>
                       )}
                     </div>
