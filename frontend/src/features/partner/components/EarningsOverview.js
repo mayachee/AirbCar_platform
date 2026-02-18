@@ -201,7 +201,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
           {/* Top Earning Vehicles */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Top Earning Vehicles</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('top_earning_vehicles')}</h3>
               <span className="text-xs text-gray-500 dark:text-gray-400">{earningsData.vehicleEarnings.length} vehicles</span>
             </div>
             {earningsData.vehicleEarnings.length > 0 ? (
@@ -236,7 +236,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
                           />
                         </div>
                         <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                          {vehicle.bookings} bookings
+                          {vehicle.bookings} {vehicle.bookings === 1 ? t('booking') : t('bookings')}
                         </span>
                       </div>
                     </motion.div>
@@ -245,7 +245,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400 dark:text-gray-500">
-                <p className="text-sm">No vehicle earnings data yet</p>
+                <p className="text-sm">{t('no_vehicle_earnings_data_yet')}</p>
               </div>
             )}
           </div>
@@ -253,7 +253,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
           {/* Payout History */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Completed Bookings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('recent_completed_bookings')}</h3>
               <CheckCircle className="h-5 w-5 text-green-500" />
             </div>
             {earningsData.payoutHistory.length > 0 ? (
@@ -281,7 +281,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
                         {formatCurrency(payout.amount)}
                       </p>
                       <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                        Completed
+                        {t('completed')}
                       </span>
                     </div>
                   </motion.div>
@@ -289,7 +289,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400 dark:text-gray-500">
-                <p className="text-sm">No completed bookings yet</p>
+                <p className="text-sm">{t('no_completed_bookings_yet')}</p>
               </div>
             )}
           </div>
@@ -302,7 +302,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Earnings Overview</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('earnings_overview')}</h3>
         <div className={`flex items-center gap-1 text-xs font-medium ${growthPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
           {growthPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
           {Math.abs(earningsData.growthRate)}%
@@ -340,7 +340,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
               <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
             </div>
           </div>
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-0.5">Total Earnings</p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-0.5">{t('total_earnings')}</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(earningsData.totalEarnings)}</p>
         </div>
         
@@ -350,7 +350,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
               <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-0.5">This Month</p>
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-0.5">{t('this_month')}</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(earningsData.monthlyEarnings)}</p>
         </div>
       </div>

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { useAuth } from '@/contexts/AuthContext'
 import { motion } from 'framer-motion'
 import { isValidMoroccanPhone } from '@/lib/utils'
@@ -47,6 +48,7 @@ const signUpSchema = z.object({
 })
 
 function AuthForm() {
+  const t = useTranslations('auth')
   const [activeTab, setActiveTab] = useState('signin') // 'signin' or 'signup'
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -627,7 +629,7 @@ function AuthForm() {
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
-                <span className="relative z-10">Sign In</span>
+                <span className="relative z-10">{t('tab_signin')}</span>
               </motion.button>
               <motion.button
                 type="button"
@@ -650,7 +652,7 @@ function AuthForm() {
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
-                <span className="relative z-10">Sign Up</span>
+                <span className="relative z-10">{t('tab_signup')}</span>
               </motion.button>
             </div>
           </div>
@@ -664,7 +666,7 @@ function AuthForm() {
             className="mb-8"
           >
             <h2 className="text-3xl font-bold text-white">
-              {activeTab === 'signin' ? 'Sign in to your account' : 'Create your account'}
+              {activeTab === 'signin' ? t('signin_heading') : t('signup_heading')}
             </h2>
           </motion.div>
 
@@ -684,7 +686,7 @@ function AuthForm() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="signin-email" className="block text-sm font-semibold text-white/90 mb-2">
-                    Email
+                    {t('signin_email_label')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -698,7 +700,7 @@ function AuthForm() {
                     type="email"
                     autoComplete="email"
                     className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                    placeholder="Enter your email"
+                    placeholder={t('signin_email_placeholder')}
                   />
                   </div>
                   {signInErrors.email && (
@@ -708,7 +710,7 @@ function AuthForm() {
 
                 <div>
                   <label htmlFor="signin-password" className="block text-sm font-semibold text-white/90 mb-2">
-                    Password
+                    {t('signin_password_label')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -722,7 +724,7 @@ function AuthForm() {
                       type="password"
                       autoComplete="current-password"
                       className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                      placeholder="Enter your password"
+                      placeholder={t('signin_password_placeholder')}
                     />
                   </div>
                   {signInErrors.password && (
@@ -737,7 +739,7 @@ function AuthForm() {
                   whileHover={{ x: 2 }}
                   className="text-sm text-orange-500 hover:text-orange-600 font-semibold transition-colors inline-flex items-center gap-1"
                 >
-                  Forgot your password?
+                  {t('signin_forgot_password')}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -775,17 +777,17 @@ function AuthForm() {
                           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                           className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
                         />
-                        Signing in...
+                        {t('signin_loading')}
                       </>
                     ) : (
-                      'Sign in'
+                      t('signin_submit')
                     )}
                   </span>
                 </motion.button>
 
                 <div className="relative py-2 flex items-center gap-4">
                   <div className="flex-1 border-t border-white/20" />
-                  <span className="text-sm text-white/60 font-medium">Or continue with</span>
+                  <span className="text-sm text-white/60 font-medium">{t('signin_or_continue_with')}</span>
                   <div className="flex-1 border-t border-white/20" />
                 </div>
 
@@ -797,7 +799,7 @@ function AuthForm() {
                   {!googleReady && (
                     <div className="w-full flex justify-center items-center py-3.5 px-4 border border-white/20 rounded-xl bg-white/10">
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                      <span className="text-sm text-white/80">Loading Google sign-in...</span>
+                      <span className="text-sm text-white/80">{t('signin_google_loading')}</span>
                     </div>
                   )}
                 </div>
@@ -834,7 +836,7 @@ function AuthForm() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="signup-firstName" className="block text-sm font-semibold text-white/90 mb-2">
-                      First Name
+                      {t('signup_first_name_label')}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -848,7 +850,7 @@ function AuthForm() {
                         type="text"
                         autoComplete="given-name"
                         className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                        placeholder="First name"
+                        placeholder={t('signup_first_name_placeholder')}
                       />
                     </div>
                     {signUpErrors.firstName && (
@@ -858,7 +860,7 @@ function AuthForm() {
 
                   <div>
                     <label htmlFor="signup-lastName" className="block text-sm font-semibold text-white/90 mb-2">
-                      Last Name
+                      {t('signup_last_name_label')}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -872,7 +874,7 @@ function AuthForm() {
                         type="text"
                         autoComplete="family-name"
                         className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                        placeholder="Last name"
+                        placeholder={t('signup_last_name_placeholder')}
                       />
                     </div>
                     {signUpErrors.lastName && (
@@ -883,7 +885,7 @@ function AuthForm() {
 
                 <div>
                   <label htmlFor="signup-email" className="block text-sm font-semibold text-white/90 mb-2">
-                    Email
+                    {t('signup_email_label')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -897,7 +899,7 @@ function AuthForm() {
                       type="email"
                       autoComplete="email"
                       className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                      placeholder="Enter your email"
+                      placeholder={t('signup_email_placeholder')}
                     />
                   </div>
                   {signUpErrors.email && (
@@ -907,7 +909,7 @@ function AuthForm() {
 
                 <div>
                   <label htmlFor="signup-phoneNumber" className="block text-sm font-semibold text-white/90 mb-2">
-                    Phone Number
+                    {t('signup_phone_label')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -921,7 +923,7 @@ function AuthForm() {
                       type="tel"
                       autoComplete="tel"
                       className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                      placeholder="+212 6XX-XXXXXX"
+                      placeholder={t('signup_phone_placeholder')}
                     />
                   </div>
                   {signUpErrors.phoneNumber && (
@@ -931,7 +933,7 @@ function AuthForm() {
 
                 <div>
                   <label htmlFor="signup-password" className="block text-sm font-semibold text-white/90 mb-2">
-                    Password
+                    {t('signup_password_label')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -945,7 +947,7 @@ function AuthForm() {
                       type="password"
                       autoComplete="new-password"
                       className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                      placeholder="Create a password"
+                      placeholder={t('signup_password_placeholder')}
                     />
                   </div>
                   {signUpErrors.password && (
@@ -969,11 +971,11 @@ function AuthForm() {
                       className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-white/30 bg-white/10 rounded"
                     />
                     <label htmlFor="signup-isPartner" className="ml-2 block text-sm font-semibold text-white/90">
-                      Sign up as a partner (rent out your car)
+                      {t('signup_partner_toggle')}
                     </label>
                   </div>
                   <p className="mt-1 ml-6 text-xs text-white/60">
-                    Partners can list and rent out their vehicles on Airbcar
+                    {t('signup_partner_description')}
                   </p>
                 </div>
 
@@ -988,7 +990,7 @@ function AuthForm() {
                   >
                     <div>
                       <label htmlFor="signup-businessName" className="block text-sm font-semibold text-white/90 mb-2">
-                        Business Name <span className="text-red-400">*</span>
+                        {t('signup_business_name_label')} <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

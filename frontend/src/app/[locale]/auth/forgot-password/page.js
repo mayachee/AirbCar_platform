@@ -5,14 +5,16 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { apiClient } from '@/lib/api/client'
 import { motion } from 'framer-motion'
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email'),
+  email: z.string().email('Invalid email address'),
 })
 
 export default function ForgotPassword() {
+  const t = useTranslations('auth')
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -135,19 +137,19 @@ export default function ForgotPassword() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">
-                  Check your email
+                  {t('check_email')}
                 </h2>
                 <p className="text-sm text-white/80 mb-6">
-                  If an account with that email exists, we've sent you a password reset link.
+                  {t('reset_link_sent')}
                 </p>
                 <p className="text-xs text-white/60 mb-8">
-                  Please check your inbox, spam folder, and promotions tab. The email may take a few minutes to arrive.
+                  {t('check_email_instructions')}
                 </p>
                 <Link
                   href="/auth/signin"
                   className="inline-flex justify-center w-full py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
                 >
-                  Back to sign in
+                  {t('back_to_signin')}
                 </Link>
               </div>
             </div>
@@ -196,10 +198,10 @@ export default function ForgotPassword() {
               className="mb-8"
             >
               <h2 className="text-3xl font-bold text-white">
-                Forgot your password?
+                {t('forgot_password_title')}
               </h2>
               <p className="mt-2 text-sm text-white/80">
-                Enter your registered email address and we'll send you a link to reset your password.
+                {t('forgot_password_description')}
               </p>
             </motion.div>
 
@@ -216,7 +218,7 @@ export default function ForgotPassword() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-white/90 mb-2">
-                  Email
+                  {t('email')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -229,7 +231,7 @@ export default function ForgotPassword() {
                     type="email"
                     autoComplete="email"
                     className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                    placeholder="Enter your email"
+                    placeholder={t('enter_email')}
                   />
                 </div>
                 {errors.email && (
@@ -268,10 +270,10 @@ export default function ForgotPassword() {
                           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                           className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
                         />
-                        Sending...
+                        {t('sending')}
                       </>
                     ) : (
-                      'Send reset link'
+                      t('send_reset_link')
                     )}
                   </span>
                 </motion.button>
@@ -280,7 +282,7 @@ export default function ForgotPassword() {
                   href="/auth/signin"
                   className="w-full flex justify-center py-3.5 px-4 border border-white/20 rounded-xl shadow-lg text-sm font-semibold text-white bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
                 >
-                  Back to sign in
+                  {t('back_to_signin')}
                 </Link>
               </div>
             </form>

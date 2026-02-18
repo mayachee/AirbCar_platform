@@ -86,7 +86,7 @@ const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType
       <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
       {onClick && (
         <div className="mt-3 flex items-center text-xs text-gray-500 dark:text-gray-400">
-          <span>Click to view</span>
+          <span>{t('click_to_view')}</span>
           <ArrowUpRight className="h-3 w-3 ml-1" />
         </div>
       )}
@@ -586,7 +586,7 @@ export default function DashboardContent({
 
       {currentView === 'settings' && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Settings</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('settings')}</h2>
           <ComponentLoader>
             <BulkOperationsPanel vehicles={vehicles} onRefresh={refetch} />
           </ComponentLoader>
