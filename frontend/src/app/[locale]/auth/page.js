@@ -823,7 +823,7 @@ function AuthForm() {
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-sm font-semibold text-red-800">Registration Error</h3>
+                      <h3 className="text-sm font-semibold text-red-800">{t('signup_error_generic')}</h3>
                       <div className="mt-1 text-sm text-red-700">
                         <p>{error}</p>
                       </div>
@@ -1003,7 +1003,7 @@ function AuthForm() {
                           id="signup-businessName"
                           type="text"
                           className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                          placeholder="Enter your business name"
+                          placeholder={t('signup_business_name_placeholder')}
                         />
                       </div>
                       {signUpErrors.businessName && (
@@ -1013,7 +1013,7 @@ function AuthForm() {
 
                     <div>
                       <label htmlFor="signup-taxId" className="block text-sm font-semibold text-white/90 mb-2">
-                        Tax ID / Registration Number <span className="text-red-400">*</span>
+                        {t('signup_tax_id_label')} <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1026,7 +1026,7 @@ function AuthForm() {
                           id="signup-taxId"
                           type="text"
                           className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
-                          placeholder="Enter your tax ID or registration number"
+                          placeholder={t('signup_tax_id_placeholder')}
                         />
                       </div>
                       {signUpErrors.taxId && (
@@ -1069,10 +1069,10 @@ function AuthForm() {
                           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                           className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
                         />
-                        Creating account...
+                        {t('signup_loading')}
                       </>
                     ) : (
-                      'Create account'
+                      t('signup_submit')
                     )}
                   </span>
                 </motion.button>
