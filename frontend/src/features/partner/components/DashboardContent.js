@@ -29,7 +29,7 @@ const ComponentLoader = ({ children, fallback = null }) => (
   </Suspense>
 );
 
-const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType = 'neutral', onClick }) => {
+const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType = 'neutral', onClick, t }) => {
   const colorClasses = {
     blue: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800',
     green: 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800',
@@ -84,7 +84,7 @@ const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType
       </div>
       <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</p>
       <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-      {onClick && (
+      {onClick && t && (
         <div className="mt-3 flex items-center text-xs text-gray-500 dark:text-gray-400">
           <span>{t('click_to_view')}</span>
           <ArrowUpRight className="h-3 w-3 ml-1" />
@@ -181,6 +181,7 @@ export default function DashboardContent({
               <QuickStatsCard
                 key={index}
                 {...stat}
+                t={t}
                 onClick={() => {
                   // Navigate to relevant section based on stat
                   if (stat.title.includes('Vehicle')) setCurrentView('vehicles');
