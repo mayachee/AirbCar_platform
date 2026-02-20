@@ -1,3 +1,24 @@
+  "reviews": {
+    "error_loading_reviews": "Échec du chargement des avis : {error}",
+    "based_on_reviews": "Basé sur {count} {count, plural, one {avis} other {avis}}",
+    "write_a_review": "Écrire un avis",
+    "sign_in": "Se connecter",
+    "to_leave_review": "pour laisser un avis.",
+    "no_reviews_yet": "Aucun avis pour le moment",
+    "be_first_to_review": "Ce véhicule n'a pas encore reçu d'avis. Soyez le premier à partager votre expérience !"
+  },
+    "edit_review": "Modifier l'avis",
+    "please_select_rating": "Veuillez sélectionner une note",
+    "comment_min_length": "Le commentaire doit comporter au moins 10 caractères",
+    "rating_label": "Note",
+    "star_count": "{count} {count, plural, one {étoile} other {étoiles}}",
+    "your_review_label": "Votre avis",
+    "review_placeholder": "Partagez votre expérience avec ce véhicule...",
+    "character_count": "{count}/1000 caractères",
+    "cancel": "Annuler",
+    "submitting": "Envoi en cours...",
+    "update_review": "Mettre à jour l'avis",
+    "submit_review": "Envoyer l'avis"
 {
   "common": {
     "app_name": "AirbCar",

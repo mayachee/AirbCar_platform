@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Star, X, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,6 +13,7 @@ export default function ReviewForm({
   initialData = null,
   loading = false 
 }) {
+  const t = useTranslations('reviews');
   const [rating, setRating] = useState(initialData?.rating || 0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState(initialData?.comment || '');
@@ -19,15 +21,12 @@ export default function ReviewForm({
 
   const validate = () => {
     const newErrors = {};
-    
     if (rating === 0) {
-      newErrors.rating = 'Please select a rating';
+      newErrors.rating = t('please_select_rating');
     }
-    
     if (comment.trim().length < 10) {
-      newErrors.comment = 'Comment must be at least 10 characters';
+      newErrors.comment = t('comment_min_length');
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -55,7 +54,7 @@ export default function ReviewForm({
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {initialData ? 'Edit Review' : 'Write a Review'}
+          {initialData ? t('edit_review') : t('write_a_review')}
         </h3>
         {onCancel && (
           <button
@@ -71,7 +70,7 @@ export default function ReviewForm({
         {/* Rating */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Rating *
+            {t('rating_label')} *
           </label>
           <div className="flex items-center space-x-1">
             {[...Array(5)].map((_, i) => {
@@ -97,7 +96,7 @@ export default function ReviewForm({
             })}
             {rating > 0 && (
               <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                {rating} {rating === 1 ? 'star' : 'stars'}
+                {t('star_count', { count: rating })}
               </span>
             )}
           </div>
@@ -109,14 +108,14 @@ export default function ReviewForm({
         {/* Comment */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Your Review *
+            {t('your_review_label')} *
           </label>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={4}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
-            placeholder="Share your experience with this vehicle..."
+            placeholder={t('review_placeholder')}
           />
           <div className="flex items-center justify-between mt-1">
             {errors.comment && (
@@ -127,7 +126,7 @@ export default function ReviewForm({
                 ? 'text-gray-500 dark:text-gray-400' 
                 : 'text-gray-600 dark:text-gray-300'
             }`}>
-              {comment.length}/1000 characters
+              {t('character_count', { count: comment.length, max: 1000 })}
             </p>
           </div>
         </div>
@@ -141,7 +140,7 @@ export default function ReviewForm({
               disabled={loading}
               className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             >
-              Cancel
+              {t('cancel')}
             </button>
           )}
           <button
@@ -152,12 +151,12 @@ export default function ReviewForm({
             {loading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Submitting...</span>
+                <span>{t('submitting')}</span>
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                <span>{initialData ? 'Update Review' : 'Submit Review'}</span>
+                <span>{initialData ? t('update_review') : t('submit_review')}</span>
               </>
             )}
           </button>

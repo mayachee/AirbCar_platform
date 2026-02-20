@@ -1,3 +1,12 @@
+  "reviews": {
+    "error_loading_reviews": "فشل تحميل التقييمات: {error}",
+    "based_on_reviews": "بناءً على {count} {count, plural, one {تقييم} other {تقييمات}}",
+    "write_a_review": "اكتب تقييمًا",
+    "sign_in": "تسجيل الدخول",
+    "to_leave_review": "لترك تقييم.",
+    "no_reviews_yet": "لا توجد تقييمات بعد",
+    "be_first_to_review": "لم يتلق هذا المركبة أي تقييمات بعد. كن أول من يشارك تجربتك!"
+  },
 {
   "common": {
     "app_name": "AirbCar",

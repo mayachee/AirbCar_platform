@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { SelectField } from '@/components/ui/select-field';
 
+import { useTranslations } from 'next-intl';
+
 export default function ReviewList({ 
   listingId, 
   showAddForm = false, 
@@ -261,6 +263,8 @@ export default function ReviewList({
     loadReviews();
   };
 
+  const t = useTranslations('reviews');
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -301,7 +305,7 @@ export default function ReviewList({
   if (error) {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-        <p className="text-red-800 dark:text-red-400">{error}</p>
+        <p className="text-red-800 dark:text-red-400">{t('error_loading_reviews', { error })}</p>
       </div>
     );
   }
@@ -325,7 +329,7 @@ export default function ReviewList({
                 <Star className="h-8 w-8 fill-yellow-400 text-yellow-400" />
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Based on {stats.totalReviews} {stats.totalReviews === 1 ? 'review' : 'reviews'}
+                {t('based_on_reviews', { count: stats.totalReviews })}
               </p>
             </div>
             
@@ -375,7 +379,7 @@ export default function ReviewList({
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
           >
             <MessageSquare className="h-4 w-4" />
-            <span>Write a Review</span>
+            <span>{t('write_a_review')}</span>
           </button>
         </div>
       )}
@@ -386,7 +390,7 @@ export default function ReviewList({
       {!user && (
         <div className="text-center py-3 px-4 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            <a href="/auth/signin" className="text-orange-500 hover:text-orange-600 font-medium">Sign in</a> to leave a review.
+            <a href="/auth/signin" className="text-orange-500 hover:text-orange-600 font-medium">{t('sign_in')}</a> {t('to_leave_review')}
           </p>
         </div>
       )}
@@ -438,10 +442,10 @@ export default function ReviewList({
             <MessageSquare className="h-8 w-8 text-gray-400 dark:text-gray-500" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            No reviews yet
+            {t('no_reviews_yet')}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-            This vehicle hasn't received any reviews yet. Be the first to share your experience!
+            {t('be_first_to_review')}
           </p>
         </motion.div>
       ) : (
