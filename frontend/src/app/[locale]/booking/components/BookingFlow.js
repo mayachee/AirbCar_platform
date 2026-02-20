@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { SelectField } from '@/components/ui/select-field'
 import React from 'react'
 import { 
@@ -17,11 +18,11 @@ import {
   AlertCircle
 } from 'lucide-react'
 
-const STEPS = [
-  { id: 1, name: 'Dates', icon: Calendar, description: 'Select pickup and return dates' },
-  { id: 2, name: 'Documents', icon: FileText, description: 'Upload driver\'s license' },
-  { id: 3, name: 'Payment', icon: CreditCard, description: 'Choose payment method' },
-  { id: 4, name: 'Review', icon: CheckCircle2, description: 'Review and confirm booking' },
+const getStepsConfig = (t) => [
+  { id: 1, name: t('dates_step'), icon: Calendar, description: t('dates_step_desc') },
+  { id: 2, name: t('documents_step'), icon: FileText, description: t('documents_step_desc') },
+  { id: 3, name: t('payment_step'), icon: CreditCard, description: t('payment_step_desc') },
+  { id: 4, name: t('review_step'), icon: CheckCircle2, description: t('review_step_desc') },
 ]
 
 export default function BookingFlow({ 
@@ -40,6 +41,8 @@ export default function BookingFlow({
   error,
   children
 }) {
+  const t = useTranslations('booking')
+  const STEPS = getStepsConfig(t)
   const [currentStep, setCurrentStep] = useState(1)
   const [pickupTime, setPickupTime] = useState(initialPickupTime)
   const [returnTime, setReturnTime] = useState(initialReturnTime)
@@ -375,10 +378,10 @@ export default function BookingFlow({
                 <div className="space-y-6">
                   <div className="text-left mb-6">
                     <h3 className="text-lg font-semibold text-white mb-2">
-                      Select Your Rental Dates
+                      {t('select_rental_dates')}
                     </h3>
                     <p className="text-sm text-white/60">
-                      Choose when you'd like to pick up and return the vehicle
+                      {t('choose_pickup_return')}
                     </p>
                   </div>
 
@@ -387,14 +390,14 @@ export default function BookingFlow({
                     {/* Pickup Date */}
                     <div>
                       <label className="block text-sm font-medium text-white/90 mb-2">
-                        Pickup Date
+                        {t('pickup_date')}
                       </label>
                       <SelectField
                         id="pickupDate"
                         value={pickupDate || ''}
                         onChange={(e) => onDatesChange?.('pickup', e.target.value)}
                         options={buildDateOptions(todayStr, 180)}
-                        placeholder="Select pickup date"
+                        placeholder={t('select_pickup_date')}
                         contentProps={{ className: heroBlurContentClass }}
                         className={`${heroBlurFieldClass} ${validationErrors.pickupDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                         
@@ -409,14 +412,14 @@ export default function BookingFlow({
                       {/* Pickup Time */}
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-white/90 mb-2">
-                          Pickup Time
+                          {t('pickup_time')}
                         </label>
                         <SelectField
                           id="pickupTime"
                           value={pickupTime || ''}
                           onChange={(e) => handleTimeChange('pickup', e.target.value)}
                           options={timeOptions}
-                          placeholder="Select pickup time"
+                          placeholder={t('select_pickup_time')}
                           contentProps={{ className: heroBlurContentClass }}
                           className={`${heroBlurFieldClass}`}
                         />
@@ -426,14 +429,14 @@ export default function BookingFlow({
                     {/* Return Date */}
                     <div>
                       <label className="block text-sm font-medium text-white/90 mb-2">
-                        Return Date
+                        {t('return_date')}
                       </label>
                       <SelectField
                         id="returnDate"
                         value={returnDate || ''}
                         onChange={(e) => onDatesChange?.('return', e.target.value)}
                         options={buildDateOptions(pickupDate || todayStr, 180)}
-                        placeholder="Select return date"
+                        placeholder={t('select_return_date')}
                         contentProps={{ className: heroBlurContentClass }}
                         className={`${heroBlurFieldClass} ${validationErrors.returnDate ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                         
@@ -448,14 +451,14 @@ export default function BookingFlow({
                       {/* Return Time */}
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-white/90 mb-2">
-                          Return Time
+                          {t('return_time')}
                         </label>
                         <SelectField
                           id="returnTime"
                           value={returnTime || ''}
                           onChange={(e) => handleTimeChange('return', e.target.value)}
                           options={timeOptions}
-                          placeholder="Select return time"
+                          placeholder={t('select_return_time')}
                           contentProps={{ className: heroBlurContentClass }}
                           className={`${heroBlurFieldClass}`}
                         />
@@ -470,16 +473,16 @@ export default function BookingFlow({
                 <div className="space-y-6">
                   <div className="text-left mb-6">
                     <h3 className="text-lg font-semibold text-white mb-2">
-                      Upload Your Documents
+                      {t('upload_documents')}
                     </h3>
                     <p className="text-sm text-white/60">
-                      Please provide your driver's license for verification
+                      {t('provide_drivers_license')}
                     </p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-white/90 mb-2">
-                      Phone Number
+                      {t('phone_number_label')}
                     </label>
                     <input
                       type="tel"
@@ -494,7 +497,7 @@ export default function BookingFlow({
                           setValidationErrors((prev) => ({ ...prev, phone: null }))
                         }
                       }}
-                      placeholder={'e.g. +212 6XX-XXXXXX'}
+                      placeholder={t('phone_placeholder')}
                       className={`w-full px-4 py-3 rounded-lg ${heroBlurFieldClass} ${validationErrors.phone ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                     />
                     {validationErrors.phone && (
@@ -504,7 +507,7 @@ export default function BookingFlow({
                       </p>
                     )}
                     <p className="mt-2 text-xs text-white/50">
-                      Used to coordinate pickup/return if needed.
+                      {t('phone_used_for_coordination')}
                     </p>
                   </div>
 
@@ -534,10 +537,10 @@ export default function BookingFlow({
                 <div className="space-y-6">
                   <div className="text-left mb-6">
                     <h3 className="text-lg font-semibold text-white mb-2">
-                      Payment Method
+                      {t('payment_method')}
                     </h3>
                     <p className="text-sm text-white/60">
-                      Select how you would like to pay
+                      {t('select_payment_method')}
                     </p>
                   </div>
 
@@ -557,8 +560,8 @@ export default function BookingFlow({
                           <CreditCard className="w-6 h-6" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-white">Pay Online</h4>
-                          <p className="text-sm text-white/60">Secure payment with credit card</p>
+                          <h4 className="font-semibold text-white">{t('pay_online')}</h4>
+                          <p className="text-sm text-white/60">{t('pay_online_desc')}</p>
                         </div>
                         {formData.paymentMethod === 'online' && (
                           <div className="ml-auto text-orange-500">
@@ -583,8 +586,8 @@ export default function BookingFlow({
                           <div className="w-6 h-6 font-bold flex items-center justify-center text-lg">$</div>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-white">Pay at Pickup</h4>
-                          <p className="text-sm text-white/60">Pay when you pick up the car</p>
+                          <h4 className="font-semibold text-white">{t('pay_at_pickup')}</h4>
+                          <p className="text-sm text-white/60">{t('pay_at_pickup_desc')}</p>
                         </div>
                         {formData.paymentMethod === 'cash' && (
                           <div className="ml-auto text-orange-500">
@@ -602,10 +605,10 @@ export default function BookingFlow({
                 <div className="space-y-6">
                   <div className="text-center mb-6">
                     <h3 className="text-lg font-semibold text-white mb-2">
-                      Review Your Booking
+                      {t('review_booking')}
                     </h3>
                     <p className="text-sm text-white/60">
-                      Please review all details before confirming
+                      {t('review_before_confirm')}
                     </p>
                   </div>
 
@@ -648,7 +651,7 @@ export default function BookingFlow({
                     <div className={`${glassContentClass} p-4`}>
                       <div className="flex items-center gap-3 mb-3">
                         <User className="w-5 h-5 text-white/60" />
-                        <h4 className="font-semibold text-white">Booking For</h4>
+                        <h4 className="font-semibold text-white">{t('booking_for')}</h4>
                       </div>
                       <p className="text-sm text-white">
                         {user.first_name} {user.last_name}
@@ -664,14 +667,14 @@ export default function BookingFlow({
                   <div className={`${glassContentClass} p-4`}>
                     <div className="flex items-center gap-3 mb-3">
                       <CreditCard className="w-5 h-5 text-white/60" />
-                      <h4 className="font-semibold text-white">Payment Method</h4>
+                      <h4 className="font-semibold text-white">{t('payment_method')}</h4>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-white">
                         {formData.paymentMethod === 'online' ? 'Pay Online (Credit Card)' : 'Pay at Pickup (Cash)'}
                       </span>
                       <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-medium border border-orange-500/20">
-                        Selected
+                        {t('selected_label')}
                       </span>
                     </div>
                   </div>
@@ -680,12 +683,12 @@ export default function BookingFlow({
                   <div className={`${glassContentClass} p-4`}>
                     <div className="flex items-center gap-3 mb-3">
                       <Shield className="w-5 h-5 text-white/60" />
-                      <h4 className="font-semibold text-white">Driver's License</h4>
+                      <h4 className="font-semibold text-white">{t('drivers_license')}</h4>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       {/* Front Image */}
                       <div>
-                        <p className="text-xs text-white/60 mb-2">Front</p>
+                        <p className="text-xs text-white/60 mb-2">{t('front')}</p>
                         <div className="relative aspect-video rounded-lg overflow-hidden bg-black/20 border border-white/10">
                           {(formData.licenseFiles?.front || user?.license_front_document_url || user?.licenseFrontDocumentUrl) ? (
                             <img 
@@ -695,14 +698,14 @@ export default function BookingFlow({
                             />
                           ) : (
                             <div className="flex items-center justify-center h-full text-white/40 text-xs">
-                              No image
+                              {t('no_image')}
                             </div>
                           )}
                         </div>
                       </div>
                       {/* Back Image */}
                       <div>
-                        <p className="text-xs text-white/60 mb-2">Back</p>
+                        <p className="text-xs text-white/60 mb-2">{t('back')}</p>
                         <div className="relative aspect-video rounded-lg overflow-hidden bg-black/20 border border-white/10">
                           {(formData.licenseFiles?.back || user?.license_back_document_url || user?.licenseBackDocumentUrl) ? (
                             <img 
@@ -712,7 +715,7 @@ export default function BookingFlow({
                             />
                           ) : (
                             <div className="flex items-center justify-center h-full text-white/40 text-xs">
-                              No image
+                              {t('no_image')}
                             </div>
                           )}
                         </div>
@@ -728,7 +731,7 @@ export default function BookingFlow({
                   <div className="flex items-start">
                     <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" />
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-red-200">Error</h3>
+                      <h3 className="text-sm font-medium text-red-200">{t('error')}</h3>
                       <p className="mt-1 text-sm text-red-300">{error}</p>
                     </div>
                   </div>
@@ -744,7 +747,7 @@ export default function BookingFlow({
                 className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 text-sm md:text-base text-white/70 font-medium rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
-                Back
+                {t('back_button')}
               </button>
 
               <div className="flex items-center gap-2">
@@ -768,7 +771,7 @@ export default function BookingFlow({
                   disabled={loading}
                   className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2 text-sm md:text-base bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next
+                  {t('next_button')}
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
               ) : (
@@ -803,11 +806,10 @@ export default function BookingFlow({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Processing...
+                      {t('processing')}
                     </>
                   ) : (
-                    <>Confirm Booking
-                    </>
+                    <>{t('confirm_booking')}</>
                   )}
                 </button>
               )}
@@ -843,7 +845,7 @@ export default function BookingFlow({
 
               <div className="pt-4 md:pt-6 border-t border-white/10 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-white/60">Total Price</p>
+                  <p className="text-sm font-medium text-white/60">{t('total_price')}</p>
                   {duration && duration !== '0' && (
                     <p className="text-xs text-white/40 mt-1">
                       for {duration} {duration === '1' ? 'day' : 'days'}
@@ -859,19 +861,19 @@ export default function BookingFlow({
 
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-white/60">Rental ({parsedDays} {parsedDays === 1 ? 'day' : 'days'})</span>
+                  <span className="text-white/60">{t('rental')} ({parsedDays} {parsedDays === 1 ? t('day') : t('days')})</span>
                   <span className="text-white/90 font-medium">{rentalSubtotal} MAD</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-white/60">Service fee</span>
+                  <span className="text-white/60">{t('service_fee')}</span>
                   <span className="text-white/90 font-medium">{serviceFee} MAD</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-white/60">Safety deposit</span>
+                  <span className="text-white/60">{t('safety_deposit')}</span>
                   <span className="text-white/90 font-medium">{safetyDeposit} MAD</span>
                 </div>
                 <p className="text-xs text-white/40 pt-1">
-                  Safety deposit is refundable after return.
+                  {t('safety_deposit_refundable')}
                 </p>
               </div>
             </div>
