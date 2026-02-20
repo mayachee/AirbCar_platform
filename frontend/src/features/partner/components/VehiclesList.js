@@ -515,7 +515,7 @@ export default function VehiclesList({
                         <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                           ${parseFloat(vehicle.price_per_day || vehicle.price || 0).toFixed(0)}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">per day</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{t('per_day')}</div>
                       </div>
                     </div>
                   )}
@@ -526,7 +526,7 @@ export default function VehiclesList({
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       <DollarSign className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
                       <span className="font-semibold text-gray-900 dark:text-white text-lg">${parseFloat(vehicle.price_per_day || vehicle.price || 0).toFixed(0)}</span>
-                      <span className="text-gray-500 dark:text-gray-400 ml-1">/day</span>
+                      <span className="text-gray-500 dark:text-gray-400 ml-1">{t('day')}</span>
                     </div>
                     {vehicle.instant_booking && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full font-medium">

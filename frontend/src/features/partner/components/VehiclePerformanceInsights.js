@@ -3,10 +3,12 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Star, Car, TrendingUp } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const formatCurrency = (v) => `${(Number(v) || 0).toLocaleString('fr-MA')} MAD`;
 
 export default function VehiclePerformanceInsights({ vehicles, earnings }) {
+  const t = useTranslations('partner_dashboard');
   const insights = useMemo(() => {
     // Use vehicle_earnings from earnings API if available
     const vehicleEarnings = earnings?.vehicle_earnings || [];
@@ -57,7 +59,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Vehicle Performance</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('vehicle_performance')}</h3>
         <Car className="h-5 w-5 text-gray-400 dark:text-gray-500" />
       </div>
       
@@ -68,7 +70,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-yellow-500" />
-                <h4 className="font-medium text-green-800 dark:text-green-200 text-sm">Top Performer</h4>
+                <h4 className="font-medium text-green-800 dark:text-green-200 text-sm">{t('top_performer')}</h4>
               </div>
               {insights.averageRating > 0 && (
                 <span className={`text-sm font-medium ${getPerformanceColor(insights.averageRating)}`}>
@@ -81,7 +83,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
             </p>
             <div className="flex items-center gap-3 mt-1">
               <p className="text-xs text-green-600 dark:text-green-400">
-                {insights.topPerformer.bookings} bookings
+                {insights.topPerformer.bookings} {t('bookings')}
               </p>
               {insights.topPerformer.revenue > 0 && (
                 <p className="text-xs font-medium text-green-700 dark:text-green-300">
@@ -96,7 +98,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600 dark:text-gray-300">Avg Rating</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300">{t('avg_rating')}</span>
               <span className={`text-sm font-semibold ${getPerformanceColor(insights.averageRating)}`}>
                 {insights.averageRating > 0 ? insights.averageRating.toFixed(1) : '—'}
               </span>
@@ -105,7 +107,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
           
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600 dark:text-gray-300">Total Bookings</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300">{t('total_bookings')}</span>
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
                 {insights.totalBookings}
               </span>
@@ -116,7 +118,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
         {/* Revenue by Vehicle */}
         {insights.revenueByVehicle.length > 0 && (
           <div>
-            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Revenue by Vehicle</h4>
+            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{t('revenue_by_vehicle')}</h4>
             <div className="space-y-2">
               {insights.revenueByVehicle.slice(0, 3).map((vehicle, index) => {
                 const maxRev = insights.revenueByVehicle[0]?.revenue || 1;
@@ -144,7 +146,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
                           className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full"
                         />
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{vehicle.bookings} bookings</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{vehicle.bookings} {t('bookings')}</p>
                     </div>
                   </motion.div>
                 );
@@ -157,7 +159,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
         {!vehicles?.length && (
           <div className="text-center py-6 text-gray-400 dark:text-gray-500">
             <Car className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Add vehicles to see performance data</p>
+            <p className="text-sm">{t('add_vehicles_message')}</p>
           </div>
         )}
       </div>

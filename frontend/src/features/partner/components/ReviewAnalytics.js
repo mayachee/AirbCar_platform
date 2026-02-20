@@ -5,9 +5,11 @@ import { reviewService } from '@/features/reviews';
 import { Star, TrendingUp, MessageSquare, TrendingDown, BarChart3, ThumbsUp, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/contexts/ToastContext';
+import { useTranslations } from 'next-intl';
 
 export default function ReviewAnalytics({ reviews: reviewsData }) {
   const { addToast } = useToast();
+  const t = useTranslations('partner_dashboard');
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -72,8 +74,8 @@ export default function ReviewAnalytics({ reviews: reviewsData }) {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="text-center py-8">
           <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 dark:text-gray-400 mb-2">No analytics data available</p>
-          <p className="text-sm text-gray-500 dark:text-gray-500">Reviews will appear here once customers start leaving reviews</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">{t('no_analytics_data')}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500">{t('no_reviews_message')}</p>
         </div>
       </div>
     );
@@ -97,10 +99,10 @@ export default function ReviewAnalytics({ reviews: reviewsData }) {
         >
           <div className="flex items-center justify-between mb-2">
             <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Avg Rating</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">{t('avg_rating')}</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.averageRating || analytics.average_rating || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Out of 5.0</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('out_of_5')}</p>
         </motion.div>
 
         <motion.div
@@ -111,11 +113,11 @@ export default function ReviewAnalytics({ reviews: reviewsData }) {
         >
           <div className="flex items-center justify-between mb-2">
             <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Total Reviews</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">{t('total_reviews_label')}</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalReviews || analytics.total_reviews || 0}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {analytics.recentReviews30Days || analytics.recent_reviews_30_days || 0} in last 30 days
+            {analytics.recentReviews30Days || analytics.recent_reviews_30_days || 0} {t('in_last_30_days')}
           </p>
         </motion.div>
 
@@ -127,10 +129,10 @@ export default function ReviewAnalytics({ reviews: reviewsData }) {
         >
           <div className="flex items-center justify-between mb-2">
             <ThumbsUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Helpful Votes</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">{t('helpful_votes')}</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalHelpfulVotes || analytics.total_helpful_votes || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Community engagement</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('community_engagement')}</p>
         </motion.div>
 
         <motion.div
@@ -141,16 +143,16 @@ export default function ReviewAnalytics({ reviews: reviewsData }) {
         >
           <div className="flex items-center justify-between mb-2">
             <BarChart3 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">With Responses</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">{t('with_responses')}</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.reviewsWithResponses || analytics.reviews_with_responses || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">You've responded to</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('responded_to')}</p>
         </motion.div>
       </div>
 
       {/* Rating Distribution */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Rating Distribution</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('rating_distribution')}</h3>
         <div className="space-y-4">
           {[5, 4, 3, 2, 1].map((rating) => {
             const ratingDist = analytics.ratingDistribution || analytics.rating_distribution || {};
@@ -187,7 +189,7 @@ export default function ReviewAnalytics({ reviews: reviewsData }) {
       {/* Top Reviewed Vehicles */}
       {analytics.reviewsByVehicle && analytics.reviewsByVehicle.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Top Reviewed Vehicles</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">{t('top_reviewed_vehicles')}</h3>
           <div className="space-y-3">
             {analytics.reviewsByVehicle
               .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
