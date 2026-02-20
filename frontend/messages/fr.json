@@ -5,8 +5,7 @@
     "sign_in": "Se connecter",
     "to_leave_review": "pour laisser un avis.",
     "no_reviews_yet": "Aucun avis pour le moment",
-    "be_first_to_review": "Ce véhicule n'a pas encore reçu d'avis. Soyez le premier à partager votre expérience !"
-  },
+    "be_first_to_review": "Ce véhicule n'a pas encore reçu d'avis. Soyez le premier à partager votre expérience !",
     "edit_review": "Modifier l'avis",
     "please_select_rating": "Veuillez sélectionner une note",
     "comment_min_length": "Le commentaire doit comporter au moins 10 caractères",
@@ -19,6 +18,7 @@
     "submitting": "Envoi en cours...",
     "update_review": "Mettre à jour l'avis",
     "submit_review": "Envoyer l'avis"
+  },
 {
   "common": {
     "app_name": "AirbCar",
