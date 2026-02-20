@@ -48,14 +48,14 @@ export default function Reviews({ vehicle }) {
   const handleSubmitReview = async (reviewData) => {
     try {
       await reviewService.createReview(reviewData);
-      addToast('Review submitted successfully!', 'success');
+      addToast(t('review_submitted_success'), 'success');
       setShowForm(false);
       setCanReview(false);
       setRefreshTrigger(prev => prev + 1); // Trigger ReviewList refresh
       checkCanReview();
     } catch (err) {
       console.error('Error submitting review:', err);
-      addToast(err.message || 'Failed to submit review', 'error');
+      addToast(err.message || t('failed_submit_review'), 'error');
     }
   };
 
@@ -70,7 +70,7 @@ export default function Reviews({ vehicle }) {
           className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
         >
           <Plus className="h-5 w-5" />
-          <span>Write a Review</span>
+          <span>{t('write_review')}</span>
         </motion.button>
       )}
 

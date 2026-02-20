@@ -25,26 +25,26 @@ export default function VehicleDetails({ vehicle }) {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
       {/* Specifications */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Car details</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('car_details')}</h3>
         <div className="space-y-3">
           <div className="flex justify-between">
-            <span className="text-gray-400">Make & Model</span>
+            <span className="text-gray-400">{t('make_model')}</span>
             <span className="font-medium text-gray-200">{name}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Year</span>
+            <span className="text-gray-400">{t('year')}</span>
             <span className="font-medium text-gray-200">{vehicle.year || 'N/A'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Seats</span>
+            <span className="text-gray-400">{t('seats')}</span>
             <span className="font-medium text-gray-200">{seats}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Transmission</span>
+            <span className="text-gray-400">{t('transmission')}</span>
             <span className="font-medium capitalize text-gray-200">{transmission}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Fuel type</span>
+            <span className="text-gray-400">{t('fuel_type')}</span>
             <span className="font-medium capitalize text-gray-200">{fuelType}</span>
           </div>
         </div>
@@ -52,7 +52,7 @@ export default function VehicleDetails({ vehicle }) {
 
       {/* Features */}
       <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Features</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('features')}</h3>
         <div className="grid grid-cols-1 gap-2">
           {features.length > 0 ? (
             features.map((feature, index) => (
@@ -64,7 +64,7 @@ export default function VehicleDetails({ vehicle }) {
               </div>
             ))
           ) : (
-            <p className="text-gray-400 text-sm">No features listed</p>
+            <p className="text-gray-400 text-sm">{t('no_features_listed')}</p>
           )}
         </div>
       </div>

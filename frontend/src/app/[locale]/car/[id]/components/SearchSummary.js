@@ -15,19 +15,19 @@ export default function SearchSummary({ searchDetails, selectedDates, onModifySe
             <span className="text-blue-200">{searchDetails.location}</span>
           </div>
           {searchDetails.pickupDate && (
-            <>
-              <span className="text-blue-400/60">•</span>
-              <span className="text-blue-200">{selectedDates.pickup} - {selectedDates.return}</span>
-              <span className="text-blue-400/60">•</span>
-              <span className="text-blue-200">{searchDetails.duration} {searchDetails.duration === 1 ? 'day' : 'days'}</span>
-            </>
-          )}
+                <>
+                  <span className="text-blue-400/60">•</span>
+                  <span className="text-blue-200">{selectedDates.pickup} - {selectedDates.return}</span>
+                  <span className="text-blue-400/60">•</span>
+                  <span className="text-blue-200">{searchDetails.duration} {searchDetails.duration === 1 ? t('day') : t('days')}</span>
+                </>
+              )}
         </div>
         <button
           onClick={onModifySearch}
           className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
         >
-          Modify search
+          {t('modify_search')}
         </button>
       </div>
     </div>

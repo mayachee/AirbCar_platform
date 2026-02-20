@@ -100,7 +100,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              per day
+              {t('per_day')}
             </motion.div>
           </motion.div>
 
@@ -115,7 +115,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <label className="block text-xs font-medium text-gray-400 mb-1">Pickup</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1">{t('pickup')}</label>
                 <div className="text-sm font-medium text-white">{selectedDates.pickup}</div>
               </motion.div>
               <motion.div
@@ -123,7 +123,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.45 }}
               >
-                <label className="block text-xs font-medium text-gray-400 mb-1">Return</label>
+                <label className="block text-xs font-medium text-gray-400 mb-1">{t('return')}</label>
                 <div className="text-sm font-medium text-white">{selectedDates.return}</div>
               </motion.div>
             </div>
@@ -134,7 +134,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
-              Change dates
+              {t('change_dates')}
             </motion.button>
           </motion.div>
 
@@ -143,23 +143,23 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             className="border-t border-b border-white/10 py-4 mb-6"
             variants={itemVariants}
           >
-            <div className="flex justify-between items-center mb-2 text-sm">
-              <span className="text-gray-400">{duration} {duration === 1 ? 'day' : 'days'} rental</span>
+              <div className="flex justify-between items-center mb-2 text-sm">
+              <span className="text-gray-400">{duration} {duration === 1 ? t('day') : t('days')} {t('rental')}</span>
               <span className="font-medium text-white">{formatPrice(basePrice)}</span>
             </div>
             <div className="flex justify-between items-center mb-2 text-sm">
-              <span className="text-gray-400">Service fee</span>
+              <span className="text-gray-400">{t('service_fee')}</span>
               <span className="font-medium text-white">{formatPrice(serviceFee)}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-400">Security deposit</span>
+              <span className="text-gray-400">{t('security_deposit')}</span>
               <span className="font-medium text-white">{formatPrice(5000)}</span>
             </div>
             <div className="text-xs text-green-400/70 text-right mb-2">
-              Refunded after rental period
+              {t('refunded_after_rental')}
             </div>
             <div className="flex justify-between items-center font-semibold text-lg pt-2 border-t border-white/10 mt-2 text-white">
-              <span>Total</span>
+              <span>{t('total')}</span>
               <span>{formatPrice(total)}</span>
             </div>
           </motion.div>
@@ -177,7 +177,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
-            Book now
+            {t('book_now')}
           </motion.button>
 
           {/* Insurance Info */}
@@ -198,10 +198,10 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </motion.svg>
-              <div>
-                <div className="font-medium text-green-400">Protected by insurance</div>
+                <div>
+                <div className="font-medium text-green-400">{t('protected_by_insurance')}</div>
                 <div className="text-sm text-green-300">{insuranceCoverage}</div>
-                <div className="text-xs text-green-400/80 mt-1">Deductible: {insuranceDeductible}</div>
+                <div className="text-xs text-green-400/80 mt-1">{t('deductible_label', { amount: insuranceDeductible })}</div>
               </div>
             </div>
           </motion.div>
@@ -211,31 +211,31 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             className="space-y-3"
             variants={itemVariants}
           >
-            <h4 className="font-medium text-white">What's included</h4>
+            <h4 className="font-medium text-white">{t('whats_included')}</h4>
             <div className="space-y-2">
               <div className="flex items-center text-sm text-gray-300">
                 <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>{mileageIncluded} km included</span>
+                <span>{mileageIncluded} {t('km_included')}</span>
               </div>
               <div className="flex items-center text-sm text-gray-300">
                 <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Comprehensive insurance</span>
+                <span>{t('comprehensive_insurance')}</span>
               </div>
               <div className="flex items-center text-sm text-gray-300">
                 <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>24/7 roadside assistance</span>
+                <span>{t('roadside_assistance')}</span>
               </div>
               <div className="flex items-center text-sm text-gray-300">
                 <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Free cancellation (24h)</span>
+                <span>{t('free_cancellation')}</span>
               </div>
             </div>
           </motion.div>

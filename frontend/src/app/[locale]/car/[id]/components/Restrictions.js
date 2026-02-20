@@ -32,11 +32,11 @@ export default function Restrictions({ vehicle }) {
 
   // Default restrictions if none provided
   const defaultRestrictions = [
-    'Minimum age: 21 years',
-    'Valid driver\'s license required',
-    'Credit card required for deposit',
-    'No smoking in the vehicle',
-    'Return vehicle with same fuel level'
+    t('min_age_default'),
+    t('valid_license_required'),
+    t('credit_card_required_deposit'),
+    t('no_smoking'),
+    t('return_same_fuel')
   ]
 
   const displayRestrictions = restrictions.length > 0 ? restrictions : defaultRestrictions
@@ -49,13 +49,13 @@ export default function Restrictions({ vehicle }) {
           <div className="p-2 bg-red-500/10 rounded-lg mr-3">
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
-          <h3 className="text-xl font-bold text-white">Car Rules & Restrictions</h3>
+          <h3 className="text-xl font-bold text-white">{t('car_rules_restrictions')}</h3>
         </div>
         <div className="space-y-3">
           {displayRestrictions.map((restriction, index) => (
             <div key={index} className="flex items-start space-x-3 p-3">
               <XCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-300 leading-relaxed">{restriction}</span>
+                  <span className="text-sm text-gray-300 leading-relaxed">{restriction}</span>
             </div>
           ))}
         </div>
@@ -68,7 +68,7 @@ export default function Restrictions({ vehicle }) {
             <div className="p-2 bg-orange-500/20 rounded-lg mr-3">
               <Shield className="w-5 h-5 text-orange-400" />
             </div>
-            <h3 className="text-xl font-bold text-white">Owner Information</h3>
+            <h3 className="text-xl font-bold text-white">{t('owner_information')}</h3>
           </div>
 
           <div className="space-y-4">
@@ -123,7 +123,7 @@ export default function Restrictions({ vehicle }) {
                 
                 {/* Company Name */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">Hosted by</p>
+                  <p className="text-xs text-gray-500 mb-1">{t('hosted_by')}</p>
                   {partnerSlug ? (
                     <Link 
                       href={`/partner/${partnerSlug}`}
@@ -144,11 +144,11 @@ export default function Restrictions({ vehicle }) {
             )}
 
             {/* Verified Badge */}
-            {owner.verified && (
+                  {owner.verified && (
               <div className="pt-3">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">Verified Partner</span>
+                  <span className="text-sm font-medium text-green-700">{t('verified_partner')}</span>
                 </div>
               </div>
             )}
