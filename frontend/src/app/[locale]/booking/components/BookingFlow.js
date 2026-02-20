@@ -165,10 +165,10 @@ export default function BookingFlow({
   const validateStep1 = () => {
     const errors = {}
     if (!pickupDate) {
-      errors.pickupDate = 'Pickup date is required'
+      errors.pickupDate = t('pickup_date_required')
     }
     if (!returnDate) {
-      errors.returnDate = 'Return date is required'
+      errors.returnDate = t('return_date_required')
     }
     
     // Simplified validation: removed date logic checks (past dates, return < pickup)
@@ -180,7 +180,7 @@ export default function BookingFlow({
   const validateStep2 = () => {
     // Check if user has complete license documents
     if (!user) {
-      setValidationErrors({ license: 'User information is required' })
+      setValidationErrors({ license: t('user_info_required') })
       return false
     }
     
@@ -203,14 +203,14 @@ export default function BookingFlow({
     
     if (!hasCompleteLicense && !hasUploadedFiles) {
       setValidationErrors({
-        license: 'Please upload both front and back of your driver\'s license'
+        license: t('license_upload_required')
       })
       return false
     }
     
     if (!formData.agreedToTerms) {
       setValidationErrors({
-        terms: 'You must agree to the terms and conditions'
+        terms: t('terms_agreement_required')
       })
       return false
     }
@@ -220,7 +220,7 @@ export default function BookingFlow({
     ).trim()
     if (!phoneValue) {
       setValidationErrors({
-        phone: 'Phone number is required'
+        phone: t('phone_required')
       })
       return false
     }
@@ -848,7 +848,7 @@ export default function BookingFlow({
                   <p className="text-sm font-medium text-white/60">{t('total_price')}</p>
                   {duration && duration !== '0' && (
                     <p className="text-xs text-white/40 mt-1">
-                      for {duration} {duration === '1' ? 'day' : 'days'}
+                      {t('for_days_label')} {duration} {duration === '1' ? t('day') : t('days')}
                     </p>
                   )}
                 </div>

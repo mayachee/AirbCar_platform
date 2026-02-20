@@ -2,8 +2,10 @@
 
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 export default function BookingForm({ onConfirm, onCancel, loading, error, user, onFormDataUpdate, hideButtons = false }) {
+  const t = useTranslations('booking')
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [specialRequest, setSpecialRequest] = useState('')
   const [licenseFrontFile, setLicenseFrontFile] = useState(null)
@@ -302,7 +304,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-red-200">Error</h3>
+                <h3 className="text-sm font-medium text-red-200">{t('error')}</h3>
                 <p className="mt-1 text-sm text-red-300">{error}</p>
               </div>
             </div>
@@ -332,8 +334,8 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-blue-200 mb-1">Secure Booking</h3>
-              <p className="text-sm text-blue-200/80">Your booking is secured and protected. All transactions are encrypted and your information is safe.</p>
+              <h3 className="text-sm font-semibold text-blue-200 mb-1">{t('secure_booking')}</h3>
+              <p className="text-sm text-blue-200/80">{t('secure_booking_desc')}</p>
             </div>
           </div>
         </div>
@@ -359,17 +361,17 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                 <h4 className={`text-sm font-semibold mb-1 ${
                   hasValidLicenseForBooking ? 'text-green-200' : 'text-yellow-200'
                 }`}>
-                  {hasValidLicenseForBooking ? 'Documents Status: Ready ✓' : 'Documents Status: Missing ⚠️'}
+                  {hasValidLicenseForBooking ? t('documents_status_ready') : t('documents_status_missing')}
                 </h4>
                 {hasValidLicenseForBooking ? (
                   <div className="space-y-2">
                     <p className="text-sm text-green-300">
-                      You have documents available for this booking.
+                      {t('docs_available')}
                     </p>
                     {hasCompleteLicenseInDatabase && (
                       <div className="text-xs text-green-400/80 space-y-1">
-                        <p className="font-medium">From your profile:</p>
-                        <p>• License: Front + Back ✓</p>
+                        <p className="font-medium">{t('from_profile')}</p>
+                        <p>• {t('license_front_back')} ✓</p>
                         {user.license_number && (
                           <p>• License Number: {user.license_number}</p>
                         )}
@@ -420,19 +422,19 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
         {/* Driver's License Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            Driver's License 
+            {t('drivers_license')} 
             {hasCompleteLicenseInDatabase ? (
               <span className="ml-2 inline-flex items-center gap-1 text-green-400 font-semibold">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Complete (from your profile)
+                {t('complete_from_profile')}
               </span>
             ) : (
               <>
-                <span className="text-red-400 font-normal">(Required)</span>
+                <span className="text-red-400 font-normal">{t('required_field')}</span>
                 {!hasValidLicenseForBooking && (
-                  <span className="ml-2 text-xs text-red-400 font-semibold">⚠️ Both front and back required</span>
+                  <span className="ml-2 text-xs text-red-400 font-semibold">⚠️ {t('both_sides_required')}</span>
                 )}
               </>
             )}
@@ -447,10 +449,10 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                 </svg>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-green-200 mb-1">
-                    ✓ Driver's License Found in Your Profile
+                    ✓ {t('license_found_profile')}
                   </p>
                   <p className="text-xs text-green-700 mb-3">
-                    Both front and back documents are already saved in your profile and will be used for this booking.
+                    {t('license_profile_saved')}
                   </p>
                   <div className="flex items-center gap-4 mt-3">
                     {user.license_front_document_url && (
@@ -464,7 +466,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        View Front
+                        {t('view_front')}
                       </a>
                     )}
                     {user.license_back_document_url && (
@@ -478,7 +480,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        View Back
+                        {t('view_back')}
                       </a>
                     )}
                   </div>
@@ -502,9 +504,9 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
           {(!hasCompleteLicenseInDatabase || licenseFrontFile) && (
             <div className="mt-4">
               <label htmlFor="licenseFrontFile" className="block text-sm font-medium text-gray-300 mb-2">
-                License Front (Recto)
+                {t('license_front_recto')}
                 {hasCompleteLicenseInDatabase && (
-                  <span className="ml-2 text-xs text-gray-400 font-normal">(Optional: replace existing)</span>
+                  <span className="ml-2 text-xs text-gray-400 font-normal">{t('replace_existing')}</span>
                 )}
               </label>
               
@@ -726,18 +728,18 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
         {/* Special Requests */}
         <div>
           <label htmlFor="specialRequest" className="block text-sm font-medium text-gray-300 mb-2">
-            Special Requests or Notes (Optional)
+            {t('special_requests')}
           </label>
           <textarea
             id="specialRequest"
             value={specialRequest}
             onChange={(e) => setSpecialRequest(e.target.value)}
-            placeholder="Any special requests, delivery instructions, or additional information..."
+            placeholder={t('special_requests_placeholder')}
             rows={3}
             disabled={loading || !isAuthenticated}
             className={`${glassInputClass} resize-none disabled:opacity-50 disabled:cursor-not-allowed`}
           />
-          <p className="mt-1 text-xs text-gray-400">This will be sent to the car owner along with your booking request</p>
+          <p className="mt-1 text-xs text-gray-400">{t('sent_to_owner')}</p>
         </div>
 
         {/* Terms and Conditions */}
@@ -757,17 +759,17 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
             />
             <div className="flex-1">
               <span className="text-sm text-gray-300">
-                I agree to the{' '}
+                {t('agree_to')}{' '}
                 <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline font-medium">
-                  Terms and Conditions
+                  {t('terms_conditions')}
                 </a>
-                {' '}and{' '}
+                {' '}{t('and_text')}{' '}
                 <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline font-medium">
-                  Privacy Policy
+                  {t('privacy_policy')}
                 </a>
               </span>
               <p className="text-xs text-gray-400 mt-1">
-                By confirming, you agree to pay the booking amount and follow our rental policies
+                {t('confirm_pay_policies')}
               </p>
             </div>
           </label>
@@ -817,7 +819,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>You can cancel this booking within 24 hours for a full refund</span>
+          <span>{t('cancel_24h_refund')}</span>
         </div>
       </div>
 
@@ -832,21 +834,21 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                 </svg>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">Confirm Booking</h3>
-                <p className="text-sm text-gray-400">Are you ready to submit your booking request?</p>
+                <h3 className="text-lg font-semibold text-white">{t('confirm_booking')}</h3>
+                <p className="text-sm text-gray-400">{t('confirm_ready')}</p>
               </div>
             </div>
             <div className="bg-white/5 rounded-lg p-4 mb-4 border border-white/10">
               <div className="space-y-2">
                 <p className="text-sm text-gray-300">
-                  By confirming, you're submitting a booking request to the car owner. They will review and respond within 24 hours.
+                  {t('confirm_submitting')}
                 </p>
                 <div className="flex items-center gap-2 pt-2 border-t border-white/10">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                   <span className="text-xs font-medium text-gray-400">
-                    Payment Method: <span className="text-blue-400 capitalize">{paymentMethod}</span>
+                    {t('payment_method_label')} <span className="text-blue-400 capitalize">{paymentMethod}</span>
                   </span>
 
                 </div>
