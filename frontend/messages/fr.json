@@ -25,7 +25,7 @@
     "show_less": "Voir moins",
     "all_rights_reserved": "Tous droits réservés.",
     "refresh": "Actualiser",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
       "car_details": "Détails du véhicule",
       "make_model": "Marque & Modèle",
       "seats": "Sièges",
@@ -61,7 +61,7 @@
       "return_same_fuel": "Retourner le véhicule avec le même niveau de carburant",
       "owner_information": "Informations sur le propriétaire",
       "hosted_by": "Hébergé par",
-      "verified_partner": "Partenaire vérifié",
+      "verified_partner": "Partenaire vérifié"
   },
   "header": {
     "menu": "Menu",
