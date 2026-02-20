@@ -1,3 +1,4 @@
+{
   "reviews": {
     "error_loading_reviews": "فشل تحميل التقييمات: {error}",
     "based_on_reviews": "بناءً على {count} {count, plural, one {تقييم} other {تقييمات}}",
@@ -5,9 +6,20 @@
     "sign_in": "تسجيل الدخول",
     "to_leave_review": "لترك تقييم.",
     "no_reviews_yet": "لا توجد تقييمات بعد",
-    "be_first_to_review": "لم يتلق هذا المركبة أي تقييمات بعد. كن أول من يشارك تجربتك!"
+    "be_first_to_review": "لم يتلق هذا المركبة أي تقييمات بعد. كن أول من يشارك تجربتك!",
+    "edit_review": "تعديل التقييم",
+    "please_select_rating": "يرجى اختيار تقييم",
+    "comment_min_length": "يجب أن يكون التعليق 10 أحرف على الأقل",
+    "rating_label": "التقييم",
+    "star_count": "{count} {count, plural, one {نجمة} other {نجوم}}",
+    "your_review_label": "تقييمك",
+    "review_placeholder": "شارك تجربتك مع هذه المركبة...",
+    "character_count": "{count}/1000 حرف",
+    "cancel": "إلغاء",
+    "submitting": "جاري الإرسال...",
+    "update_review": "تحديث التقييم",
+    "submit_review": "إرسال التقييم"
   },
-{
   "common": {
     "app_name": "AirbCar",
     "loading": "جاري التحميل...",

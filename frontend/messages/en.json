@@ -1,3 +1,4 @@
+{
   "reviews": {
     "error_loading_reviews": "Failed to load reviews: {error}",
     "based_on_reviews": "Based on {count} {count, plural, one {review} other {reviews}}",
@@ -5,9 +6,20 @@
     "sign_in": "Sign in",
     "to_leave_review": "to leave a review.",
     "no_reviews_yet": "No reviews yet",
-    "be_first_to_review": "This vehicle hasn't received any reviews yet. Be the first to share your experience!"
+    "be_first_to_review": "This vehicle hasn't received any reviews yet. Be the first to share your experience!",
+    "edit_review": "Edit Review",
+    "please_select_rating": "Please select a rating",
+    "comment_min_length": "Comment must be at least 10 characters",
+    "rating_label": "Rating",
+    "star_count": "{count} {count, plural, one {star} other {stars}}",
+    "your_review_label": "Your Review",
+    "review_placeholder": "Share your experience with this vehicle...",
+    "character_count": "{count}/1000 characters",
+    "cancel": "Cancel",
+    "submitting": "Submitting...",
+    "update_review": "Update Review",
+    "submit_review": "Submit Review"
   },
-{
   "common": {
     "app_name": "AirbCar",
     "loading": "Loading...",
