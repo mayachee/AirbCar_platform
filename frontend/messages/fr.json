@@ -1,3 +1,4 @@
+{
   "reviews": {
     "error_loading_reviews": "Échec du chargement des avis : {error}",
     "based_on_reviews": "Basé sur {count} {count, plural, one {avis} other {avis}}",
@@ -19,7 +20,6 @@
     "update_review": "Mettre à jour l'avis",
     "submit_review": "Envoyer l'avis"
   },
-{
   "common": {
     "app_name": "AirbCar",
     "loading": "Chargement...",
