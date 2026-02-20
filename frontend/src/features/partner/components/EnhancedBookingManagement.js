@@ -255,7 +255,7 @@ export default function EnhancedBookingManagement({
       let reason = '';
       
       if (action === 'reject') {
-        reason = prompt('Please provide a reason for rejection (optional):');
+        reason = prompt(t('reject_reason_prompt'));
         if (reason === null) {
           setActionLoading(prev => ({ ...prev, [bookingId]: false }));
           return;
@@ -299,8 +299,8 @@ export default function EnhancedBookingManagement({
       setSelectedBooking(null);
       
       // Show success toast (you can replace with a toast library)
-      const actionText = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'cancelled';
-      console.log(`✅ Booking ${actionText} successfully!`);
+      const actionText = action === 'accept' ? t('accepted') : action === 'reject' ? t('rejected') : t('cancelled');
+      console.log(`✅ ${t('booking')} ${actionText} ${t('successfully')}!`);
     } catch (error) {
       console.error(`Error ${action}ing booking:`, error);
       alert(`Error: ${error?.message || 'Failed to process booking'}`);
@@ -323,7 +323,7 @@ export default function EnhancedBookingManagement({
 
   const exportBookings = () => {
     const csv = [
-      ['Booking ID', 'Customer', 'Vehicle', 'Pickup Date', 'Return Date', 'Status', 'Payment Status', 'Total Price'].join(','),
+    [t('csv_booking_id'), t('csv_customer'), t('csv_vehicle'), t('csv_pickup_date'), t('csv_return_date'), t('csv_status'), t('csv_payment_status'), t('csv_total_price')].join(','),
       ...filteredBookings.map(b => [
         b.id,
         `"${b.user?.first_name || ''} ${b.user?.last_name || ''}"`,
@@ -372,11 +372,11 @@ export default function EnhancedBookingManagement({
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
-    }).format(price) + ' MAD';
+    }).format(price) + ' ' + t('currency_mad');
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('not_available');
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -385,10 +385,10 @@ export default function EnhancedBookingManagement({
   };
 
   const formatDateTime = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('not_available');
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'N/A';
+      if (isNaN(date.getTime())) return t('not_available');
       return date.toLocaleString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -398,7 +398,7 @@ export default function EnhancedBookingManagement({
         hour12: true
       });
     } catch (error) {
-      return 'N/A';
+      return t('not_available');
     }
   };
 
@@ -654,7 +654,7 @@ export default function EnhancedBookingManagement({
                         {booking.created_at && (
                           <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center space-x-1">
                             <Clock className="h-3 w-3" />
-                            <span>Created {formatDate(booking.created_at)}</span>
+                            <span>{t('created_on', { date: formatDate(booking.created_at) })}</span>
                           </span>
                         )}
                       </div>
@@ -666,7 +666,7 @@ export default function EnhancedBookingManagement({
                           <div className="flex items-center space-x-2 mb-2">
                             <Car className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                              {listing.make && listing.model ? `${listing.make} ${listing.model}` : 'Unknown Vehicle'}
+                              {listing.make && listing.model ? `${listing.make} ${listing.model}` : t('unknown_vehicle')}
                               {listing.year && ` (${listing.year})`}
                             </h3>
                           </div>
@@ -711,21 +711,21 @@ export default function EnhancedBookingManagement({
                         <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
                           <div className="space-y-3">
                             <div>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Pickup</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('pickup')}</p>
                               <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
                                 <span>{formatDateTime(booking.start_time || booking.start_date || booking.pickup_date)}</span>
                               </p>
                             </div>
                             <div>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Return</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('return')}</p>
                               <p className="text-sm font-semibold text-gray-900 dark:text-white flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
                                 <span>{formatDateTime(booking.end_time || booking.end_date || booking.return_date)}</span>
                               </p>
                             </div>
                             <div className="pt-2 border-t border-orange-200 dark:border-orange-800">
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Duration: {days} day{days !== 1 ? 's' : ''}</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('duration_days', { days })}</p>
                               <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                 {formatCurrency(booking.price || booking.total_price || booking.total_amount || 0)}
                               </p>
@@ -750,11 +750,11 @@ export default function EnhancedBookingManagement({
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('pickup_location')}</p>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{booking.pickup_location || listing.location || 'N/A'}</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{booking.pickup_location || listing.location || t('not_available')}</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('return_location')}</p>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">{booking.return_location || listing.location || 'N/A'}</p>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">{booking.return_location || listing.location || t('not_available')}</p>
                             </div>
                           </div>
 
@@ -808,7 +808,7 @@ export default function EnhancedBookingManagement({
                             {isLoading ? (
                               <>
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Processing...</span>
+                                <span>{t('processing')}</span>
                               </>
                             ) : (
                               <>
