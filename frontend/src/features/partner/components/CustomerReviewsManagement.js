@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { reviewService } from '@/features/reviews';
 import { ReviewCard } from '@/features/reviews';
 import { Star, Loader2, Eye, EyeOff, FileText, Search, Filter, TrendingUp, MessageSquare, RefreshCw } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function CustomerReviewsManagement({ vehicles, reviews: reviewsData }) {
+  const t = useTranslations('reviews');
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,7 +46,7 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
       setReviews(Array.from(reviewsMap.values()));
     } catch (err) {
       console.error('Error loading reviews:', err);
-      addToast('Failed to load reviews', 'error');
+      addToast(t('failed_load_reviews'), 'error');
       setReviews([]);
     } finally {
       setLoading(false);
@@ -55,13 +57,13 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
     try {
       await reviewService.publishReview(reviewId, isPublished);
       addToast(
-        isPublished ? 'Review published' : 'Review unpublished',
+        isPublished ? t('review_published') : t('review_unpublished'),
         'success'
       );
       await loadReviews();
     } catch (err) {
       console.error('Error publishing review:', err);
-      addToast('Failed to update review', 'error');
+      addToast(t('failed_update_review'), 'error');
     }
   };
 
@@ -118,15 +120,15 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Customer Reviews</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Manage and monitor all customer feedback</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t('customer_reviews')}</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{t('manage_feedback')}</p>
           </div>
           <button
             onClick={loadReviews}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
-            <span>Refresh</span>
+            <span>{t('refresh')}</span>
           </button>
         </div>
         
@@ -134,48 +136,48 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
             <div className="flex items-center justify-between mb-2">
               <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Avg Rating</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{t('avg_rating')}</span>
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{avgRating}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Based on {reviews.length} reviews</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('based_on')} {reviews.length} {reviews.length === 1 ? t('page_title') : t('page_title')}</p>
           </div>
           
           <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
             <div className="flex items-center justify-between mb-2">
               <FileText className="h-6 w-6 text-green-600 dark:text-green-400" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Total Reviews</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{t('total_reviews')}</span>
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{reviews.length}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{publishedReviews.length} published</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{publishedReviews.length} {t('published')}</p>
           </div>
           
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
             <div className="flex items-center justify-between mb-2">
               <EyeOff className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Unpublished</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{t('unpublished_reviews')}</span>
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {unpublishedReviews.length}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Pending review</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('pending_review')}</p>
           </div>
 
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
             <div className="flex items-center justify-between mb-2">
               <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">With Response</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{t('with_responses')}</span>
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {reviews.filter(r => r.owner_response).length}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Replied to</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('replied_to')}</p>
           </div>
         </div>
 
         {/* Rating Distribution */}
         {reviews.length > 0 && (
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Rating Distribution</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{t('rating_distribution')}</h3>
             <div className="space-y-2">
               {[5, 4, 3, 2, 1].map(rating => {
                 const count = ratingDistribution[rating] || 0;
@@ -207,7 +209,7 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            All Reviews {filteredReviews.length !== reviews.length && `(${filteredReviews.length} of ${reviews.length})`}
+            {t('all_reviews')} {filteredReviews.length !== reviews.length && `(${filteredReviews.length} of ${reviews.length})`}
           </h3>
           
           {/* Search and Filters */}
@@ -217,7 +219,7 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search reviews..."
+                placeholder={t('search_reviews')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -229,9 +231,9 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               options={[
-                { value: 'all', label: 'All Status' },
-                { value: 'published', label: 'Published' },
-                { value: 'unpublished', label: 'Unpublished' },
+                { value: 'all', label: t('all_status') },
+                { value: 'published', label: t('published') },
+                { value: 'unpublished', label: t('unpublished') },
               ]}
               className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -239,15 +241,15 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
             {/* Rating Filter */}
             <SelectField
               value={filterRating ?? ''}
-              placeholder="All Ratings"
+              placeholder={t('all_ratings')}
               showPlaceholderOption
               onChange={(e) => setFilterRating(e.target.value ? parseInt(e.target.value) : null)}
               options={[
-                { value: '5', label: '5 Stars' },
-                { value: '4', label: '4 Stars' },
-                { value: '3', label: '3 Stars' },
-                { value: '2', label: '2 Stars' },
-                { value: '1', label: '1 Star' },
+                { value: '5', label: t('stars_5') },
+                { value: '4', label: t('stars_4') },
+                { value: '3', label: t('stars_3') },
+                { value: '2', label: t('stars_2') },
+                { value: '1', label: t('stars_1') },
               ]}
               className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -257,13 +259,13 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
         {reviews.length === 0 ? (
           <div className="text-center py-12">
             <Star className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 dark:text-gray-400">No reviews yet</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('no_reviews_yet')}</p>
           </div>
         ) : filteredReviews.length === 0 ? (
           <div className="text-center py-12">
             <Search className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 dark:text-gray-400 font-medium">No reviews match your filters</p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Try adjusting your search or filter criteria</p>
+            <p className="text-gray-600 dark:text-gray-400 font-medium">{t('no_matches_filters')}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">{t('try_adjusting_filters')}</p>
             <button
               onClick={() => {
                 setSearchQuery('');
@@ -272,7 +274,7 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
               }}
               className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
             >
-              Clear all filters
+              {t('clear_all_filters')}
             </button>
           </div>
         ) : (
@@ -291,7 +293,7 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
                       <button
                         onClick={() => handlePublish(review.id, false)}
                         className="p-2 bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 rounded-lg transition-colors"
-                        title="Unpublish review"
+                        title={t('unpublish_review')}
                       >
                         <EyeOff className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />
                       </button>
@@ -299,7 +301,7 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
                       <button
                         onClick={() => handlePublish(review.id, true)}
                         className="p-2 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 rounded-lg transition-colors"
-                        title="Publish review"
+                        title={t('publish_review')}
                       >
                         <Eye className="h-4 w-4 text-green-700 dark:text-green-400" />
                       </button>

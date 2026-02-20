@@ -19,144 +19,42 @@ export default function RentalPolicies({ partnerData, onUpdate }) {
       title: t('general_terms'), 
       icon: FileText,
       description: t('general_rental_terms'),
-      content: `These are the fundamental terms and conditions that govern all vehicle rentals. This section covers basic rental requirements, age restrictions, driver qualifications, and general rules that customers must follow.
-
-**Age Requirements**
-All renters must be at least 21 years of age and possess a valid driver's license. Drivers under 25 may be subject to additional fees. The license must be valid for the entire rental period and must have been held for a minimum of one year.
-
-**Driver Qualifications**
-All drivers must present a valid, unexpired driver's license at the time of rental. International drivers must present a valid international driving permit along with their national license. The license must be in the same name as the credit card used for payment.
-
-**Rental Period**
-The rental period begins at the time specified in the rental agreement and ends when the vehicle is returned to the designated location. Late returns may result in additional charges. The minimum rental period is typically 24 hours.
-
-**Vehicle Condition**
-The vehicle will be provided in good working condition with a full tank of fuel. Renters are responsible for returning the vehicle in the same condition, normal wear and tear excepted. Any damage beyond normal wear and tear will be charged to the renter.
-
-**Prohibited Uses**
-The vehicle may not be used for any illegal purposes, racing, towing, off-road driving, or transporting passengers for hire. Smoking is strictly prohibited in all rental vehicles. Violation of these terms may result in immediate termination of the rental agreement and additional charges.`
+      content: t('general_terms_content')
     },
     { 
       id: 'booking', 
       title: t('booking_cancellation'), 
       icon: Calendar,
       description: t('booking_policies'),
-      content: `This section outlines your booking policies, including reservation requirements, modification rules, cancellation deadlines, refund policies, and any fees associated with changes or cancellations.
-
-**Reservation Requirements**
-All reservations must be confirmed with a valid credit card. A reservation does not guarantee vehicle availability, but we will make every effort to provide the vehicle class requested or a suitable alternative. Reservations can be made online, by phone, or in person at our rental location.
-
-**Modification Policy**
-Reservations can be modified up to 24 hours before the scheduled pickup time at no additional charge, subject to availability. Changes to rental dates, vehicle type, or pickup location may result in price adjustments. Modifications made less than 24 hours before pickup may incur a modification fee.
-
-**Cancellation Policy**
-Cancellations made more than 48 hours before the scheduled pickup time are free of charge. Cancellations made between 24-48 hours before pickup will incur a cancellation fee of 25% of the total rental cost. Cancellations made less than 24 hours before pickup or no-shows will be charged 50% of the total rental cost.
-
-**Refund Policy**
-Refunds for eligible cancellations will be processed to the original payment method within 5-10 business days. Refunds are only available for cancellations made within the specified timeframes. Early returns do not qualify for refunds unless otherwise specified in the rental agreement.
-
-**No-Show Policy**
-If you fail to pick up your reserved vehicle within 2 hours of the scheduled pickup time without prior notification, your reservation will be considered a no-show and may be cancelled. No-show fees apply as outlined in the cancellation policy.`
+      content: t('booking_cancellation_content')
     },
     { 
       id: 'insurance', 
       title: t('insurance_protection'), 
       icon: Shield,
       description: t('insurance_coverage'),
-      content: `Details about insurance coverage, protection plans, deductibles, and what is covered under different insurance tiers. This helps customers understand their options and make informed decisions.
-
-**Basic Coverage Included**
-All rentals include basic third-party liability insurance as required by law. This covers damage to other vehicles and property, but does not cover damage to the rental vehicle itself. The minimum coverage amounts vary by location and local regulations.
-
-**Collision Damage Waiver (CDW)**
-CDW reduces your financial responsibility for damage to the rental vehicle. With CDW, you are responsible only for the deductible amount in case of damage. CDW does not cover damage to tires, wheels, glass, or undercarriage. CDW can be purchased at the time of rental or may be included in certain rate packages.
-
-**Theft Protection**
-Theft Protection covers you in the event the rental vehicle is stolen. This protection typically includes coverage for theft of the vehicle and may include coverage for personal belongings, though personal items are usually not covered. Theft Protection may have a deductible that applies in case of a claim.
-
-**Personal Accident Insurance (PAI)**
-PAI provides coverage for medical expenses and accidental death benefits for the renter and passengers in the event of an accident during the rental period. This is optional coverage that can be added to your rental agreement. Coverage amounts and terms vary by location.
-
-**Personal Effects Coverage**
-This optional coverage protects your personal belongings in the vehicle against theft or damage. Coverage limits apply, and certain high-value items may require additional coverage. Personal Effects Coverage does not cover cash, electronics, or items left in plain view.
-
-**Exclusions and Limitations**
-Insurance coverage does not apply to damage caused by prohibited uses, driving under the influence, unauthorized drivers, or violations of rental terms. Coverage may be voided if the vehicle is used for racing, off-road driving, or transporting illegal substances. Always review your policy details carefully.`
+      content: t('insurance_protection_content')
     },
     { 
       id: 'vehicle', 
       title: t('vehicle_usage'), 
       icon: Car,
       description: t('vehicle_usage_rules'),
-      content: `Guidelines for proper vehicle usage, including mileage limits, fuel policies, prohibited uses, maintenance responsibilities, and what to do in case of mechanical issues or accidents.
-
-**Mileage Limits**
-Standard rentals include unlimited mileage within the rental country. Cross-border travel may require prior authorization and additional fees. Mileage restrictions may apply to certain vehicle categories or promotional rates. Excess mileage charges will apply if limits are exceeded.
-
-**Fuel Policy**
-Vehicles are provided with a full tank of fuel and must be returned with a full tank. If the vehicle is returned with less fuel, a refueling fee will be charged at a rate higher than local gas station prices. Pre-paid fuel options may be available at the time of rental.
-
-**Maintenance Responsibilities**
-Renters are responsible for maintaining proper fluid levels (oil, coolant, etc.) during the rental period. Regular maintenance items are the responsibility of the rental company. If warning lights appear, renters must contact us immediately and should not continue driving the vehicle.
-
-**Mechanical Issues**
-In case of mechanical problems or breakdowns, contact our 24/7 roadside assistance immediately. Do not attempt to repair the vehicle yourself. We will arrange for repairs or provide a replacement vehicle when possible. Renters are not responsible for mechanical failures due to normal wear and tear.
-
-**Accident Procedures**
-In the event of an accident, immediately contact local authorities and our emergency hotline. Do not admit fault or liability. Document the incident with photos and gather contact information from all parties involved. Follow all instructions provided by our claims department.
-
-**Prohibited Activities**
-The vehicle must not be used for racing, towing (unless equipped), off-road driving, transporting hazardous materials, or any illegal activities. Violations may result in immediate rental termination, loss of insurance coverage, and additional charges.`
+      content: t('vehicle_usage_content')
     },
     { 
       id: 'payment', 
       title: t('payment_fees'), 
       icon: CreditCard,
       description: t('payment_methods'),
-      content: `Information about payment methods, deposit requirements, security deposits, additional fees (late return, cleaning, etc.), and payment processing policies.
-
-**Accepted Payment Methods**
-We accept major credit cards (Visa, MasterCard, American Express) and debit cards. Cash payments may be accepted at select locations with additional requirements. The credit card used for payment must be in the name of the primary renter and must be present at pickup.
-
-**Security Deposit**
-A security deposit (authorization hold) will be placed on your payment method at the time of rental. The amount varies by vehicle type and typically ranges from $200 to $500. The hold will be released within 5-10 business days after vehicle return, provided there are no damages or additional charges.
-
-**Rental Charges**
-Rental charges include the base daily rate, applicable taxes, and mandatory fees. Optional services such as GPS, child seats, or additional drivers will be charged separately. All charges are calculated and displayed at the time of booking confirmation.
-
-**Additional Fees**
-Late return fees apply if the vehicle is returned after the scheduled return time. Cleaning fees may be charged if the vehicle is returned excessively dirty or with smoke odor. Traffic violation fees and toll charges incurred during the rental period will be charged to the renter.
-
-**Payment Processing**
-Payment is processed at the time of vehicle pickup. For prepaid reservations, the amount charged may differ from the reservation total due to changes in rental duration, optional services, or damage assessments. All charges are subject to local taxes and fees.
-
-**Refunds and Disputes**
-Refunds for eligible cancellations or overcharges will be processed within 5-10 business days. Disputes regarding charges must be reported within 30 days of the rental end date. We will investigate and respond to all disputes in a timely manner.`
+      content: t('payment_fees_content')
     },
     { 
       id: 'support', 
       title: t('support_contact'), 
       icon: Phone,
       description: t('customer_support'),
-      content: `Contact information for customer support, emergency assistance, business hours, and how to reach your team for questions, issues, or assistance during the rental period.
-
-**Customer Service Hours**
-Our customer service team is available Monday through Friday from 8:00 AM to 8:00 PM, and Saturday-Sunday from 9:00 AM to 6:00 PM (local time). For urgent matters outside business hours, please use our 24/7 emergency hotline.
-
-**24/7 Emergency Assistance**
-For roadside assistance, accidents, or emergencies during your rental, call our 24/7 emergency hotline immediately. Our team will dispatch assistance, arrange for vehicle replacement if needed, and guide you through the necessary procedures. Keep this number with you at all times during your rental.
-
-**General Inquiries**
-For questions about reservations, modifications, billing, or general information, contact our customer service team during business hours. You can reach us by phone, email, or through our online chat service. Response times vary by contact method.
-
-**Rental Location Contact**
-Each rental location has its own contact information for local inquiries, pickup/return questions, and location-specific services. Contact details for your specific rental location will be provided in your booking confirmation.
-
-**Online Support**
-Access your reservation, make modifications, view rental history, and get answers to frequently asked questions through our online portal. Live chat support is available during business hours for immediate assistance with your account or reservation.
-
-**Feedback and Complaints**
-We value your feedback and strive to provide excellent service. If you have concerns or suggestions, please contact our customer relations department. We aim to respond to all inquiries within 48 hours and will work to resolve any issues promptly.`
+      content: t('support_contact_content')
     }
   ];
 

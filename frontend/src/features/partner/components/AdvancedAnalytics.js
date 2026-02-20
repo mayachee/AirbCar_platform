@@ -90,37 +90,37 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
 
   const reviewStats = useMemo(() => analytics?.reviews || {}, [analytics]);
 
-  const timeRangeLabel = { '7d': 'Last 7 Days', '30d': 'Last 30 Days', '90d': 'Last 90 Days' }[timeRange] || 'Last 30 Days';
+  const timeRangeLabel = { '7d': t('last_7_days'), '30d': t('last_30_days'), '90d': t('last_90_days') }[timeRange] || t('last_30_days');
 
   const metricCards = [
     {
-      title: 'Total Revenue',
+      title: t('total_revenue'),
       value: formatCurrency(metrics.total_revenue),
       trend: trends.revenue,
       icon: DollarSign,
       color: 'green',
     },
     {
-      title: 'Total Bookings',
+      title: t('total_bookings'),
       value: metrics.total_bookings || 0,
       trend: trends.bookings,
       icon: BarChart3,
       color: 'blue',
     },
     {
-      title: 'Active Vehicles',
+      title: t('active_vehicles'),
       value: metrics.active_vehicles || vehicles?.filter(v => v.is_available)?.length || 0,
       trend: null,
       icon: Car,
       color: 'purple',
     },
     {
-      title: 'Conversion Rate',
+      title: t('conversion_rate'),
       value: `${metrics.conversion_rate || 0}%`,
       trend: null,
       icon: Target,
       color: 'yellow',
-      subtitle: `${metrics.acceptance_rate || 0}% acceptance`,
+      subtitle: `${metrics.acceptance_rate || 0}% ${t('acceptance')}`,
     },
   ];
 
@@ -133,7 +133,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
             <BarChart3 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Analytics</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('analytics')}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{timeRangeLabel}</p>
           </div>
         </div>
