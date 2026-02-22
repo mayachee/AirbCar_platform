@@ -74,7 +74,7 @@ export default function ImageGallery({ vehicle, currentImageIndex, onNextImage, 
         {hasImages && allImages.length > 1 && (
           <button
             onClick={onShowFullGallery}
-            className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors flex items-center gap-2 shadow-sm"
+            className="absolute bottom-4 left-4 bg-orange-500/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors flex items-center gap-2 shadow-sm"
           >
             <Grid className="w-4 h-4" />
             View all photos
