@@ -9,6 +9,32 @@ import PopularDestinations from "@/features/home/components/PopularDestinations"
 import Footer from "@/components/layout/Footer";
 import RentalProviders from "@/features/home/components/RentalProviders";
 import InfoSection from "@/features/home/components/InfoSection";
+import { Metadata } from 'next';
+
+// Export metadata for this page
+export const metadata = {
+  title: "Airbcar - Car Rental Morocco | Luxury & Affordable Vehicle Rentals",
+  description: "Rent a car in Morocco with Airbcar. Best prices on luxury and economy vehicles. Same-day delivery, 24/7 support. Book your car today.",
+  keywords: "car rental Morocco, rent car Morocco, car hire Casablanca, luxury car rental, affordable car rental",
+  openGraph: {
+    title: "Airbcar - Morocco's Best Car Rental Service",
+    description: "Rent a car in Morocco with Airbcar. Best prices on luxury and economy vehicles.",
+    type: "website",
+    images: [
+      {
+        url: "https://airbcar.com/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Airbcar - Car Rental Morocco",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Airbcar - Car Rental Morocco",
+    description: "Best car rental service in Morocco",
+  },
+};
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -32,6 +58,90 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen">
+      {/* FAQ Schema for Google Rich Results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is the minimum age to rent a car in Morocco?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The minimum age to rent a car with Airbcar is 21 years old, with a valid driver's license held for at least 2 years."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What documents do I need to rent a car?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "You'll need a valid passport or ID, a valid driver's license, and a credit card for the security deposit."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I get a rental car with free cancellation?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes! Most of our rental options offer free cancellation up to 48 hours before the pickup date."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is insurance included in the rental price?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Basic insurance is included. We offer comprehensive insurance upgrades for complete peace of mind."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What payment methods do you accept?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "We accept all major credit cards, debit cards, and bank transfers. Mobile payment options are also available."
+                }
+              }
+            ]
+          })
+        }}
+      />
+
+      {/* Breadcrumb Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://airbcar.com"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Search Cars",
+                "item": "https://airbcar.com/search"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Booking",
+                "item": "https://airbcar.com/booking"
+              }
+            ]
+          })
+        }}
+      />
+
       <Header />
       <Hero />
       <PopularDestinations />

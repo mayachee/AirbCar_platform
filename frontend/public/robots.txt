@@ -1,0 +1,37 @@
+# Airbcar robots.txt - Allow Google and other search engines to crawl and index
+
+User-agent: *
+Allow: /
+Allow: /cars
+Allow: /bookings
+Allow: /partner
+Disallow: /admin
+Disallow: /api
+Disallow: /auth
+Disallow: /.next
+Disallow: /node_modules
+
+# Allow Google to crawl at normal rate
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Specific rules for Bing
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://airbcar.com/sitemap.xml
+Sitemap: https://airbcar.com/sitemap-cars.xml
+
+# Maximum crawl rate
+Request-rate: 30/1m
+
+# Avoid crawling development URLs
+User-agent: *
+Disallow: /dev/
+Disallow: /test/
+Disallow: /?*
+Disallow: /*?*
+Disallow: /*&*

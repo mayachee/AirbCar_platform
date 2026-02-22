@@ -2,6 +2,7 @@ import { Outfit, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { getOrganizationSchema, getLocalBusinessSchema } from "@/lib/seoConfig";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -14,8 +15,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Airbcar",
-  description: "First moroccan Cars rental platform",
+  title: "Airbcar - Morocco's Premier Car Rental Platform",
+  description: "First moroccan Cars rental platform with premium vehicles and professional service",
+  openGraph: {
+    title: "Airbcar - Morocco's Premier Car Rental Platform",
+    description: "First moroccan Cars rental platform with premium vehicles and professional service",
+    type: "website",
+    locale: "en_US",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -23,6 +41,26 @@ export default function RootLayout({ children }) {
     <html data-scroll-behavior="smooth" suppressHydrationWarning={true}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="application-name" content="Airbcar" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        
+        {/* Structured Data for Organization and CEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(getOrganizationSchema())
+          }}
+        />
+        
+        {/* Business Directory Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(getLocalBusinessSchema())
+          }}
+        />
+        
         <script
           dangerouslySetInnerHTML={{
             __html: `
