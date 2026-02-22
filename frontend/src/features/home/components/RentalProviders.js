@@ -27,6 +27,7 @@ export default function RentalProviders() {
   const [providers, setProviders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const shouldLoop = !isLoading && !loadError && providers.length > 0
   const loopedProviders = shouldLoop ? [...providers, ...providers, ...providers] : providers
@@ -281,13 +282,17 @@ export default function RentalProviders() {
           { skipAuth: true }
         )
 
-        const partnerList = response?.data?.data
+        const partnerList = response?.data?.results || response?.data?.data || response?.data || []
         const rows = Array.isArray(partnerList) ? partnerList : []
         const mapped = rows.map(toProvider).filter((p) => p?.id)
 
-        if (isMounted) setProviders(mapped)
+        if (isMounted) {
+          setProviders(mapped)
+          setRetryCount(0)
+        }
       } catch (err) {
-        const message = err?.friendlyMessage || err?.message || 'Failed to load rental providers.'
+        console.error('Failed to load providers:', err)
+        const message = err?.friendlyMessage || err?.message || 'Failed to load rental providers. Please try again later.'
         if (isMounted) setLoadError(message)
       } finally {
         if (isMounted) setIsLoading(false)
@@ -297,7 +302,7 @@ export default function RentalProviders() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [retryCount])
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -445,6 +450,12 @@ export default function RentalProviders() {
               <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
                 <div className="font-semibold text-gray-900">{t('providers_unable_to_load')}</div>
                 <div className="mt-1 text-sm text-gray-600">{loadError}</div>
+                <button 
+                  onClick={() => setRetryCount(c => c + 1)}
+                  className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                >
+                  Try Again
+                </button>
               </div>
             )}
 
@@ -463,7 +474,7 @@ export default function RentalProviders() {
                 viewport={{ once: true, margin: "-10%" }}
                 transition={{ duration: 0.5 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className="group relative flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white p-5 sm:p-7 snap-start rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 ease-out hover:shadow-xl"
+                className="group relative flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white p-5 sm:p-7 transition-all duration-300 ease-out hover:shadow-xl"
                 data-provider-card="true"
                 style={{ scrollSnapStop: 'always' }}
               >
