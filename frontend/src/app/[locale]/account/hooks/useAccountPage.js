@@ -145,9 +145,12 @@ export const useAccountPage = () => {
       // Map backend response to frontend format
       const mappedData = mapBackendToFrontend(updatedData);
       
-      // Preserve file uploads and previews if they exist
+      // IMPORTANT: Preserve existing data and merge with new data
+      // Don't replace all data with potentially incomplete response
       updateAccountData({
-        ...mappedData,
+        ...accountData,  // Keep existing data first
+        ...mappedData,   // Then overlay with new/updated fields
+        // Always preserve file uploads and previews
         idFrontDocumentFile: accountData.idFrontDocumentFile,
         idBackDocumentFile: accountData.idBackDocumentFile,
         idFrontDocumentPreview: accountData.idFrontDocumentPreview,

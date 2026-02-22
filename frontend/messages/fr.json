@@ -1819,6 +1819,7 @@
     "favorites_filtered": "Affichage de {filtered} sur {total} favoris",
     
     "bookings_tab_title": "Mes réservations",
+    "bookings_tab_subtitle": "Consultez et gérez vos réservations de location de voiture",
     "bookings_upcoming": "Réservations à venir",
     "bookings_past": "Réservations passées",
     "bookings_all": "Toutes les réservations",

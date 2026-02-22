@@ -104,23 +104,7 @@ function AccountPageContent() {
             <p className="text-slate-300 text-lg">{t('manage_account')}</p>
         </div>
 
-        {/* Save Message */}
-        {saveMessage && (
-          <div
-            className={`mb-8 p-4 rounded-xl border flex items-center gap-3 animate-fade-in ${
-              saveMessage.includes('success')
-                ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                : 'bg-red-500/10 text-red-400 border-red-500/20'
-            }`}
-          >
-             {saveMessage.includes('success') ? (
-                <Shield className="w-5 h-5" />
-              ) : (
-                <Shield className="w-5 h-5" />
-              )}
-            <span className="font-medium">{saveMessage}</span>
-          </div>
-        )}
+
 
         {/* Dashboard Layout */}
         <div className="flex flex-col lg:flex-row gap-8">
@@ -181,6 +165,7 @@ function AccountPageContent() {
                                     saving={saving}
                                     stats={stats}
                                     upcomingBookings={upcomingBookings}
+                                    saveMessage={saveMessage}
                                 />
                             )}
 

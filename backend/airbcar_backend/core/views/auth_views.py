@@ -153,6 +153,7 @@ class RegisterView(APIView):
         username = request.data.get('username') or email.split('@')[0] if email else None
         first_name = request.data.get('first_name', '')
         last_name = request.data.get('last_name', '')
+        phone_number = request.data.get('phone_number', '')
         role = request.data.get('role', 'customer')
         
         if not email or not password:
@@ -178,6 +179,7 @@ class RegisterView(APIView):
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
+                phone_number=phone_number,
                 role=role,
                 is_active=True  # User is active but email not verified
             )

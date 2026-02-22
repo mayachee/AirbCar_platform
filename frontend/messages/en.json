@@ -1819,6 +1819,7 @@
     "favorites_filtered": "Showing {filtered} of {total} favorites",
     
     "bookings_tab_title": "My Bookings",
+    "bookings_tab_subtitle": "View and manage your car rental bookings",
     "bookings_upcoming": "Upcoming Bookings",
     "bookings_past": "Past Bookings",
     "bookings_all": "All Bookings",

@@ -95,11 +95,11 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             name="firstName"
             icon={User}
             value={accountData.firstName || ''}
-            onChange={(e) => handleFieldChangeWithValidation('firstName', e.target.value)}
-            onBlur={() => setTouchedFields(prev => new Set([...prev, 'firstName']))}
+            disabled
+            className="bg-gray-50/50 text-gray-500 border-gray-200 cursor-not-allowed"
             placeholder="Enter your first name"
-            error={touchedFields.has('firstName') ? fieldErrors['firstName'] : null}
           />
+          <p className="text-xs text-gray-400 pl-1">First name cannot be changed.</p>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700 block">
@@ -110,11 +110,11 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             name="lastName"
             icon={User}
             value={accountData.lastName || ''}
-            onChange={(e) => handleFieldChangeWithValidation('lastName', e.target.value)}
-            onBlur={() => setTouchedFields(prev => new Set([...prev, 'lastName']))}
+            disabled
+            className="bg-gray-50/50 text-gray-500 border-gray-200 cursor-not-allowed"
             placeholder="Enter your last name"
-            error={touchedFields.has('lastName') ? fieldErrors['lastName'] : null}
           />
+          <p className="text-xs text-gray-400 pl-1">Last name cannot be changed.</p>
         </div>
       </div>
 
@@ -156,13 +156,12 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
            <Input
             type="date"
             name="dateOfBirth"
-            icon={Calendar}
             value={accountData.dateOfBirth || ''}
-            onChange={(e) => handleFieldChangeWithValidation('dateOfBirth', e.target.value)}
-            onBlur={() => setTouchedFields(prev => new Set([...prev, 'dateOfBirth']))}
+            disabled
+            className="bg-gray-50/50 text-gray-500 border-gray-200 cursor-not-allowed"
             max={new Date().toISOString().split('T')[0]}
-            error={touchedFields.has('dateOfBirth') ? fieldErrors['dateOfBirth'] : null}
           />
+          <p className="text-xs text-gray-400 pl-1">Date of birth cannot be changed.</p>
         </div>
       </div>
     </div>

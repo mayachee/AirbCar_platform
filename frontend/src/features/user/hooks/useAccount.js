@@ -63,8 +63,10 @@ export const useAccount = () => {
       console.log('📦 Extracted userData:', userData);
       console.log('📦 userData type:', typeof userData);
       console.log('📦 userData keys:', userData ? Object.keys(userData) : 'null');
-      // Debug: Check profile picture fields
+      // Debug: Check profile picture fields and phone number
       if (userData) {
+        console.log('📞 phone_number:', userData.phone_number);
+        console.log('📞 phone_number type:', typeof userData.phone_number);
         console.log('🖼️ profile_picture_url:', userData.profile_picture_url);
         console.log('🖼️ profile_picture_base64:', userData.profile_picture_base64);
         console.log('🖼️ profile_picture_url type:', typeof userData.profile_picture_url);

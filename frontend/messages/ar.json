@@ -1816,6 +1816,7 @@
     "favorites_filtered": "عرض {filtered} من {total} المفضلة",
     
     "bookings_tab_title": "حجوزاتي",
+    "bookings_tab_subtitle": "عرض وإدارة حجوزات استئجار السيارات الخاصة بك",
     "bookings_upcoming": "الحجوزات القادمة",
     "bookings_past": "الحجوزات السابقة",
     "bookings_all": "جميع الحجوزات",

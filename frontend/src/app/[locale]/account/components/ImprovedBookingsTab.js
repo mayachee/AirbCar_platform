@@ -159,7 +159,7 @@ export default function ImprovedBookingsTab() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold text-white-900 mb-2">{t('bookings_tab_title')}</h3>
-          <p className="text-gray-600">{t('bookings_tab_title')}</p>
+          <p className="text-gray-600">{t('bookings_tab_subtitle')}</p>
         </div>
         <button
           onClick={() => loadBookings(true)}
