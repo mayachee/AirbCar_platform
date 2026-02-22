@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api/client';
+import { useFavoritesContext } from '@/contexts/FavoritesContext';
 import { FavoritesGrid } from '@/features/user';
 import { Search, RefreshCw, Heart, X, AlertCircle, CheckCircle, Loader2, Filter, Grid, List as ListIcon } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
@@ -11,6 +12,10 @@ import { SelectField } from '@/components/ui/select-field';
 export default function FavoritesTab({ favorites: propFavorites, loading: propLoading, onRemoveFavorite, onBookNow, onViewDetails }) {
   const t = useTranslations('account');
   const router = useRouter();
+  
+  // Use global favorites context
+  const { favorites: contextFavorites, toggleFavorite, isFavorite } = useFavoritesContext();
+  
   const [favorites, setFavorites] = useState([]);
   const [localLoading, setLocalLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,181 +30,64 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       setLocalLoading(true);
       setError(null);
       
-      let favoritesData = [];
+      // Get favorite IDs from global context
+      const favoriteIds = Array.from(contextFavorites || []);
+      console.log('🎯 Fetching details for favorites:', favoriteIds);
       
-      // Try the my-favorites endpoint first (returns favorites with full listing details)
+      if (favoriteIds.length === 0) {
+        setFavorites([]);
+        return;
+      }
+      
+      // Fetch full car details for all favorite IDs
+      let processedFavorites = [];
+      
       try {
-        // Increase timeout for favorites (60 seconds - may include full listing details)
-        const response = await apiClient.get('/favorites/my-favorites/', undefined, { timeout: 60000 });
+        // Try to fetch from backend - could be a bulk endpoint or fetch individually
+        const response = await apiClient.get('/listings/', undefined, { timeout: 60000 });
         const data = response?.data || response;
-        console.log('my-favorites response:', data);
         
-        // Backend returns: { favorites: [...], listings: [...] }
-        if (data.favorites && Array.isArray(data.favorites)) {
-          // Use favorites array directly (contains favorite entry + listing)
-          favoritesData = data.favorites;
-        } else if (data.listings && Array.isArray(data.listings)) {
-          // If backend returns listings directly, wrap them in favorite structure
-          favoritesData = data.listings.map((listing, idx) => ({
-            id: data.favorites?.[idx]?.id || listing.id,
-            listing: listing,
-            created_at: data.favorites?.[idx]?.created_at
-          }));
+        // Get all listings and filter by favorites
+        let allListings = [];
+        if (data.results && Array.isArray(data.results)) {
+          allListings = data.results;
         } else if (Array.isArray(data)) {
-          favoritesData = data;
+          allListings = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          allListings = data.data;
         }
+        
+        // Filter to only favorites and map to expected format
+        processedFavorites = allListings
+          .filter(listing => favoriteIds.includes(String(listing.id)))
+          .map(listing => ({
+            id: listing.id,
+            listing: listing,
+            vehicle: listing,
+            vehicle_id: listing.id,
+            created_at: listing.created_at
+          }));
+          
+        console.log(`✅ Loaded ${processedFavorites.length} favorite cars`);
       } catch (err) {
-        console.error('My-favorites endpoint error:', err);
-        // Continue to fallback
-      }
-
-      // Fallback to general favorites endpoint (GET /favorites/)
-      if (favoritesData.length === 0 || !favoritesData) {
-        try {
-          // Increase timeout for favorites (60 seconds - may include full listing details)
-          const response = await apiClient.get('/favorites/', undefined, { timeout: 60000 });
-          const data = response?.data || response;
-          console.log('General favorites response:', data);
-          
-          // Handle different response structures
-          if (data.results && Array.isArray(data.results)) {
-            favoritesData = data.results;
-          } else if (Array.isArray(data)) {
-            favoritesData = data;
-          } else if (data.favorites && Array.isArray(data.favorites)) {
-            favoritesData = data.favorites;
-          } else if (data.data && Array.isArray(data.data)) {
-            favoritesData = data.data;
-          }
-        } catch (err) {
-          console.error('General favorites endpoint error:', err.message);
-          setError(`Failed to load favorites: ${err.message}`);
-        }
-      }
-
-      // Transform and process favorites data
-      const processedFavorites = [];
-      const seenIds = new Set();
-      
-      // Process fetched favorites - handle both Favorite objects and direct listings
-      favoritesData.forEach(fav => {
-        // Handle different favorite response structures:
-        // 1. { id: favoriteId, listing: {...}, user: {...} } - Standard Favorite object
-        // 2. { listing: {...} } - Direct listing in favorite
-        // 3. {...} - Direct listing object
-        const favorite = fav.listing || fav;
-        const favoriteId = fav.id; // Favorite entry ID
-        const listingId = favorite?.id || favorite;
-        
-        // Create a unique key for deduplication
-        const dedupeKey = favoriteId || listingId;
-        
-        if (dedupeKey && !seenIds.has(dedupeKey)) {
-          seenIds.add(dedupeKey);
-          
-          // Normalize the favorite structure
-          processedFavorites.push({
-            id: favoriteId || listingId, // Favorite entry ID or listing ID
-            listing: favorite, // The actual listing/vehicle data
-            vehicle: favorite, // Alias for compatibility
-            vehicle_id: listingId,
-            created_at: fav.created_at
-          });
-        }
-      });
-      
-      // If no favorites from API and props are available, use them
-      if (processedFavorites.length === 0 && propFavorites && propFavorites.length > 0) {
-        propFavorites.forEach(fav => {
-          const listing = fav.listing || fav.vehicle || fav;
-          const vehicleId = listing?.id || fav.vehicle_id || fav.id;
-          if (vehicleId && !seenIds.has(vehicleId)) {
-            seenIds.add(vehicleId);
-            processedFavorites.push({
-              id: fav.id || vehicleId,
-              listing: listing,
-              vehicle: listing,
-              vehicle_id: vehicleId
-            });
-          }
-        });
+        console.error('Error fetching listings:', err);
+        setError(`Failed to load favorites: ${err.message}`);
       }
       
-      if (processedFavorites.length > 0) {
-        console.log(`✅ Successfully loaded ${processedFavorites.length} favorites from backend`);
-      } else if (!error) {
-        console.log('ℹ️ No favorites found in backend');
-      }
       setFavorites(processedFavorites);
     } catch (err) {
-      console.error('❌ Error fetching favorites:', err);
-      const errorMsg = err.message || 'Failed to load favorites';
-      
-      // If 404, the endpoint might not exist - fallback to props if available
-      if (err.message && (err.message.includes('404') || err.status === 404)) {
-        console.warn('⚠️ Favorites API endpoint returned 404');
-        if (propFavorites && propFavorites.length > 0) {
-          console.log('Using provided favorites data as fallback');
-          // Deduplicate propFavorites if using them
-          const deduplicated = [];
-          const seenIds = new Set();
-          propFavorites.forEach(fav => {
-            const listing = fav.listing || fav.vehicle || fav;
-            const vehicleId = listing?.id || fav.vehicle_id || fav.id;
-            if (vehicleId && !seenIds.has(vehicleId)) {
-              seenIds.add(vehicleId);
-              deduplicated.push({
-                id: fav.id || vehicleId,
-                listing: listing,
-                vehicle: listing,
-                vehicle_id: vehicleId
-              });
-            }
-          });
-          setFavorites(deduplicated);
-        } else {
-          setError('Favorites API endpoint not available. Please check your backend connection.');
-        }
-      } else {
-        // Other errors - network issues, auth issues, etc.
-        setError(`Failed to load favorites: ${errorMsg}. Please check your connection and try refreshing.`);
-      }
+      console.error('❌ Error in fetchFavorites:', err);
+      setError(`Failed to load favorites: ${err.message}`);
     } finally {
       setLocalLoading(false);
     }
-  }, [propFavorites]);
+  }, [contextFavorites]);
 
   useEffect(() => {
-    // Update local state when propFavorites changes (from the useFavorites hook)
-    if (propFavorites && propFavorites.length > 0) {
-      console.log('📦 Updating FavoritesTab from propFavorites:', propFavorites.length);
-      const processed = [];
-      const seenIds = new Set();
-      
-      propFavorites.forEach(fav => {
-        const listing = fav.listing || fav.vehicle || fav;
-        const favoriteId = fav.id;
-        const vehicleId = listing?.id || fav.vehicle_id;
-        const dedupeKey = favoriteId || vehicleId;
-        
-        if (dedupeKey && !seenIds.has(dedupeKey)) {
-          seenIds.add(dedupeKey);
-          processed.push({
-            id: favoriteId || vehicleId,
-            listing: listing,
-            vehicle: listing,
-            vehicle_id: vehicleId,
-            created_at: fav.created_at
-          });
-        }
-      });
-      
-      setFavorites(processed);
-      setError(null);
-    } else if (!propLoading && propFavorites?.length === 0) {
-      setFavorites([]);
-    }
-  }, [propFavorites, propLoading]);
+    // Watch for changes in global favorites context
+    console.log('📦 Global context favorites updated:', contextFavorites?.size || 0);
+    fetchFavorites();
+  }, [fetchFavorites, contextFavorites]);
 
   useEffect(() => {
     // Also fetch fresh data from API for consistency
@@ -209,44 +97,21 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
   const handleRemoveFavorite = async (favorite) => {
     if (!favorite) return;
 
-    const favoriteId = favorite.id;
     const vehicleId = favorite.vehicle?.id || favorite.vehicle_id || favorite.listing?.id;
-    const idToUse = favoriteId || vehicleId;
+    if (!vehicleId) return;
     
-    setRemovingFavorite(idToUse);
+    setRemovingFavorite(vehicleId);
     
     try {
-      // Clear previous error when starting new operation
       setError(null);
       
-      // Call the provided handler which handles optimistic update and API call
-      if (onRemoveFavorite) {
-        await onRemoveFavorite(favorite);
-        setSuccessMessage('✨ Removed from favorites');
-        setTimeout(() => setSuccessMessage(''), 2000);
-        return;
-      }
+      // Use global context to remove favorite (updates localStorage)
+      toggleFavorite(vehicleId);
       
-      // Fallback: Try API call directly if no handler provided
-      try {
-        await apiClient.delete(`/favorites/${idToUse}/`);
-        console.log('✅ Removed from API');
-      } catch (deleteError) {
-        const deleteErrorMessage = (deleteError.message || '').toLowerCase();
-        const isNotFound = deleteError.status === 404 || 
-                          deleteErrorMessage.includes('404') || 
-                          deleteErrorMessage.includes('not found');
-        
-        if (!isNotFound) {
-          throw deleteError;
-        }
-      }
-      
-      // Update local state
+      // Update local state immediately
       setFavorites(prev => prev.filter(fav => {
-        const favId = fav.id || fav.vehicle?.id || fav.vehicle_id;
-        const listingId = fav.listing?.id || fav.vehicle?.id;
-        return favId !== idToUse && listingId !== vehicleId;
+        const favVehicleId = fav.vehicle?.id || fav.vehicle_id || fav.listing?.id;
+        return favVehicleId !== vehicleId;
       }));
       
       setSuccessMessage('✨ Removed from favorites');
