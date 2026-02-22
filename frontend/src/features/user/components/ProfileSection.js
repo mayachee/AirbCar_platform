@@ -153,14 +153,15 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           <label className="text-sm font-semibold text-gray-700 block">
             Date of Birth <span className="text-red-500">*</span>
           </label>
-           <Input
+          <Input
             type="date"
             name="dateOfBirth"
             value={accountData.dateOfBirth || ''}
-            className="bg-gray-50/50 text-gray-500 border-gray-200 cursor-not-allowed"
+            onChange={(e) => handleFieldChangeWithValidation('dateOfBirth', e.target.value)}
+            onBlur={() => setTouchedFields(prev => new Set([...prev, 'dateOfBirth']))}
             max={new Date().toISOString().split('T')[0]}
+            error={touchedFields.has('dateOfBirth') ? fieldErrors['dateOfBirth'] : null}
           />
-          <p className="text-xs text-gray-400 pl-1">Date of birth cannot be changed.</p>
         </div>
       </div>
     </div>
