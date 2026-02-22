@@ -255,9 +255,6 @@ export const useAccountPage = () => {
 
   // Handler for favorites
   const handleRemoveFavorite = async (favorite) => {
-    if (!confirm('Are you sure you want to remove this car from your favorites?')) {
-      return;
-    }
     // Use favorite.id (the Favorite entry ID) if available, otherwise fall back to listing/vehicle ID
     // The backend expects the Favorite entry ID for DELETE /favorites/<id>/
     const favoriteId = favorite.id; // This is the Favorite entry ID from the database
