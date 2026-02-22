@@ -144,12 +144,18 @@ export const useAccountPage = () => {
       
       // Map backend response to frontend format
       const mappedData = mapBackendToFrontend(updatedData);
-      
+
+      // Filter out empty values from mappedData so we don't overwrite
+      // existing frontend state with empty strings coming from backend.
+      const cleanedMappedData = Object.fromEntries(
+        Object.entries(mappedData || {}).filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+      );
+
       // IMPORTANT: Preserve existing data and merge with new data
-      // Don't replace all data with potentially incomplete response
+      // Only overlay fields that have meaningful values in the backend response
       updateAccountData({
         ...accountData,  // Keep existing data first
-        ...mappedData,   // Then overlay with new/updated fields
+        ...cleanedMappedData,   // Then overlay with new/updated (non-empty) fields
         // Always preserve file uploads and previews
         idFrontDocumentFile: accountData.idFrontDocumentFile,
         idBackDocumentFile: accountData.idBackDocumentFile,
@@ -223,9 +229,13 @@ export const useAccountPage = () => {
       // Map backend response to frontend format (this handles URL filtering properly)
       const mappedData = mapBackendToFrontend(updatedData);
       console.log('🔄 Mapped profile data:', mappedData);
-      
+
+      const cleanedMapped = Object.fromEntries(
+        Object.entries(mappedData || {}).filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+      );
+
       updateAccountData({
-        ...mappedData,
+        ...cleanedMapped,
         idFrontDocumentFile: accountData.idFrontDocumentFile,
         idBackDocumentFile: accountData.idBackDocumentFile,
         idFrontDocumentPreview: accountData.idFrontDocumentPreview,
