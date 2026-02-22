@@ -166,6 +166,37 @@ class UserMeView(APIView):
                 'message': error_msg if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    def delete(self, request):
+        """Delete current user account."""
+        try:
+            user = request.user
+            user_email = user.email
+            
+            with transaction.atomic():
+                # Delete related data
+                Booking.objects.filter(customer=user).delete()
+                Favorite.objects.filter(user=user).delete()
+                Review.objects.filter(user=user).delete()
+                
+                # Delete the user
+                user.delete()
+                
+                if settings.DEBUG:
+                    print(f"✅ User {user_email} account deleted successfully")
+                
+                return Response({
+                    'message': 'Account deleted successfully'
+                }, status=status.HTTP_204_NO_CONTENT)
+                
+        except Exception as e:
+            error_msg = str(e)
+            if settings.DEBUG:
+                print(f"Error in UserMeView.delete: {error_msg}")
+            return Response({
+                'error': 'An error occurred',
+                'message': error_msg if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class UserStatsView(APIView):
     """Get user statistics."""

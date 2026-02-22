@@ -288,15 +288,41 @@ export const useAccountPage = () => {
   };
 
   const handleDeleteAccount = async (logout) => {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      try {
-        await authService.deleteAccount();
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone and will:\n\n' +
+      '• Permanently delete your account and all associated data\n' +
+      '• Cancel all active bookings\n' +
+      '• Remove all your saved information\n\n' +
+      'To confirm, click OK.'
+    );
+    
+    if (!confirmed) return;
+
+    setSaving(true);
+    setSaveMessage('');
+
+    try {
+      // Call the delete account endpoint
+      const response = await authService.deleteAccount();
+      
+      // Show success message
+      setSaveMessage('Account deleted successfully. Logging out...');
+      
+      // Wait a moment for user to see the message
+      setTimeout(() => {
         logout();
         router.push('/');
-      } catch (error) {
-        console.error('Error deleting account:', error);
-        alert('Failed to delete account. Please try again or contact support.');
-      }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      const errorMsg = error.message || 'Failed to delete account. Please try again or contact support.';
+      setSaveMessage(`Error: ${errorMsg}`);
+      setSaving(false);
+      
+      // Show error alert
+      alert(`Failed to delete account:\n\n${errorMsg}`);
     }
   };
 
