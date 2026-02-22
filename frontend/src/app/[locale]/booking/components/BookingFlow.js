@@ -51,7 +51,7 @@ export default function BookingFlow({
     phoneNumber: '',
     specialRequest: '',
     licenseFiles: null,
-    paymentMethod: 'online',
+    paymentMethod: 'cash',
     agreedToTerms: false
   })
   const [formReady, setFormReady] = useState(false)
@@ -546,28 +546,17 @@ export default function BookingFlow({
 
                   <div className="grid grid-cols-1 gap-4">
                     <div 
-                      onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'online' }))}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                        formData.paymentMethod === 'online' 
-                          ? 'bg-orange-500/20 border-orange-500' 
-                          : 'bg-white/5 border-white/10 hover:bg-white/10'
-                      }`}
+                      className={`p-4 rounded-xl border transition-all opacity-50 cursor-not-allowed bg-white/5 border-white/10`}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-full ${
-                          formData.paymentMethod === 'online' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white/60'
-                        }`}>
+                        <div className={`p-3 rounded-full bg-white/10 text-white/60`}>
                           <CreditCard className="w-6 h-6" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-white">{t('pay_online')}</h4>
-                          <p className="text-sm text-white/60">{t('pay_online_desc')}</p>
+                          <h4 className="font-semibold text-white/50">{t('pay_online')}</h4>
+                          <p className="text-sm text-white/40">{t('pay_online_desc')}</p>
+                          <p className="text-xs text-red-400 mt-1">Currently unavailable</p>
                         </div>
-                        {formData.paymentMethod === 'online' && (
-                          <div className="ml-auto text-orange-500">
-                            <CheckCircle2 className="w-6 h-6" />
-                          </div>
-                        )}
                       </div>
                     </div>
 
