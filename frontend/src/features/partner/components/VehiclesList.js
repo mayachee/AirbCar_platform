@@ -581,24 +581,24 @@ export default function VehiclesList({
               </div>
 
               {/* Actions */}
-              <div className={`flex space-x-2 border-t border-gray-100 dark:border-gray-700 ${
+              <div className={`flex flex-col sm:flex-row gap-2 border-t border-gray-100 dark:border-gray-700 ${
                 viewMode === "grid" ? "pt-4" : "pt-3 mt-auto"
               }`}>
                 <button
                   onClick={() => onViewVehicle(vehicle)}
-                  className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
+                  className="flex-1 flex items-center justify-center space-x-1 px-2 sm:px-3 py-2 text-xs sm:text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors font-medium"
                   title={t('view_details')}
                 >
                   <Eye className="h-4 w-4" />
-                  {viewMode === "grid" && <span>{t('view')}</span>}
+                  <span className="hidden xs:inline">{t('view')}</span>
                 </button>
                 <button
                   onClick={() => onEditVehicle(vehicle)}
-                  className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors font-medium"
+                  className="flex-1 flex items-center justify-center space-x-1 px-2 sm:px-3 py-2 text-xs sm:text-sm text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors font-medium"
                   title={t('edit')}
                 >
                   <Edit className="h-4 w-4" />
-                  {viewMode === "grid" && <span>{t('edit')}</span>}
+                  <span className="hidden xs:inline">{t('edit')}</span>
                 </button>
                 <button
                   onClick={(e) => {
@@ -606,18 +606,18 @@ export default function VehiclesList({
                     setVehicleToDelete(vehicle);
                   }}
                   disabled={deletingVehicleId === vehicle.id || loading}
-                  className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed group/delete"
+                  className="flex-1 flex items-center justify-center space-x-1 px-2 sm:px-3 py-2 text-xs sm:text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed group/delete"
                   title={t('delete')}
                 >
                   {deletingVehicleId === vehicle.id ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      {viewMode === "grid" && <span>{t('processing')}</span>}
+                      <span className="hidden xs:inline">{t('processing')}</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="h-4 w-4 transition-transform group-hover/delete:scale-110" />
-                      {viewMode === "grid" && <span>{t('delete')}</span>}
+                      <span className="hidden xs:inline">{t('delete')}</span>
                     </>
                   )}
                 </button>
@@ -631,7 +631,7 @@ export default function VehiclesList({
                         console.log('Duplicate vehicle:', vehicle);
                       }
                     }}
-                    className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="px-2 sm:px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     title={t('duplicate_vehicle_title')}
                   >
                     <Copy className="h-4 w-4" />
