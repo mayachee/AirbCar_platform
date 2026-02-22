@@ -241,7 +241,7 @@ export default function VehiclesList({
         <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-100 text-sm font-medium">{t('average_rating')}</p>
+              <p className="text-yellow-100 text-sm font-medium">{t('stat_average_price')}</p>
               <p className="text-3xl font-bold mt-1">${stats.avgPrice.toFixed(0)}</p>
             </div>
             <DollarSign className="h-10 w-10 text-yellow-200 opacity-80" />
