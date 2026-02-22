@@ -125,7 +125,7 @@ export default function FleetSection({ listings = [] }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredListings.map((listing, index) => {
           const vehicleName = listing.title || listing.name || `${listing.make || ''} ${listing.model || ''} ${listing.year || ''}`.trim();
-          const imageUrl = listing.images?.[0] || listing.image || '/carsymbol.jpg';
+          const imageUrl = listing.images?.[0] || listing.image;
           const price = listing.price_per_day || listing.price || listing.dailyRate || 0;
           const location = listing.location || 'Location not specified';
           const rating = listing.rating || 0;
@@ -149,16 +149,18 @@ export default function FleetSection({ listings = [] }) {
                 }`}
               >
                 {/* Image */}
-                <div className="relative w-full bg-gray-800 overflow-hidden">
+                <div className="relative w-full h-64 bg-gray-800 overflow-hidden flex items-center justify-center">
                   <motion.img
                     src={imageUrl}
                     alt={vehicleName}
-                    className="w-full h-full object-contain"
-                    whileHover={{ scale: 1.1 }}
+                    className="w-full h-full object-contain p-4"
+                    whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.4 }}
                     onError={(e) => {
                       e.target.src = '/carsymbol.jpg';
+                      e.target.className = 'w-full h-full object-contain p-4';
                     }}
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
