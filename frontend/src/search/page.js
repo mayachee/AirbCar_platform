@@ -4,14 +4,16 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { SearchFilters, SearchResults, LoadingSkeleton, SearchForm, useSearch, useFavorites } from '@/features/search';
+import { SearchFilters, SearchResults, LoadingSkeleton, SearchForm, useSearch } from '@/features/search';
+import { useFavoritesContext } from '@/contexts/FavoritesContext';
 import { SelectField } from '@/components/ui/select-field';
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // Initialize filters from URL params and sessionStorage (for language switch recovery)
+  // Use global favorites context
+  const { isFavorite, toggleFavorite, loading: favoritesLoading } = useFavoritesContext();
   const getInitialFilters = () => {
     // Try to recover filters from sessionStorage if available
     let recoveredFilters = null;
@@ -55,9 +57,6 @@ function SearchContent() {
     setSortBy,
     clearFilters
   } = useSearch(initialFilters);
-
-  // Use favorites hook
-  const { isFavorite, toggleFavorite, loading: favoritesLoading } = useFavorites();
 
   // Save filters to sessionStorage to preserve them across language changes
   useEffect(() => {
@@ -123,10 +122,10 @@ function SearchContent() {
     router.push(url);
   };
 
-  // Handle favorite toggle with router redirect
+  // Handle favorite toggle
   const handleToggleFavorite = async (carId) => {
     try {
-      await toggleFavorite(carId);
+      toggleFavorite(carId);
     } catch (error) {
       // If user is not authenticated, redirect to login
       if (error.message?.includes('authentication') || error.message?.includes('401')) {
