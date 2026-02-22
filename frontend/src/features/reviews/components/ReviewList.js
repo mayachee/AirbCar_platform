@@ -371,20 +371,6 @@ export default function ReviewList({
         </motion.div>
       )}
 
-      {/* Add Review Button */}
-      {user && canReview && !isAddingReview && !editingReview && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => setIsAddingReview(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2"
-          >
-            <MessageSquare className="h-4 w-4" />
-            <span>{t('write_a_review')}</span>
-          </button>
-        </div>
-      )}
-
-
 
       {/* Login prompt for guests */}
       {!user && (
