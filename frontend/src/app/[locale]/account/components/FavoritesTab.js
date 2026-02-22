@@ -170,111 +170,91 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
   }, [propFavorites]);
 
   useEffect(() => {
-    // Always fetch to get fresh data
+    // Update local state when propFavorites changes (from the useFavorites hook)
+    if (propFavorites && propFavorites.length > 0) {
+      console.log('📦 Updating FavoritesTab from propFavorites:', propFavorites.length);
+      const processed = [];
+      const seenIds = new Set();
+      
+      propFavorites.forEach(fav => {
+        const listing = fav.listing || fav.vehicle || fav;
+        const favoriteId = fav.id;
+        const vehicleId = listing?.id || fav.vehicle_id;
+        const dedupeKey = favoriteId || vehicleId;
+        
+        if (dedupeKey && !seenIds.has(dedupeKey)) {
+          seenIds.add(dedupeKey);
+          processed.push({
+            id: favoriteId || vehicleId,
+            listing: listing,
+            vehicle: listing,
+            vehicle_id: vehicleId,
+            created_at: fav.created_at
+          });
+        }
+      });
+      
+      setFavorites(processed);
+      setError(null);
+    } else if (!propLoading && propFavorites?.length === 0) {
+      setFavorites([]);
+    }
+  }, [propFavorites, propLoading]);
+
+  useEffect(() => {
+    // Also fetch fresh data from API for consistency
     fetchFavorites();
   }, [fetchFavorites]);
 
   const handleRemoveFavorite = async (favorite) => {
     if (!favorite) return;
 
-    // Get the favorite ID (the Favorite object ID from backend)
-    // OR the listing/vehicle ID as fallback
-    const favoriteId = favorite.id; // This is the Favorite entry ID from backend
+    const favoriteId = favorite.id;
     const vehicleId = favorite.vehicle?.id || favorite.vehicle_id || favorite.listing?.id;
-    
-    // Use favorite.id (Favorite entry ID) if available - this is what the backend expects
-    // favorite.id is the ID of the Favorite entry in the database, not the listing ID
     const idToUse = favoriteId || vehicleId;
+    
     setRemovingFavorite(idToUse);
     
     try {
-      // Try to use the provided handler first
+      // Clear previous error when starting new operation
+      setError(null);
+      
+      // Call the provided handler which handles optimistic update and API call
       if (onRemoveFavorite) {
         await onRemoveFavorite(favorite);
-        setFavorites(prev => prev.filter(fav => {
-          const favId = fav.id || fav.vehicle?.id || fav.vehicle_id || fav.listing?.id;
-          const listingId = fav.listing?.id || fav.vehicle?.id;
-          return favId !== idToUse && listingId !== vehicleId;
-        }));
-        setSuccessMessage('Removed from favorites');
-        setTimeout(() => setSuccessMessage(''), 3000);
+        setSuccessMessage('✨ Removed from favorites');
+        setTimeout(() => setSuccessMessage(''), 2000);
         return;
       }
       
-      // Otherwise try API call - try favorite ID first, then fallback to listing/vehicle ID
+      // Fallback: Try API call directly if no handler provided
       try {
         await apiClient.delete(`/favorites/${idToUse}/`);
+        console.log('✅ Removed from API');
       } catch (deleteError) {
         const deleteErrorMessage = (deleteError.message || '').toLowerCase();
         const isNotFound = deleteError.status === 404 || 
                           deleteErrorMessage.includes('404') || 
-                          deleteErrorMessage.includes('not found') ||
-                          deleteErrorMessage.includes('endpoint not found');
+                          deleteErrorMessage.includes('not found');
         
-        // If favorite ID doesn't work with 404, try with listing/vehicle ID
-        if (isNotFound && favoriteId && vehicleId !== favoriteId) {
-          try {
-          await apiClient.delete(`/favorites/${vehicleId}/`);
-          } catch (secondDeleteError) {
-            const secondErrorMessage = (secondDeleteError.message || '').toLowerCase();
-            const secondIsNotFound = secondDeleteError.status === 404 || 
-                                    secondErrorMessage.includes('404') || 
-                                    secondErrorMessage.includes('not found') ||
-                                    secondErrorMessage.includes('endpoint not found');
-            
-            // If both fail with 404, treat as success (favorite already removed)
-            if (secondIsNotFound) {
-              console.log('Favorite not found with either ID, assuming already removed');
-              // Continue to update local state below
-            } else {
-              throw secondDeleteError;
-            }
-          }
-        } else if (isNotFound) {
-          // 404 means favorite already removed - treat as success
-          console.log('Favorite not found, assuming already removed');
-          // Continue to update local state below
-        } else {
+        if (!isNotFound) {
           throw deleteError;
         }
       }
       
-      // Update local state immediately for better UX
+      // Update local state
       setFavorites(prev => prev.filter(fav => {
-        const favId = fav.id || fav.vehicle?.id || fav.vehicle_id || fav.listing?.id;
+        const favId = fav.id || fav.vehicle?.id || fav.vehicle_id;
         const listingId = fav.listing?.id || fav.vehicle?.id;
         return favId !== idToUse && listingId !== vehicleId;
       }));
       
-      setSuccessMessage('Removed from favorites');
-      setTimeout(() => setSuccessMessage(''), 3000);
-      
-      // Refresh the favorites to ensure consistency
-      await fetchFavorites();
+      setSuccessMessage('✨ Removed from favorites');
+      setTimeout(() => setSuccessMessage(''), 2000);
     } catch (err) {
-      // Handle different error cases gracefully
-      const errorMessage = (err.message || '').toLowerCase();
-      const isNotFoundError = err.status === 404 || 
-                              errorMessage.includes('404') || 
-                              errorMessage.includes('not found') || 
-                              errorMessage.includes('endpoint not found') ||
-                              errorMessage.includes('favorite not found');
-      
-      if (isNotFoundError) {
-        console.log('Favorite not found or already removed');
-        // Update local state anyway - favorite might already be removed
-        setFavorites(prev => prev.filter(fav => {
-          const favId = fav.id || fav.vehicle?.id || fav.vehicle_id || fav.listing?.id;
-          const listingId = fav.listing?.id || fav.vehicle?.id;
-          return favId !== idToUse && listingId !== vehicleId;
-        }));
-        setSuccessMessage('Removed from favorites');
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        console.error('Error removing favorite:', err);
-        setError('Failed to remove favorite. Please try again.');
-        setTimeout(() => setError(null), 5000);
-      }
+      console.error('Error removing favorite:', err);
+      setError('Could not remove favorite. Please try again.');
+      setTimeout(() => setError(null), 5000);
     } finally {
       setRemovingFavorite(null);
     }

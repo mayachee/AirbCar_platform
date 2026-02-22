@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { userService } from '../services/userService';
 
@@ -9,6 +9,8 @@ export const useFavorites = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const operatingOnRef = useRef(new Set()); // Track which items are being operated on
+  const debounceTimerRef = useRef(null);
 
   // Load favorites
   const loadFavorites = useCallback(async () => {
@@ -110,50 +112,90 @@ export const useFavorites = () => {
 
   // Remove from favorites
   const removeFavorite = useCallback(async (vehicleId) => {
+    // Prevent duplicate operations on same item
+    if (operatingOnRef.current.has(vehicleId)) {
+      console.warn('⚠️ Operation already in progress for vehicle:', vehicleId);
+      return false;
+    }
+    
+    operatingOnRef.current.add(vehicleId);
+    
     try {
       setLoading(true);
+      console.log('🗑️ Removing favorite:', vehicleId);
       
       // OPTIMISTIC UPDATE: Remove from local state immediately for better UX
-      const previousFavorites = favorites;
-      setFavorites(prev => prev.filter(fav => {
-        const favVehicleId = fav.vehicle?.id || fav.vehicle_id || fav.id;
-        const favListingId = fav.listing?.id || fav.listing;
-        return favVehicleId !== vehicleId && favListingId !== vehicleId;
-      }));
+      let previousFavoritesToRevert = null;
+      setFavorites(prev => {
+        const filtered = prev.filter(fav => {
+          const favVehicleId = fav.vehicle?.id || fav.vehicle_id || fav.id;
+          const favListingId = fav.listing?.id || fav.listing;
+          return favVehicleId !== vehicleId && favListingId !== vehicleId;
+        });
+        
+        previousFavoritesToRevert = prev;
+        console.log('✨ Optimistically updated - removed from UI:', vehicleId);
+        return filtered;
+      });
       
-      // Then make the API call in the background
-      try {
-        const result = await userService.removeFavorite(vehicleId);
-        console.log('✅ Successfully removed from favorites:', vehicleId);
-        return true;
-      } catch (err) {
-        // If favorite not found, it might already be removed - treat as success
-        const errorMessage = (err.message || '').toLowerCase();
-        const isNotFound = err.status === 404 || 
-                          errorMessage.includes('404') || 
-                          errorMessage.includes('not found') || 
-                          errorMessage.includes('endpoint not found') ||
-                          errorMessage.includes('favorite not found');
-        
-        if (isNotFound) {
-          console.log('Favorite not found on backend, already removed from UI');
+      // Then make the API call with retry logic
+      let retries = 0;
+      const maxRetries = 2;
+      let lastError = null;
+      
+      while (retries <= maxRetries) {
+        try {
+          const result = await userService.removeFavorite(vehicleId);
+          console.log('✅ Successfully removed from favorites:', vehicleId);
+          setError(null);
           return true;
+        } catch (err) {
+          lastError = err;
+          const errorMessage = (err.message || '').toLowerCase();
+          const isNotFound = err.status === 404 || 
+                            errorMessage.includes('404') || 
+                            errorMessage.includes('not found') || 
+                            errorMessage.includes('endpoint not found');
+          
+          if (isNotFound) {
+            console.log('Favorite not found on backend, already removed');
+            setError(null);
+            return true;
+          }
+          
+          // Check if retryable
+          const isRetryable = err.status >= 500 || errorMessage.includes('timeout') || errorMessage.includes('network');
+          
+          if (isRetryable && retries < maxRetries) {
+            retries++;
+            console.warn(`⚠️ Retrying removal (attempt ${retries}/${maxRetries})...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+            continue;
+          }
+          break;
         }
-        
-        // For other errors, revert the optimistic update
-        console.error('Error removing favorite, reverting UI:', err);
-        setFavorites(previousFavorites);
-        setError(err.message);
-        return false;
       }
+      
+      // Failed after retries - revert UI
+      console.error('Failed to remove favorite:', lastError);
+      if (previousFavoritesToRevert) {
+        setFavorites(previousFavoritesToRevert);
+        console.log('🔄 Reverted to previous state');
+      } else {
+        await loadFavorites();
+      }
+      
+      setError(lastError?.message || 'Failed to remove from favorites');
+      return false;
     } catch (err) {
-      console.error('Error in removeFavorite:', err);
+      console.error('Unexpected error in removeFavorite:', err);
       setError(err.message);
       return false;
     } finally {
       setLoading(false);
+      operatingOnRef.current.delete(vehicleId);
     }
-  }, [favorites]);
+  }, [loadFavorites, favorites]);
 
   // Toggle favorite status
   const toggleFavorite = useCallback(async (vehicleId) => {
