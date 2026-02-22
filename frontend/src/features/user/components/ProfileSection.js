@@ -79,60 +79,6 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
 
   return (
     <div className="space-y-8">
-      {/* Profile Picture Section */}
-      <div className="pt-8">
-        <h3 className="text-lg font-bold text-white-900 mb-6 flex items-center gap-2">
-          <Camera className="w-5 h-5 text-orange-500" />
-          Profile Picture
-        </h3>
-        <div className="space-y-4">
-          <label className="block w-full">
-            <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-orange-500 rounded-lg cursor-pointer hover:bg-orange-500/10 transition-colors bg-orange-500/5">
-              {accountData.profileImage && accountData.profileImage !== '/default-avatar.svg' ? (
-                <div className="relative w-full h-full">
-                  <img
-                    src={accountData.profileImage}
-                    alt="Profile"
-                    className="w-full h-full object-cover rounded-lg"
-                    onError={(e) => {
-                      e.currentTarget.src = '/default-avatar.svg';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
-                    <Camera className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    <Camera className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <p className="text-sm font-semibold text-gray-600 mb-1">Upload Profile Picture</p>
-                  <p className="text-xs text-gray-500">JPEG, PNG, or WebP (max 5MB)</p>
-                </div>
-              )}
-            </div>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleImageChange}
-              className="hidden"
-              disabled={uploading}
-            />
-          </label>
-          {uploading && (
-            <div className="flex items-center gap-2 text-sm text-orange-600">
-              <div className="animate-spin">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </div>
-              <span>Uploading picture...</span>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Basic Information */}
       <div className="pt-8 border-t border-gray-100">
         <h3 className="text-lg font-bold text-white-900 mb-6 flex items-center gap-2">
