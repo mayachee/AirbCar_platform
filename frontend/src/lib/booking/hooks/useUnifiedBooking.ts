@@ -18,7 +18,8 @@ interface UseUnifiedBookingOptions {
 }
 
 export function useUnifiedBooking(options: UseUnifiedBookingOptions = {}) {
-  const { user } = useAuth();
+  const authContext = useAuth() as any;
+  const { user } = authContext;
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,13 +92,15 @@ export function useUnifiedBooking(options: UseUnifiedBookingOptions = {}) {
     }
 
     // Subscribe to real-time updates
-    const unsubscribe = bookingSync.subscribe((event) => {
+    const unsubscribe: (() => void) = bookingSync.subscribe((event) => {
       if (event.type === 'created' || event.type === 'status_changed' || event.type === 'sync') {
         fetchBookings();
       }
-    });
+    }) as () => void;
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, [fetchBookings, options.autoFetch]);
 
   return {

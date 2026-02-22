@@ -135,7 +135,7 @@ export class BookingManager {
       cancelled: bookings.filter(b => b.status === 'cancelled').length,
       revenue: bookings
         .filter(b => b.status === 'completed')
-        .reduce((sum, b) => sum + (parseFloat(b.total_price || b.price || '0')), 0)
+        .reduce((sum, b) => sum + (parseFloat(String(b.total_price || b.price || '0'))), 0)
     };
   }
 
