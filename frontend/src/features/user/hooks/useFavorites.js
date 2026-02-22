@@ -92,8 +92,12 @@ export const useFavorites = () => {
   const addFavorite = useCallback(async (vehicleId) => {
     try {
       setLoading(true);
-      await userService.addFavorite(vehicleId);
-      await loadFavorites(); // Reload favorites list
+      
+      // For add, we need to load full data from API first
+      const result = await userService.addFavorite(vehicleId);
+      
+      // Reload favorites to get the complete list
+      await loadFavorites();
       return true;
     } catch (err) {
       console.error('Error adding favorite:', err);
@@ -108,43 +112,48 @@ export const useFavorites = () => {
   const removeFavorite = useCallback(async (vehicleId) => {
     try {
       setLoading(true);
-      const result = await userService.removeFavorite(vehicleId);
       
-      // Update local state immediately for better UX
+      // OPTIMISTIC UPDATE: Remove from local state immediately for better UX
+      const previousFavorites = favorites;
       setFavorites(prev => prev.filter(fav => {
         const favVehicleId = fav.vehicle?.id || fav.vehicle_id || fav.id;
         const favListingId = fav.listing?.id || fav.listing;
         return favVehicleId !== vehicleId && favListingId !== vehicleId;
       }));
       
-      return true;
-    } catch (err) {
-      // If favorite not found, it might already be removed - treat as success
-      const errorMessage = (err.message || '').toLowerCase();
-      const isNotFound = err.status === 404 || 
-                        errorMessage.includes('404') || 
-                        errorMessage.includes('not found') || 
-                        errorMessage.includes('endpoint not found') ||
-                        errorMessage.includes('favorite not found');
-      
-      if (isNotFound) {
-        console.log('Favorite not found, assuming already removed');
-        // Update local state anyway
-        setFavorites(prev => prev.filter(fav => {
-          const favVehicleId = fav.vehicle?.id || fav.vehicle_id || fav.id;
-          const favListingId = fav.listing?.id || fav.listing;
-          return favVehicleId !== vehicleId && favListingId !== vehicleId;
-        }));
+      // Then make the API call in the background
+      try {
+        const result = await userService.removeFavorite(vehicleId);
+        console.log('✅ Successfully removed from favorites:', vehicleId);
         return true;
+      } catch (err) {
+        // If favorite not found, it might already be removed - treat as success
+        const errorMessage = (err.message || '').toLowerCase();
+        const isNotFound = err.status === 404 || 
+                          errorMessage.includes('404') || 
+                          errorMessage.includes('not found') || 
+                          errorMessage.includes('endpoint not found') ||
+                          errorMessage.includes('favorite not found');
+        
+        if (isNotFound) {
+          console.log('Favorite not found on backend, already removed from UI');
+          return true;
+        }
+        
+        // For other errors, revert the optimistic update
+        console.error('Error removing favorite, reverting UI:', err);
+        setFavorites(previousFavorites);
+        setError(err.message);
+        return false;
       }
-      
-      console.error('Error removing favorite:', err);
+    } catch (err) {
+      console.error('Error in removeFavorite:', err);
       setError(err.message);
       return false;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [favorites]);
 
   // Toggle favorite status
   const toggleFavorite = useCallback(async (vehicleId) => {

@@ -50,46 +50,57 @@ export const useFavorites = () => {
     const normalizedCarId = normalizeId(carId);
     if (!normalizedCarId) return;
 
+    const isCurrentlyFavorited = favorites.has(normalizedCarId);
+    
     try {
       setLoading(true);
       
-      if (favorites.has(normalizedCarId)) {
-        // Remove from favorites
+      // OPTIMISTIC UPDATE: Update UI immediately for better UX
+      if (isCurrentlyFavorited) {
+        // Remove from favorites - update state immediately
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(normalizedCarId);
+          return newFavorites;
+        });
+        
+        // Then make the API call in the background
         try {
           await listingsService.removeFavorite(normalizedCarId);
-          setFavorites(prev => {
-            const newFavorites = new Set(prev);
-            newFavorites.delete(normalizedCarId);
-            return newFavorites;
-          });
+          console.log('✅ Successfully removed from favorites:', normalizedCarId);
         } catch (error) {
-          // If endpoint doesn't exist, just update local state
-          if (error.message?.includes('404')) {
+          console.warn('⚠️ Failed to remove from favorites API call, but UI already updated:', error.message);
+          // If API call fails, revert the state
+          if (!error.message?.includes('404') && !error.message?.includes('already') && !error.message?.includes('not found')) {
+            setFavorites(prev => new Set([...prev, normalizedCarId]));
+            throw error;
+          }
+          // For 404 or "not found" errors, keep the state as-is (already removed from UI)
+        }
+      } else {
+        // Add to favorites - update state immediately
+        setFavorites(prev => new Set([...prev, normalizedCarId]));
+        
+        // Then make the API call in the background
+        try {
+          await listingsService.toggleFavorite(normalizedCarId);
+          console.log('✅ Successfully added to favorites:', normalizedCarId);
+        } catch (error) {
+          console.warn('⚠️ Failed to add to favorites API call, but UI already updated:', error.message);
+          
+          if (error.message?.includes('401') || error.message?.includes('403')) {
+            // Authentication error - revert state and re-throw
             setFavorites(prev => {
               const newFavorites = new Set(prev);
               newFavorites.delete(normalizedCarId);
               return newFavorites;
             });
-          } else {
             throw error;
           }
-        }
-      } else {
-        // Add to favorites
-        try {
-          await listingsService.toggleFavorite(normalizedCarId);
-          setFavorites(prev => new Set([...prev, normalizedCarId]));
-        } catch (error) {
-          // If endpoint doesn't exist, just update local state
-          if (error.message?.includes('404')) {
-            setFavorites(prev => new Set([...prev, normalizedCarId]));
-          } else if (error.message?.includes('401') || error.message?.includes('403')) {
-            // Authentication error - re-throw so UI can handle it
-            throw error;
-          } else {
-            console.warn('Could not toggle favorite:', error.message);
-            // Still update local state for better UX
-            setFavorites(prev => new Set([...prev, normalizedCarId]));
+          
+          // For 404 or other errors, keep the state as-is (already added to UI)
+          if (!error.message?.includes('404')) {
+            console.warn('Could not add favorite, but UI updated. Error:', error.message);
           }
         }
       }
