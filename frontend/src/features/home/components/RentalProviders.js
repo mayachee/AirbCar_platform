@@ -567,11 +567,11 @@ export default function RentalProviders() {
 
           {/* Edge fade for a more premium look */}
           <div 
-            className={`pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-20 bg-gradient-to-r from-white via-white/80 to-transparent backdrop-blur-[2px] transition-opacity duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} 
+            className={`pointer-events-none absolute inset-y-0 left-0 duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} 
             aria-hidden="true" 
           />
           <div 
-            className={`pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-20 bg-gradient-to-l from-white via-white/80 to-transparent backdrop-blur-[2px] transition-opacity duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} 
+            className={`pointer-events-none absolute inset-y-0 right-0 duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} 
             aria-hidden="true" 
           />
 
