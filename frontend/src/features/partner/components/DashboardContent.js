@@ -570,8 +570,10 @@ export default function DashboardContent({
               try {
                 const { partnerService } = await import('@/features/partner/services/partnerService');
                 if (hasPartnerProfile === false) {
+                  console.log('Registering new partner with data:', profileData);
                   await partnerService.registerPartner(profileData);
                 } else {
+                  console.log('Updating partner profile with data:', profileData);
                   await partnerService.updatePartnerProfile(profileData);
                 }
                 refetch();

@@ -314,6 +314,9 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
     // Field Mappings
     if (payload.company_name) {
       payload.business_name = payload.company_name;
+    } else {
+      // Ensure business_name is set (required field)
+      payload.business_name = '';
     }
     
     // Backend Logic: Map "fleet" and "dealership" to "company"
@@ -321,10 +324,8 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
       payload.business_type = 'company';
     }
     
-    // Cleanup: Remove empty business_type
-    if (payload.business_type === '') {
-      delete payload.business_type;
-    }
+    // Cleanup: Remove empty business_type is removed - let backend handle required field validation
+    // We already validate in handleSave, so business_type should never be empty here
 
     // Cleanup: Remove read-only & frontend-only fields
     const fieldsToRemove = [
@@ -343,6 +344,18 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
     setSaving(true);
     try {
       // 1. Validation
+      if (!formData.company_name?.trim()) {
+        addToast('Company name is required.', 'error');
+        setSaving(false);
+        return;
+      }
+      
+      if (!formData.business_type || formData.business_type === '') {
+        addToast('Business type is required. Please select a business type.', 'error');
+        setSaving(false);
+        return;
+      }
+      
       const phoneValidation = validatePhoneNumber(formData.phone_number);
       if (!phoneValidation.isValid) {
         addToast(phoneValidation.error, 'error');
@@ -410,6 +423,14 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
       console.error('Error saving profile:', error);
       
       // 5. Error Handling & Retry Logic
+      // Check if it's a validation error from registerPartner
+      if (error.message && !error.data) {
+        // This is likely a custom validation error from registerPartner
+        addToast(error.message, 'error');
+        setSaving(false);
+        return;
+      }
+      
       const serverErrorDetails = error.data?.details || error.data?.detail || error.data;
       const errorMsgDetails = typeof serverErrorDetails === 'string' 
         ? serverErrorDetails 

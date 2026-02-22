@@ -6,12 +6,18 @@ import { apiClient } from '@/lib/api/client'
 export const partnerService = {
   // Partner Management
   async registerPartner(partnerData) {
+    // Handle both FormData and JSON payloads
+    if (partnerData instanceof FormData) {
+      // If FormData, pass it directly - backend will handle multipart
+      return apiClient.post('/partners/', partnerData)
+    }
+
+    // For JSON payloads, ensure required fields are present
     const business_name =
       partnerData.business_name ||
       partnerData.businessName ||
       partnerData.company_name ||
       partnerData.companyName ||
-      partnerData.businessName ||
       ''
 
     const business_type =
@@ -19,9 +25,17 @@ export const partnerService = {
       partnerData.businessType ||
       ''
 
+    // Validate required fields before sending
+    if (!business_name || business_name.trim() === '') {
+      throw new Error('business_name is required')
+    }
+    if (!business_type || business_type.trim() === '') {
+      throw new Error('business_type is required')
+    }
+
     const payload = {
-      business_name,
-      business_type,
+      business_name: business_name.trim(),
+      business_type: business_type.trim(),
       business_license:
         partnerData.business_license ||
         partnerData.businessLicense ||
