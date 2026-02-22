@@ -99,6 +99,17 @@ export default function RentalProviders() {
     return Math.round(cardWidth + gapValue)
   }, [])
 
+  const setInstantScrollLeft = useCallback((container, left) => {
+    const prevBehavior = container.style.scrollBehavior
+    container.style.scrollBehavior = 'auto'
+    isProgrammaticScrollRef.current = true
+    container.scrollLeft = left
+    container.style.scrollBehavior = prevBehavior
+    window.setTimeout(() => {
+      isProgrammaticScrollRef.current = false
+    }, 0)
+  }, [])
+
   const checkScrollPosition = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return
@@ -195,17 +206,6 @@ export default function RentalProviders() {
   const scrollToRight = () => {
     scrollToSnap('right')
   };
-
-  const setInstantScrollLeft = useCallback((container, left) => {
-    const prevBehavior = container.style.scrollBehavior
-    container.style.scrollBehavior = 'auto'
-    isProgrammaticScrollRef.current = true
-    container.scrollLeft = left
-    container.style.scrollBehavior = prevBehavior
-    window.setTimeout(() => {
-      isProgrammaticScrollRef.current = false
-    }, 0)
-  }, [])
 
   const normalizeLoopScrollLeft = useCallback((container) => {
     const metrics = getLoopMetrics(container)
@@ -347,7 +347,7 @@ export default function RentalProviders() {
   }, [providers.length, shouldLoop, checkScrollPosition, getLoopMetrics]);
 
   useEffect(() => {
-    if (!shouldLoop || !didInitLoopScrollRef.current) return
+    if (!shouldLoop) return
 
     const intervalId = window.setInterval(() => {
       if (document.hidden) return
