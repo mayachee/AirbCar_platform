@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api/client'
 import { motion } from 'framer-motion';
@@ -29,7 +29,10 @@ export default function RentalProviders() {
   const [loadError, setLoadError] = useState(null);
 
   const shouldLoop = !isLoading && !loadError && providers.length > 0
-  const loopedProviders = shouldLoop ? [...providers, ...providers, ...providers] : providers
+  const loopedProviders = useMemo(
+    () => shouldLoop ? [...providers, ...providers, ...providers] : providers,
+    [shouldLoop, providers]
+  )
 
   const getLoopMetrics = useCallback((container) => {
     if (!container) return null
@@ -273,7 +276,8 @@ export default function RentalProviders() {
 
   useEffect(() => {
     let isMounted = true
-    ;(async () => {
+    
+    const loadProviders = async () => {
       try {
         setIsLoading(true)
         setLoadError(null)
@@ -289,7 +293,9 @@ export default function RentalProviders() {
         const rows = Array.isArray(partnerList) ? partnerList : []
         const mapped = rows.map(toProvider).filter((p) => p?.id)
 
-        if (isMounted) setProviders(mapped)
+        if (isMounted) {
+          setProviders(mapped)
+        }
       } catch (err) {
         console.error('Failed to load providers:', err)
         const message = err?.friendlyMessage || err?.message || 'Failed to load rental providers.'
@@ -297,7 +303,9 @@ export default function RentalProviders() {
       } finally {
         if (isMounted) setIsLoading(false)
       }
-    })()
+    }
+    
+    loadProviders()
 
     return () => {
       isMounted = false
@@ -309,18 +317,16 @@ export default function RentalProviders() {
     if (container) {
       // Start in the middle copy so user can scroll both directions "forever".
       if (shouldLoop && !didInitLoopScrollRef.current) {
-        // Wait a frame for DOM to settle
-        window.requestAnimationFrame(() => {
-          const metrics = getLoopMetrics(container)
-          if (metrics) {
-            const prevBehavior = container.style.scrollBehavior
-            container.style.scrollBehavior = 'auto'
-            container.scrollLeft = metrics.startMiddle
-            container.style.scrollBehavior = prevBehavior
-            didInitLoopScrollRef.current = true;
-            checkScrollPosition();
-          }
-        })
+        // Initialize immediately without delay for faster load
+        const metrics = getLoopMetrics(container)
+        if (metrics) {
+          const prevBehavior = container.style.scrollBehavior
+          container.style.scrollBehavior = 'auto'
+          container.scrollLeft = metrics.startMiddle
+          container.style.scrollBehavior = prevBehavior
+          didInitLoopScrollRef.current = true;
+          checkScrollPosition();
+        }
       }
 
       const onScroll = () => {
@@ -477,7 +483,7 @@ export default function RentalProviders() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true, margin: "-10%" }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 className="group relative flex-shrink-0 w-[280px] sm:w-80 md:w-96 bg-white p-5 sm:p-7 snap-start rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 ease-out hover:shadow-xl"
                 data-provider-card="true"
