@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Calendar, RefreshCw } from 'lucide-react';
 import { bookingService } from '@/services/api';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
@@ -13,6 +14,7 @@ import ToastNotifications from './bookings/ToastNotifications';
 import { formatCurrency, formatDateTime } from './bookings/bookingUtils';
 
 export default function ImprovedBookingsTab() {
+  const t = useTranslations('account');
   const [tab, setTab] = useState('upcoming');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,11 +66,11 @@ export default function ImprovedBookingsTab() {
       setShowDetails(false);
       setShowCancelConfirm(false);
       setBookingToCancel(null);
-      setSuccessMessage('Booking cancelled successfully');
+      setSuccessMessage(t('bookings_cancellation_success'));
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Error cancelling booking:', error);
-      setErrorMessage('Failed to cancel booking. Please try again.');
+      setErrorMessage(t('bookings_cancellation_error'));
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setActionLoading(false);
@@ -156,8 +158,8 @@ export default function ImprovedBookingsTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-2xl font-bold text-white-900 mb-2">My Bookings</h3>
-          <p className="text-gray-600">View and manage your car rental bookings</p>
+          <h3 className="text-2xl font-bold text-white-900 mb-2">{t('bookings_tab_title')}</h3>
+          <p className="text-gray-600">{t('bookings_tab_title')}</p>
         </div>
         <button
           onClick={() => loadBookings(true)}
@@ -165,7 +167,7 @@ export default function ImprovedBookingsTab() {
           className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-          <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          <span>{refreshing ? t('refreshing') : t('refresh')}</span>
         </button>
       </div>
 
@@ -192,11 +194,11 @@ export default function ImprovedBookingsTab() {
       {filteredBookings.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
           <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('bookings_empty')}</h3>
           <p className="text-gray-600">
-            {tab === 'upcoming' && 'You have no upcoming bookings'}
-            {tab === 'past' && 'You have no past bookings'}
-            {tab === 'all' && 'You have no bookings yet'}
+            {tab === 'upcoming' && t('no_upcoming_bookings')}
+            {tab === 'past' && t('no_past_bookings')}
+            {tab === 'all' && t('bookings_empty')}
           </p>
         </div>
       ) : (

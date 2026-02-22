@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api/client';
 import { ProfileSection } from '@/features/user';
 
@@ -16,6 +17,7 @@ export default function ProfileTab({
   stats: propStats,
   upcomingBookings: propUpcomingBookings = []
 }) {
+  const t = useTranslations('account');
   const router = useRouter();
   const [stats, setStats] = useState(propStats || null);
   const [upcomingBookings, setUpcomingBookings] = useState(propUpcomingBookings || []);
@@ -114,8 +116,8 @@ export default function ProfileTab({
       {/* Section Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Profile Information</h2>
-          <p className="text-sm text-gray-600 mt-1">Update your personal details and documents</p>
+          <h2 className="text-2xl font-bold text-white">{t('profile_tab_title')}</h2>
+          <p className="text-sm text-gray-600 mt-1">{t('profile_tab_description')}</p>
         </div>
         <button
           onClick={fetchData}
@@ -125,7 +127,7 @@ export default function ProfileTab({
           <svg className={`w-4 h-4 ${localLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          {localLoading ? 'Refreshing...' : 'Refresh Data'}
+          {localLoading ? t('profile_refreshing') : t('profile_refresh_data')}
         </button>
       </div>
 
@@ -146,7 +148,7 @@ export default function ProfileTab({
       {/* Save Button */}
       <div className="mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
         <p className="text-sm text-gray-500">
-          Make sure all required fields are filled before saving
+          {t('profile_required_fields')}
         </p>
         <button
           onClick={handleSaveProfile}
@@ -159,14 +161,14 @@ export default function ProfileTab({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span>Saving...</span>
+              <span>{t('saving')}</span>
             </>
           ) : (
             <>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Save Changes</span>
+              <span>{t('save_changes')}</span>
             </>
           )}
         </button>

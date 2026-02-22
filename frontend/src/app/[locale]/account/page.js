@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccountPage } from './hooks';
 import { formatProfileCompletion } from '@/features/user';
@@ -20,6 +21,7 @@ function AccountPageContent() {
   const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('account');
 
   const {
     accountData,
@@ -75,10 +77,10 @@ function AccountPageContent() {
   }
 
   const sidebarItems = [
-    { id: 'profile', label: 'Profile Settings', icon: User },
-    { id: 'bookings', label: 'My Bookings', icon: Calendar },
-    { id: 'favorites', label: 'Favorites', icon: Heart },
-    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'profile', labelKey: 'sidebar_profile', icon: User },
+    { id: 'bookings', labelKey: 'sidebar_bookings', icon: Calendar },
+    { id: 'favorites', labelKey: 'sidebar_favorites', icon: Heart },
+    { id: 'security', labelKey: 'sidebar_security', icon: Shield },
   ];
 
   return (
@@ -97,9 +99,9 @@ function AccountPageContent() {
         {/* Welcome Section */}
         <div className="mb-12">
             <h1 className="text-4xl font-bold text-white mb-4">
-                Welcome back, {user?.first_name || user?.username || 'User'}! 👋
+                {t('welcome_back', { name: user?.first_name || user?.username || 'User' })}
             </h1>
-            <p className="text-slate-300 text-lg">Manage your account, bookings, and preferences.</p>
+            <p className="text-slate-300 text-lg">{t('manage_account')}</p>
         </div>
 
         {/* Save Message */}
@@ -141,7 +143,7 @@ function AccountPageContent() {
                                     }`}
                                 >
                                     <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white transition-colors'}`} />
-                                    {item.label}
+                                    {t(item.labelKey)}
                                 </button>
                             );
                         })}

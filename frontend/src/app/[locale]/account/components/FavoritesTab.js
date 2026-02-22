@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api/client';
 import { FavoritesGrid } from '@/features/user';
 import { Search, RefreshCw, Heart, X, AlertCircle, CheckCircle, Loader2, Filter, Grid, List as ListIcon } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function FavoritesTab({ favorites: propFavorites, loading: propLoading, onRemoveFavorite, onBookNow, onViewDetails }) {
+  const t = useTranslations('account');
   const router = useRouter();
   const [favorites, setFavorites] = useState([]);
   const [localLoading, setLocalLoading] = useState(false);
@@ -367,12 +369,12 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
         <div>
           <h3 className="text-2xl font-bold text-white-900 mb-2 flex items-center space-x-2">
             <Heart className="h-6 w-6 text-red-500 fill-red-500" />
-            <span>My Favorite Cars</span>
+            <span>{t('favorites_tab_title')}</span>
           </h3>
           <p className="text-gray-600">
             {filteredFavorites.length === displayFavorites.length 
-              ? `You have ${displayFavorites.length} favorite ${displayFavorites.length === 1 ? 'car' : 'cars'}`
-              : `Showing ${filteredFavorites.length} of ${displayFavorites.length} favorites`
+              ? t('favorites_count', { count: displayFavorites.length })
+              : t('favorites_filtered', { filtered: filteredFavorites.length, total: displayFavorites.length })
             }
           </p>
         </div>
@@ -382,7 +384,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
           className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
+          <span>{isLoading ? t('loading') : t('refresh')}</span>
         </button>
       </div>
 
@@ -393,7 +395,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by car name or location..."
+              placeholder={t('favorites_search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
@@ -403,10 +405,10 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             options={[
-              { value: 'recent', label: 'Recently Added' },
-              { value: 'price-low', label: 'Price: Low to High' },
-              { value: 'price-high', label: 'Price: High to Low' },
-              { value: 'name', label: 'Name: A to Z' },
+              { value: 'recent', label: t('favorites_sort_recent') },
+              { value: 'price-low', label: t('favorites_sort_price_low') },
+              { value: 'price-high', label: t('favorites_sort_price_high') },
+              { value: 'name', label: t('favorites_sort_name') },
             ]}
             className="px-4 py-2 rounded-lg"
           />
@@ -444,13 +446,13 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       {!isLoading && searchTerm && filteredFavorites.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
           <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No cars found</h3>
-          <p className="text-gray-600 mb-4">No favorites match your search "{searchTerm}"</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('favorites_empty')}</h3>
+          <p className="text-gray-600 mb-4">{t('favorites_search')} "{searchTerm}"</p>
           <button
             onClick={() => setSearchTerm('')}
             className="text-orange-600 hover:text-orange-700 font-medium"
           >
-            Clear search
+            {t('cancel')}
           </button>
         </div>
       )}
