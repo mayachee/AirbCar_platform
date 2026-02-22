@@ -388,7 +388,15 @@ export default function PartnerProfileSettings({ partnerData, hasPartnerProfile 
          if (!formDataToSend.has('phone_number')) formDataToSend.append('phone_number', payload.phone_number || '');
          if (!formDataToSend.has('city')) formDataToSend.append('city', payload.city || '');
          
-         formDataToSend.append('logo', logoFile);
+         // Truncate filename to max 100 characters (backend limit)
+         // Get file extension
+         const ext = logoFile.name.split('.').pop();
+         const maxNameLength = 100 - (ext.length + 1); // -1 for the dot
+         const truncatedName = logoFile.name.substring(0, maxNameLength) + '.' + ext;
+         
+         // Create a new File object with the truncated name
+         const renamedFile = new File([logoFile], truncatedName, { type: logoFile.type });
+         formDataToSend.append('logo', renamedFile);
          
          await onUpdate(formDataToSend);
       } 
