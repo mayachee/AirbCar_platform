@@ -27,7 +27,6 @@ export default function RentalProviders() {
   const [providers, setProviders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [retryCount, setRetryCount] = useState(0);
 
   const shouldLoop = !isLoading && !loadError && providers.length > 0
   const loopedProviders = shouldLoop ? [...providers, ...providers, ...providers] : providers
@@ -106,7 +105,7 @@ export default function RentalProviders() {
 
     // Infinite loop behavior: keep scroll position within the middle copy.
     if (shouldLoop) {
-      // In loop mode there are no true edges, so keep arrows available.
+      // In loop mode always show arrows for infinite scrolling
       setShowLeftArrow(true)
       setShowRightArrow(true)
 
@@ -119,9 +118,9 @@ export default function RentalProviders() {
         // Keep scrollLeft within the middle copy range by shifting exactly one copy width.
         // This stays seamless because copy #1 and copy #2 are identical.
         if (left < metrics.startMiddle - 1) {
-          container.scrollLeft = left + metrics.singleWidth
+          setInstantScrollLeft(container, left + metrics.singleWidth)
         } else if (left >= metrics.startThird - 1) {
-          container.scrollLeft = left - metrics.singleWidth
+          setInstantScrollLeft(container, left - metrics.singleWidth)
         }
       }
       return
@@ -131,7 +130,7 @@ export default function RentalProviders() {
     setShowRightArrow(
       container.scrollLeft < container.scrollWidth - container.clientWidth
     );
-  }, [getLoopMetrics, shouldLoop])
+  }, [getLoopMetrics, shouldLoop, setInstantScrollLeft])
 
   const handlePointerDown = (e) => {
     const container = scrollContainerRef.current;
@@ -146,6 +145,7 @@ export default function RentalProviders() {
     startScrollLeftRef.current = container.scrollLeft;
 
     container.style.cursor = 'grabbing';
+    container.style.scrollBehavior = 'auto';
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
@@ -158,6 +158,7 @@ export default function RentalProviders() {
     if (!container) return;
     if (!isPointerDownRef.current) return;
 
+    e.preventDefault();
     const dx = e.clientX - startXRef.current;
     if (Math.abs(dx) > 6) didDragRef.current = true;
     
@@ -170,6 +171,7 @@ export default function RentalProviders() {
 
     isPointerDownRef.current = false;
     container.style.cursor = 'grab';
+    container.style.scrollBehavior = 'smooth';
 
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -275,6 +277,7 @@ export default function RentalProviders() {
       try {
         setIsLoading(true)
         setLoadError(null)
+        didInitLoopScrollRef.current = false
 
         const response = await apiClient.get(
           '/partners/',
@@ -286,13 +289,10 @@ export default function RentalProviders() {
         const rows = Array.isArray(partnerList) ? partnerList : []
         const mapped = rows.map(toProvider).filter((p) => p?.id)
 
-        if (isMounted) {
-          setProviders(mapped)
-          setRetryCount(0)
-        }
+        if (isMounted) setProviders(mapped)
       } catch (err) {
         console.error('Failed to load providers:', err)
-        const message = err?.friendlyMessage || err?.message || 'Failed to load rental providers. Please try again later.'
+        const message = err?.friendlyMessage || err?.message || 'Failed to load rental providers.'
         if (isMounted) setLoadError(message)
       } finally {
         if (isMounted) setIsLoading(false)
@@ -302,21 +302,25 @@ export default function RentalProviders() {
     return () => {
       isMounted = false
     }
-  }, [retryCount])
+  }, [])
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container) {
       // Start in the middle copy so user can scroll both directions "forever".
       if (shouldLoop && !didInitLoopScrollRef.current) {
-        const metrics = getLoopMetrics(container)
-        if (metrics) {
-          const prevBehavior = container.style.scrollBehavior
-          container.style.scrollBehavior = 'auto'
-          container.scrollLeft = metrics.startMiddle
-          container.style.scrollBehavior = prevBehavior
-          didInitLoopScrollRef.current = true;
-        }
+        // Wait a frame for DOM to settle
+        window.requestAnimationFrame(() => {
+          const metrics = getLoopMetrics(container)
+          if (metrics) {
+            const prevBehavior = container.style.scrollBehavior
+            container.style.scrollBehavior = 'auto'
+            container.scrollLeft = metrics.startMiddle
+            container.style.scrollBehavior = prevBehavior
+            didInitLoopScrollRef.current = true;
+            checkScrollPosition();
+          }
+        })
       }
 
       const onScroll = () => {
@@ -340,10 +344,10 @@ export default function RentalProviders() {
         }
       };
     }
-  }, [providers.length, shouldLoop, checkScrollPosition]);
+  }, [providers.length, shouldLoop, checkScrollPosition, getLoopMetrics]);
 
   useEffect(() => {
-    if (!shouldLoop) return
+    if (!shouldLoop || !didInitLoopScrollRef.current) return
 
     const intervalId = window.setInterval(() => {
       if (document.hidden) return
@@ -396,11 +400,18 @@ export default function RentalProviders() {
             .scrollbar-hide::-webkit-scrollbar {
               display: none;
             }
+            .provider-scroll-container {
+              cursor: grab;
+              scroll-behavior: smooth;
+            }
+            .provider-scroll-container:active {
+              cursor: grabbing;
+            }
           `}</style>
           
           <div
             ref={scrollContainerRef}
-            className="-mx-4 sm:mx-0 flex gap-4 sm:gap-6 overflow-x-auto py-8 scrollbar-hide px-4 sm:px-2 snap-x snap-mandatory scroll-smooth overscroll-x-contain select-none cursor-grab"
+            className="flex gap-4 sm:gap-6 overflow-x-auto py-8 scrollbar-hide px-4 sm:px-0 snap-x snap-mandatory overscroll-x-contain select-none provider-scroll-container"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={endPointerDrag}
@@ -418,7 +429,7 @@ export default function RentalProviders() {
               Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={`skeleton-${i}`}
-                  className="flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white rounded-2xl border border-gray-100 p-5 sm:p-7 animate-pulse shadow-sm"
+                  className="flex-shrink-0 w-[280px] sm:w-80 md:w-96 bg-white rounded-2xl border border-gray-100 p-5 sm:p-7 animate-pulse shadow-sm"
                 >
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center">
@@ -450,12 +461,6 @@ export default function RentalProviders() {
               <div className="w-full rounded-2xl bg-white p-6 text-gray-700 shadow-sm border border-gray-100">
                 <div className="font-semibold text-gray-900">{t('providers_unable_to_load')}</div>
                 <div className="mt-1 text-sm text-gray-600">{loadError}</div>
-                <button 
-                  onClick={() => setRetryCount(c => c + 1)}
-                  className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
-                >
-                  Try Again
-                </button>
               </div>
             )}
 
@@ -474,7 +479,7 @@ export default function RentalProviders() {
                 viewport={{ once: true, margin: "-10%" }}
                 transition={{ duration: 0.5 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className="group relative flex-shrink-0 w-[85vw] sm:w-80 md:w-[26rem] bg-white p-5 sm:p-7 transition-all duration-300 ease-out hover:shadow-xl"
+                className="group relative flex-shrink-0 w-[280px] sm:w-80 md:w-96 bg-white p-5 sm:p-7 snap-start rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 ease-out hover:shadow-xl"
                 data-provider-card="true"
                 style={{ scrollSnapStop: 'always' }}
               >
@@ -567,11 +572,11 @@ export default function RentalProviders() {
 
           {/* Edge fade for a more premium look */}
           <div 
-            className={`pointer-events-none absolute inset-y-0 left-0 duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} 
+            className={`pointer-events-none absolute inset-y-0 left-0 w-12 duration-300 ${showLeftArrow ? 'opacity-100' : 'opacity-0'}`} 
             aria-hidden="true" 
           />
           <div 
-            className={`pointer-events-none absolute inset-y-0 right-0 duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} 
+            className={`pointer-events-none absolute inset-y-0 right-0 w-12 duration-300 ${showRightArrow ? 'opacity-100' : 'opacity-0'}`} 
             aria-hidden="true" 
           />
 
