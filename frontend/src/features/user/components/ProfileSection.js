@@ -157,7 +157,6 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             type="date"
             name="dateOfBirth"
             value={accountData.dateOfBirth || ''}
-            disabled
             className="bg-gray-50/50 text-gray-500 border-gray-200 cursor-not-allowed"
             max={new Date().toISOString().split('T')[0]}
           />
