@@ -227,9 +227,24 @@ class FavoriteDetailView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def delete(self, request, pk):
-        """Delete a favorite and archive it in RemovedFavorite."""
+        """Delete a favorite and archive it in RemovedFavorite.
+        pk can be either the Favorite id or the listing id (for convenience).
+        """
         try:
-            favorite = Favorite.objects.get(pk=pk, user=request.user)
+            favorite = None
+            try:
+                favorite = Favorite.objects.get(pk=pk, user=request.user)
+            except Favorite.DoesNotExist:
+                try:
+                    favorite = Favorite.objects.get(listing_id=pk, user=request.user)
+                except Favorite.DoesNotExist:
+                    pass
+
+            if not favorite:
+                return Response({
+                    'error': 'Favorite not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
             favorite_id = favorite.id
             user = favorite.user
             listing = favorite.listing
@@ -246,11 +261,6 @@ class FavoriteDetailView(APIView):
                 'message': 'Favorite removed successfully',
                 'id': favorite_id
             }, status=status.HTTP_200_OK)
-            
-        except Favorite.DoesNotExist:
-            return Response({
-                'error': 'Favorite not found'
-            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             error_msg = str(e)
             if settings.DEBUG:
