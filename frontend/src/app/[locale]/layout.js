@@ -3,6 +3,7 @@ import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
+import { QueryProvider } from '@/providers/QueryProvider';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -70,15 +71,17 @@ export default async function LocaleLayout({ children, params }) {
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider locale={locale}>
             <AuthProvider>
-              <FavoritesProvider>
-                <CurrencyProvider>
+              <QueryProvider>
+                <FavoritesProvider>
+                  <CurrencyProvider>
                   <ToastProvider>
                     <NotificationProvider>
                       {children}
                     </NotificationProvider>
                   </ToastProvider>
-                </CurrencyProvider>
-              </FavoritesProvider>
+                  </CurrencyProvider>
+                </FavoritesProvider>
+              </QueryProvider>
             </AuthProvider>
           </LocaleProvider>
         </NextIntlClientProvider>

@@ -1,194 +1,154 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { useFavoritesContext } from '@/contexts/FavoritesContext';
 import { FavoritesGrid } from '@/features/user';
-import { Search, RefreshCw, Heart, X, AlertCircle, CheckCircle, Loader2, Filter, Grid, List as ListIcon } from 'lucide-react';
+import { Search, RefreshCw, Heart, X, AlertCircle, CheckCircle, Grid, List as ListIcon } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
 
-export default function FavoritesTab({ favorites: propFavorites, loading: propLoading, onRemoveFavorite, onBookNow, onViewDetails }) {
+const FAVORITES_QUERY_KEY = ['favorites'];
+
+function normalizeFavorite(listing) {
+  return {
+    id: listing.id,
+    listing,
+    vehicle: listing,
+    vehicle_id: listing.id,
+    created_at: listing.created_at,
+  };
+}
+
+export default function FavoritesTab({ favorites: propFavorites, loading: propLoading, onRemoveFavorite: onRemoveFavoriteProp, onBookNow, onViewDetails }) {
   const t = useTranslations('account');
   const router = useRouter();
-  
-  // Use global favorites context
-  const { favorites: contextFavorites, toggleFavorite, isFavorite } = useFavoritesContext();
-  
-  const [favorites, setFavorites] = useState([]);
-  const [localLoading, setLocalLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const { favorites: contextFavorites, toggleFavorite } = useFavoritesContext();
+
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('recent'); // recent, price-low, price-high, name
-  const [viewMode, setViewMode] = useState('grid'); // grid, list
+  const [sortBy, setSortBy] = useState('recent');
+  const [viewMode, setViewMode] = useState('grid');
   const [removingFavorite, setRemovingFavorite] = useState(null);
 
-  const fetchFavorites = useCallback(async () => {
-    try {
-      setLocalLoading(true);
-      setError(null);
-      
-      // Get favorite IDs from global context
-      const favoriteIds = Array.from(contextFavorites || []);
-      console.log('🎯 Fetching details for favorites:', favoriteIds);
-      
-      if (favoriteIds.length === 0) {
-        setFavorites([]);
-        return;
-      }
-      
-      // Fetch full car details for all favorite IDs
-      let processedFavorites = [];
-      
-      try {
-        // Try to fetch from backend - could be a bulk endpoint or fetch individually
-        const response = await apiClient.get('/listings/', undefined, { timeout: 60000 });
-        const data = response?.data || response;
-        
-        // Get all listings and filter by favorites
-        let allListings = [];
-        if (data.results && Array.isArray(data.results)) {
-          allListings = data.results;
-        } else if (Array.isArray(data)) {
-          allListings = data;
-        } else if (data.data && Array.isArray(data.data)) {
-          allListings = data.data;
-        }
-        
-        // Filter to only favorites and map to expected format
-        processedFavorites = allListings
-          .filter(listing => favoriteIds.includes(String(listing.id)))
-          .map(listing => ({
-            id: listing.id,
-            listing: listing,
-            vehicle: listing,
-            vehicle_id: listing.id,
-            created_at: listing.created_at
-          }));
-          
-        console.log(`✅ Loaded ${processedFavorites.length} favorite cars`);
-      } catch (err) {
-        console.error('Error fetching listings:', err);
-        setError(`Failed to load favorites: ${err.message}`);
-      }
-      
-      setFavorites(processedFavorites);
-    } catch (err) {
-      console.error('❌ Error in fetchFavorites:', err);
-      setError(`Failed to load favorites: ${err.message}`);
-    } finally {
-      setLocalLoading(false);
+  const fetchFavoritesList = useCallback(async () => {
+    const favoriteIds = Array.from(contextFavorites || []);
+    if (favoriteIds.length === 0) return [];
+
+    const response = await apiClient.get('/listings/', undefined, { timeout: 60000 });
+    const data = response?.data || response;
+    let allListings = [];
+    if (data.results && Array.isArray(data.results)) {
+      allListings = data.results;
+    } else if (Array.isArray(data)) {
+      allListings = data;
+    } else if (data.data && Array.isArray(data.data)) {
+      allListings = data.data;
     }
+
+    return allListings
+      .filter((listing) => favoriteIds.includes(String(listing.id)))
+      .map(normalizeFavorite);
   }, [contextFavorites]);
 
-  useEffect(() => {
-    // Watch for changes in global favorites context
-    console.log('📦 Global context favorites updated:', contextFavorites?.size || 0);
-    fetchFavorites();
-  }, [fetchFavorites, contextFavorites]);
+  const {
+    data: favorites = [],
+    isLoading: queryLoading,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: FAVORITES_QUERY_KEY,
+    queryFn: fetchFavoritesList,
+    enabled: (contextFavorites?.size ?? 0) > 0,
+    staleTime: 60 * 1000,
+  });
 
-  useEffect(() => {
-    // Also fetch fresh data from API for consistency
-    fetchFavorites();
-  }, [fetchFavorites]);
+  const loadError = queryError ? `Failed to load favorites: ${queryError.message}` : null;
 
-  const handleRemoveFavorite = async (favorite) => {
-    if (!favorite) return;
+  const handleRemoveFavorite = useCallback(
+    (favorite) => {
+      if (!favorite) return;
+      const vehicleId = favorite.vehicle?.id ?? favorite.vehicle_id ?? favorite.listing?.id;
+      if (vehicleId == null) return;
 
-    const vehicleId = favorite.vehicle?.id || favorite.vehicle_id || favorite.listing?.id;
-    if (!vehicleId) return;
-    
-    setRemovingFavorite(vehicleId);
-    
-    try {
+      setRemovingFavorite(vehicleId);
       setError(null);
-      
-      // Use global context to remove favorite (updates localStorage)
-      toggleFavorite(vehicleId);
-      
-      // Update local state immediately
-      setFavorites(prev => prev.filter(fav => {
-        const favVehicleId = fav.vehicle?.id || fav.vehicle_id || fav.listing?.id;
-        return favVehicleId !== vehicleId;
-      }));
-      
-      setSuccessMessage('✨ Removed from favorites');
-      setTimeout(() => setSuccessMessage(''), 2000);
-    } catch (err) {
-      console.error('Error removing favorite:', err);
-      setError('Could not remove favorite. Please try again.');
-      setTimeout(() => setError(null), 5000);
-    } finally {
-      setRemovingFavorite(null);
-    }
-  };
 
-  // Filter and sort favorites
+      try {
+        toggleFavorite(vehicleId);
+
+        // Update React Query cache immediately — no refetch, no loading flash
+        queryClient.setQueryData(FAVORITES_QUERY_KEY, (prev) => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.filter((fav) => {
+            const id = fav.vehicle?.id ?? fav.vehicle_id ?? fav.listing?.id;
+            return String(id) !== String(vehicleId);
+          });
+        });
+
+        setSuccessMessage('✨ Removed from favorites');
+        setTimeout(() => setSuccessMessage(''), 2000);
+      } catch (err) {
+        console.error('Error removing favorite:', err);
+        setError('Could not remove favorite. Please try again.');
+        setTimeout(() => setError(null), 5000);
+      } finally {
+        setRemovingFavorite(null);
+      }
+    },
+    [toggleFavorite, queryClient]
+  );
+
   const getFilteredAndSortedFavorites = () => {
     let filtered = [...favorites];
-
-    // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(fav => {
+      filtered = filtered.filter((fav) => {
         const car = fav.listing || fav.vehicle || fav;
         const vehicleName = `${car.make || ''} ${car.model || ''}`.toLowerCase();
         const location = (car.location || '').toLowerCase();
         return vehicleName.includes(term) || location.includes(term);
       });
     }
-
-    // Sort
     filtered.sort((a, b) => {
       const carA = a.listing || a.vehicle || a;
       const carB = b.listing || b.vehicle || b;
-      
       if (sortBy === 'price-low') {
-        const priceA = carA.price_per_day || carA.price || 0;
-        const priceB = carB.price_per_day || carB.price || 0;
-        return priceA - priceB;
-      } else if (sortBy === 'price-high') {
-        const priceA = carA.price_per_day || carA.price || 0;
-        const priceB = carB.price_per_day || carB.price || 0;
-        return priceB - priceA;
-      } else if (sortBy === 'name') {
+        return (carA.price_per_day || carA.price || 0) - (carB.price_per_day || carB.price || 0);
+      }
+      if (sortBy === 'price-high') {
+        return (carB.price_per_day || carB.price || 0) - (carA.price_per_day || carA.price || 0);
+      }
+      if (sortBy === 'name') {
         const nameA = `${carA.make || ''} ${carA.model || ''}`.toLowerCase();
         const nameB = `${carB.make || ''} ${carB.model || ''}`.toLowerCase();
         return nameA.localeCompare(nameB);
-      } else {
-        // Recent (default) - keep original order or by ID
-        return (b.id || 0) - (a.id || 0);
       }
+      return (b.id || 0) - (a.id || 0);
     });
-
     return filtered;
   };
 
   const handleBookNow = (car) => {
-    if (onBookNow) {
-      onBookNow(car);
-    } else {
-      router.push(`/car/${car.id}`);
-    }
+    if (onBookNow) onBookNow(car);
+    else router.push(`/car/${car.id}`);
   };
 
   const handleViewDetails = (car) => {
-    if (onViewDetails) {
-      onViewDetails(car);
-    } else {
-      router.push(`/car/${car.id}`);
-    }
+    if (onViewDetails) onViewDetails(car);
+    else router.push(`/car/${car.id}`);
   };
 
-  const displayFavorites = favorites.length > 0 ? favorites : (propFavorites || []);
+  const displayFavorites = favorites.length > 0 ? favorites : propFavorites || [];
   const filteredFavorites = getFilteredAndSortedFavorites();
-  const isLoading = localLoading || propLoading;
+  const isLoading = queryLoading || propLoading;
 
   return (
     <div className="p-8 space-y-6">
-      {/* Toast Notifications */}
       {successMessage && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
           <CheckCircle className="h-5 w-5" />
@@ -198,7 +158,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
           </button>
         </div>
       )}
-      
+
       {error && (
         <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
           <AlertCircle className="h-5 w-5" />
@@ -209,7 +169,6 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-2xl font-bold text-white-900 mb-2 flex items-center space-x-2">
@@ -217,14 +176,13 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
             <span>{t('favorites_tab_title')}</span>
           </h3>
           <p className="text-gray-600">
-            {filteredFavorites.length === displayFavorites.length 
+            {filteredFavorites.length === displayFavorites.length
               ? t('favorites_count', { count: displayFavorites.length })
-              : t('favorites_filtered', { filtered: filteredFavorites.length, total: displayFavorites.length })
-            }
+              : t('favorites_filtered', { filtered: filteredFavorites.length, total: displayFavorites.length })}
           </p>
         </div>
         <button
-          onClick={() => fetchFavorites()}
+          onClick={() => refetch()}
           disabled={isLoading}
           className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -233,7 +191,6 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
         </button>
       </div>
 
-      {/* Filters and Search */}
       {displayFavorites.length > 0 && (
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
@@ -276,33 +233,27 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
         </div>
       )}
 
-      {/* Favorites Grid */}
       <FavoritesGrid
-        favorites={filteredFavorites.length > 0 ? filteredFavorites : (searchTerm ? [] : displayFavorites)}
+        favorites={filteredFavorites.length > 0 ? filteredFavorites : searchTerm ? [] : displayFavorites}
         loading={isLoading}
         onRemoveFavorite={handleRemoveFavorite}
         onBookNow={handleBookNow}
         onViewDetails={handleViewDetails}
         viewMode={viewMode}
         removingFavorite={removingFavorite}
+        error={loadError}
       />
 
-      {/* No Results Message */}
       {!isLoading && searchTerm && filteredFavorites.length === 0 && (
         <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
           <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">{t('favorites_empty')}</h3>
-          <p className="text-gray-600 mb-4">{t('favorites_search')} "{searchTerm}"</p>
-          <button
-            onClick={() => setSearchTerm('')}
-            className="text-orange-600 hover:text-orange-700 font-medium"
-          >
+          <p className="text-gray-600 mb-4">{t('favorites_search')} &quot;{searchTerm}&quot;</p>
+          <button onClick={() => setSearchTerm('')} className="text-orange-600 hover:text-orange-700 font-medium">
             {t('cancel')}
           </button>
         </div>
       )}
-
     </div>
   );
 }
-
