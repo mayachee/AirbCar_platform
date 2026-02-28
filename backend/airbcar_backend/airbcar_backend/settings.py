@@ -3,6 +3,7 @@ Django settings for airbcar_backend project.
 """
 
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -18,11 +19,12 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
-    # Use a fallback key for development/build environments if not set
+    # Use a fallback key for development/build/migrate environments if not set
     # WARN: This is not secure for production
-    if DEBUG or os.environ.get('CI') or os.environ.get('BUILD_ENV'):
-        if DEBUG:
-            print("WARNING: SECRET_KEY not set, using insecure fallback key (development only).")
+    is_manage_cmd = len(sys.argv) > 1 and sys.argv[1] in ('migrate', 'makemigrations', 'showmigrations', 'sqlmigrate')
+    if DEBUG or os.environ.get('CI') or os.environ.get('BUILD_ENV') or is_manage_cmd:
+        if DEBUG or is_manage_cmd:
+            print("WARNING: SECRET_KEY not set, using insecure fallback key (development/migrate only).")
         SECRET_KEY = 'django-insecure-fallback-key-for-dev-and-build-only'
     else:
         raise ValueError('SECRET_KEY environment variable must be set')

@@ -280,6 +280,29 @@ class Favorite(models.Model):
         return f"{self.user.username} favorited {self.listing}"
 
 
+class RemovedFavorite(models.Model):
+    """
+    Archive of removed favorites. When a user removes a favorite, a row is created here
+    before deleting from Favorite, so you keep a history of what was removed and when.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='removed_favorites')
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='removed_from_favorites')
+    favorited_at = models.DateTimeField(help_text='When the user originally added it to favorites')
+    removed_at = models.DateTimeField(auto_now_add=True, help_text='When the user removed it')
+
+    class Meta:
+        ordering = ['-removed_at']
+        indexes = [
+            models.Index(fields=['user', 'removed_at']),
+            models.Index(fields=['listing']),
+        ]
+        verbose_name = 'Removed favorite'
+        verbose_name_plural = 'Removed favorites'
+
+    def __str__(self):
+        return f"{self.user.username} removed favorite {self.listing} at {self.removed_at}"
+
+
 class Review(models.Model):
     """Review model for listings."""
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='reviews')

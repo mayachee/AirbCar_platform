@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
+from ..models import Listing, Booking, Favorite, RemovedFavorite, Review, Partner, User, PasswordReset
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
@@ -227,12 +227,21 @@ class FavoriteDetailView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def delete(self, request, pk):
-        """Delete a favorite."""
+        """Delete a favorite and archive it in RemovedFavorite."""
         try:
             favorite = Favorite.objects.get(pk=pk, user=request.user)
             favorite_id = favorite.id
+            user = favorite.user
+            listing = favorite.listing
+            favorited_at = favorite.created_at
+
+            RemovedFavorite.objects.create(
+                user=user,
+                listing=listing,
+                favorited_at=favorited_at,
+            )
             favorite.delete()
-            
+
             return Response({
                 'message': 'Favorite removed successfully',
                 'id': favorite_id

@@ -265,81 +265,54 @@ export class UserService {
   }
 
   /**
-   * Remove a listing from favorites
-   * @param {string|number} listingId - Listing ID to remove from favorites
+   * Remove a listing from favorites (persists to backend when user is authenticated).
+   * Backend DELETE expects Favorite pk; if we only have listing id, we fetch favorites and delete by favorite id.
+   * @param {string|number} listingId - Listing/vehicle ID to remove, or Favorite entry ID
    * @returns {Promise}
    */
   async removeFavorite(listingId) {
     try {
-      // First, try to delete directly by listingId if it looks like a favorite ID
-      // This handles cases where listingId is actually the favorite ID
-      try {
-        const directResponse = await apiClient.delete(`/favorites/${listingId}/`)
-        return directResponse.data || directResponse
-      } catch (directError) {
-        // If direct delete fails with 404, the favorite might already be removed
-        // Check for various 404 error message formats
-        const errorMessage = directError.message || '';
-        const isNotFound = directError.status === 404 || 
-                          errorMessage.toLowerCase().includes('404') || 
-                          errorMessage.toLowerCase().includes('not found') ||
-                          errorMessage.toLowerCase().includes('endpoint not found');
-        
-        if (isNotFound) {
-          // Favorite not found or already removed - return success (idempotent operation)
-          console.log('Favorite not found (may already be removed), treating as success');
-          return { success: true, message: 'Favorite removed' };
-        }
-        
-        // For other errors, throw them
-        throw directError;
-      }
+      const id = String(listingId);
 
-      // Get user's favorites to find the matching favorite entry
-      // listingId could be either a Favorite entry ID or a listing/vehicle ID
-      const favoritesResponse = await this.getFavorites()
-      const favorites = favoritesResponse.data || []
-      
-      // First, check if listingId is already a Favorite entry ID
-      let favorite = favorites.find(fav => fav.id === listingId)
-      
-      // If not found, search by listing/vehicle ID
-      if (!favorite) {
-        favorite = favorites.find(fav => {
-          const favListing = fav.listing || fav.vehicle || fav
-          const favListingId = favListing?.id || favListing
-          return (
-            favListingId === listingId || 
-            favListing === listingId || 
-            fav.listing?.id === listingId ||
-            fav.vehicle?.id === listingId
-          )
-        })
-      }
-      
-      if (favorite && favorite.id) {
-        // Use the Favorite entry ID (favorite.id) for deletion
-        const response = await apiClient.delete(`/favorites/${favorite.id}/`)
-        return response.data || response
-      } else {
-        // Favorite might already be removed or never existed - return success to avoid errors
-        console.log('Favorite not found in list, might already be removed')
-        return { success: true, message: 'Favorite already removed' }
+      // 1) Try direct delete (works when listingId is actually the Favorite pk)
+      try {
+        const res = await apiClient.delete(`/favorites/${id}/`);
+        return res.data ?? res;
+      } catch (directErr) {
+        const msg = (directErr.message || '').toLowerCase();
+        const is404 =
+          directErr.status === 404 ||
+          msg.includes('404') ||
+          msg.includes('not found') ||
+          msg.includes('endpoint not found');
+
+        if (!is404) throw directErr;
+
+        // 2) 404 → backend has no Favorite with pk=id; treat id as listing id and resolve by listing
+        const favoritesRes = await this.getFavorites();
+        const list = Array.isArray(favoritesRes?.data) ? favoritesRes.data : [];
+        const favorite = list.find((fav) => {
+          const lid = fav.listing?.id ?? fav.vehicle?.id ?? fav.vehicle_id ?? fav.listing;
+          return String(lid) === id || Number(lid) === Number(listingId);
+        });
+
+        if (favorite && favorite.id != null) {
+          const delRes = await apiClient.delete(`/favorites/${favorite.id}/`);
+          return delRes.data ?? delRes;
+        }
+
+        return { success: true, message: 'Favorite already removed' };
       }
     } catch (error) {
-      // If it's a 404, the favorite might already be removed - treat as success
-      const errorMessage = (error.message || '').toLowerCase();
-      const isNotFound = error.status === 404 || 
-                        errorMessage.includes('404') || 
-                        errorMessage.includes('not found') || 
-                        errorMessage.includes('endpoint not found') ||
-                        errorMessage.includes('favorite not found');
-      
-      if (isNotFound) {
-        console.log('Favorite not found, assuming already removed')
-        return { success: true, message: 'Favorite already removed' }
-      }
-      throw error
+      const msg = (error.message || '').toLowerCase();
+      const is404 =
+        error.status === 404 ||
+        msg.includes('404') ||
+        msg.includes('not found') ||
+        msg.includes('endpoint not found') ||
+        msg.includes('favorite not found');
+      if (is404) return { success: true, message: 'Favorite already removed' };
+      throw error;
     }
   }
 

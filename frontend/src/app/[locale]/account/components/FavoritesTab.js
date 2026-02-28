@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { useFavoritesContext } from '@/contexts/FavoritesContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { userService } from '@/features/user/services/userService';
 import { FavoritesGrid } from '@/features/user';
 import { Search, RefreshCw, Heart, X, AlertCircle, CheckCircle, Grid, List as ListIcon } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
@@ -26,6 +28,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
   const t = useTranslations('account');
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { favorites: contextFavorites, toggleFavorite } = useFavoritesContext();
 
   const [error, setError] = useState(null);
@@ -70,7 +73,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
   const loadError = queryError ? `Failed to load favorites: ${queryError.message}` : null;
 
   const handleRemoveFavorite = useCallback(
-    (favorite) => {
+    async (favorite) => {
       if (!favorite) return;
       const vehicleId = favorite.vehicle?.id ?? favorite.vehicle_id ?? favorite.listing?.id;
       if (vehicleId == null) return;
@@ -81,7 +84,6 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       try {
         toggleFavorite(vehicleId);
 
-        // Update React Query cache immediately — no refetch, no loading flash
         queryClient.setQueryData(FAVORITES_QUERY_KEY, (prev) => {
           if (!Array.isArray(prev)) return prev;
           return prev.filter((fav) => {
@@ -92,6 +94,10 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
 
         setSuccessMessage('✨ Removed from favorites');
         setTimeout(() => setSuccessMessage(''), 2000);
+
+        if (user) {
+          await userService.removeFavorite(vehicleId);
+        }
       } catch (err) {
         console.error('Error removing favorite:', err);
         setError('Could not remove favorite. Please try again.');
@@ -100,7 +106,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
         setRemovingFavorite(null);
       }
     },
-    [toggleFavorite, queryClient]
+    [toggleFavorite, queryClient, user]
   );
 
   const getFilteredAndSortedFavorites = () => {
