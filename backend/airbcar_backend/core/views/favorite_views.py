@@ -268,48 +268,6 @@ class FavoriteDetailView(APIView):
                 'error': 'Favorite not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
-    def _delete_favorite(self, favorite):
-        """Archive to RemovedFavorite and delete. Handles missing RemovedFavorite table."""
-        favorite_id = favorite.id
-        user = favorite.user
-        listing = favorite.listing
-        favorited_at = favorite.created_at
-        try:
-            RemovedFavorite.objects.create(
-                user=user,
-                listing=listing,
-                favorited_at=favorited_at,
-            )
-        except Exception:
-            pass  # Table may not exist yet; still delete the favorite
-        favorite.delete()
-        return favorite_id
-
-    def delete(self, request, pk):
-        """Delete a favorite and archive it in RemovedFavorite.
-        pk can be either the Favorite id or the listing id (for convenience).
-        """
-        try:
-            pk_int = int(pk) if pk is not None else None
-        except (TypeError, ValueError):
-            return Response({'error': 'Invalid id'}, status=status.HTTP_400_BAD_REQUEST)
-        if pk_int is None:
-            return Response({'error': 'Favorite not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        favorite = None
-        try:
-            favorite = Favorite.objects.get(pk=pk_int, user=request.user)
-        except Favorite.DoesNotExist:
-            try:
-                favorite = Favorite.objects.get(listing_id=pk_int, user=request.user)
-            except Favorite.DoesNotExist:
-                pass
-
-        if not favorite:
-            return Response({
-                'error': 'Favorite not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-
         try:
             favorite_id = self._delete_favorite(favorite)
             return Response({
