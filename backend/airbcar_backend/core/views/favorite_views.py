@@ -1,5 +1,6 @@
 """
 Favorite-related views.
+Handles adding, removing, and retrieving user favorites.
 """
 from rest_framework import status
 from rest_framework.response import Response
