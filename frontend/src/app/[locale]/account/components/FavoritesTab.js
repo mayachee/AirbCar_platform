@@ -14,6 +14,10 @@ import { SelectField } from '@/components/ui/select-field';
 
 const FAVORITES_QUERY_KEY = ['favorites'];
 
+function getFavoritesQueryKey(userId) {
+  return ['favorites', userId ?? 'guest'];
+}
+
 function normalizeFavorite(listing) {
   return {
     id: listing.id,
@@ -39,6 +43,25 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
   const [removingFavorite, setRemovingFavorite] = useState(null);
 
   const fetchFavoritesList = useCallback(async () => {
+    if (user) {
+      try {
+        const res = await userService.getFavorites();
+        const raw = res?.data ?? res;
+        const list = Array.isArray(raw) ? raw : (raw?.favorites ?? raw?.data ?? []);
+        return list.map((fav) => {
+          const listing = fav.listing ?? fav.vehicle ?? fav;
+          return {
+            id: fav.id ?? listing?.id,
+            listing,
+            vehicle: listing,
+            vehicle_id: listing?.id ?? fav.vehicle_id,
+            created_at: fav.created_at,
+          };
+        });
+      } catch (err) {
+        throw err;
+      }
+    }
     const favoriteIds = Array.from(contextFavorites || []);
     if (favoriteIds.length === 0) return [];
 
@@ -56,7 +79,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
     return allListings
       .filter((listing) => favoriteIds.includes(String(listing.id)))
       .map(normalizeFavorite);
-  }, [contextFavorites]);
+  }, [user, contextFavorites]);
 
   const {
     data: favorites = [],
@@ -64,9 +87,9 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
     error: queryError,
     refetch,
   } = useQuery({
-    queryKey: FAVORITES_QUERY_KEY,
+    queryKey: getFavoritesQueryKey(user?.id),
     queryFn: fetchFavoritesList,
-    enabled: (contextFavorites?.size ?? 0) > 0,
+    enabled: !!user || (contextFavorites?.size ?? 0) > 0,
     staleTime: 60 * 1000,
   });
 
@@ -84,7 +107,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       try {
         toggleFavorite(vehicleId);
 
-        queryClient.setQueryData(FAVORITES_QUERY_KEY, (prev) => {
+        queryClient.setQueryData(getFavoritesQueryKey(user?.id), (prev) => {
           if (!Array.isArray(prev)) return prev;
           return prev.filter((fav) => {
             const id = fav.vehicle?.id ?? fav.vehicle_id ?? fav.listing?.id;
@@ -187,14 +210,6 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
               : t('favorites_filtered', { filtered: filteredFavorites.length, total: displayFavorites.length })}
           </p>
         </div>
-        <button
-          onClick={() => refetch()}
-          disabled={isLoading}
-          className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>{isLoading ? t('loading') : t('refresh')}</span>
-        </button>
       </div>
 
       {displayFavorites.length > 0 && (
