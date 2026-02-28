@@ -291,6 +291,17 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
           </button>
         </div>
       )}
+
+      {!isLoading && !searchTerm && displayFavorites.length === 0 && (
+        <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
+          <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('favorites_empty')}</h3>
+          <p className="text-gray-600 mb-4">No favorites yet. Start adding your favorite cars!</p>
+          <button onClick={() => router.push('/search')} className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium">
+            Browse Cars
+          </button>
+        </div>
+      )}
     </div>
   );
 }
