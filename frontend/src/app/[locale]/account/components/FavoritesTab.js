@@ -99,31 +99,47 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
     async (favorite) => {
       if (!favorite) return;
       const vehicleId = favorite.vehicle?.id ?? favorite.vehicle_id ?? favorite.listing?.id;
+      const favoriteId = favorite.id;
       if (vehicleId == null) return;
 
       setRemovingFavorite(vehicleId);
       setError(null);
 
       try {
-        toggleFavorite(vehicleId);
-
+        // Store previous state for potential rollback
+        const previousData = queryClient.getQueryData(getFavoritesQueryKey(user?.id));
+        
+        // IMMEDIATE UI UPDATE - Remove from display right away
         queryClient.setQueryData(getFavoritesQueryKey(user?.id), (prev) => {
           if (!Array.isArray(prev)) return prev;
-          return prev.filter((fav) => {
+          const updated = prev.filter((fav) => {
             const id = fav.vehicle?.id ?? fav.vehicle_id ?? fav.listing?.id;
             return String(id) !== String(vehicleId);
           });
+          console.log('✅ Favorite removed from UI instantly');
+          return updated;
         });
 
+        // Update context as well
+        toggleFavorite(vehicleId);
+
+        // Show success message
         setSuccessMessage('✨ Removed from favorites');
         setTimeout(() => setSuccessMessage(''), 2000);
 
+        // Sync with backend (fire and forget, already optimistic)
         if (user) {
-          await userService.removeFavorite(vehicleId);
+          userService.removeFavorite(vehicleId).catch((err) => {
+            console.error('⚠️ Backend sync failed:', err.message);
+            // If backend fails, revert UI
+            queryClient.setQueryData(getFavoritesQueryKey(user?.id), previousData);
+            setError('Could not remove favorite from server. Try again.');
+            setTimeout(() => setError(null), 5000);
+          });
         }
       } catch (err) {
-        console.error('Error removing favorite:', err);
-        setError('Could not remove favorite. Please try again.');
+        console.error('Error in remove handler:', err);
+        setError('Error removing favorite');
         setTimeout(() => setError(null), 5000);
       } finally {
         setRemovingFavorite(null);
