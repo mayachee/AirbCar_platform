@@ -106,6 +106,8 @@ if views.FavoriteListView is not None:
     urlpatterns.append(path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'))
 if views.MyFavoritesView is not None:
     urlpatterns.append(path('favorites/my-favorites/', views.MyFavoritesView.as_view(), name='my-favorites'))
+if views.FavoriteDeleteByListingView is not None:
+    urlpatterns.append(path('favorites/by-listing/<int:listing_id>/', views.FavoriteDeleteByListingView.as_view(), name='favorite-delete-by-listing'))
 if views.FavoriteDetailView is not None:
     urlpatterns.append(path('favorites/<int:pk>/', views.FavoriteDetailView.as_view(), name='favorite-detail'))
 

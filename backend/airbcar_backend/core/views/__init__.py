@@ -37,11 +37,11 @@ except Exception as e:
     UserListView = UserMeView = UserStatsView = ChangePasswordView = UserDetailView = UserDocumentUploadView = None
 
 try:
-    from .favorite_views import FavoriteListView, MyFavoritesView, FavoriteDetailView
+    from .favorite_views import FavoriteListView, MyFavoritesView, FavoriteDetailView, FavoriteDeleteByListingView
 except Exception as e:
     print(f"Error importing favorite_views: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
-    FavoriteListView = MyFavoritesView = FavoriteDetailView = None
+    FavoriteListView = MyFavoritesView = FavoriteDetailView = FavoriteDeleteByListingView = None
 
 try:
     from .partner_views import (
@@ -162,7 +162,7 @@ __all__ = [
     # Users
     'UserListView', 'UserMeView', 'UserStatsView', 'ChangePasswordView', 'UserDetailView',
     # Favorites
-    'FavoriteListView', 'MyFavoritesView', 'FavoriteDetailView',
+    'FavoriteListView', 'MyFavoritesView', 'FavoriteDetailView', 'FavoriteDeleteByListingView',
     # Partners
     'PartnerListView', 'PartnerMeView', 'PartnerDetailView',
     'PartnerEarningsView', 'PartnerAnalyticsView', 'PartnerReviewsView', 'PartnerActivityView',

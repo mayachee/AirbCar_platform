@@ -226,37 +226,92 @@ class FavoriteDetailView(APIView):
                 'message': error_msg if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def delete(self, request, pk):
-        """Delete a favorite and archive it in RemovedFavorite.
-        pk can be either the Favorite id or the listing id (for convenience).
-        """
+    def _delete_favorite(self, favorite):
+        """Archive to RemovedFavorite and delete. Handles missing RemovedFavorite table."""
+        favorite_id = favorite.id
+        user = favorite.user
+        listing = favorite.listing
+        favorited_at = favorite.created_at
         try:
-            favorite = None
-            try:
-                favorite = Favorite.objects.get(pk=pk, user=request.user)
-            except Favorite.DoesNotExist:
-                try:
-                    favorite = Favorite.objects.get(listing_id=pk, user=request.user)
-                except Favorite.DoesNotExist:
-                    pass
-
-            if not favorite:
-                return Response({
-                    'error': 'Favorite not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            favorite_id = favorite.id
-            user = favorite.user
-            listing = favorite.listing
-            favorited_at = favorite.created_at
-
             RemovedFavorite.objects.create(
                 user=user,
                 listing=listing,
                 favorited_at=favorited_at,
             )
-            favorite.delete()
+        except Exception:
+            pass  # Table may not exist yet; still delete the favorite
+        favorite.delete()
+        return favorite_id
 
+    def delete(self, request, pk):
+        """Delete a favorite and archive it in RemovedFavorite.
+        pk can be either the Favorite id or the listing id (for convenience).
+        """
+        try:
+            pk_int = int(pk) if pk is not None else None
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid id'}, status=status.HTTP_400_BAD_REQUEST)
+        if pk_int is None:
+            return Response({'error': 'Favorite not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        favorite = None
+        try:
+            favorite = Favorite.objects.get(pk=pk_int, user=request.user)
+        except Favorite.DoesNotExist:
+            try:
+                favorite = Favorite.objects.get(listing_id=pk_int, user=request.user)
+            except Favorite.DoesNotExist:
+                pass
+
+        if not favorite:
+            return Response({
+                'error': 'Favorite not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+    def _delete_favorite(self, favorite):
+        """Archive to RemovedFavorite and delete. Handles missing RemovedFavorite table."""
+        favorite_id = favorite.id
+        user = favorite.user
+        listing = favorite.listing
+        favorited_at = favorite.created_at
+        try:
+            RemovedFavorite.objects.create(
+                user=user,
+                listing=listing,
+                favorited_at=favorited_at,
+            )
+        except Exception:
+            pass  # Table may not exist yet; still delete the favorite
+        favorite.delete()
+        return favorite_id
+
+    def delete(self, request, pk):
+        """Delete a favorite and archive it in RemovedFavorite.
+        pk can be either the Favorite id or the listing id (for convenience).
+        """
+        try:
+            pk_int = int(pk) if pk is not None else None
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid id'}, status=status.HTTP_400_BAD_REQUEST)
+        if pk_int is None:
+            return Response({'error': 'Favorite not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        favorite = None
+        try:
+            favorite = Favorite.objects.get(pk=pk_int, user=request.user)
+        except Favorite.DoesNotExist:
+            try:
+                favorite = Favorite.objects.get(listing_id=pk_int, user=request.user)
+            except Favorite.DoesNotExist:
+                pass
+
+        if not favorite:
+            return Response({
+                'error': 'Favorite not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            favorite_id = self._delete_favorite(favorite)
             return Response({
                 'message': 'Favorite removed successfully',
                 'id': favorite_id
@@ -268,4 +323,43 @@ class FavoriteDetailView(APIView):
             return Response({
                 'error': 'Failed to delete favorite. Please try again later.',
                 'message': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FavoriteDeleteByListingView(APIView):
+    """Delete a favorite by listing id. Use this when you only have the listing/vehicle id."""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, listing_id):
+        try:
+            listing_id_int = int(listing_id) if listing_id is not None else None
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid listing id'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            favorite = Favorite.objects.get(listing_id=listing_id_int, user=request.user)
+        except Favorite.DoesNotExist:
+            return Response({
+                'error': 'Favorite not found',
+                'message': 'This listing is not in your favorites or was already removed.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        try:
+            fid = favorite.id
+            try:
+                RemovedFavorite.objects.create(
+                    user=favorite.user,
+                    listing=favorite.listing,
+                    favorited_at=favorite.created_at,
+                )
+            except Exception:
+                pass
+            favorite.delete()
+            return Response({
+                'message': 'Favorite removed successfully',
+                'id': fid
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"Error in FavoriteDeleteByListingView.delete: {e}")
+            return Response({
+                'error': 'Failed to delete favorite. Please try again later.',
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
