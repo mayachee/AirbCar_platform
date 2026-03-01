@@ -19,7 +19,7 @@ export default function SecurityTab({ emailVerified, onRefreshVerification, onDe
 
       {/* Email Verification Status */}
       <div className="mb-8">
-        <h4 className="text-lg font-medium text-gray-900 mb-4">{t('security_email_verification')}</h4>
+        <h4 className="text-lg font-medium text-white mb-4">{t('security_email_verification')}</h4>
         <div className={`rounded-lg p-6 ${
           emailVerified ? 'bg-green-50' : 'bg-yellow-50'
         }`}>
@@ -52,7 +52,7 @@ export default function SecurityTab({ emailVerified, onRefreshVerification, onDe
 
       {/* Account Actions */}
       <div>
-        <h4 className="text-lg font-medium text-gray-900 mb-4">{t('security_account_actions')}</h4>
+        <h4 className="text-lg font-medium text-white mb-4">{t('security_account_actions')}</h4>
         <div className="border border-red-200 rounded-lg p-6 bg-red-50">
           <div className="flex items-center justify-between">
             <div>
