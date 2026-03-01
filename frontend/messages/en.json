@@ -56,7 +56,12 @@
     "your_review_label": "Your Review",
     "review_placeholder": "Share your experience with this rental...",
     "character_count": "{count} / {max} characters",
-    "be_first_to_review": "Be the first to leave a review!"
+    "be_first_to_review": "Be the first to leave a review!",
+    "confirm_delete_message": "Are you sure you want to delete this review? This cannot be undone.",
+    "review_deleted": "Review deleted successfully",
+    "failed_delete_review": "Failed to delete review",
+    "write_a_review": "Write a Review",
+    "rating_label": "Rating"
   },
   "common": {
     "app_name": "AirbCar",
@@ -689,7 +694,19 @@
     "state": "State/Region",
     "state_placeholder": "State or region",
     "description": "Description",
-    "description_placeholder": "Describe your business and services..."
+    "description_placeholder": "Describe your business and services...",
+    "seats": "Seats",
+    "available": "Available",
+    "day": "/day",
+    "settings": "Settings",
+    "settings_subtitle": "Manage your preferences and account settings",
+    "settings_language": "Language",
+    "settings_language_desc": "Choose your preferred language",
+    "settings_currency": "Currency",
+    "settings_currency_desc": "Set your preferred currency for prices",
+    "settings_view_profile": "View Platform Profile",
+    "settings_view_profile_desc": "Go back to your account profile on the platform",
+    "bulk_operations": "Bulk Vehicle Operations"
   },
   "bookings": {
     "page_title": "My Bookings",
@@ -1276,7 +1293,9 @@
     "failed_to_delete": "Failed to delete vehicle",
     "vehicle_deleted": "Vehicle deleted successfully",
     "per_day": "per day",
-    "day": "/day"
+    "day": "/day",
+    "pickup": "Pickup",
+    "return": "Return"
   },
   "owner_spotlight": {
     "verified": "Verified",

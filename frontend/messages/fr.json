@@ -56,7 +56,12 @@
     "your_review_label": "Votre avis",
     "review_placeholder": "Partagez votre expérience avec cette location...",
     "character_count": "{count} / {max} caractères",
-    "be_first_to_review": "Soyez le premier à laisser un avis !"
+    "be_first_to_review": "Soyez le premier à laisser un avis !",
+    "confirm_delete_message": "Êtes-vous sûr de vouloir supprimer cet avis ? Cette action est irréversible.",
+    "review_deleted": "Avis supprimé avec succès",
+    "failed_delete_review": "Impossible de supprimer l'avis",
+    "write_a_review": "Écrire un avis",
+    "rating_label": "Note"
   },
   "common": {
     "app_name": "AirbCar",
@@ -687,7 +692,19 @@
     "state": "État/Région",
     "state_placeholder": "État ou région",
     "description": "Description",
-    "description_placeholder": "Décrivez votre entreprise et vos services..."
+    "description_placeholder": "Décrivez votre entreprise et vos services...",
+    "seats": "Places",
+    "available": "Disponible",
+    "day": "/jour",
+    "settings": "Paramètres",
+    "settings_subtitle": "Gérez vos préférences et paramètres de compte",
+    "settings_language": "Langue",
+    "settings_language_desc": "Choisissez votre langue préférée",
+    "settings_currency": "Devise",
+    "settings_currency_desc": "Définissez votre devise préférée pour les prix",
+    "settings_view_profile": "Voir le profil plateforme",
+    "settings_view_profile_desc": "Retourner à votre profil de compte sur la plateforme",
+    "bulk_operations": "Opérations en masse sur les véhicules"
   },
   "bookings": {
     "page_title": "Mes réservations",
@@ -1275,7 +1292,9 @@
     "failed_to_delete": "Échec de la suppression du véhicule",
     "vehicle_deleted": "Véhicule supprimé avec succès",
     "per_day": "par jour",
-    "day": "/jour"
+    "day": "/jour",
+    "pickup": "Prise en charge",
+    "return": "Retour"
   },
   "owner_spotlight": {
     "verified": "Vérifié",

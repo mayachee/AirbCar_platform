@@ -2,9 +2,13 @@
 
 import { Suspense, lazy } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { AlertCircle, CheckCircle2, Clock, Calendar, TrendingUp, ArrowUpRight, Car, DollarSign, Lightbulb, Target, Zap } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Calendar, TrendingUp, ArrowUpRight, Car, DollarSign, Lightbulb, Target, Zap, Globe, Coins, User, ExternalLink } from 'lucide-react';
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
+import { useCurrency, CURRENCIES } from '@/contexts/CurrencyContext';
+import { SelectField } from '@/components/ui/select-field';
 
 // Lazy load components
 const PartnerStats = lazy(() => import('@/features/partner/components/PartnerStats'));
@@ -122,7 +126,9 @@ export default function DashboardContent({
   setCurrentView
 }) {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations('partner');
+  const { currency, setCurrency } = useCurrency();
   
   // Ensure pendingRequests and upcomingBookings are always arrays
   const pendingRequests = Array.isArray(pendingRequestsProp) ? pendingRequestsProp : [];
@@ -588,11 +594,89 @@ export default function DashboardContent({
       )}
 
       {currentView === 'settings' && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('settings')}</h2>
-          <ComponentLoader>
-            <BulkOperationsPanel vehicles={vehicles} onRefresh={refetch} />
-          </ComponentLoader>
+        <div className="space-y-6">
+          {/* Settings Header */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">{t('settings')}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings_subtitle', { fallback: 'Manage your preferences and account settings' })}</p>
+          </div>
+
+          {/* Language & Currency */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Language */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                  <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_language', { fallback: 'Language' })}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_language_desc', { fallback: 'Choose your preferred language' })}</p>
+                </div>
+              </div>
+              <LanguageSwitcher />
+            </motion.div>
+
+            {/* Currency */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
+                  <Coins className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_currency', { fallback: 'Currency' })}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_currency_desc', { fallback: 'Set your preferred currency for prices' })}</p>
+                </div>
+              </div>
+              <SelectField
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                options={Object.values(CURRENCIES).map(c => ({ value: c.code, label: `${c.symbol}  ${c.label}` }))}
+                className="w-full"
+              />
+            </motion.div>
+          </div>
+
+          {/* Back to Platform Profile */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <button
+              onClick={() => router.push(`/${locale}/account`)}
+              className="w-full flex items-center justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                  <User className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_profile', { fallback: 'View Platform Profile' })}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_profile_desc', { fallback: 'Go back to your account profile on the platform' })}</p>
+                </div>
+              </div>
+              <ExternalLink className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+            </button>
+          </motion.div>
+
+          {/* Bulk Operations */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('bulk_operations', { fallback: 'Bulk Vehicle Operations' })}</h3>
+            <ComponentLoader>
+              <BulkOperationsPanel vehicles={vehicles} onRefresh={refetch} />
+            </ComponentLoader>
+          </div>
         </div>
       )}
     </div>

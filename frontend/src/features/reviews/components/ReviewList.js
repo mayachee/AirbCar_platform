@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReviewCard from './ReviewCard';
 import ReviewForm from './ReviewForm';
 import { reviewService } from '../services/reviewService';
-import { Star, Loader2, Filter, SortAsc, ChevronDown, MessageSquare } from 'lucide-react';
+import { Star, Loader2, Filter, SortAsc, ChevronDown, MessageSquare, AlertTriangle, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { SelectField } from '@/components/ui/select-field';
@@ -30,6 +30,9 @@ export default function ReviewList({
   const [showFilters, setShowFilters] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [isAddingReview, setIsAddingReview] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const confirmTimerRef = useRef(null);
   const [canReview, setCanReview] = useState(false);
   const [stats, setStats] = useState({
     averageRating: 0,
@@ -212,21 +215,49 @@ export default function ReviewList({
     }
   };
 
-  const handleDelete = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review?')) {
-      return;
-    }
+  // Step 1: Request delete — show inline confirmation
+  const handleDelete = (reviewId) => {
+    // Clear any existing timer
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    setConfirmDeleteId(reviewId);
+    // Auto-dismiss confirmation after 6 seconds
+    confirmTimerRef.current = setTimeout(() => setConfirmDeleteId(null), 6000);
+  };
+
+  // Cancel delete confirmation
+  const handleDeleteCancel = () => {
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    setConfirmDeleteId(null);
+  };
+
+  // Step 2: Confirm delete — optimistic removal with rollback
+  const handleDeleteConfirm = async () => {
+    const reviewId = confirmDeleteId;
+    if (!reviewId) return;
+
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    setConfirmDeleteId(null);
+    setDeletingId(reviewId);
+
+    // Save snapshot for rollback
+    const previousReviews = [...reviews];
+
+    // Optimistic removal
+    setReviews(prev => prev.filter(r => r.id !== reviewId));
 
     try {
       await reviewService.deleteReview(reviewId);
-      setReviews(reviews.filter(r => r.id !== reviewId));
       if (onReviewDeleted) onReviewDeleted(reviewId);
-      addToast('Review deleted successfully', 'success');
-      await loadReviews(); // Reload to update display
-      await loadStats(); // Reload stats after deletion
+      addToast(t('review_deleted', { fallback: 'Review deleted successfully' }), 'success');
+      // Reload stats in background (rating distribution changed)
+      loadStats().catch(() => {});
     } catch (err) {
       console.error('Error deleting review:', err);
-      addToast('Failed to delete review', 'error');
+      // Rollback — restore the review
+      setReviews(previousReviews);
+      addToast(t('failed_delete_review', { fallback: 'Failed to delete review' }), 'error');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -417,6 +448,44 @@ export default function ReviewList({
         </motion.div>
       )}
 
+      {/* Delete Confirmation Banner */}
+      <AnimatePresence>
+        {confirmDeleteId && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                  {t('confirm_delete_message', { fallback: 'Are you sure you want to delete this review? This cannot be undone.' })}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  {t('delete_review')}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Reviews List */}
       {reviews.length === 0 ? (
         <motion.div 
@@ -436,21 +505,26 @@ export default function ReviewList({
         </motion.div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
-            <motion.div
-              key={`review-${review.id}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <ReviewCard
-                review={review}
-                showActions={user?.id === review.user?.id}
-                onEdit={setEditingReview}
-                onDelete={handleDelete}
-                onVote={handleVote}
-              />
-            </motion.div>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {reviews.map((review) => (
+              <motion.div
+                key={`review-${review.id}`}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -40, height: 0, marginBottom: 0, transition: { duration: 0.3 } }}
+                className={confirmDeleteId === review.id ? 'ring-2 ring-red-300 dark:ring-red-700 rounded-xl transition-shadow' : ''}
+              >
+                <ReviewCard
+                  review={review}
+                  showActions={user?.id === review.user?.id}
+                  onEdit={setEditingReview}
+                  onDelete={handleDelete}
+                  onVote={handleVote}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>

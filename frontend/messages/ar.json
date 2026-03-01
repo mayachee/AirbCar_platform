@@ -56,7 +56,12 @@
     "your_review_label": "تقييمك",
     "review_placeholder": "شارك تجربتك مع هذا الإيجار...",
     "character_count": "{count} / {max} حرف",
-    "be_first_to_review": "كن أول من يترك تقييمًا!"
+    "be_first_to_review": "كن أول من يترك تقييمًا!",
+    "confirm_delete_message": "هل أنت متأكد من حذف هذا التقييم؟ لا يمكن التراجع عن هذا.",
+    "review_deleted": "تم حذف التقييم بنجاح",
+    "failed_delete_review": "فشل حذف التقييم",
+    "write_a_review": "اكتب تقييمًا",
+    "rating_label": "التقييم"
   },
   "common": {
     "app_name": "AirbCar",
@@ -689,7 +694,19 @@
     "state": "الحالة/الإقليم",
     "state_placeholder": "الحالة أو الإقليم",
     "description": "الوصف",
-    "description_placeholder": "صف عملك وخدماتك..."
+    "description_placeholder": "صف عملك وخدماتك...",
+    "seats": "مقاعد",
+    "available": "متاح",
+    "day": "/يوم",
+    "settings": "الإعدادات",
+    "settings_subtitle": "إدارة تفضيلاتك وإعدادات حسابك",
+    "settings_language": "اللغة",
+    "settings_language_desc": "اختر لغتك المفضلة",
+    "settings_currency": "العملة",
+    "settings_currency_desc": "حدد العملة المفضلة للأسعار",
+    "settings_view_profile": "عرض الملف الشخصي",
+    "settings_view_profile_desc": "العودة إلى ملفك الشخصي على المنصة",
+    "bulk_operations": "عمليات جماعية على المركبات"
   },
   "bookings": {
     "page_title": "حجوزاتي",
@@ -1277,7 +1294,9 @@
     "failed_to_delete": "فشل حذف المركبة",
     "vehicle_deleted": "تم حذف المركبة بنجاح",
     "per_day": "في اليوم",
-    "day": "/يوم"
+    "day": "/يوم",
+    "pickup": "الاستلام",
+    "return": "الإرجاع"
   },
   "owner_spotlight": {
     "verified": "موثق",
