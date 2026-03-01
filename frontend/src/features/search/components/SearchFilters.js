@@ -1,13 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function SearchFilters({ filters, onFilterChange }) {
+  const t = useTranslations('search');
   const { formatPrice, currency: currentCurrency } = useCurrency();
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [showAllBrands, setShowAllBrands] = useState(false);
   const [showAllStyles, setShowAllStyles] = useState(false);
+
+  // Translation maps (API values → displayed labels)
+  const transmissionLabels = { 'Manual': t('sf_manual'), 'Automatic': t('sf_automatic') };
+  const fuelLabels = { 'Petrol': t('sf_petrol'), 'Diesel': t('sf_diesel'), 'Electric': t('sf_electric'), 'Hybrid': t('sf_hybrid') };
+  const styleLabels = { 'Commercial': t('sf_commercial'), 'City': t('sf_city'), 'Sedan': t('sf_sedan'), 'Family': t('sf_family'), 'Minibus': t('sf_minibus'), '4x4': t('sf_4x4'), 'Convertible': t('sf_convertible'), 'Coupe': t('sf_coupe'), 'Antique': t('sf_antique'), 'Campervan': t('sf_campervan'), 'SUV': t('sf_suv') };
+  const featureLabels = { 'Child seat': t('sf_child_seat'), 'GPS': t('sf_gps'), 'Air conditioning': t('sf_air_conditioning'), 'Bike rack': t('sf_bike_rack'), 'Roof box': t('sf_roof_box'), 'Cruise control': t('sf_cruise_control'), 'Snow tires': t('sf_snow_tires'), 'Snow chains': t('sf_snow_chains'), 'Apple CarPlay': t('sf_apple_carplay'), 'Android Auto': t('sf_android_auto'), 'Four-wheel drive': t('sf_four_wheel_drive') };
 
   const handleTransmissionToggle = (type) => {
     const current = filters.transmission || [];
@@ -68,7 +76,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       {/* Price Range */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-300 mb-3">
-          Price Range ({currentCurrency}/day)
+          {t('sf_price_range', { currency: currentCurrency })}
         </label>
         <div className="px-3">
           <input
@@ -95,7 +103,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
           <span className="w-1 h-6 bg-orange-500 rounded-full mr-3"></span>
-          Transmission
+          {t('sf_transmission')}
         </h3>
         <div className="grid grid-cols-2 gap-3">
           {['Manual', 'Automatic'].map(type => (
@@ -108,7 +116,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                   : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
               }`}
             >
-              {type}
+              {transmissionLabels[type] || type}
             </button>
           ))}
         </div>
@@ -118,7 +126,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
           <span className="w-1 h-6 bg-orange-500 rounded-full mr-3"></span>
-          Fuel Type
+          {t('sf_fuel_type')}
         </h3>
         <div className="grid grid-cols-2 gap-3">
           {['Petrol', 'Diesel', 'Electric', 'Hybrid'].map(fuel => (
@@ -131,7 +139,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                   : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
               }`}
             >
-              {fuel}
+              {fuelLabels[fuel] || fuel}
             </button>
           ))}
         </div>
@@ -141,7 +149,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
           <span className="w-1 h-6 bg-orange-500 rounded-full mr-3"></span>
-          Style
+          {t('sf_style')}
         </h3>
         <div className="flex flex-wrap gap-2">
           {(() => {
@@ -160,7 +168,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                         : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    {style}
+                    {styleLabels[style] || style}
                   </button>
                 ))}
                 {!showAllStyles && (
@@ -171,7 +179,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                    Show More
+                    {t('sf_show_more')}
                   </button>
                 )}
                 {showAllStyles && (
@@ -182,7 +190,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                     </svg>
-                    Show Less
+                    {t('sf_show_less')}
                   </button>
                 )}
               </>
@@ -195,7 +203,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
           <span className="w-1 h-6 bg-orange-500 rounded-full mr-3"></span>
-          Brand
+          {t('sf_brand')}
         </h3>
         <div className="flex flex-wrap gap-2">
           {(() => {
@@ -225,7 +233,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                    Show More
+                    {t('sf_show_more')}
                   </button>
                 )}
                 {showAllBrands && (
@@ -236,7 +244,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                     </svg>
-                    Show Less
+                    {t('sf_show_less')}
                   </button>
                 )}
               </>
@@ -249,7 +257,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
           <span className="w-1 h-6 bg-orange-500 rounded-full mr-3"></span>
-          Features
+          {t('sf_features')}
         </h3>
         <div className="flex flex-wrap gap-2">
           {(() => {
@@ -268,7 +276,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                         : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    {feature}
+                    {featureLabels[feature] || feature}
                   </button>
                 ))}
                 {!showAllFeatures && (
@@ -279,7 +287,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                    Show More
+                    {t('sf_show_more')}
                   </button>
                 )}
                 {showAllFeatures && (
@@ -290,7 +298,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                     </svg>
-                    Show Less
+                    {t('sf_show_less')}
                   </button>
                 )}
               </>
@@ -303,7 +311,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
       <div className="mb-8">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
           <span className="w-1 h-6 bg-orange-500 rounded-full mr-3"></span>
-          Seats
+          {t('sf_seats')}
         </h3>
         <div className="flex flex-wrap gap-2">
           {['2', '4', '5', '7', '8+'].map(seats => (
@@ -337,7 +345,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <span className="ml-3 text-sm text-gray-300 group-hover:text-white transition-colors">Verified agencies only</span>
+          <span className="ml-3 text-sm text-gray-300 group-hover:text-white transition-colors">{t('sf_verified_agencies')}</span>
         </label>
       </div>
 
@@ -356,7 +364,7 @@ export default function SearchFilters({ filters, onFilterChange }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <span className="ml-3 text-sm text-gray-300 group-hover:text-white transition-colors">Instant booking available</span>
+          <span className="ml-3 text-sm text-gray-300 group-hover:text-white transition-colors">{t('sf_instant_booking')}</span>
         </label>
       </div>
     </div>

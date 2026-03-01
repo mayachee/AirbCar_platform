@@ -5,8 +5,10 @@ import { MapPin, Calendar, Search, AlertCircle } from 'lucide-react';
 import { SelectField } from '@/components/ui/select-field';
 import { MOROCCAN_CITIES } from '@/constants';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 export default function SearchForm({ onSearch, initialValues = {} }) {
+  const t = useTranslations('search');
   // Get today's date for min date attribute
   const today = new Date();
   const tomorrow = new Date(today);
@@ -79,20 +81,20 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
     const newErrors = {};
 
     if (!location.trim()) {
-      newErrors.location = 'Location is required';
+      newErrors.location = t('sf_location_required');
     }
 
     if (!pickupDate) {
-      newErrors.pickupDate = 'Pick-up date is required';
+      newErrors.pickupDate = t('sf_pickup_required');
     }
 
     if (!returnDate) {
-      newErrors.returnDate = 'Return date is required';
+      newErrors.returnDate = t('sf_return_required');
     } else if (pickupDate) {
       const pickup = new Date(pickupDate);
       const returnD = new Date(returnDate);
       if (returnD < pickup) {
-        newErrors.returnDate = 'Return date must be after pick-up date';
+        newErrors.returnDate = t('sf_return_after_pickup');
       }
     }
 
@@ -188,16 +190,16 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
         {/* Location Select */}
         <div className="md:col-span-1">
           <label htmlFor="location" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-            Pickup location
+            {t('sf_pickup_location')}
           </label>
           <SelectField
             id="location"
             value={location}
             onChange={handleLocationChange}
-            placeholder="Select a city"
+            placeholder={t('sf_select_city')}
             options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
             triggerProps={{ 
-              'aria-label': 'Pickup location',
+              'aria-label': t('sf_pickup_location'),
               onBlur: () => handleBlur('location')
             }}
             contentProps={{ className: heroBlurContentClass }}
@@ -214,7 +216,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
         {/* Pickup Date */}
         <div className="md:col-span-1">
           <label htmlFor="pickupDate" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-            Pickup date
+            {t('sf_pickup_date')}
           </label>
           <SelectField
             id="pickupDate"
@@ -222,7 +224,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
             onChange={handlePickupDateChange}
             options={buildDateOptions(todayStr, 180)}
             triggerProps={{ 
-              'aria-label': 'Pickup date',
+              'aria-label': t('sf_pickup_date'),
               onBlur: () => handleBlur('pickupDate')
             }}
             contentProps={{ className: heroBlurContentClass }}
@@ -239,7 +241,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
         {/* Return Date */}
         <div className="md:col-span-1">
           <label htmlFor="returnDate" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-            Return date
+            {t('sf_return_date')}
           </label>
           <SelectField
             id="returnDate"
@@ -247,7 +249,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
             onChange={handleReturnDateChange}
             options={buildDateOptions(pickupDate || todayStr, 180)}
             triggerProps={{ 
-              'aria-label': 'Return date',
+              'aria-label': t('sf_return_date'),
               onBlur: () => handleBlur('returnDate')
             }}
             contentProps={{ className: heroBlurContentClass }}
@@ -276,10 +278,10 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Searching...
+                {t('sf_searching')}
               </>
             ) : (
-              'Search Cars'
+              t('sf_search_cars')
             )}
           </motion.button>
         </div>
