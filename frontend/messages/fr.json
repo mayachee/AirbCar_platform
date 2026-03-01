@@ -52,7 +52,11 @@
     "review_published": "Avis publié",
     "review_unpublished": "Avis dépublié",
     "failed_load_reviews": "Impossible de charger les avis",
-    "failed_update_review": "Impossible de mettre à jour l'avis"
+    "failed_update_review": "Impossible de mettre à jour l'avis",
+    "your_review_label": "Votre avis",
+    "review_placeholder": "Partagez votre expérience avec cette location...",
+    "character_count": "{count} / {max} caractères",
+    "be_first_to_review": "Soyez le premier à laisser un avis !"
   },
   "common": {
     "app_name": "AirbCar",
@@ -406,7 +410,8 @@
     "view_details": "Voir les détails",
     "remove_from_favorites": "Retirer des favoris",
     "add_to_favorites": "Ajouter aux favoris",
-    "instant_booking": "Réservation Instantanée"
+    "instant_booking": "Réservation Instantanée",
+    "per_day": "/jour"
   },
   "car_details": {
     "error_vehicle_not_loaded": "Impossible de réserver : les données du véhicule ne sont pas chargées",

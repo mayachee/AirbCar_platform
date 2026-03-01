@@ -52,7 +52,11 @@
     "review_published": "تم نشر التقييم",
     "review_unpublished": "تم إلغاء نشر التقييم",
     "failed_load_reviews": "فشل تحميل التقييمات",
-    "failed_update_review": "فشل تحديث التقييم"
+    "failed_update_review": "فشل تحديث التقييم",
+    "your_review_label": "تقييمك",
+    "review_placeholder": "شارك تجربتك مع هذا الإيجار...",
+    "character_count": "{count} / {max} حرف",
+    "be_first_to_review": "كن أول من يترك تقييمًا!"
   },
   "common": {
     "app_name": "AirbCar",
@@ -371,7 +375,8 @@
     "view_details": "عرض التفاصيل",
     "remove_from_favorites": "إزالة من المفضلة",
     "add_to_favorites": "إضافة إلى المفضلة",
-    "instant_booking": "حجز فوري"
+    "instant_booking": "حجز فوري",
+    "per_day": "/يوم"
   },
   "car_details": {
     "error_vehicle_not_loaded": "لا يمكن الحجز: بيانات السيارة لم تحمل",
