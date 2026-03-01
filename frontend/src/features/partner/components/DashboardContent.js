@@ -48,10 +48,7 @@ const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType
     purple: 'text-purple-600 dark:text-purple-400'
   };
 
-  const IconComponent = icon || (title === 'Total Vehicles' ? Car : 
-                                 title === 'Active Bookings' ? Calendar :
-                                 title === 'Pending Requests' ? Clock :
-                                 DollarSign);
+  const IconComponent = icon || DollarSign;
 
   return (
     <motion.div
@@ -66,15 +63,7 @@ const QuickStatsCard = ({ title, value, icon, color = 'blue', change, changeType
     >
       <div className="flex items-center justify-between mb-3">
         <div className={`p-3 rounded-lg bg-white/50 dark:bg-gray-800/50 ${iconColorClasses[color]} transition-transform duration-200 ${onClick ? 'group-hover:scale-110' : ''}`}>
-          {icon ? (
-            typeof icon === 'string' ? (
-              <span className="text-2xl">{icon}</span>
-            ) : (
-              icon
-            )
-          ) : (
-            <IconComponent className={`h-6 w-6 ${iconColorClasses[color]}`} />
-          )}
+          <IconComponent className={`h-6 w-6 ${iconColorClasses[color]}`} />
         </div>
         {change && (
           <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
@@ -189,11 +178,11 @@ export default function DashboardContent({
                 {...stat}
                 t={t}
                 onClick={() => {
-                  // Navigate to relevant section based on stat
-                  if (stat.title.includes('Vehicle')) setCurrentView('vehicles');
-                  if (stat.title.includes('Booking')) setCurrentView('bookings');
-                  if (stat.title.includes('Request')) setCurrentView('bookings');
-                  if (stat.title.includes('Earning')) setCurrentView('analytics');
+                  // Navigate to relevant section based on stat color
+                  if (stat.color === 'blue') setCurrentView('vehicles');
+                  if (stat.color === 'green') setCurrentView('bookings');
+                  if (stat.color === 'yellow') setCurrentView('bookings');
+                  if (stat.color === 'purple') setCurrentView('analytics');
                 }}
               />
             ))}

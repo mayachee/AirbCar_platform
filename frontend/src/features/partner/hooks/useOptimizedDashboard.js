@@ -9,7 +9,8 @@ import { useTranslations } from 'next-intl';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { 
   LayoutDashboard, Car, Calendar, DollarSign, BarChart3, 
-  CalendarDays, Star, FileText, User, Settings 
+  CalendarDays, Star, FileText, User, Settings,
+  CarFront, BookOpen, ClipboardList, Wallet
 } from 'lucide-react';
 
 export function useOptimizedDashboard() {
@@ -94,7 +95,7 @@ export function useOptimizedDashboard() {
       {
         title: t('stat_total_vehicles'),
         value: stats.totalVehicles || 0,
-        icon: null,
+        icon: CarFront,
         color: 'blue',
         change: t('stat_listed', { count: stats.totalVehicles || 0 }),
         changeType: 'neutral'
@@ -102,7 +103,7 @@ export function useOptimizedDashboard() {
       {
         title: t('stat_active_bookings'),
         value: stats.activeBookings || 0,
-        icon: null,
+        icon: BookOpen,
         color: 'green',
         change: stats.activeBookings > 0 ? t('stat_in_progress') : t('stat_none_active'),
         changeType: stats.activeBookings > 0 ? 'positive' : 'neutral'
@@ -110,7 +111,7 @@ export function useOptimizedDashboard() {
       {
         title: t('stat_pending_requests'),
         value: pendingRequests.length,
-        icon: null,
+        icon: ClipboardList,
         color: 'yellow',
         change: pendingRequests.length > 0 ? t('stat_needs_attention') : t('stat_all_clear'),
         changeType: pendingRequests.length > 0 ? 'neutral' : 'positive'
@@ -118,7 +119,7 @@ export function useOptimizedDashboard() {
       {
         title: t('stat_monthly_earnings'),
         value: formatPrice(Number(monthlyEarningsVal)),
-        icon: null,
+        icon: Wallet,
         color: 'purple',
         change: growthRate !== 0 ? `${growthRate > 0 ? '+' : ''}${growthRate}% vs last month` : t('stat_this_month'),
         changeType: growthRate > 0 ? 'positive' : growthRate < 0 ? 'negative' : 'neutral'

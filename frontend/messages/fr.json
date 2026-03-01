@@ -1809,5 +1809,24 @@
     "no_data": "Aucune donnée disponible",
     "something_went_wrong": "Une erreur s'est produite. Veuillez réessayer.",
     "try_again": "Réessayer"
+  },
+  "partner_public": {
+    "loading": "Chargement du profil partenaire...",
+    "not_found": "Partenaire introuvable",
+    "not_found_desc": "Le partenaire que vous recherchez n'existe pas.",
+    "analytics": "Statistiques",
+    "total_bookings": "Réservations totales",
+    "rating": "Note",
+    "reviews_count": "{count} avis",
+    "contact_info": "Coordonnées",
+    "location": "Localisation",
+    "phone": "Téléphone",
+    "email": "E-mail",
+    "no_contact_info": "Aucune information de contact disponible.",
+    "fleet_insights": "Aperçu de la flotte",
+    "starting_price": "Prix de départ",
+    "per_day": "/jour",
+    "locations": "Emplacements",
+    "total_vehicles": "Total véhicules"
   }
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Star, MapPin, TrendingUp, Sparkles, Calendar, Phone, Mail, Car, Award } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import BackButton from './BackButton'
@@ -41,6 +42,7 @@ const itemVariants = {
 export default function PartnerPublicProfilePage() {
   const params = useParams()
   const { formatPrice } = useCurrency()
+  const t = useTranslations('partner_public')
   const [partner, setPartner] = useState(null)
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -93,7 +95,7 @@ export default function PartnerPublicProfilePage() {
             <div className="relative inline-flex">
               <div className="w-16 h-16 border-4 border-orange-500/30 rounded-full animate-spin border-t-orange-500"></div>
             </div>
-            <p className="text-gray-400 font-medium animate-pulse">Loading partner profile...</p>
+            <p className="text-gray-400 font-medium animate-pulse">{t('loading')}</p>
           </div>
         </div>
         <Footer />
@@ -111,8 +113,8 @@ export default function PartnerPublicProfilePage() {
               <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">⚠️</span>
               </div>
-              <h2 className="text-xl font-bold text-white mb-2">Partner Not Found</h2>
-              <p className="text-gray-400 mb-6">{error || 'The partner you are looking for does not exist.'}</p>
+              <h2 className="text-xl font-bold text-white mb-2">{t('not_found')}</h2>
+              <p className="text-gray-400 mb-6">{error || t('not_found_desc')}</p>
               <BackButton />
             </div>
           </div>
@@ -176,14 +178,14 @@ export default function PartnerPublicProfilePage() {
                   variants={itemVariants}
                   className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
                 >
-                  <h2 className="text-xl font-bold text-white mb-4">Analytics</h2>
+                  <h2 className="text-xl font-bold text-white mb-4">{t('analytics')}</h2>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-orange-500/10 rounded-lg">
                           <Car className="h-5 w-5 text-orange-500" />
                         </div>
-                        <span className="text-gray-300 font-medium">Total Bookings</span>
+                        <span className="text-gray-300 font-medium">{t('total_bookings')}</span>
                       </div>
                       <span className="text-white font-bold">{totalBookings}</span>
                     </div>
@@ -193,11 +195,11 @@ export default function PartnerPublicProfilePage() {
                         <div className="p-2 bg-yellow-500/10 rounded-lg">
                           <Star className="h-5 w-5 text-yellow-500" />
                         </div>
-                        <span className="text-gray-300 font-medium">Rating</span>
+                        <span className="text-gray-300 font-medium">{t('rating')}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-white font-bold block">{rating.toFixed(1)}</span>
-                        <span className="text-xs text-gray-500">{reviewCount} reviews</span>
+                        <span className="text-xs text-gray-500">{t('reviews_count', { count: reviewCount })}</span>
                       </div>
                     </div>
                   </div>
@@ -208,13 +210,13 @@ export default function PartnerPublicProfilePage() {
                   variants={itemVariants}
                   className="hidden sm:block bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
                 >
-                  <h2 className="text-xl font-bold text-white mb-4">Contact Info</h2>
+                  <h2 className="text-xl font-bold text-white mb-4">{t('contact_info')}</h2>
                   <div className="space-y-4">
                     {location && (
                       <div className="flex items-start gap-3">
                         <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
                         <div>
-                          <p className="text-sm text-gray-400 font-medium">Location</p>
+                          <p className="text-sm text-gray-400 font-medium">{t('location')}</p>
                           <p className="text-white">{location}</p>
                         </div>
                       </div>
@@ -224,7 +226,7 @@ export default function PartnerPublicProfilePage() {
                       <div className="flex items-start gap-3">
                         <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
                         <div>
-                          <p className="text-sm text-gray-400 font-medium">Phone</p>
+                          <p className="text-sm text-gray-400 font-medium">{t('phone')}</p>
                           <a href={`tel:${phone}`} className="text-orange-400 hover:text-orange-300 transition-colors">
                             {phone}
                           </a>
@@ -236,7 +238,7 @@ export default function PartnerPublicProfilePage() {
                       <div className="flex items-start gap-3">
                         <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
                         <div>
-                          <p className="text-sm text-gray-400 font-medium">Email</p>
+                          <p className="text-sm text-gray-400 font-medium">{t('email')}</p>
                           <a href={`mailto:${email}`} className="text-orange-400 hover:text-orange-300 transition-colors break-all">
                             {email}
                           </a>
@@ -246,7 +248,7 @@ export default function PartnerPublicProfilePage() {
 
                     {!location && !phone && !email && (
                       <p className="text-gray-500 italic text-sm">
-                        No contact information available.
+                        {t('no_contact_info')}
                       </p>
                     )}
                   </div>
@@ -258,22 +260,22 @@ export default function PartnerPublicProfilePage() {
                     variants={itemVariants}
                     className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
                   >
-                    <h2 className="text-xl font-bold text-white mb-4">Fleet Insights</h2>
+                    <h2 className="text-xl font-bold text-white mb-4">{t('fleet_insights')}</h2>
                     <div className="space-y-4">
                       {minPrice && (
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-400">Starting Price</span>
-                          <span className="text-white font-bold">{formatPrice(minPrice)}/day</span>
+                          <span className="text-gray-400">{t('starting_price')}</span>
+                          <span className="text-white font-bold">{formatPrice(minPrice)}{t('per_day')}</span>
                         </div>
                       )}
                       {locationCount > 0 && (
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-400">Locations</span>
+                          <span className="text-gray-400">{t('locations')}</span>
                           <span className="text-white font-bold">{locationCount}</span>
                         </div>
                       )}
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Total Vehicles</span>
+                        <span className="text-gray-400">{t('total_vehicles')}</span>
                         <span className="text-white font-bold">{listings.length}</span>
                       </div>
                     </div>

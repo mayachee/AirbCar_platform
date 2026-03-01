@@ -1811,5 +1811,24 @@
     "no_data": "لا توجد بيانات",
     "something_went_wrong": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
     "try_again": "حاول مرة أخرى"
+  },
+  "partner_public": {
+    "loading": "جاري تحميل ملف الشريك...",
+    "not_found": "الشريك غير موجود",
+    "not_found_desc": "الشريك الذي تبحث عنه غير موجود.",
+    "analytics": "الإحصائيات",
+    "total_bookings": "إجمالي الحجوزات",
+    "rating": "التقييم",
+    "reviews_count": "{count} تقييمات",
+    "contact_info": "معلومات الاتصال",
+    "location": "الموقع",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "no_contact_info": "لا توجد معلومات اتصال متاحة.",
+    "fleet_insights": "نظرة على الأسطول",
+    "starting_price": "السعر الابتدائي",
+    "per_day": "/يوم",
+    "locations": "المواقع",
+    "total_vehicles": "إجمالي المركبات"
   }
 }

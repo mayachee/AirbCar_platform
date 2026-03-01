@@ -6,6 +6,7 @@ import { getVehicleImageUrl } from '@/utils/imageUtils';
 import { SelectField } from '@/components/ui/select-field';
 import { useToast } from '@/contexts/ToastContext';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ export default function VehiclesList({
 }) {
   const { addToast } = useToast();
   const t = useTranslations('partner');
+  const { formatPrice } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -242,7 +244,7 @@ export default function VehiclesList({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-100 text-sm font-medium">{t('stat_average_price')}</p>
-              <p className="text-3xl font-bold mt-1">${stats.avgPrice.toFixed(0)}</p>
+              <p className="text-3xl font-bold mt-1">{formatPrice(stats.avgPrice)}</p>
             </div>
             <DollarSign className="h-10 w-10 text-yellow-200 opacity-80" />
           </div>
@@ -513,7 +515,7 @@ export default function VehiclesList({
                     <div className="ml-4">
                       <div className="text-right">
                         <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                          ${parseFloat(vehicle.price_per_day || vehicle.price || 0).toFixed(0)}
+                          {formatPrice(parseFloat(vehicle.price_per_day || vehicle.price || 0))}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">{t('per_day')}</div>
                       </div>
@@ -525,7 +527,7 @@ export default function VehiclesList({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       <DollarSign className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
-                      <span className="font-semibold text-gray-900 dark:text-white text-lg">${parseFloat(vehicle.price_per_day || vehicle.price || 0).toFixed(0)}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white text-lg">{formatPrice(parseFloat(vehicle.price_per_day || vehicle.price || 0))}</span>
                       <span className="text-gray-500 dark:text-gray-400 ml-1">{t('day')}</span>
                     </div>
                     {vehicle.instant_booking && (

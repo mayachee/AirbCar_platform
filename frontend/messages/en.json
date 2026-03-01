@@ -1810,5 +1810,24 @@
     "no_data": "No data available",
     "something_went_wrong": "Something went wrong. Please try again.",
     "try_again": "Try Again"
+  },
+  "partner_public": {
+    "loading": "Loading partner profile...",
+    "not_found": "Partner Not Found",
+    "not_found_desc": "The partner you are looking for does not exist.",
+    "analytics": "Analytics",
+    "total_bookings": "Total Bookings",
+    "rating": "Rating",
+    "reviews_count": "{count} reviews",
+    "contact_info": "Contact Info",
+    "location": "Location",
+    "phone": "Phone",
+    "email": "Email",
+    "no_contact_info": "No contact information available.",
+    "fleet_insights": "Fleet Insights",
+    "starting_price": "Starting Price",
+    "per_day": "/day",
+    "locations": "Locations",
+    "total_vehicles": "Total Vehicles"
   }
 }
