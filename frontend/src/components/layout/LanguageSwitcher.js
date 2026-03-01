@@ -55,7 +55,7 @@ export default function LanguageSwitcher() {
       onChange={handleLanguageChange}
       contentProps={{ className: 'z-[100] ignore-outside-click', position: 'popper' }}
       options={languageOptions}
-      className="w-full rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors"
+      className="w-full rounded-xl bg-white/5 hover:bg-white/10 border border-gray-300 text-sm text-gray-900  focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors"
     />
   );
 }
