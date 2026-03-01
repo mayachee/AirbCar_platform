@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { SelectField } from '@/components/ui/select-field';
 import { MOROCCAN_CITIES } from '@/constants';
 import { User, Mail, Phone, Calendar, Camera,  FileText, CheckCircle, AlertCircle, Eye, MapPin } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function ProfileSection({ accountData, handleFieldChange, formatProfileCompletion, profileCompletion, onProfilePictureChange }) {
+  const t = useTranslations('account');
   const [uploading, setUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [touchedFields, setTouchedFields] = useState(new Set());
@@ -83,12 +85,12 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
       <div className="pt-8 border-t border-gray-100">
         <h3 className="text-lg font-bold text-white-900 mb-6 flex items-center gap-2">
             <FileText className="w-5 h-5 text-orange-500" />
-            Basic Information
+            {t('ps_basic_info')}
         </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700 block">
-            First Name <span className="text-red-500">*</span>
+            {t('ps_first_name')} <span className="text-red-500">*</span>
           </label>
           <Input
             type="text"
@@ -97,13 +99,13 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             value={accountData.firstName || ''}
             disabled
             className="bg-gray-50/50 text-gray-500 border-gray-200 cursor-not-allowed"
-            placeholder="Enter your first name"
+            placeholder={t('ps_enter_first_name')}
           />
-          <p className="text-xs text-gray-400 pl-1">First name cannot be changed.</p>
+          <p className="text-xs text-gray-400 pl-1">{t('ps_first_name_locked')}</p>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700 block">
-            Last Name <span className="text-red-500">*</span>
+            {t('ps_last_name')} <span className="text-red-500">*</span>
           </label>
            <Input
             type="text"
@@ -112,15 +114,15 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             value={accountData.lastName || ''}
             disabled
             className="bg-gray-50/50 text-gray-500 border-gray-200 cursor-not-allowed"
-            placeholder="Enter your last name"
+            placeholder={t('ps_enter_last_name')}
           />
-          <p className="text-xs text-gray-400 pl-1">Last name cannot be changed.</p>
+          <p className="text-xs text-gray-400 pl-1">{t('ps_last_name_locked')}</p>
         </div>
       </div>
 
       <div className="mt-6 space-y-2">
         <label className="text-sm font-semibold text-gray-700 block">
-          Email Address <span className="text-red-500">*</span>
+          {t('ps_email_address')} <span className="text-red-500">*</span>
         </label>
          <Input
           type="email"
@@ -130,13 +132,13 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           disabled
           className="bg-gray-50/50 text-gray-500 border-gray-200"
         />
-        <p className="text-xs text-gray-400 pl-1">Email cannot be changed directly.</p>
+        <p className="text-xs text-gray-400 pl-1">{t('ps_email_locked')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700 block">
-            Phone Number <span className="text-red-500">*</span>
+            {t('ps_phone_number')} <span className="text-red-500">*</span>
           </label>
            <Input
             type="tel"
@@ -151,7 +153,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
         </div>
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700 block">
-            Date of Birth <span className="text-red-500">*</span>
+            {t('ps_date_of_birth')} <span className="text-red-500">*</span>
           </label>
           <Input
             type="date"
@@ -171,10 +173,10 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
         <div className="mb-6">
           <h3 className="text-lg font-bold text-white-400 mb-2 flex items-center gap-2">
              <FileText className="w-5 h-5 text-orange-500" />
-            Driver's License Documents
+            {t('ps_license_documents')}
           </h3>
           <p className="text-sm text-gray-500 leading-relaxed max-w-2xl">
-            Upload both sides of your driver's license for verification purposes. These documents are required to complete your profile.
+            {t('ps_license_description')}
           </p>
         </div>
         
@@ -183,7 +185,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
             {(accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl) && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold shadow-sm">
                 <CheckCircle className="w-3.5 h-3.5" />
-                Documents Verified
+                {t('ps_documents_verified')}
               </span>
             )}
           </div>
@@ -195,10 +197,10 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-green-900 mb-1">
-                    Documents Uploaded Successfully
+                    {t('ps_documents_uploaded')}
                   </p>
                   <p className="text-xs text-green-700 mb-3">
-                    Both front and back documents are saved.
+                    {t('ps_documents_saved')}
                   </p>
                   <div className="flex items-center gap-4">
                     {accountData.licenseFrontDocumentUrl && (
@@ -209,7 +211,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                         className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 underline font-medium transition-colors"
                       >
                        <Eye className="w-3.5 h-3.5" />
-                        View Front
+                        {t('ps_view_front')}
                       </a>
                     )}
                     {accountData.licenseBackDocumentUrl && (
@@ -220,7 +222,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                         className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 underline font-medium transition-colors"
                       >
                          <Eye className="w-3.5 h-3.5" />
-                        View Back
+                        {t('ps_view_back')}
                       </a>
                     )}
                   </div>
@@ -231,7 +233,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
           
           {accountData.licenseFrontDocumentUrl && accountData.licenseBackDocumentUrl && (
           <p className="text-sm text-gray-600 mb-4 font-medium pl-1">
-              Update Documents
+              {t('ps_update_documents')}
           </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -270,7 +272,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                     </label>
                     {fileName && (
                       <p className="text-xs text-gray-500 truncate bg-orange-600/40 px-2 py-1 rounded border border-gray-100">
-                        Selected: <span className="font-medium text-gray-900">{fileName}</span>
+                        {t('ps_selected', { name: fileName })}
                       </p>
                     )}
                     {imageUrl ? (
@@ -311,7 +313,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
                             <Camera className="w-5 h-5 opacity-40" />
                         </div>
-                        <span className="text-xs font-medium">No document uploaded</span>
+                        <span className="text-xs font-medium">{t('ps_no_document')}</span>
                       </div>
                     )}
                   </div>
@@ -321,7 +323,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
               return (
                 <>
                   {renderDocumentCard(
-                    'License Front',
+                    t('ps_license_front'),
                     frontPreview,
                     accountData.licenseFrontDocumentUrl,
                     accountData.licenseFrontDocumentFile?.name,
@@ -355,7 +357,7 @@ export default function ProfileSection({ accountData, handleFieldChange, formatP
                     }
                   )}
                   {renderDocumentCard(
-                    'License Back',
+                    t('ps_license_back'),
                     backPreview,
                     accountData.licenseBackDocumentUrl,
                     accountData.licenseBackDocumentFile?.name,
