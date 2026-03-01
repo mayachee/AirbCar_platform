@@ -90,7 +90,8 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
     queryKey: getFavoritesQueryKey(user?.id),
     queryFn: fetchFavoritesList,
     enabled: !!user || (contextFavorites?.size ?? 0) > 0,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const loadError = queryError ? `Failed to load favorites: ${queryError.message}` : null;
@@ -106,18 +107,16 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       setError(null);
 
       try {
-        // Store previous state for potential rollback
-        const previousData = queryClient.getQueryData(getFavoritesQueryKey(user?.id));
-        
+        // Cancel any in-flight refetches so they don't overwrite our optimistic update
+        await queryClient.cancelQueries({ queryKey: getFavoritesQueryKey(user?.id) });
+
         // IMMEDIATE UI UPDATE - Remove from display right away
         queryClient.setQueryData(getFavoritesQueryKey(user?.id), (prev) => {
-          if (!Array.isArray(prev)) return prev;
-          const updated = prev.filter((fav) => {
+          if (!Array.isArray(prev)) return [];
+          return prev.filter((fav) => {
             const id = fav.vehicle?.id ?? fav.vehicle_id ?? fav.listing?.id;
             return String(id) !== String(vehicleId);
           });
-          console.log('✅ Favorite removed from UI instantly');
-          return updated;
         });
 
         // Update context as well
@@ -127,14 +126,10 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
         setSuccessMessage('✨ Removed from favorites');
         setTimeout(() => setSuccessMessage(''), 2000);
 
-        // Sync with backend (fire and forget, already optimistic)
+        // Sync with backend in background — do NOT revert UI on failure
         if (user) {
           userService.removeFavorite(vehicleId).catch((err) => {
-            console.error('⚠️ Backend sync failed:', err.message);
-            // If backend fails, revert UI
-            queryClient.setQueryData(getFavoritesQueryKey(user?.id), previousData);
-            setError('Could not remove favorite from server. Try again.');
-            setTimeout(() => setError(null), 5000);
+            console.warn('⚠️ Backend sync failed (item already removed from UI):', err.message);
           });
         }
       } catch (err) {

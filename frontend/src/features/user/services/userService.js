@@ -266,68 +266,34 @@ export class UserService {
 
   /**
    * Remove a listing from favorites (persists to backend when user is authenticated).
-   * Uses DELETE /favorites/by-listing/<id>/ when we have a listing id (avoids 404).
-   * @param {string|number} listingId - Listing/vehicle ID to remove, or Favorite entry ID
+   * Tries DELETE /favorites/by-listing/<id>/ first, then /favorites/<id>/.
+   * Returns success even on 404 (already removed).
+   * @param {string|number} listingId - Listing/vehicle ID to remove
    * @returns {Promise}
    */
   async removeFavorite(listingId) {
+    const id = String(listingId);
+
+    // 1) Try by-listing endpoint (preferred — uses listing_id directly)
     try {
-      const id = String(listingId);
-
-      // 1) Prefer by-listing endpoint so backend finds by listing_id (no 404 when id is listing id)
-      try {
-        const res = await apiClient.delete(`/favorites/by-listing/${id}/`);
-        return res.data ?? res;
-      } catch (byListingErr) {
-        const msg = (byListingErr.message || '').toLowerCase();
-        const is404 =
-          byListingErr.status === 404 ||
-          msg.includes('404') ||
-          msg.includes('not found') ||
-          msg.includes('endpoint not found');
-
-        if (!is404) throw byListingErr;
-
-        // 2) Fallback: try direct delete (when id is Favorite pk)
-        try {
-          const res = await apiClient.delete(`/favorites/${id}/`);
-          return res.data ?? res;
-        } catch (directErr) {
-          const dmsg = (directErr.message || '').toLowerCase();
-          const d404 =
-            directErr.status === 404 ||
-            dmsg.includes('404') ||
-            dmsg.includes('not found') ||
-            dmsg.includes('endpoint not found');
-          if (!d404) throw directErr;
-        }
-
-        // 3) Resolve by listing id from my-favorites and delete by Favorite pk
-        const favoritesRes = await this.getFavorites();
-        const list = Array.isArray(favoritesRes?.data) ? favoritesRes.data : [];
-        const favorite = list.find((fav) => {
-          const lid = fav.listing?.id ?? fav.vehicle?.id ?? fav.vehicle_id ?? fav.listing;
-          return String(lid) === id || Number(lid) === Number(listingId);
-        });
-
-        if (favorite && favorite.id != null) {
-          const delRes = await apiClient.delete(`/favorites/${favorite.id}/`);
-          return delRes.data ?? delRes;
-        }
-
-        return { success: true, message: 'Favorite already removed' };
-      }
-    } catch (error) {
-      const msg = (error.message || '').toLowerCase();
-      const is404 =
-        error.status === 404 ||
-        msg.includes('404') ||
-        msg.includes('not found') ||
-        msg.includes('endpoint not found') ||
-        msg.includes('favorite not found');
-      if (is404) return { success: true, message: 'Favorite already removed' };
-      throw error;
+      const res = await apiClient.delete(`/favorites/by-listing/${id}/`);
+      return res.data ?? res;
+    } catch (err) {
+      const is404 = err.status === 404 || (err.message || '').toLowerCase().includes('404');
+      if (!is404) throw err;
     }
+
+    // 2) Fallback: try direct delete (id may be Favorite pk or listing pk)
+    try {
+      const res = await apiClient.delete(`/favorites/${id}/`);
+      return res.data ?? res;
+    } catch (err) {
+      const is404 = err.status === 404 || (err.message || '').toLowerCase().includes('404');
+      if (!is404) throw err;
+    }
+
+    // Both returned 404 — already removed
+    return { success: true, message: 'Favorite already removed' };
   }
 
   // ============ STATISTICS OPERATIONS ============
