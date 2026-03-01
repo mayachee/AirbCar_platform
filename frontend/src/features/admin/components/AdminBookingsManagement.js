@@ -6,11 +6,13 @@ import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { adminService } from '@/features/admin/services/adminService';
 import { useToast } from '@/contexts/ToastContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function AdminBookingsManagement() {
   const { addToast } = useToast();
+  const { formatPrice } = useCurrency();
   const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const bookingsApiUrl = `${apiUrl}/bookings/`;
   
@@ -424,10 +426,7 @@ export default function AdminBookingsManagement() {
 
   const formatCurrency = (amount) => {
     if (!amount && amount !== 0) return 'N/A';
-    return new Intl.NumberFormat('fr-MA', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount) + ' MAD';
+    return formatPrice(amount);
   };
 
   const formatDate = (dateString) => {

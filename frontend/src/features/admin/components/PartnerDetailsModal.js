@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Mail, Phone, Building, MapPin, Calendar, CheckCircle, XCircle, Edit, Trash2, User, FileText, Car, Award, Clock, ExternalLink, Star, TrendingUp, Activity, Shield, Globe, Hash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminService } from '@/features/admin/services/adminService';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -19,16 +20,18 @@ const formatDateTime = (dateString) => {
   } catch { return dateString; }
 };
 
-const formatCurrency = (amount) => {
-  if (!amount && amount !== 0) return 'N/A';
-  const num = parseFloat(amount) || 0;
-  return `${new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num)} MAD`;
-};
+// formatCurrency is now defined inside the component using useCurrency hook
 
 export default function PartnerDetailsModal({ partner, isOpen, onClose, onEdit, onDelete, onApprove, onReject, onUnverify }) {
+  const { formatPrice } = useCurrency();
   const [fullPartnerData, setFullPartnerData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  const formatCurrency = (amount) => {
+    if (!amount && amount !== 0) return 'N/A';
+    return formatPrice(parseFloat(amount) || 0);
+  };
 
   useEffect(() => {
     if (isOpen && partner?.id) {

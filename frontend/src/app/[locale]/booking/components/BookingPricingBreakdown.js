@@ -3,6 +3,8 @@
  * Shows transparent pricing with all fees
  */
 
+import { useCurrency } from '@/contexts/CurrencyContext'
+
 export default function BookingPricingBreakdown({ 
   basePrice, 
   duration, 
@@ -10,6 +12,7 @@ export default function BookingPricingBreakdown({
   totalPrice 
 }) {
   const subtotal = parseFloat(basePrice) || 0;
+  const { formatPrice } = useCurrency();
   const serviceFee = fees.serviceFee || 25; // Fixed service fee
   const securityFee = fees.securityFee || 5000; // Fixed security deposit
   const insuranceFee = fees.insuranceFee || 0; // Optional insurance
@@ -27,7 +30,7 @@ export default function BookingPricingBreakdown({
             Rental ({duration} {duration === '1' ? 'day' : 'days'})
           </span>
           <span className="text-sm font-medium text-gray-900">
-            {subtotal.toFixed(2)} MAD
+            {formatPrice(subtotal)}
           </span>
         </div>
 
@@ -45,7 +48,7 @@ export default function BookingPricingBreakdown({
             </button>
           </div>
           <span className="text-sm font-medium text-gray-900">
-            {serviceFee.toFixed(2)} MAD
+            {formatPrice(serviceFee)}
           </span>
         </div>
 
@@ -63,7 +66,7 @@ export default function BookingPricingBreakdown({
             </button>
           </div>
           <span className="text-sm font-medium text-gray-900">
-            {securityFee.toFixed(2)} MAD
+            {formatPrice(securityFee)}
           </span>
         </div>
 
@@ -72,7 +75,7 @@ export default function BookingPricingBreakdown({
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Insurance</span>
             <span className="text-sm font-medium text-orange-600">
-              +{insuranceFee.toFixed(2)} MAD
+              +{formatPrice(insuranceFee)}
             </span>
           </div>
         )}
@@ -84,7 +87,7 @@ export default function BookingPricingBreakdown({
         <div className="flex justify-between items-center pt-2">
           <span className="text-base font-semibold text-gray-900">Total</span>
           <span className="text-2xl font-bold text-orange-600">
-            {finalTotal.toFixed(2)} MAD
+            {formatPrice(finalTotal)}
           </span>
         </div>
 

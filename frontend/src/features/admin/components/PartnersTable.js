@@ -5,18 +5,21 @@ import { Search, CheckCircle, XCircle, Download, Eye, UserCheck, Trash2, Chevron
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/contexts/ToastContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import PartnerDetailsModal from './PartnerDetailsModal';
 import { adminService } from '@/features/admin/services/adminService';
 
-const formatCurrency = (amount) => {
-  const num = parseFloat(amount) || 0;
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M MAD`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K MAD`;
-  return `${new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num)} MAD`;
-};
+// formatCurrency is now defined inside the component using useCurrency hook
 
 export default function PartnersTable({ partners, loading, error, onApprove, onReject, onUnverify, onRefresh }) {
   const { addToast } = useToast();
+  const { formatPrice } = useCurrency();
+
+  const formatCurrency = (amount) => {
+    const num = parseFloat(amount) || 0;
+    return formatPrice(num);
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedPartner, setSelectedPartner] = useState(null);

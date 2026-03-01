@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Car, MapPin, Star, Fuel, Settings2, Users, Eye, EyeOff } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.95 },
@@ -30,6 +31,7 @@ const cardVariants = {
 
 export default function FleetSection({ listings = [] }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'available' | 'unavailable'
+  const { formatPrice } = useCurrency();
 
   const filteredListings = useMemo(() => {
     if (filter === 'available') return listings.filter(l => l.is_available !== false);
@@ -166,7 +168,7 @@ export default function FleetSection({ listings = [] }) {
                   {/* Price Badge */}
                   <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                     <span className="text-lg font-bold text-orange-400">
-                      {Number(price).toLocaleString()} MAD
+                      {formatPrice(Number(price))}
                     </span>
                     <span className="text-xs text-gray-300 ml-1">/day</span>
                   </div>

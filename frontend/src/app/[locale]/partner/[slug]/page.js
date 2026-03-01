@@ -12,6 +12,7 @@ import OwnerSpotlight from './components/OwnerSpotlight'
 import FleetSection from './components/FleetSection'
 import { fetchPartnerProfile } from './api'
 import { computeFleetInsights } from './utils'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 // Animation variants
 const containerVariants = {
@@ -39,6 +40,7 @@ const itemVariants = {
 
 export default function PartnerPublicProfilePage() {
   const params = useParams()
+  const { formatPrice } = useCurrency()
   const [partner, setPartner] = useState(null)
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -261,7 +263,7 @@ export default function PartnerPublicProfilePage() {
                       {minPrice && (
                         <div className="flex justify-between items-center">
                           <span className="text-gray-400">Starting Price</span>
-                          <span className="text-white font-bold">{minPrice} MAD/day</span>
+                          <span className="text-white font-bold">{formatPrice(minPrice)}/day</span>
                         </div>
                       )}
                       {locationCount > 0 && (

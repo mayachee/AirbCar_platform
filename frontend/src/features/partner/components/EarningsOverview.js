@@ -1,25 +1,22 @@
-'use client';
+﻿'use client';
 
 import { useMemo } from 'react';
 import { DollarSign, Calendar, Clock, TrendingUp, TrendingDown, CheckCircle, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 
-const formatCurrency = (value) => {
-  const num = Number(value) || 0;
-  return `${num.toLocaleString('fr-MA')} MAD`;
-};
-
-const CustomTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({ active, payload, label, formatter }) => {
   if (!active || !payload?.length) return null;
+  const fmt = formatter || ((v) => `${(Number(v) || 0).toLocaleString('fr-MA')} MAD`);
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
       <p className="text-sm font-semibold text-gray-900 dark:text-white">
-        {formatCurrency(payload[0].value)}
+        {fmt(payload[0].value)}
       </p>
     </div>
   );
@@ -27,6 +24,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function EarningsOverview({ earnings, stats, detailed = false }) {
   const t = useTranslations('partner_dashboard');
+  const { formatPrice } = useCurrency();
   const earningsData = useMemo(() => ({
     totalEarnings: earnings?.total_earnings || earnings?.totalEarnings || 0,
     monthlyEarnings: earnings?.monthly_earnings || earnings?.monthlyEarnings || 0,
@@ -53,7 +51,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
   const earningsCards = [
     {
       title: t('total_earnings'),
-      value: formatCurrency(earningsData.totalEarnings),
+      value: formatPrice(earningsData.totalEarnings),
       icon: DollarSign,
       color: 'green',
       change: `${growthPositive ? '+' : ''}${earningsData.growthRate}%`,
@@ -62,16 +60,16 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
     },
     {
       title: t('this_month'),
-      value: formatCurrency(earningsData.monthlyEarnings),
+      value: formatPrice(earningsData.monthlyEarnings),
       icon: Calendar,
       color: 'blue',
-      change: `${formatCurrency(earningsData.weeklyEarnings)} ${t('this_week')}`,
+      change: `${formatPrice(earningsData.weeklyEarnings)} ${t('this_week')}`,
       changeType: 'neutral',
       subtitle: null
     },
     {
       title: t('pending_payouts'),
-      value: formatCurrency(earningsData.pendingEarnings),
+      value: formatPrice(earningsData.pendingEarnings),
       icon: Clock,
       color: 'yellow',
       change: t('awaiting_completion'),
@@ -80,7 +78,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
     },
     {
       title: t('avg_per_booking'),
-      value: formatCurrency(earningsData.averagePerBooking),
+      value: formatPrice(earningsData.averagePerBooking),
       icon: TrendingUp,
       color: 'purple',
       change: `${earningsData.totalBookings} ${earningsData.totalBookings === 1 ? 'booking' : 'bookings'}`,
@@ -89,7 +87,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
     }
   ];
 
-  // ─── DETAILED VIEW (Earnings page) ──────────────────────────
+  // â”€â”€â”€ DETAILED VIEW (Earnings page) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (detailed) {
     return (
       <div className="space-y-6">
@@ -172,7 +170,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
                     tickFormatter={(v) => `${v}`}
                     width={50}
                   />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip content={<CustomTooltip formatter={formatPrice} />} />
                   <Area
                     type="monotone"
                     dataKey="revenue"
@@ -223,7 +221,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
                           <p className="text-sm font-medium text-gray-900 dark:text-white">{vehicle.name}</p>
                         </div>
                         <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                          {formatCurrency(vehicle.revenue)}
+                          {formatPrice(vehicle.revenue)}
                         </p>
                       </div>
                       <div className="ml-7 flex items-center gap-3">
@@ -271,14 +269,14 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
                         {payout.vehicle}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {payout.customer} · {new Date(payout.date).toLocaleDateString('en-US', {
+                        {payout.customer} Â· {new Date(payout.date).toLocaleDateString('en-US', {
                           month: 'short', day: 'numeric', year: 'numeric'
                         })}
                       </p>
                     </div>
                     <div className="text-right ml-3">
                       <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                        {formatCurrency(payout.amount)}
+                        {formatPrice(payout.amount)}
                       </p>
                       <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                         {t('completed')}
@@ -298,7 +296,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
     );
   }
 
-  // ─── COMPACT VIEW (Dashboard home) ──────────────────────────
+  // â”€â”€â”€ COMPACT VIEW (Dashboard home) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-4">
@@ -341,7 +339,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
             </div>
           </div>
           <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-0.5">{t('total_earnings')}</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(earningsData.totalEarnings)}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(earningsData.totalEarnings)}</p>
         </div>
         
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
@@ -351,7 +349,7 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
             </div>
           </div>
           <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-0.5">{t('this_month')}</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(earningsData.monthlyEarnings)}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(earningsData.monthlyEarnings)}</p>
         </div>
       </div>
     </div>

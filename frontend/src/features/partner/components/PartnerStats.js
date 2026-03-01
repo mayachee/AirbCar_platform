@@ -3,9 +3,11 @@
 import { CarFront, Calendar, DollarSign, CheckCircle, TrendingUp, Clock, Star, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function PartnerStats({ stats, loading }) {
   const t = useTranslations('partner');
+  const { formatPrice } = useCurrency();
   
   const statCards = [
     {
@@ -30,7 +32,7 @@ export default function PartnerStats({ stats, loading }) {
     },
     {
       title: t('stat_monthly_earnings'),
-      value: `${(stats?.monthlyEarnings || 0).toLocaleString('fr-MA')} MAD`,
+      value: formatPrice(stats?.monthlyEarnings || 0),
       icon: DollarSign,
       color: 'bg-purple-500',
       bgColor: 'bg-purple-50',

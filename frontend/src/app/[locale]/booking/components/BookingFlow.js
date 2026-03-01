@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { SelectField } from '@/components/ui/select-field'
 import React from 'react'
+import { useCurrency } from '@/contexts/CurrencyContext'
 import { 
   Calendar, 
   FileText, 
@@ -42,6 +43,7 @@ export default function BookingFlow({
   children
 }) {
   const t = useTranslations('booking')
+  const { formatPrice } = useCurrency()
   const STEPS = getStepsConfig(t)
   const [currentStep, setCurrentStep] = useState(1)
   const [pickupTime, setPickupTime] = useState(initialPickupTime)
@@ -843,7 +845,7 @@ export default function BookingFlow({
                 </div>
                 <div className="text-right">
                   <span className="block text-2xl md:text-3xl font-bold text-orange-500">
-                    {displayTotal} <span className="text-sm font-medium text-orange-500/70">MAD</span>
+                    {formatPrice(displayTotal)}
                   </span>
                 </div>
               </div>
@@ -851,15 +853,15 @@ export default function BookingFlow({
               <div className="mt-4 space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-white/60">{t('rental')} ({parsedDays} {parsedDays === 1 ? t('day') : t('days')})</span>
-                  <span className="text-white/90 font-medium">{rentalSubtotal} MAD</span>
+                  <span className="text-white/90 font-medium">{formatPrice(rentalSubtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-white/60">{t('service_fee')}</span>
-                  <span className="text-white/90 font-medium">{serviceFee} MAD</span>
+                  <span className="text-white/90 font-medium">{formatPrice(serviceFee)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-white/60">{t('safety_deposit')}</span>
-                  <span className="text-white/90 font-medium">{safetyDeposit} MAD</span>
+                  <span className="text-white/90 font-medium">{formatPrice(safetyDeposit)}</span>
                 </div>
                 <p className="text-xs text-white/40 pt-1">
                   {t('safety_deposit_refundable')}

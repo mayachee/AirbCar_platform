@@ -6,6 +6,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/contexts/ToastContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { adminService } from '@/features/admin/services/adminService';
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -13,6 +14,7 @@ const CHART_COLORS_DARK = ['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa'
 
 export default function EarningsManagement({ bookings, listings, partners, loading: dataLoading }) {
   const { addToast } = useToast();
+  const { formatPrice } = useCurrency();
   const [periodFilter, setPeriodFilter] = useState('month');
   const [chartType, setChartType] = useState('area');
   const [revenueAnalytics, setRevenueAnalytics] = useState(null);
@@ -36,18 +38,16 @@ export default function EarningsManagement({ bookings, listings, partners, loadi
   const tooltipBorder = isDarkMode ? '#374151' : '#e5e7eb';
   const tooltipText = isDarkMode ? '#e5e7eb' : '#111827';
 
-  // Format MAD currency
+  // Format currency using platform-wide currency context
   const formatCurrency = useCallback((amount) => {
     const num = parseFloat(amount) || 0;
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M MAD`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K MAD`;
-    return `${new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num)} MAD`;
-  }, []);
+    return formatPrice(num);
+  }, [formatPrice]);
 
   const formatCurrencyFull = useCallback((amount) => {
     const num = parseFloat(amount) || 0;
-    return `${new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num)} MAD`;
-  }, []);
+    return formatPrice(num);
+  }, [formatPrice]);
 
   // Fetch backend analytics
   useEffect(() => {

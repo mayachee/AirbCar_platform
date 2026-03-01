@@ -61,7 +61,8 @@
     "review_deleted": "Review deleted successfully",
     "failed_delete_review": "Failed to delete review",
     "write_a_review": "Write a Review",
-    "rating_label": "Rating"
+    "rating_label": "Rating",
+    "loading": "Loading..."
   },
   "common": {
     "app_name": "AirbCar",
@@ -704,9 +705,14 @@
     "settings_language_desc": "Choose your preferred language",
     "settings_currency": "Currency",
     "settings_currency_desc": "Set your preferred currency for prices",
-    "settings_view_profile": "View Platform Profile",
-    "settings_view_profile_desc": "Go back to your account profile on the platform",
-    "bulk_operations": "Bulk Vehicle Operations"
+    "settings_view_profile": "Account Settings",
+    "settings_view_profile_desc": "Manage your account settings on the platform",
+    "settings_view_public_profile": "View Public Profile",
+    "settings_view_public_profile_desc": "See how your partner profile looks to customers",
+    "bulk_operations": "Bulk Vehicle Operations",
+    "total_vehicles": "Total Vehicles",
+    "active_bookings": "Active Bookings",
+    "reviews": "Reviews"
   },
   "bookings": {
     "page_title": "My Bookings",
@@ -998,6 +1004,8 @@
     "active_bookings": "Active Bookings",
     "total_earnings": "Total Earnings",
     "average_rating": "Average Income",
+    "conversion_rate": "Conversion Rate",
+    "avg_daily_rate": "Avg. Daily Rate",
     "vehicle_name": "Vehicle Name",
     "vehicle_type": "Vehicle Type",
     "status": "Status",

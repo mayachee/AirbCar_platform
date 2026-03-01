@@ -1,25 +1,25 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Car, BarChart3, Target, Percent } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { partnerService } from '@/features/partner/services/partnerService';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Cell, PieChart, Pie
 } from 'recharts';
 
-const formatCurrency = (v) => `${(Number(v) || 0).toLocaleString('fr-MA')} MAD`;
-
-const ChartTooltip = ({ active, payload, label, isCurrency = true }) => {
+const ChartTooltip = ({ active, payload, label, isCurrency = true, formatter }) => {
   if (!active || !payload?.length) return null;
+  const fmt = formatter || ((v) => `${(Number(v) || 0).toLocaleString('fr-MA')} MAD`);
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} className="text-sm font-semibold" style={{ color: entry.color }}>
-          {entry.name}: {isCurrency ? formatCurrency(entry.value) : entry.value}
+          {entry.name}: {isCurrency ? fmt(entry.value) : entry.value}
         </p>
       ))}
     </div>
@@ -36,6 +36,7 @@ const STATUS_COLORS = {
 
 export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, bookings, vehicles }) {
   const t = useTranslations('partner_dashboard');
+  const { formatPrice } = useCurrency();
   const [timeRange, setTimeRange] = useState('30d');
   const [analytics, setAnalytics] = useState(initialAnalytics);
   const [loadingRange, setLoadingRange] = useState(false);
@@ -95,7 +96,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
   const metricCards = [
     {
       title: t('total_revenue'),
-      value: formatCurrency(metrics.total_revenue),
+      value: formatPrice(metrics.total_revenue),
       trend: trends.revenue,
       icon: DollarSign,
       color: 'green',
@@ -225,7 +226,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.4} />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={Math.ceil(dailyData.length / 7)} />
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={50} />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip content={<ChartTooltip formatter={formatPrice} />} />
                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#analyticsRevenueGrad)" dot={false} activeDot={{ r: 4, fill: '#10b981' }} />
               </AreaChart>
             </ResponsiveContainer>
@@ -334,7 +335,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">{vehicle.name}</p>
-                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">{formatCurrency(vehicle.revenue)}</p>
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-400">{formatPrice(vehicle.revenue)}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
@@ -346,7 +347,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
                         />
                       </div>
                       <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        {vehicle.bookings} bookings · {vehicle.utilization}% util.
+                        {vehicle.bookings} bookings Â· {vehicle.utilization}% util.
                       </span>
                     </div>
                   </motion.div>
@@ -372,7 +373,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('average_rating')}</p>
               <div className="flex items-baseline gap-2">
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{reviewStats.average_rating}</p>
-                <span className="text-yellow-500 text-lg">★</span>
+                <span className="text-yellow-500 text-lg">â˜…</span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{reviewStats.count} {t('reviews')}</p>
             </div>
@@ -380,7 +381,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
           {metrics.avg_daily_rate > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('avg_daily_rate')}</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatCurrency(metrics.avg_daily_rate)}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{formatPrice(metrics.avg_daily_rate)}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('across_available_vehicles')}</p>
             </div>
           )}

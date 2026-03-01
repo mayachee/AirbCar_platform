@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { partnerService } from '@/features/partner/services/partnerService';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
   const [selectedVehicles, setSelectedVehicles] = useState([]);
@@ -31,6 +32,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
   const [newPrice, setNewPrice] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const { formatPrice } = useCurrency();
 
   const handleSelectAll = () => {
     if (selectedVehicles.length === vehicles.length) {
@@ -147,9 +149,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
       }
 
       // Auto-hide success message after 5 seconds
-      if (successMessage) {
-        setTimeout(() => setSuccessMessage(''), 5000);
-      }
+      setTimeout(() => setSuccessMessage(''), 5000);
 
     } catch (error) {
       console.error('Error performing bulk operation:', error);
@@ -186,7 +186,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
         }
       }
 
-      setSuccessMessage(`Successfully updated pricing for ${results.success} vehicle(s) to ${price} MAD/day`);
+      setSuccessMessage(`Successfully updated pricing for ${results.success} vehicle(s) to ${formatPrice(price)}/day`);
 
       if (results.failed > 0) {
         setErrorMessage(`${results.failed} vehicle(s) failed. Check console for details.`);
@@ -417,7 +417,7 @@ export default function BulkOperationsPanel({ vehicles = [], onRefresh }) {
                         </p>
                         <span className="text-gray-400 dark:text-gray-500">•</span>
                         <p className="text-xs font-semibold text-orange-600 dark:text-orange-400">
-                          {vehicle.price_per_day ? `${vehicle.price_per_day} MAD/day` : 'N/A'}
+                          {vehicle.price_per_day ? formatPrice(vehicle.price_per_day) : 'N/A'}
                         </p>
                       </div>
                     </div>

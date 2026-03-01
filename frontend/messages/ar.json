@@ -61,7 +61,8 @@
     "review_deleted": "تم حذف التقييم بنجاح",
     "failed_delete_review": "فشل حذف التقييم",
     "write_a_review": "اكتب تقييمًا",
-    "rating_label": "التقييم"
+    "rating_label": "التقييم",
+    "loading": "جاري التحميل..."
   },
   "common": {
     "app_name": "AirbCar",
@@ -704,9 +705,14 @@
     "settings_language_desc": "اختر لغتك المفضلة",
     "settings_currency": "العملة",
     "settings_currency_desc": "حدد العملة المفضلة للأسعار",
-    "settings_view_profile": "عرض الملف الشخصي",
-    "settings_view_profile_desc": "العودة إلى ملفك الشخصي على المنصة",
-    "bulk_operations": "عمليات جماعية على المركبات"
+    "settings_view_profile": "إعدادات الحساب",
+    "settings_view_profile_desc": "إدارة إعدادات حسابك على المنصة",
+    "settings_view_public_profile": "عرض الملف الشخصي العام",
+    "settings_view_public_profile_desc": "شاهد كيف يبدو ملفك الشخصي للعملاء",
+    "bulk_operations": "عمليات جماعية على المركبات",
+    "total_vehicles": "إجمالي المركبات",
+    "active_bookings": "الحجوزات النشطة",
+    "reviews": "التقييمات"
   },
   "bookings": {
     "page_title": "حجوزاتي",
@@ -998,6 +1004,8 @@
     "active_bookings": "الحجوزات النشطة",
     "total_earnings": "إجمالي الأرباح",
     "average_rating": "متوسط الدخل",
+    "conversion_rate": "معدل التحويل",
+    "avg_daily_rate": "متوسط السعر اليومي",
     "vehicle_name": "اسم المركبة",
     "vehicle_type": "نوع المركبة",
     "status": "الحالة",

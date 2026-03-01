@@ -1,7 +1,9 @@
 import { useRouter } from 'next/navigation'
+import { useCurrency } from '@/contexts/CurrencyContext'
 
 export default function BookingSuccess({ bookingData }) {
   const router = useRouter()
+  const { formatPrice } = useCurrency()
 
   // Support both shapes:
   // - booking object directly
@@ -113,7 +115,7 @@ export default function BookingSuccess({ bookingData }) {
             {totalAmountValue && (
               <div className="mt-4 bg-orange-50 rounded-lg p-4 border border-orange-200">
                 <p className="text-xs text-gray-600 mb-1">Total Amount</p>
-                <p className="text-2xl font-bold text-orange-600">{totalAmountValue} MAD</p>
+                <p className="text-2xl font-bold text-orange-600">{formatPrice(totalAmountValue)}</p>
               </div>
             )}
           </div>

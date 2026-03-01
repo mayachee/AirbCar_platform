@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
@@ -8,6 +8,7 @@ import {
   ChevronUp, RefreshCw, TrendingUp, TrendingDown
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { bookingService } from '@/features/booking/services/bookingService';
 import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
@@ -58,15 +59,15 @@ export default function EnhancedBookingManagement({
     try {
       setLoading(true);
       
-      console.log('🔍 Loading bookings...');
+      console.log('ðŸ” Loading bookings...');
       
       const allBookingsResponse = await bookingService.getBookings();
       const pendingRequestsResponse = hasPartnerProfile
         ? await bookingService.getPendingRequests().catch(() => ({ data: [] }))
         : { data: [] };
       
-      console.log('📦 Raw bookings response:', allBookingsResponse);
-      console.log('📦 Raw pending response:', pendingRequestsResponse);
+      console.log('ðŸ“¦ Raw bookings response:', allBookingsResponse);
+      console.log('ðŸ“¦ Raw pending response:', pendingRequestsResponse);
       
       let all = [];
       if (Array.isArray(allBookingsResponse)) {
@@ -89,7 +90,7 @@ export default function EnhancedBookingManagement({
         pending = pendingRequestsResponse.results;
       }
       
-      console.log('✅ Parsed bookings:', all.length, 'all,', pending.length, 'pending');
+      console.log('âœ… Parsed bookings:', all.length, 'all,', pending.length, 'pending');
       
       const normalizeBooking = (booking) => ({
         ...booking,
@@ -300,7 +301,7 @@ export default function EnhancedBookingManagement({
       
       // Show success toast (you can replace with a toast library)
       const actionText = action === 'accept' ? t('accepted') : action === 'reject' ? t('rejected') : t('cancelled');
-      console.log(`✅ ${t('booking')} ${actionText} ${t('successfully')}!`);
+      console.log(`âœ… ${t('booking')} ${actionText} ${t('successfully')}!`);
     } catch (error) {
       console.error(`Error ${action}ing booking:`, error);
       alert(`Error: ${error?.message || 'Failed to process booking'}`);
@@ -367,13 +368,7 @@ export default function EnhancedBookingManagement({
     }
   };
 
-  const formatCurrency = (amount) => {
-    const price = parseFloat(amount) || 0;
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(price) + ' ' + t('currency_mad');
-  };
+  const { formatPrice } = useCurrency();
 
   const formatDate = (dateString) => {
     if (!dateString) return t('not_available');
@@ -482,11 +477,11 @@ export default function EnhancedBookingManagement({
               <TrendingUp className="h-3 w-3" />
               <span>{t('total_revenue')}</span>
             </p>
-            <p className="text-lg sm:text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-lg sm:text-xl font-bold text-emerald-700 dark:text-emerald-400">{formatPrice(stats.totalRevenue)}</p>
           </div>
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 sm:p-4 border border-amber-200 dark:border-amber-800">
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('pending_revenue')}</p>
-            <p className="text-lg sm:text-xl font-bold text-amber-700 dark:text-amber-400">{formatCurrency(stats.pendingRevenue)}</p>
+            <p className="text-lg sm:text-xl font-bold text-amber-700 dark:text-amber-400">{formatPrice(stats.pendingRevenue)}</p>
           </div>
         </div>
       </div>
@@ -678,7 +673,7 @@ export default function EnhancedBookingManagement({
                           )}
                           {listing.price_per_day && (
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                              {formatCurrency(listing.price_per_day)}/day
+                              {formatPrice(listing.price_per_day)}/day
                             </p>
                           )}
                         </div>
@@ -727,7 +722,7 @@ export default function EnhancedBookingManagement({
                             <div className="pt-2 border-t border-orange-200 dark:border-orange-800">
                               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('duration_days', { days })}</p>
                               <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                                {formatCurrency(booking.price || booking.total_price || booking.total_amount || 0)}
+                                {formatPrice(booking.price || booking.total_price || booking.total_amount || 0)}
                               </p>
                             </div>
                           </div>

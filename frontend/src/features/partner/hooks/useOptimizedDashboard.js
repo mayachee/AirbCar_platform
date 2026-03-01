@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { 
   LayoutDashboard, Car, Calendar, DollarSign, BarChart3, 
   CalendarDays, Star, FileText, User, Settings 
@@ -15,6 +16,7 @@ export function useOptimizedDashboard() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const t = useTranslations('partner');
+  const { formatPrice } = useCurrency();
   
   // State management
   const [isPartner, setIsPartner] = useState(false);
@@ -106,7 +108,7 @@ export function useOptimizedDashboard() {
       },
       {
         title: t('stat_monthly_earnings'),
-        value: `${Number(monthlyEarningsVal).toLocaleString('fr-MA')} MAD`,
+        value: formatPrice(Number(monthlyEarningsVal)),
         icon: null,
         color: 'purple',
         change: growthRate !== 0 ? `${growthRate > 0 ? '+' : ''}${growthRate}% vs last month` : t('stat_this_month'),

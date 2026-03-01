@@ -1,14 +1,14 @@
-'use client';
+﻿'use client';
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Star, Car, TrendingUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
-const formatCurrency = (v) => `${(Number(v) || 0).toLocaleString('fr-MA')} MAD`;
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function VehiclePerformanceInsights({ vehicles, earnings }) {
   const t = useTranslations('partner_dashboard');
+  const { formatPrice } = useCurrency();
   const insights = useMemo(() => {
     // Use vehicle_earnings from earnings API if available
     const vehicleEarnings = earnings?.vehicle_earnings || [];
@@ -74,7 +74,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
               </div>
               {insights.averageRating > 0 && (
                 <span className={`text-sm font-medium ${getPerformanceColor(insights.averageRating)}`}>
-                  {insights.averageRating.toFixed(1)} ★
+                  {insights.averageRating.toFixed(1)} â˜…
                 </span>
               )}
             </div>
@@ -87,7 +87,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
               </p>
               {insights.topPerformer.revenue > 0 && (
                 <p className="text-xs font-medium text-green-700 dark:text-green-300">
-                  {formatCurrency(insights.topPerformer.revenue)}
+                  {formatPrice(insights.topPerformer.revenue)}
                 </p>
               )}
             </div>
@@ -100,7 +100,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-600 dark:text-gray-300">{t('avg_rating')}</span>
               <span className={`text-sm font-semibold ${getPerformanceColor(insights.averageRating)}`}>
-                {insights.averageRating > 0 ? insights.averageRating.toFixed(1) : '—'}
+                {insights.averageRating > 0 ? insights.averageRating.toFixed(1) : 'â€”'}
               </span>
             </div>
           </div>
@@ -134,7 +134,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{vehicle.name}</p>
                       <span className="text-sm font-semibold text-green-600 dark:text-green-400 ml-2 whitespace-nowrap">
-                        {formatCurrency(vehicle.revenue)}
+                        {formatPrice(vehicle.revenue)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

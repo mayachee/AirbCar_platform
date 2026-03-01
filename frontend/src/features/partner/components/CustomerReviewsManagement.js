@@ -125,10 +125,11 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
           </div>
           <button
             onClick={loadReviews}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={loading}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw className="h-4 w-4" />
-            <span>{t('refresh')}</span>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>{loading ? t('loading') : t('refresh')}</span>
           </button>
         </div>
         

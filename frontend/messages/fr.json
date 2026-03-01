@@ -61,7 +61,8 @@
     "review_deleted": "Avis supprimé avec succès",
     "failed_delete_review": "Impossible de supprimer l'avis",
     "write_a_review": "Écrire un avis",
-    "rating_label": "Note"
+    "rating_label": "Note",
+    "loading": "Chargement..."
   },
   "common": {
     "app_name": "AirbCar",
@@ -702,9 +703,14 @@
     "settings_language_desc": "Choisissez votre langue préférée",
     "settings_currency": "Devise",
     "settings_currency_desc": "Définissez votre devise préférée pour les prix",
-    "settings_view_profile": "Voir le profil plateforme",
-    "settings_view_profile_desc": "Retourner à votre profil de compte sur la plateforme",
-    "bulk_operations": "Opérations en masse sur les véhicules"
+    "settings_view_profile": "Paramètres du compte",
+    "settings_view_profile_desc": "Gérer vos paramètres de compte sur la plateforme",
+    "settings_view_public_profile": "Voir le profil public",
+    "settings_view_public_profile_desc": "Voir comment votre profil partenaire apparaît aux clients",
+    "bulk_operations": "Opérations en masse sur les véhicules",
+    "total_vehicles": "Total des véhicules",
+    "active_bookings": "Réservations actives",
+    "reviews": "Avis"
   },
   "bookings": {
     "page_title": "Mes réservations",
@@ -996,6 +1002,8 @@
     "active_bookings": "Réservations Actives",
     "total_earnings": "Revenus Totaux",
     "average_rating": "Revenus Moyens",
+    "conversion_rate": "Taux de conversion",
+    "avg_daily_rate": "Tarif journalier moyen",
     "vehicle_name": "Nom du Véhicule",
     "vehicle_type": "Type de Véhicule",
     "status": "Statut",

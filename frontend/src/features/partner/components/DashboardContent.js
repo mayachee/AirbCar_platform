@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { AlertCircle, CheckCircle2, Clock, Calendar, TrendingUp, ArrowUpRight, Car, DollarSign, Lightbulb, Target, Zap, Globe, Coins, User, ExternalLink } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Calendar, TrendingUp, ArrowUpRight, Car, DollarSign, Lightbulb, Target, Zap, Globe, Coins, User, ExternalLink, Eye } from 'lucide-react';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher';
 import { useCurrency, CURRENCIES } from '@/contexts/CurrencyContext';
 import { SelectField } from '@/components/ui/select-field';
@@ -128,7 +128,7 @@ export default function DashboardContent({
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('partner');
-  const { currency, setCurrency } = useCurrency();
+  const { currency, setCurrency, formatPrice } = useCurrency();
   
   // Ensure pendingRequests and upcomingBookings are always arrays
   const pendingRequests = Array.isArray(pendingRequestsProp) ? pendingRequestsProp : [];
@@ -353,7 +353,7 @@ export default function DashboardContent({
                           )}
                           {booking.price && (
                             <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-2">
-                              {parseFloat(booking.price || booking.total_price || 0).toLocaleString('fr-MA')} MAD
+                              {formatPrice(parseFloat(booking.price || booking.total_price || 0))}
                             </p>
                           )}
                         </div>
@@ -647,28 +647,56 @@ export default function DashboardContent({
             </motion.div>
           </div>
 
-          {/* Back to Platform Profile */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <button
-              onClick={() => router.push(`/${locale}/account`)}
-              className="w-full flex items-center justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md transition-all group"
+          {/* View Public Partner Profile & Account Profile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* View Public Partner Profile */}
+            {partnerData?.id && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <button
+                  onClick={() => window.open(`/${locale}/partner/${partnerData.id}`, '_blank')}
+                  className="w-full h-full flex items-center justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                      <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_public_profile', { fallback: 'View Public Profile' })}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_public_profile_desc', { fallback: 'See how your partner profile looks to customers' })}</p>
+                    </div>
+                  </div>
+                  <ExternalLink className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                </button>
+              </motion.div>
+            )}
+
+            {/* Back to Account Settings */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
-                  <User className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <button
+                onClick={() => router.push(`/${locale}/account`)}
+                className="w-full h-full flex items-center justify-between gap-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-md transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                    <User className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_profile', { fallback: 'Account Settings' })}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_profile_desc', { fallback: 'Manage your account settings on the platform' })}</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_profile', { fallback: 'View Platform Profile' })}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_profile_desc', { fallback: 'Go back to your account profile on the platform' })}</p>
-                </div>
-              </div>
-              <ExternalLink className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
-            </button>
-          </motion.div>
+                <ExternalLink className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+              </button>
+            </motion.div>
+          </div>
 
           {/* Bulk Operations */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">

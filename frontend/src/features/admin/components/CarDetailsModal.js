@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Car, MapPin, DollarSign, Calendar, CheckCircle, XCircle, Edit, Trash2, Building, Clock, Star, Gauge, Settings, Users, Image as ImageIcon, Tag, Eye, ExternalLink, User, Info, Mail, Phone, Globe, Award, Shield, TrendingUp, Activity, CreditCard, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminService } from '@/features/admin/services/adminService';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -21,18 +22,20 @@ const formatDate = (dateString) => {
   }
 };
 
-const formatCurrency = (amount) => {
-  const num = parseFloat(amount);
-  if (isNaN(num) || num < 0) return 'N/A';
-  return new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num) + ' MAD';
-};
+// formatCurrency is now defined inside the component using useCurrency hook
 
 export default function CarDetailsModal({ listing, isOpen, onClose, onEdit, onDelete, onToggleAvailability }) {
-  // ALL STATE HOOKS MUST BE CALLED FIRST
+  const { formatPrice } = useCurrency();
   const [fullListingData, setFullListingData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [togglingAvailability, setTogglingAvailability] = useState(false);
+
+  const formatCurrency = (amount) => {
+    const num = parseFloat(amount);
+    if (isNaN(num) || num < 0) return 'N/A';
+    return formatPrice(num);
+  };
 
   // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // Wrap loadFullListingData in useCallback to ensure stable reference

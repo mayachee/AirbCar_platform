@@ -1,4 +1,7 @@
+import { useCurrency } from '@/contexts/CurrencyContext'
+
 export default function BookingSummary({ duration, pickupDate, returnDate, totalPrice }) {
+  const { formatPrice } = useCurrency()
   const formatDate = (dateString) => {
     if (!dateString) return 'Not selected'
     try {
@@ -83,7 +86,7 @@ export default function BookingSummary({ duration, pickupDate, returnDate, total
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Amount</p>
-              <p className="text-2xl font-bold text-orange-600 mt-1">{totalPrice} MAD</p>
+              <p className="text-2xl font-bold text-orange-600 mt-1">{formatPrice(totalPrice)}</p>
             </div>
             <svg className="w-10 h-10 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
               <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />

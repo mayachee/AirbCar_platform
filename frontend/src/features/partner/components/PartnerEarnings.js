@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
@@ -7,31 +7,21 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { partnerService } from '@/features/partner/services/partnerService';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid
 } from 'recharts';
 
-const formatCurrency = (v) => {
-  const num = parseFloat(v) || 0;
-  return `${new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num)} MAD`;
-};
-
-const formatCurrencyCompact = (v) => {
-  const num = parseFloat(v) || 0;
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M MAD`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K MAD`;
-  return `${new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num)} MAD`;
-};
-
-const ChartTooltip = ({ active, payload, label, isCurrency = true }) => {
+const ChartTooltip = ({ active, payload, label, isCurrency = true, formatter }) => {
   if (!active || !payload?.length) return null;
+  const fmt = formatter || ((v) => `${(Number(v) || 0).toLocaleString('fr-MA')} MAD`);
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</p>
       {payload.map((entry, i) => (
         <p key={i} className="text-sm font-semibold" style={{ color: entry.color }}>
-          {entry.name}: {isCurrency ? formatCurrency(entry.value) : entry.value}
+          {entry.name}: {isCurrency ? fmt(entry.value) : entry.value}
         </p>
       ))}
     </div>
@@ -39,6 +29,7 @@ const ChartTooltip = ({ active, payload, label, isCurrency = true }) => {
 };
 
 export default function PartnerEarnings({ earnings: initialEarnings, loading: parentLoading }) {
+  const { formatPrice } = useCurrency();
   const [earnings, setEarnings] = useState(initialEarnings);
   const [loading, setLoading] = useState(false);
   const [chartType, setChartType] = useState('area');
@@ -96,14 +87,14 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
   const statCards = [
     {
       title: 'Total Earnings',
-      value: formatCurrency(totalEarnings),
+      value: formatPrice(totalEarnings),
       subtitle: `${totalBookings} completed bookings`,
       icon: DollarSign,
       color: 'green',
     },
     {
       title: 'Monthly Earnings',
-      value: formatCurrency(monthlyEarnings),
+      value: formatPrice(monthlyEarnings),
       trend: growthRate,
       subtitle: 'Last 30 days',
       icon: TrendingUp,
@@ -111,21 +102,21 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
     },
     {
       title: 'Weekly Earnings',
-      value: formatCurrency(weeklyEarnings),
+      value: formatPrice(weeklyEarnings),
       subtitle: 'Last 7 days',
       icon: BarChart3,
       color: 'purple',
     },
     {
       title: 'Pending Earnings',
-      value: formatCurrency(pendingEarnings),
+      value: formatPrice(pendingEarnings),
       subtitle: 'Accepted bookings',
       icon: Clock,
       color: 'yellow',
     },
     {
       title: 'Avg per Booking',
-      value: formatCurrency(avgPerBooking),
+      value: formatPrice(avgPerBooking),
       subtitle: 'Per completed booking',
       icon: Wallet,
       color: 'indigo',
@@ -280,7 +271,7 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.4} />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={Math.ceil(dailyEarnings.length / 7)} />
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={55} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip content={<ChartTooltip formatter={formatPrice} />} />
                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#earningsGrad)" dot={false} activeDot={{ r: 4, fill: '#10b981' }} />
               </AreaChart>
             ) : (
@@ -288,7 +279,7 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.4} />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={Math.ceil(dailyEarnings.length / 7)} />
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={55} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                <Tooltip content={<ChartTooltip />} />
+                <Tooltip content={<ChartTooltip formatter={formatPrice} />} />
                 <Bar dataKey="revenue" name="Revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={24} />
               </BarChart>
             )}
@@ -329,7 +320,7 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate mr-2">{vehicle.name}</p>
-                      <p className="text-sm font-semibold text-green-600 dark:text-green-400 whitespace-nowrap">{formatCurrency(vehicle.revenue)}</p>
+                      <p className="text-sm font-semibold text-green-600 dark:text-green-400 whitespace-nowrap">{formatPrice(vehicle.revenue)}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
@@ -381,7 +372,7 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{payout.vehicle}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-gray-500 dark:text-gray-400">{payout.customer}</span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">·</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">Â·</span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(payout.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
@@ -389,7 +380,7 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
                   </div>
                   <div className="flex items-center gap-2 ml-3">
                     <span className="text-sm font-semibold text-green-600 dark:text-green-400 whitespace-nowrap">
-                      {formatCurrency(payout.amount)}
+                      {formatPrice(payout.amount)}
                     </span>
                     <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                       {payout.status}
@@ -428,7 +419,7 @@ export default function PartnerEarnings({ earnings: initialEarnings, loading: pa
             <div className="flex items-center gap-3">
               <div className="text-center px-4">
                 <p className="text-xs text-gray-500 dark:text-gray-400">This Month</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrencyCompact(monthlyEarnings)}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(monthlyEarnings)}</p>
               </div>
               <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                 growthRate >= 0 ? 'bg-green-100 dark:bg-green-900/40' : 'bg-red-100 dark:bg-red-900/40'

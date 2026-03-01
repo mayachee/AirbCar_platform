@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Calendar, Clock, User, Car, CheckCircle, XCircle, Eye, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import BookingDetailsModal from '@/components/bookings/BookingDetailsModal';
 import CustomerDocuments from '@/features/partner/components/CustomerDocuments';
 import { useTranslations } from 'next-intl';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export default function ImprovedBookingManagement({ 
   bookings: propBookings = [], 
@@ -225,7 +226,7 @@ export default function ImprovedBookingManagement({
       
       // Show success message
       const actionText = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'cancelled';
-      alert(`✅ Booking ${actionText} successfully!`);
+      alert(`âœ… Booking ${actionText} successfully!`);
     } catch (error) {
       // Log error for debugging
       console.error(`Error ${action}ing booking:`, error);
@@ -238,7 +239,7 @@ export default function ImprovedBookingManagement({
                    error?.message?.includes('Endpoint not found');
       
       if (is404) {
-        console.warn('⚠️ Backend endpoint not found. This usually means:');
+        console.warn('âš ï¸ Backend endpoint not found. This usually means:');
         console.warn('   1. The backend on Render needs to be redeployed');
         console.warn('   2. Go to Render dashboard and trigger a manual deployment');
         console.warn('   3. Or push a new commit to trigger auto-deployment');
@@ -273,14 +274,7 @@ export default function ImprovedBookingManagement({
     }
   };
 
-  const formatCurrency = (amount) => {
-    // Backend returns prices in MAD (Moroccan Dirham)
-    const price = parseFloat(amount) || 0;
-    return new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(price) + ' MAD';
-  };
+  const { formatPrice } = useCurrency();
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -489,7 +483,7 @@ export default function ImprovedBookingManagement({
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Total Price</p>
                           <p className="text-2xl font-bold text-orange-600">
-                            {formatCurrency(booking.price || booking.total_price || booking.total_amount || 0)}
+                            {formatPrice(booking.price || booking.total_price || booking.total_amount || 0)}
                           </p>
                         </div>
                       </div>

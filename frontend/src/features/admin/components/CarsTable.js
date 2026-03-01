@@ -6,11 +6,13 @@ import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { adminService } from '@/features/admin/services/adminService';
 import { useToast } from '@/contexts/ToastContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import CarDetailsModal from './CarDetailsModal';
 import { SelectField } from '@/components/ui/select-field';
 
 export default function CarsTable({ listings, loading, onRefresh }) {
   const { addToast } = useToast();
+  const { formatPrice } = useCurrency();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [makeFilter, setMakeFilter] = useState("all");
@@ -212,7 +214,7 @@ export default function CarsTable({ listings, loading, onRefresh }) {
   const formatCurrency = (amount) => {
     const num = parseFloat(amount);
     if (isNaN(num) || num < 0) return 'N/A';
-    return new Intl.NumberFormat('fr-MA', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num) + ' MAD';
+    return formatPrice(num);
   };
 
   // Get the first image from the listing — backend uses "images" field (JSONField array)

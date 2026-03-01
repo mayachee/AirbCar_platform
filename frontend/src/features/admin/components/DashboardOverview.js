@@ -14,6 +14,7 @@ import RecentActivity from './RecentActivity';
 import AdminStatsSkeleton from './AdminStatsSkeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/contexts/ToastContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { 
   PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, CartesianGrid
@@ -31,6 +32,7 @@ export default function DashboardOverview({
   onQuickAction
 }) {
   const { addToast } = useToast();
+  const { formatPrice } = useCurrency();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   // Ensure data is arrays
@@ -147,11 +149,8 @@ export default function DashboardOverview({
   }, [bookingsList, usersList, partnersList, listingsList, selectedPeriod, stats]);
 
   const formatCurrency = (amount) => {
-    if (!amount && amount !== 0) return '0 MAD';
-    return new Intl.NumberFormat('fr-MA', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount) + ' MAD';
+    if (!amount && amount !== 0) return formatPrice(0);
+    return formatPrice(amount);
   };
 
   const GrowthBadge = ({ value }) => {
