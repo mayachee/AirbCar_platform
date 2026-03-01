@@ -10,7 +10,7 @@ export function AdminThemeProvider({ children }) {
   // Initialize from localStorage or system preference
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('admin-theme');
+      const stored = localStorage.getItem('airbcar_theme');
       if (stored === 'dark') {
         setIsDark(true);
       } else if (stored === 'light') {
@@ -30,10 +30,10 @@ export function AdminThemeProvider({ children }) {
     try {
       if (isDark) {
         document.documentElement.classList.add('dark');
-        localStorage.setItem('admin-theme', 'dark');
+        localStorage.setItem('airbcar_theme', 'dark');
       } else {
         document.documentElement.classList.remove('dark');
-        localStorage.setItem('admin-theme', 'light');
+        localStorage.setItem('airbcar_theme', 'light');
       }
     } catch {}
   }, [isDark]);

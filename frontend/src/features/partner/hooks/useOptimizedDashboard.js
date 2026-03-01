@@ -27,7 +27,16 @@ export function useOptimizedDashboard() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('airbcar_theme');
+        if (saved === 'dark' || saved === 'light') return saved;
+        return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
+      } catch { return 'light'; }
+    }
+    return 'light';
+  });
   const { notifications, unreadCount, markAsRead, markAllAsRead, refresh: refreshNotifications } = useNotifications();
   // Use activity from usePartnerData instead of separate state
   const [isOnline, setIsOnline] = useState(true);
@@ -414,6 +423,7 @@ export function useOptimizedDashboard() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
+    try { localStorage.setItem('airbcar_theme', theme); } catch {}
   }, [theme]);
 
   return {

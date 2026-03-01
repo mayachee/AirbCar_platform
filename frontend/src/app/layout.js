@@ -64,13 +64,18 @@ export default function RootLayout({ children }) {
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Initialize dark mode (system preference)
+              // Initialize dark mode (saved preference or system)
               (function() {
                 try {
                   var root = document.documentElement;
-                  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (prefersDark) root.classList.add('dark');
-                  else root.classList.remove('dark');
+                  var saved = localStorage.getItem('airbcar_theme');
+                  if (saved === 'dark') { root.classList.add('dark'); }
+                  else if (saved === 'light') { root.classList.remove('dark'); }
+                  else {
+                    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) root.classList.add('dark');
+                    else root.classList.remove('dark');
+                  }
                 } catch (e) {}
               })();
 
