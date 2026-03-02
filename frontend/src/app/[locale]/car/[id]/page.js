@@ -182,7 +182,7 @@ function CarDetailsContent() {
 
               {/* Right Column - Booking Sidebar */}
               <motion.div
-                className="hidden lg:block lg:col-span-1"
+                className="hidden lg:block lg:col-span-1 self-start sticky top-24"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ 
