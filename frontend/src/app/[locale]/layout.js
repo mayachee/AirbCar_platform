@@ -84,8 +84,8 @@ export default async function LocaleLayout({ children, params }) {
               </QueryProvider>
             </AuthProvider>
           </LocaleProvider>
+          <CookieConsent />
         </NextIntlClientProvider>
-        <CookieConsent />
       </div>
     );
   } catch (error) {
