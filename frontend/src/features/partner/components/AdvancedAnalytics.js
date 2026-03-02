@@ -373,7 +373,7 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('average_rating')}</p>
               <div className="flex items-baseline gap-2">
                 <p className="text-3xl font-bold text-gray-900 dark:text-white">{reviewStats.average_rating}</p>
-                <span className="text-yellow-500 text-lg">â˜…</span>
+                <span className="text-yellow-500 text-lg"></span>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{reviewStats.count} {t('reviews')}</p>
             </div>

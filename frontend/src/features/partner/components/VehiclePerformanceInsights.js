@@ -100,7 +100,7 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-600 dark:text-gray-300">{t('avg_rating')}</span>
               <span className={`text-sm font-semibold ${getPerformanceColor(insights.averageRating)}`}>
-                {insights.averageRating > 0 ? insights.averageRating.toFixed(1) : 'â€”'}
+                {insights.averageRating > 0 ? insights.averageRating.toFixed(1) : '.'}
               </span>
             </div>
           </div>
