@@ -1,11 +1,15 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Calendar, Clock, MapPin, Car, Eye, Printer, XCircle, CheckCircle, ChevronRight, Sparkles, CreditCard, Fuel, Users, ArrowDown } from 'lucide-react';
-import { formatCurrency, formatDateTime, formatDate, calculateDaysUntilBooking, calculateDuration, getBookingImage, getStatusColor, getStatusIcon } from './bookingUtils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Clock, MapPin, Car, Eye, Printer, XCircle, CheckCircle, ChevronRight, Sparkles, CreditCard, Fuel, Users, ArrowDown, RefreshCw } from 'lucide-react';
+import { formatDateTime, formatDate, calculateDaysUntilBooking, calculateDuration, getBookingImage, getStatusColor, getStatusIcon } from './bookingUtils';
+import { useCurrency, CURRENCIES } from '@/contexts/CurrencyContext';
+
+const CURRENCY_CYCLE = ['MAD', 'USD', 'EUR'];
 
 export default function BookingCard({ booking, onViewDetails, onPrint, onCancel, actionLoading }) {
   const listing = booking.listing || {};
+  const { currency, setCurrency, formatPrice } = useCurrency();
   const imageUrl = getBookingImage(listing);
   const daysUntil = calculateDaysUntilBooking(booking.start_time || booking.start_date);
   const duration = calculateDuration(booking.start_time || booking.start_date, booking.end_time || booking.end_date);
@@ -98,15 +102,38 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
               </h3>
               {/* Price — always visible, top right */}
               <div className="flex-shrink-0 text-right">
-                <p className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">
-                  {formatCurrency(booking.price || booking.total_price || booking.total_amount)}
-                </p>
-                {booking.payment_method && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 mt-1">
-                    <CreditCard className="h-3 w-3" />
-                    {booking.payment_method}
-                  </span>
-                )}
+                <div className="flex items-center justify-end gap-1.5">
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={currency}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.18 }}
+                      className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none"
+                    >
+                      {formatPrice(booking.price || booking.total_price || booking.total_amount)}
+                    </motion.p>
+                  </AnimatePresence>
+                  {/* Currency cycle button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const idx = CURRENCY_CYCLE.indexOf(currency);
+                      setCurrency(CURRENCY_CYCLE[(idx + 1) % CURRENCY_CYCLE.length]);
+                    }}
+                    title={`Switch currency (${currency})`}
+                    className="flex-shrink-0 p-1 rounded-md bg-slate-700/60 border border-slate-600/40 text-slate-400 hover:text-orange-400 hover:border-orange-500/30 hover:bg-orange-500/10 transition-all"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </button>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-400/70 mt-0.5">
+                  {CURRENCIES[currency]?.code}
+                  {booking.payment_method && (
+                    <span className="text-slate-500 font-normal">· {booking.payment_method}</span>
+                  )}
+                </span>
               </div>
             </div>
 
