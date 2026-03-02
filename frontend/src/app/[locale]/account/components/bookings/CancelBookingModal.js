@@ -6,7 +6,7 @@ export default function CancelBookingModal({ isOpen, onClose, onConfirm, isLoadi
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={onClose}>
       <div 
         className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}

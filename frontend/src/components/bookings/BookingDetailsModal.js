@@ -385,7 +385,6 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onAction
     { id: 'overview', label: 'Overview', icon: FileText },
     { id: 'timeline', label: 'Timeline', icon: Activity },
     { id: 'details', label: 'Details', icon: SettingsIcon },
-    { id: 'raw', label: 'Raw Data', icon: Info },
     ...(userType === 'partner' || userType === 'admin' ? [{ id: 'customer', label: 'Customer Documents', icon: User }] : []),
   ];
 
@@ -855,94 +854,6 @@ export default function BookingDetailsModal({ booking, isOpen, onClose, onAction
                         <p className="text-sm text-gray-500 dark:text-gray-400">No timeline events available</p>
                       </div>
                     )}
-                  </div>
-                )}
-
-                {/* Raw Data Tab - Debug */}
-                {activeTab === 'raw' && (
-                  <div className="space-y-6">
-                    <div className="bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700/60 rounded-lg p-4 mb-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Info className="h-5 w-5 text-yellow-600" />
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Debug Information</h3>
-                      </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-200">
-                        This tab shows the raw booking data to help diagnose display issues. Check the browser console for detailed logs.
-                      </p>
-                    </div>
-                    
-                    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Complete Booking Object</h4>
-                      <pre className="bg-white dark:bg-gray-950 p-4 rounded border border-gray-200 dark:border-gray-800 overflow-auto text-xs max-h-96 text-gray-800 dark:text-gray-200">
-                        {JSON.stringify(displayBooking, null, 2)}
-                      </pre>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Extracted Fields</h4>
-                        <div className="space-y-2 text-sm text-gray-900 dark:text-gray-100">
-                          <div><span className="font-medium">Pickup Date:</span> <span className="text-gray-600 dark:text-gray-300">{pickupDate || 'N/A'}</span></div>
-                          <div><span className="font-medium">Return Date:</span> <span className="text-gray-600 dark:text-gray-300">{returnDate || 'N/A'}</span></div>
-                          <div><span className="font-medium">Pickup Time:</span> <span className="text-gray-600 dark:text-gray-300">{pickupTime || 'N/A'}</span></div>
-                          <div><span className="font-medium">Return Time:</span> <span className="text-gray-600 dark:text-gray-300">{returnTime || 'N/A'}</span></div>
-                          <div><span className="font-medium">Pickup Location:</span> <span className="text-gray-600 dark:text-gray-300">{pickupLocation || 'N/A'}</span></div>
-                          <div><span className="font-medium">Return Location:</span> <span className="text-gray-600 dark:text-gray-300">{returnLocation || 'N/A'}</span></div>
-                          <div><span className="font-medium">Total Amount:</span> <span className="text-gray-600 dark:text-gray-300">{totalAmount || 'N/A'}</span></div>
-                          <div><span className="font-medium">Payment Status:</span> <span className="text-gray-600 dark:text-gray-300">{paymentStatus || 'N/A'}</span></div>
-                          <div><span className="font-medium">Payment Method:</span> <span className="text-gray-600 dark:text-gray-300">{paymentMethod || 'N/A'}</span></div>
-                          <div><span className="font-medium">Special Requests:</span> <span className="text-gray-600 dark:text-gray-300">{specialRequests || 'N/A'}</span></div>
-                        </div>
-                      </div>
-
-                      <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-5 border border-gray-200 dark:border-gray-700">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Nested Objects</h4>
-                        <div className="space-y-3 text-sm text-gray-900 dark:text-gray-100">
-                          <div>
-                            <span className="font-medium">Listing:</span>
-                            <pre className="bg-white dark:bg-gray-950 p-2 rounded mt-1 text-xs overflow-auto max-h-32 text-gray-800 dark:text-gray-200">
-                              {JSON.stringify(listing, null, 2)}
-                            </pre>
-                          </div>
-                          <div>
-                            <span className="font-medium">User/Customer:</span>
-                            <pre className="bg-white dark:bg-gray-950 p-2 rounded mt-1 text-xs overflow-auto max-h-32 text-gray-800 dark:text-gray-200">
-                              {JSON.stringify(user, null, 2)}
-                            </pre>
-                          </div>
-                          <div>
-                            <span className="font-medium">Partner:</span>
-                            <pre className="bg-white dark:bg-gray-950 p-2 rounded mt-1 text-xs overflow-auto max-h-32 text-gray-800 dark:text-gray-200">
-                              {JSON.stringify(partner, null, 2)}
-                            </pre>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-5 border border-blue-100 dark:border-blue-700/50">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Fetched Related Data</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Customer</p>
-                          <pre className="bg-white dark:bg-gray-950 p-2 rounded text-xs overflow-auto max-h-40 text-gray-800 dark:text-gray-200">
-                            {JSON.stringify(relatedData.customer, null, 2)}
-                          </pre>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Listing</p>
-                          <pre className="bg-white dark:bg-gray-950 p-2 rounded text-xs overflow-auto max-h-40 text-gray-800 dark:text-gray-200">
-                            {JSON.stringify(relatedData.listing, null, 2)}
-                          </pre>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Partner</p>
-                          <pre className="bg-white dark:bg-gray-950 p-2 rounded text-xs overflow-auto max-h-40 text-gray-800 dark:text-gray-200">
-                            {JSON.stringify(relatedData.partner, null, 2)}
-                          </pre>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 )}
 
