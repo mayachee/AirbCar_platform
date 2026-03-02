@@ -141,6 +141,9 @@
     "notifications_mark_all_read": "Tout marquer comme lu",
     "notifications_empty": "Aucune notification",
     "notifications_just_now": "À l'instant",
+    "notifications_minutes_ago": "il y a {count}min",
+    "notifications_hours_ago": "il y a {count}h",
+    "notifications_days_ago": "il y a {count}j",
     "settings_language": "Langue",
     "settings_currency": "Devise"
   },

@@ -228,7 +228,7 @@ export default function Header({ theme = 'dark' }) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center shadow-lg">
+                      <span className="absolute -top-1 -end-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center shadow-lg">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -238,7 +238,7 @@ export default function Header({ theme = 'dark' }) {
                   {isNotifOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-                      <div className="fixed left-3 right-3 top-16 z-50 sm:absolute sm:left-auto sm:right-0 sm:top-14 sm:w-96 max-h-[70vh] bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
+                      <div className="fixed left-3 right-3 top-16 z-50 sm:absolute sm:left-auto sm:right-auto sm:end-0 sm:top-14 sm:w-96 max-h-[70vh] bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
                         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                           <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('notifications_title')}</h3>
                           <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export default function Header({ theme = 'dark' }) {
                               <button
                                 key={n.id}
                                 onClick={() => { if (!n.is_read) markAsRead(n.id); setIsNotifOpen(false); }}
-                                className={`w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                                className={`w-full text-start p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
                                   !n.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
                                 }`}
                               >
@@ -272,7 +272,7 @@ export default function Header({ theme = 'dark' }) {
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{n.title}</p>
                                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">{n.message}</p>
-                                    <p className="text-[10px] text-gray-400 mt-1">{(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? t('notifications_just_now') : d < 60 ? d + 'm ago' : d < 1440 ? Math.floor(d/60) + 'h ago' : Math.floor(d/1440) + 'd ago'; } catch { return ''; } })()}</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">{(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? t('notifications_just_now') : d < 60 ? t('notifications_minutes_ago', { count: d }) : d < 1440 ? t('notifications_hours_ago', { count: Math.floor(d/60) }) : t('notifications_days_ago', { count: Math.floor(d/1440) }); } catch { return ''; } })()}</p>
                                   </div>
                                 </div>
                               </button>

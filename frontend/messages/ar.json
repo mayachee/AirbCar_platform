@@ -106,6 +106,9 @@
     "notifications_mark_all_read": "تحديد الكل كمقروء",
     "notifications_empty": "لا توجد إشعارات",
     "notifications_just_now": "الآن",
+    "notifications_minutes_ago": "منذ {count} دقيقة",
+    "notifications_hours_ago": "منذ {count} ساعة",
+    "notifications_days_ago": "منذ {count} يوم",
     "settings_language": "اللغة",
     "settings_currency": "العملة"
   },

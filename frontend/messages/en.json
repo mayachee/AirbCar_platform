@@ -106,6 +106,9 @@
     "notifications_mark_all_read": "Mark all read",
     "notifications_empty": "No notifications yet",
     "notifications_just_now": "Just now",
+    "notifications_minutes_ago": "{count}m ago",
+    "notifications_hours_ago": "{count}h ago",
+    "notifications_days_ago": "{count}d ago",
     "settings_language": "Language",
     "settings_currency": "Currency"
   },
