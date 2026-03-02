@@ -91,62 +91,96 @@ export default function ReviewAnalytics({ reviews: reviewsData }) {
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Avg Rating */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800"
+          transition={{ duration: 0.3 }}
+          className="relative overflow-hidden bg-slate-800/80 rounded-2xl border border-slate-700/60 p-5 hover:border-yellow-500/40 transition-colors group"
         >
-          <div className="flex items-center justify-between mb-2">
-            <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">{t('avg_rating')}</span>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-400/5 rounded-full -mr-8 -mt-8 group-hover:bg-yellow-400/10 transition-colors" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-yellow-400/10 rounded-xl border border-yellow-400/20">
+                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('avg_rating')}</span>
+            </div>
+            <p className="text-3xl font-black text-white tracking-tight">
+              {(analytics.averageRating || analytics.average_rating || 0).toFixed?.(1) ?? (analytics.averageRating || 0)}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">{t('out_of_5')}</p>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.averageRating || analytics.average_rating || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('out_of_5')}</p>
         </motion.div>
 
+        {/* Total Reviews */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-800"
+          transition={{ duration: 0.3, delay: 0.08 }}
+          className="relative overflow-hidden bg-slate-800/80 rounded-2xl border border-slate-700/60 p-5 hover:border-emerald-500/40 transition-colors group"
         >
-          <div className="flex items-center justify-between mb-2">
-            <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">{t('total_reviews_label')}</span>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-8 -mt-8 group-hover:bg-emerald-500/10 transition-colors" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                <MessageSquare className="h-5 w-5 text-emerald-400" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('total_reviews_label')}</span>
+            </div>
+            <p className="text-3xl font-black text-white tracking-tight">
+              {analytics.totalReviews || analytics.total_reviews || 0}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              +{analytics.recentReviews30Days || analytics.recent_reviews_30_days || 0}{' '}
+              <span className="text-emerald-500/70">{t('in_last_30_days')}</span>
+            </p>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalReviews || analytics.total_reviews || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {analytics.recentReviews30Days || analytics.recent_reviews_30_days || 0} {t('in_last_30_days')}
-          </p>
         </motion.div>
 
+        {/* Helpful Votes */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800"
+          transition={{ duration: 0.3, delay: 0.16 }}
+          className="relative overflow-hidden bg-slate-800/80 rounded-2xl border border-slate-700/60 p-5 hover:border-violet-500/40 transition-colors group"
         >
-          <div className="flex items-center justify-between mb-2">
-            <ThumbsUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">{t('helpful_votes')}</span>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full -mr-8 -mt-8 group-hover:bg-violet-500/10 transition-colors" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-violet-500/10 rounded-xl border border-violet-500/20">
+                <ThumbsUp className="h-5 w-5 text-violet-400" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('helpful_votes')}</span>
+            </div>
+            <p className="text-3xl font-black text-white tracking-tight">
+              {analytics.totalHelpfulVotes || analytics.total_helpful_votes || 0}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">{t('community_engagement')}</p>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalHelpfulVotes || analytics.total_helpful_votes || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('community_engagement')}</p>
         </motion.div>
 
+        {/* Responses */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl p-6 border border-orange-200 dark:border-orange-800"
+          transition={{ duration: 0.3, delay: 0.24 }}
+          className="relative overflow-hidden bg-slate-800/80 rounded-2xl border border-slate-700/60 p-5 hover:border-orange-500/40 transition-colors group"
         >
-          <div className="flex items-center justify-between mb-2">
-            <BarChart3 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">{t('with_responses')}</span>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full -mr-8 -mt-8 group-hover:bg-orange-500/10 transition-colors" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2 bg-orange-500/10 rounded-xl border border-orange-500/20">
+                <BarChart3 className="h-5 w-5 text-orange-400" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t('with_responses')}</span>
+            </div>
+            <p className="text-3xl font-black text-white tracking-tight">
+              {analytics.reviewsWithResponses || analytics.reviews_with_responses || 0}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">{t('responded_to')}</p>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.reviewsWithResponses || analytics.reviews_with_responses || 0}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('responded_to')}</p>
         </motion.div>
       </div>
 
