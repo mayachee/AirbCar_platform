@@ -180,9 +180,10 @@ function CarDetailsContent() {
                 </AnimatedSection>
               </motion.div>
 
-              {/* Right Column - Booking Sidebar */}
+              {/* Right Column - Booking Sidebar (fixed) */}
+              <div className="hidden lg:block lg:col-span-1" />
               <motion.div
-                className="hidden lg:block lg:col-span-1 self-start sticky top-24"
+                className="hidden lg:block fixed top-24 right-0 w-[calc((100%-1280px)/2+1280px/3-1rem)] max-w-[400px] me-[max(1rem,calc((100%-1280px)/2+1rem))] z-30"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ 
