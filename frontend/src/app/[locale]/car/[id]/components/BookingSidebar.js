@@ -62,8 +62,9 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
   const minTripLength = availability.minTripLength || '1 day'
   
   return (
-    <div>
+    <div className="lg:col-span-1">
       <motion.div
+        className="sticky top-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
