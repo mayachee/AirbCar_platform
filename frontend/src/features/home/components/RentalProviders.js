@@ -365,6 +365,21 @@ export default function RentalProviders() {
     }
   }, [shouldLoop, scrollToSnap])
 
+  // Attach wheel listener with { passive: false } so preventDefault works
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const handleWheel = (e) => {
+      if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault()
+      }
+    }
+
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [])
+
   return (
     <section className="py-12 sm:py-16 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -423,13 +438,7 @@ export default function RentalProviders() {
             onPointerUp={endPointerDrag}
             onPointerCancel={endPointerDrag}
             onPointerLeave={endPointerDrag}
-            onWheel={(e) => {
-              // Block horizontal wheel/trackpad scrolling (including Shift+wheel),
-              // but allow vertical page scrolling.
-              if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-                e.preventDefault()
-              }
-            }}
+
           >
             {isLoading && (
               Array.from({ length: 4 }).map((_, i) => (
