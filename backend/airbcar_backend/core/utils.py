@@ -6,6 +6,13 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 from .models import EmailVerification, PasswordReset, User
+import os
+import json
+import urllib.request
+import urllib.error
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def send_verification_email(user):
@@ -120,9 +127,63 @@ def verify_email_token(token):
         return False, None, "An error occurred during verification."
 
 
+def _send_email_resend(to_email, subject, body, html=None):
+    """
+    Send email via Resend HTTP API (bypasses SMTP entirely).
+    Used for Render.com which blocks outbound SMTP ports.
+    """
+    api_key = getattr(settings, 'RESEND_API_KEY', '') or os.environ.get('RESEND_API_KEY', '')
+    if not api_key:
+        raise RuntimeError('RESEND_API_KEY not configured')
+    
+    # Use verified domain sender, fall back to test sender
+    from_email = getattr(settings, 'RESEND_FROM_EMAIL', '') or os.environ.get('RESEND_FROM_EMAIL', '')
+    if not from_email:
+        from_email = 'AirbCar <onboarding@resend.dev>'
+    
+    payload = {
+        'from': from_email,
+        'to': [to_email],
+        'subject': subject,
+        'text': body,
+    }
+    if html:
+        payload['html'] = html
+
+    data = json.dumps(payload).encode('utf-8')
+    
+    req = urllib.request.Request(
+        'https://api.resend.com/emails',
+        data=data,
+        headers={
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json',
+        },
+        method='POST',
+    )
+    
+    try:
+        timeout = getattr(settings, 'EMAIL_TIMEOUT', 60) or 60  # 60 second timeout
+        resp = urllib.request.urlopen(req, timeout=timeout)
+        resp_data = json.loads(resp.read().decode())
+        logger.info(f"Resend API success: {resp_data} (from={from_email}, to={to_email})")
+        return resp_data
+    except urllib.error.HTTPError as e:
+        error_body = ''
+        try:
+            error_body = e.read().decode()
+        except Exception:
+            pass
+        logger.error(f"Resend API FAILED {e.code}: {error_body} (to={to_email})")
+        raise RuntimeError(
+            f'Resend API {e.code}: {error_body}'
+        )
+
+
 def send_password_reset_email(user):
     """
     Send password reset email to user.
+    Supports both Resend HTTP API and SMTP backends.
     
     Args:
         user: User instance to send password reset email to
@@ -146,35 +207,50 @@ def send_password_reset_email(user):
         
         # Email subject and message
         subject = 'Reset your AirbCar password'
-        message = f"""
-Hello {user.first_name or user.email},
-
-You requested to reset your password for your AirbCar account.
-
-Click the link below to reset your password:
-
-{reset_url}
-
-This link will expire in 24 hours.
-
-If you didn't request a password reset, please ignore this email. Your password will remain unchanged.
-
-Best regards,
-The AirbCar Team
-"""
-        
-        # Send email
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
+        body = (
+            f"Hello {user.first_name or user.email},\n\n"
+            f"You requested to reset your password for your AirbCar account.\n\n"
+            f"Click the link below to reset your password:\n\n"
+            f"{reset_url}\n\n"
+            f"This link will expire in 24 hours.\n\n"
+            f"If you didn't request a password reset, please ignore this email. "
+            f"Your password will remain unchanged.\n\n"
+            f"Best regards,\nThe AirbCar Team"
+        )
+        html_body = (
+            f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px">'
+            f'<h2 style="color:#1e40af">Reset Your Password</h2>'
+            f'<p>Hello {user.first_name or user.email},</p>'
+            f'<p>You requested to reset your password for your AirbCar account.</p>'
+            f'<p style="text-align:center;margin:32px 0">'
+            f'<a href="{reset_url}" style="background:#2563eb;color:#fff;padding:12px 32px;'
+            f'border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">'
+            f'Reset Password</a></p>'
+            f'<p style="font-size:13px;color:#6b7280">This link expires in 24 hours. '
+            f'If you didn\'t request this, ignore this email.</p>'
+            f'<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">'
+            f'<p style="font-size:12px;color:#9ca3af;text-align:center">AirbCar Team</p>'
+            f'</div>'
         )
         
+        # Try Resend HTTP API first (works on Render which blocks SMTP)
+        resend_key = getattr(settings, 'RESEND_API_KEY', '') or os.environ.get('RESEND_API_KEY', '')
+        if resend_key:
+            _send_email_resend(user.email, subject, body, html=html_body)
+        else:
+            # Fall back to Django's configured email backend (SMTP)
+            send_mail(
+                subject=subject,
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        
+        logger.info(f"Password reset email sent to {user.email}")
         return password_reset
     except Exception as e:
-        print(f"Error sending password reset email: {e}")
+        logger.error(f"Error sending password reset email to {user.email}: {e}", exc_info=True)
         return None
 
 

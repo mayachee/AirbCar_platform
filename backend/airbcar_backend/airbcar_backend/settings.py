@@ -409,7 +409,7 @@ EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'ayacheyassine2000@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 15))  # 15 second timeout
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 60))  # 60 second timeout to match frontend expectations
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@airbcar.com')
 
 # SSL and TLS are mutually exclusive — pick based on port (for local SMTP only)
