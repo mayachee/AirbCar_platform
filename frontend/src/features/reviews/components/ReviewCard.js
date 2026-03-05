@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Star, Calendar, Verified, ThumbsUp, ThumbsDown, Heart, MessageSquare, Edit2, Trash2, Send, ChevronDown, ChevronUp, CornerDownRight, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { reviewService } from '../services/reviewService';
 import { useToast } from '@/contexts/ToastContext';
@@ -21,6 +22,7 @@ const REACTIONS = [
 function ReplyItem({ reply, reviewId, depth = 0, onReplyAdded, onDelete }) {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const t = useTranslations('reviews');
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -37,22 +39,22 @@ function ReplyItem({ reply, reviewId, depth = 0, onReplyAdded, onDelete }) {
       setReplyText('');
       setShowReplyForm(false);
       if (onReplyAdded) onReplyAdded();
-      addToast('Reply added!', 'success');
+      addToast(t('reply_added'), 'success');
     } catch (err) {
-      addToast(err.message || 'Failed to reply', 'error');
+      addToast(err.message || t('failed_reply'), 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this reply?')) return;
+    if (!window.confirm(t('confirm_delete_reply'))) return;
     try {
       await reviewService.deleteReply(reviewId, reply.id);
       if (onDelete) onDelete();
-      addToast('Reply deleted', 'success');
+      addToast(t('reply_deleted'), 'success');
     } catch (err) {
-      addToast('Failed to delete reply', 'error');
+      addToast(t('failed_delete_reply'), 'error');
     }
   };
 
@@ -70,28 +72,28 @@ function ReplyItem({ reply, reviewId, depth = 0, onReplyAdded, onDelete }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-gray-900 dark:text-white">
-              {reply.user?.first_name ? `${reply.user.first_name} ${reply.user.last_name || ''}` : reply.user?.email || 'User'}
+              {reply.user?.first_name ? `${reply.user.first_name} ${reply.user.last_name || ''}` : reply.user?.email || t('anonymous')}
             </span>
             <span className="text-xs text-gray-400">{fmtDate(reply.created_at)}</span>
-            {reply.updated_at !== reply.created_at && <span className="text-xs text-gray-400 italic">(edited)</span>}
+            {reply.updated_at !== reply.created_at && <span className="text-xs text-gray-400 italic">{t('edited')}</span>}
           </div>
           <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{reply.comment}</p>
           <div className="flex items-center gap-3 mt-1">
             {user && depth < maxDepth && (
               <button onClick={() => setShowReplyForm(!showReplyForm)} className="text-xs text-gray-500 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 flex items-center gap-1">
-                <CornerDownRight className="h-3 w-3" /> Reply
+                <CornerDownRight className="h-3 w-3" /> {t('reply_button')}
               </button>
             )}
             {isOwner && (
               <button onClick={handleDelete} className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1">
-                <Trash2 className="h-3 w-3" /> Delete
+                <Trash2 className="h-3 w-3" /> {t('delete_button')}
               </button>
             )}
           </div>
           <AnimatePresence>
             {showReplyForm && (
               <motion.form initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} onSubmit={handleSubmitReply} className="flex items-center gap-2 mt-2">
-                <input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="Write a reply..." className="flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none" />
+                <input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={t('write_reply_placeholder')} className="flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 outline-none" />
                 <button type="submit" disabled={!replyText.trim() || submitting} className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"><Send className="h-3.5 w-3.5" /></button>
               </motion.form>
             )}
@@ -113,6 +115,7 @@ function ReplyItem({ reply, reviewId, depth = 0, onReplyAdded, onDelete }) {
 export default function ReviewCard({ review, showActions = false, onEdit, onDelete, onVote, showOwnerActions = false }) {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const t = useTranslations('reviews');
   const [helpfulCount, setHelpfulCount] = useState(review.helpful_count || 0);
   const [hasVoted, setHasVoted] = useState(review.user_has_voted || false);
   const [isVoting, setIsVoting] = useState(false);
@@ -161,7 +164,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
       }
       if (onVote) onVote();
     } catch (err) {
-      addToast('Failed to vote on review', 'error');
+      addToast(t('failed_vote'), 'error');
     } finally {
       setIsVoting(false);
     }
@@ -174,13 +177,13 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
   };
 
   const getRatingLabel = (rating) => {
-    const labels = { 5: 'Excellent', 4: 'Very Good', 3: 'Good', 2: 'Fair', 1: 'Poor' };
+    const labels = { 5: t('rating_excellent'), 4: t('rating_very_good'), 3: t('rating_good'), 2: t('rating_fair'), 1: t('rating_poor') };
     return labels[rating] || '';
   };
 
   /* ── Reactions ─────────────────────── */
   const handleReaction = async (reactionKey) => {
-    if (!user) { addToast('Please sign in to react', 'info'); return; }
+    if (!user) { addToast(t('sign_in_to_react'), 'info'); return; }
     try {
       if (userReaction === reactionKey) {
         const res = await reviewService.removeReaction(review.id);
@@ -194,7 +197,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
         setUserReaction(reactionKey);
       }
     } catch {
-      addToast('Failed to react', 'error');
+      addToast(t('failed_react'), 'error');
     }
     setShowReactionPicker(false);
   };
@@ -216,7 +219,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
   const handleSubmitReply = async (e) => {
     e.preventDefault();
     if (!replyText.trim() || submittingReply) return;
-    if (!user) { addToast('Please sign in to reply', 'info'); return; }
+    if (!user) { addToast(t('sign_in_to_reply'), 'info'); return; }
     setSubmittingReply(true);
     try {
       await reviewService.addReply(review.id, replyText.trim());
@@ -225,9 +228,9 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
       setReplyCount(prev => prev + 1);
       setShowReplies(true);
       await loadReplies();
-      addToast('Reply added!', 'success');
+      addToast(t('reply_added'), 'success');
     } catch (err) {
-      addToast(err.message || 'Failed to add reply', 'error');
+      addToast(err.message || t('failed_add_reply'), 'error');
     } finally {
       setSubmittingReply(false);
     }
@@ -252,12 +255,12 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
               <h4 className="font-semibold text-gray-900 dark:text-white">
                 {review.user?.first_name && review.user?.last_name
                   ? `${review.user.first_name} ${review.user.last_name}`
-                  : review.user?.email || 'Anonymous'}
+                  : review.user?.email || t('anonymous')}
               </h4>
               {review.is_verified && (
                 <span className="inline-flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
                   <Verified className="h-3 w-3" />
-                  <span>Verified</span>
+                  <span>{t('verified')}</span>
                 </span>
               )}
             </div>
@@ -271,14 +274,14 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
                 <span>{formatDate(review.created_at)}</span>
               </span>
               {review.updated_at !== review.created_at && (
-                <span className="text-xs text-gray-400 dark:text-gray-500 italic bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">(edited)</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 italic bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{t('edited')}</span>
               )}
             </div>
           </div>
         </div>
         {!review.is_published && (
           <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800">
-            Pending Review
+            {t('pending_review')}
           </span>
         )}
       </div>
@@ -297,7 +300,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
             <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-1">
-                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Owner Response</span>
+                <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">{t('owner_response')}</span>
                 {review.owner_response_at && (
                   <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(review.owner_response_at)}</span>
                 )}
@@ -339,7 +342,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
             }`}
           >
             <ThumbsUp className={`h-4 w-4 ${userReaction === 'like' ? 'fill-current' : ''}`} />
-            <span>Like</span>
+            <span>{t('like')}</span>
             {(reactionCounts.like || 0) > 0 && <span className="text-xs">({reactionCounts.like})</span>}
           </button>
 
@@ -350,7 +353,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
             }`}
           >
             <ThumbsDown className={`h-4 w-4 ${userReaction === 'dislike' ? 'fill-current' : ''}`} />
-            <span>Dislike</span>
+            <span>{t('dislike')}</span>
             {(reactionCounts.dislike || 0) > 0 && <span className="text-xs">({reactionCounts.dislike})</span>}
           </button>
 
@@ -361,7 +364,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
             }`}
           >
             <Heart className={`h-4 w-4 ${userReaction === 'love' ? 'fill-current' : ''}`} />
-            <span>Love</span>
+            <span>{t('love')}</span>
             {(reactionCounts.love || 0) > 0 && <span className="text-xs">({reactionCounts.love})</span>}
           </button>
 
@@ -372,7 +375,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
               className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 hover:text-orange-500 dark:hover:text-orange-400 transition-colors"
             >
               <span>{userReaction ? REACTIONS.find(r => r.key === userReaction)?.emoji : '😀'}</span>
-              <span>React</span>
+              <span>{t('react')}</span>
             </button>
             <AnimatePresence>
               {showReactionPicker && (
@@ -386,7 +389,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
                     <button
                       key={r.key}
                       onClick={() => handleReaction(r.key)}
-                      title={r.label}
+                      title={t(`reaction_${r.key}`)}
                       className={`text-xl hover:scale-125 transition-transform px-1 ${userReaction === r.key ? 'scale-125 bg-blue-100 dark:bg-blue-900/30 rounded-full' : ''}`}
                     >
                       {r.emoji}
@@ -403,7 +406,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
             className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
             <MessageSquare className="h-4 w-4" />
-            <span>Reply</span>
+            <span>{t('reply_button')}</span>
             {replyCount > 0 && <span className="text-xs">({replyCount})</span>}
           </button>
 
@@ -412,12 +415,12 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
             <div className="flex items-center space-x-3">
               {onEdit && (
                 <button onClick={() => onEdit(review)} className="flex items-center space-x-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700">
-                  <Edit2 className="h-4 w-4" /><span>Edit</span>
+                  <Edit2 className="h-4 w-4" /><span>{t('edit_button')}</span>
                 </button>
               )}
               {onDelete && (
                 <button onClick={() => onDelete(review.id)} className="flex items-center space-x-1 text-sm text-red-600 dark:text-red-400 hover:text-red-700">
-                  <Trash2 className="h-4 w-4" /><span>Delete</span>
+                  <Trash2 className="h-4 w-4" /><span>{t('delete_button')}</span>
                 </button>
               )}
             </div>
@@ -427,7 +430,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
         {helpfulCount > 0 && !canVote && (
           <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
             <ThumbsUp className="h-3 w-3" />
-            <span>{helpfulCount} {helpfulCount === 1 ? 'person' : 'people'} found this helpful</span>
+            <span>{helpfulCount === 1 ? t('found_helpful_singular', { count: helpfulCount }) : t('found_helpful_plural', { count: helpfulCount })}</span>
           </div>
         )}
       </div>
@@ -445,7 +448,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
             <input
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder={user ? 'Write a reply...' : 'Sign in to reply'}
+              placeholder={user ? t('write_reply_placeholder') : t('sign_in_to_reply_placeholder')}
               disabled={!user}
               className="flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none disabled:opacity-50"
             />
@@ -464,7 +467,7 @@ export default function ReviewCard({ review, showActions = false, onEdit, onDele
         <div className="mt-2">
           <button onClick={handleToggleReplies} className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
             {showReplies ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            {showReplies ? 'Hide' : 'View'} {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+            {showReplies ? t('hide') : t('view')} {replyCount} {replyCount === 1 ? t('reply_singular') : t('reply_plural')}
           </button>
           <AnimatePresence>
             {showReplies && (
