@@ -574,7 +574,17 @@
     "type_marketing": "Cookies de marketing",
     "type_marketing_desc": "Ceux-ci sont utilisés pour suivre les visiteurs sur les sites web. L'intention est d'afficher des publicités pertinentes et attrayantes pour l'utilisateur individuel.",
     "heading_managing": "Gestion des cookies",
-    "managing_desc": "La plupart des navigateurs web vous permettent de contrôler les cookies via les paramètres de leurs préférences. Cependant, si vous limitez la capacité des sites web à définir des cookies, vous pourrez détériorer votre expérience globale, car elle ne sera plus personnalisée. Cela peut également vous empêcher d'enregistrer des paramètres personnalisés comme les informations de connexion."
+    "managing_desc": "La plupart des navigateurs web vous permettent de contrôler les cookies via les paramètres de leurs préférences. Cependant, si vous limitez la capacité des sites web à définir des cookies, vous pourrez détériorer votre expérience globale, car elle ne sera plus personnalisée. Cela peut également vous empêcher d'enregistrer des paramètres personnalisés comme les informations de connexion.",
+    "heading": "Nous respectons votre vie privée",
+    "description": "Nous utilisons des cookies et des technologies similaires pour améliorer votre expérience de navigation, personnaliser le contenu et les annonces, et analyser notre trafic.",
+    "purpose_navigation": "Navigation et fonctionnement du site",
+    "purpose_audience": "Mesure d'audience et statistiques",
+    "purpose_performance": "Améliorations des performances",
+    "purpose_ads": "Publicité personnalisée",
+    "partner_notice": "En cliquant sur \"Tout accepter\", vous consentez à l'utilisation de cookies. Vous pouvez modifier vos préférences à tout moment via la page Paramètres des cookies.",
+    "accept": "Tout accepter",
+    "customize": "Gérer les préférences",
+    "continue_without": "Continuer sans accepter"
   },
   "cities": {
     "tetouan": "Tétouan",

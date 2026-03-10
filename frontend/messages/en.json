@@ -575,7 +575,17 @@
     "type_marketing": "Marketing Cookies",
     "type_marketing_desc": "These are used to track visitors across websites. The intention is to display ads that are relevant and engaging for the individual user.",
     "heading_managing": "Managing Cookies",
-    "managing_desc": "Most web browsers allow you to control cookies through their settings preferences. However, if you limit the ability of websites to set cookies, you may worsen your overall user experience, since it will no longer be personalized to you. It may also stop you from saving customized settings like login information."
+    "managing_desc": "Most web browsers allow you to control cookies through their settings preferences. However, if you limit the ability of websites to set cookies, you may worsen your overall user experience, since it will no longer be personalized to you. It may also stop you from saving customized settings like login information.",
+    "heading": "We value your privacy",
+    "description": "We use cookies and similar technologies to improve your browsing experience, personalise content and ads, and analyse our traffic.",
+    "purpose_navigation": "Navigation and site functionality",
+    "purpose_audience": "Audience measurement and analytics",
+    "purpose_performance": "Performance improvements",
+    "purpose_ads": "Personalised advertising",
+    "partner_notice": "By clicking \"Accept all\", you consent to our use of cookies. You can change your preferences at any time via the Cookie settings page.",
+    "accept": "Accept all",
+    "customize": "Manage preferences",
+    "continue_without": "Continue without accepting"
   },
   "cities": {
     "tetouan": "Tetouan",
