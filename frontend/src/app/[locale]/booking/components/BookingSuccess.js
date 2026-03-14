@@ -1,8 +1,10 @@
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useCurrency } from '@/contexts/CurrencyContext'
 
 export default function BookingSuccess({ bookingData }) {
   const router = useRouter()
+  const t = useTranslations('booking')
   const { formatPrice } = useCurrency()
 
   // Support both shapes:
@@ -35,9 +37,9 @@ export default function BookingSuccess({ bookingData }) {
               </div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3">Booking Request Submitted!</h1>
+          <h1 className="text-4xl font-bold text-white mb-3">{t('success_title')}</h1>
           <p className="text-green-100 text-lg max-w-md mx-auto">
-            Your booking request has been sent to the car owner for review.
+            {t('success_subtitle')}
           </p>
         </div>
 
@@ -49,25 +51,25 @@ export default function BookingSuccess({ bookingData }) {
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Booking Details
+              {t('booking_details')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Booking ID</p>
-                <p className="font-bold text-lg text-gray-900">#{booking?.id || 'PENDING'}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{t('booking_id')}</p>
+                <p className="font-bold text-lg text-gray-900">#{booking?.id || t('pending')}</p>
               </div>
               <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Status</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{t('status')}</p>
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full animate-pulse"></div>
-                  <p className="font-bold text-lg text-gray-900">Pending Approval</p>
+                  <p className="font-bold text-lg text-gray-900">{t('pending_approval')}</p>
                 </div>
               </div>
             </div>
             {pickupDateValue && returnDateValue && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Pickup Date</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{t('pickup_date')}</p>
                   <p className="font-semibold text-gray-900">
                     {new Date(pickupDateValue).toLocaleDateString('en-US', { 
                       weekday: 'long', 
@@ -89,7 +91,7 @@ export default function BookingSuccess({ bookingData }) {
                   )}
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Return Date</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{t('return_date')}</p>
                   <p className="font-semibold text-gray-900">
                     {new Date(returnDateValue).toLocaleDateString('en-US', { 
                       weekday: 'long', 
@@ -114,7 +116,7 @@ export default function BookingSuccess({ bookingData }) {
             )}
             {totalAmountValue && (
               <div className="mt-4 bg-orange-50 rounded-lg p-4 border border-orange-200">
-                <p className="text-xs text-gray-600 mb-1">Total Amount</p>
+                <p className="text-xs text-gray-600 mb-1">{t('total_amount')}</p>
                 <p className="text-2xl font-bold text-orange-600">{formatPrice(totalAmountValue)}</p>
               </div>
             )}
@@ -126,20 +128,20 @@ export default function BookingSuccess({ bookingData }) {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              What happens next?
+              {t('what_next')}
             </h3>
             <ol className="space-y-3 text-sm text-blue-800">
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                <span>The car owner will review your booking request within 24 hours</span>
+                <span>{t('step1')}</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                <span>You'll receive an email notification once they respond</span>
+                <span>{t('step2')}</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                <span>Upon approval, you'll need to complete payment to secure your booking</span>
+                <span>{t('step3')}</span>
               </li>
             </ol>
           </div>
@@ -151,9 +153,9 @@ export default function BookingSuccess({ bookingData }) {
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
               <div>
-                <p className="text-sm font-semibold text-amber-900 mb-1">Important Notice</p>
+                <p className="text-sm font-semibold text-amber-900 mb-1">{t('important_notice')}</p>
                 <p className="text-xs text-amber-800">
-                  This booking is not yet confirmed. You'll receive a confirmation email once the owner approves your request and payment is completed.
+                  {t('notice_text')}
                 </p>
               </div>
             </div>
@@ -168,7 +170,7 @@ export default function BookingSuccess({ bookingData }) {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              View My Bookings
+              {t('view_my_bookings')}
             </button>
             <button
               onClick={() => router.push('/')}
@@ -177,7 +179,7 @@ export default function BookingSuccess({ bookingData }) {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              Continue Browsing
+              {t('continue_browsing')}
             </button>
           </div>
         </div>
