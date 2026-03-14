@@ -31,7 +31,7 @@ def cache_api_response(timeout=300, key_prefix='api'):
                 str(getattr(request.user, 'id', 'anonymous'))
             ]
             cache_key_str = '|'.join(cache_key_parts)
-            cache_key = hashlib.md5(cache_key_str.encode()).hexdigest()
+            cache_key = hashlib.sha256(cache_key_str.encode()).hexdigest()
             
             # Try to get from cache
             cached_response = cache.get(cache_key)
@@ -72,7 +72,7 @@ def cache_queryset(timeout=300, key_prefix='qs'):
                 str(kwargs)
             ]
             cache_key_str = '|'.join(cache_key_parts)
-            cache_key = hashlib.md5(cache_key_str.encode()).hexdigest()
+            cache_key = hashlib.sha256(cache_key_str.encode()).hexdigest()
             
             # Try cache first
             cached_result = cache.get(cache_key)

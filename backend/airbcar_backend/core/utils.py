@@ -10,9 +10,22 @@ import os
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def validate_url_scheme(url):
+    """Validate that URL uses only http or https scheme."""
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            raise ValueError(f'Unsupported URL scheme: {parsed.scheme}. Only http and https are allowed.')
+        return True
+    except Exception as e:
+        logger.error(f"URL validation failed for {url}: {e}")
+        raise
 
 
 def send_verification_email(user):
@@ -182,18 +195,31 @@ def _send_email_resend(to_email, subject, body, html=None):
 
 def send_password_reset_email(user):
     """
-    Send password reset email to user.
+    Send password reset email to user with verification code.
     Supports both Resend HTTP API and SMTP backends.
+    Implements email verification similar to 2FA OTP system.
     
     Args:
         user: User instance to send password reset email to
         
     Returns:
-        PasswordReset instance or None if failed
+        tuple: (password_reset: PasswordReset, verification: EmailVerification) or (None, None) if failed
     """
     try:
-        # Generate a new reset token
+        import secrets
+        
+        # Delete any existing unexpired verification codes for this user (prevent accumulation)
+        EmailVerification.objects.filter(
+            user=user,
+            expires_at__gt=timezone.now(),
+            is_used=False
+        ).delete()
+        
+        logger.info(f"Cleaned up previous verification codes for {user.email}")
+        
+        # Generate secure reset token and verification code
         token = PasswordReset.generate_token()
+        verification_code = secrets.token_hex(3)  # 6-digit hex code (e.g., "a3f2c1")
         
         # Create reset record (expires in 24 hours)
         password_reset = PasswordReset.objects.create(
@@ -202,56 +228,85 @@ def send_password_reset_email(user):
             expires_at=timezone.now() + timedelta(hours=24)
         )
         
-        # Build reset URL
+        # Create verification record (expires in 15 minutes for email verification)
+        # This forces users to verify their email quickly before proceeding with password reset
+        verification = EmailVerification.objects.create(
+            user=user,
+            token=verification_code,
+            expires_at=timezone.now() + timedelta(minutes=15)
+        )
+        
+        # Build reset URL (will be used after email verification)
         reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
         
-        # Email subject and message
-        subject = 'Reset your AirbCar password'
+        # Email subject and message with verification code
+        subject = 'AirbCar - Verify Your Email to Reset Password'
         body = (
             f"Hello {user.first_name or user.email},\n\n"
             f"You requested to reset your password for your AirbCar account.\n\n"
-            f"Click the link below to reset your password:\n\n"
+            f"Your verification code is: {verification_code}\n\n"
+            f"This code will expire in 15 minutes.\n\n"
+            f"Once verified, you can reset your password using this link:\n"
             f"{reset_url}\n\n"
-            f"This link will expire in 24 hours.\n\n"
             f"If you didn't request a password reset, please ignore this email. "
-            f"Your password will remain unchanged.\n\n"
+            f"Your account security is important to us.\n\n"
             f"Best regards,\nThe AirbCar Team"
         )
         html_body = (
-            f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px">'
-            f'<h2 style="color:#1e40af">Reset Your Password</h2>'
-            f'<p>Hello {user.first_name or user.email},</p>'
-            f'<p>You requested to reset your password for your AirbCar account.</p>'
-            f'<p style="text-align:center;margin:32px 0">'
+            f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px">'
+            f'<h2 style="color:#1e40af;margin-bottom:24px">Verify Your Email</h2>'
+            f'<p style="color:#374151;font-size:15px;line-height:1.6">Hello {user.first_name or user.email},</p>'
+            f'<p style="color:#374151;font-size:15px;line-height:1.6">You requested to reset your password for your AirbCar account.</p>'
+            f'<div style="background:#fff;border:2px solid #dbeafe;border-radius:8px;padding:16px;margin:24px 0;text-align:center">'
+            f'<p style="color:#6b7280;font-size:13px;margin:0 0 8px 0">Your Verification Code:</p>'
+            f'<p style="color:#1e40af;font-size:28px;font-weight:700;margin:0;letter-spacing:4px">{verification_code}</p>'
+            f'<p style="color:#9ca3af;font-size:12px;margin:8px 0 0 0">Expires in 15 minutes</p>'
+            f'</div>'
+            f'<p style="color:#374151;font-size:14px;line-height:1.6;margin:24px 0 0 0">'
+            f'After verifying this code, use this button to reset your password:</p>'
+            f'<p style="text-align:center;margin:16px 0">'
             f'<a href="{reset_url}" style="background:#2563eb;color:#fff;padding:12px 32px;'
-            f'border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">'
-            f'Reset Password</a></p>'
-            f'<p style="font-size:13px;color:#6b7280">This link expires in 24 hours. '
-            f'If you didn\'t request this, ignore this email.</p>'
+            f'border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Reset Password</a></p>'
+            f'<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;border-radius:4px;margin:24px 0">'
+            f'<p style="color:#92400e;font-size:13px;margin:0;font-weight:500">'
+            f'⚠️ If you didn\'t request this, please contact support immediately.</p>'
+            f'</div>'
             f'<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">'
-            f'<p style="font-size:12px;color:#9ca3af;text-align:center">AirbCar Team</p>'
+            f'<p style="font-size:12px;color:#9ca3af;text-align:center;margin:0">AirbCar Team</p>'
             f'</div>'
         )
         
-        # Try Resend HTTP API first (works on Render which blocks SMTP)
+        # Send email via Resend API or SMTP with proper error handling
         resend_key = getattr(settings, 'RESEND_API_KEY', '') or os.environ.get('RESEND_API_KEY', '')
-        if resend_key:
-            _send_email_resend(user.email, subject, body, html=html_body)
-        else:
-            # Fall back to Django's configured email backend (SMTP)
-            send_mail(
-                subject=subject,
-                message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
+        try:
+            if resend_key:
+                _send_email_resend(user.email, subject, body, html=html_body)
+            else:
+                # Fall back to Django's configured email backend (SMTP)
+                send_mail(
+                    subject=subject,
+                    message=body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            
+            logger.info(f"Password reset email with verification code sent to {user.email}")
+            return password_reset, verification
+            
+        except Exception as email_error:
+            logger.error(
+                f"Failed to send password reset email to {user.email}: {email_error}",
+                exc_info=True
             )
-        
-        logger.info(f"Password reset email sent to {user.email}")
-        return password_reset
+            # Clean up the created records if email sending fails
+            password_reset.delete()
+            verification.delete()
+            raise
+            
     except Exception as e:
-        logger.error(f"Error sending password reset email to {user.email}: {e}", exc_info=True)
-        return None
+        logger.error(f"Error in send_password_reset_email for {user.email}: {e}", exc_info=True)
+        return None, None
 
 
 def verify_password_reset_token(token):

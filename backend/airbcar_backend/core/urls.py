@@ -80,6 +80,8 @@ if views.RefreshTokenView is not None:
     urlpatterns.append(path('api/token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'))
 if views.VerifyTokenView is not None:
     urlpatterns.append(path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify-token'))
+if views.LogoutView is not None:
+    urlpatterns.append(path('api/logout/', views.LogoutView.as_view(), name='logout'))
 if views.VerifyEmailView is not None:
     urlpatterns.append(path('api/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'))
 if views.ResendVerificationEmailView is not None:
@@ -88,6 +90,8 @@ if views.PasswordResetRequestView is not None:
     urlpatterns.append(path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset-request'))
 if views.PasswordResetConfirmView is not None:
     urlpatterns.append(path('api/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'))
+if views.PasswordResetVerifyEmailView is not None:
+    urlpatterns.append(path('api/password-reset/verify-email/', views.PasswordResetVerifyEmailView.as_view(), name='password-reset-verify-email'))
 if views.GoogleAuthView is not None:
     urlpatterns.append(path('api/auth/google/', views.GoogleAuthView.as_view(), name='google-auth'))
 

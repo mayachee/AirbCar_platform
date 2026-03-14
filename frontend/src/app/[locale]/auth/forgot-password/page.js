@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,9 +16,11 @@ const forgotPasswordSchema = z.object({
 
 export default function ForgotPassword() {
   const t = useTranslations('auth')
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [submittedEmail, setSubmittedEmail] = useState('')
 
   const {
     register,
@@ -30,6 +33,7 @@ export default function ForgotPassword() {
   const onSubmit = async (data) => {
     setIsLoading(true)
     setError('')
+    setSubmittedEmail(data.email)
 
     try {
       // First, wake up the backend (Render free tier sleeps after inactivity)
@@ -58,7 +62,7 @@ export default function ForgotPassword() {
       }
 
       // Backend is awake, proceed with password reset
-      await apiClient.post(
+      const response = await apiClient.post(
         '/api/password-reset/', 
         { email: data.email }, 
         { 
@@ -66,7 +70,21 @@ export default function ForgotPassword() {
           timeout: 60000 // 60 seconds - SMTP can be slow
         }
       )
-      setSuccess(true)
+      
+      if (response.data?.requires_verification) {
+        // Email sent successfully - redirect to verification page
+        setSuccess(true)
+        // Wait a moment then redirect to verification page
+        setTimeout(() => {
+          router.push(`/auth/verify-reset-email?email=${encodeURIComponent(data.email)}`)
+        }, 1500)
+      } else {
+        // Fallback: still redirect even if requires_verification isn't set
+        setSuccess(true)
+        setTimeout(() => {
+          router.push(`/auth/verify-reset-email?email=${encodeURIComponent(data.email)}`)
+        }, 1500)
+      }
     } catch (error) {
       console.error('Password reset error:', error)
       

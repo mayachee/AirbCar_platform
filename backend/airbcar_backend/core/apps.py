@@ -42,7 +42,7 @@ class CoreConfig(AppConfig):
                 for table, columns in tables_to_check.items():
                     for col_name, col_type in columns:
                         # 1. Check if column exists using information_schema (safe read)
-                        cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table}' AND column_name = '{col_name}'")
+                        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = %s AND column_name = %s", [table, col_name])
                         if not cursor.fetchone():
                             # 2. Add if missing
                             print(f"[CoreConfig] FIXING: Adding missing column {col_name} to {table}")

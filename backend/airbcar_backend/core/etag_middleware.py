@@ -29,7 +29,7 @@ class ETagMiddleware:
             if request.path.startswith('/api/'):
                 # Generate ETag from response content
                 if hasattr(response, 'content') and response.content:
-                    etag = hashlib.md5(response.content).hexdigest()
+                    etag = hashlib.sha256(response.content).hexdigest()
                     response['ETag'] = f'"{etag}"'
                     
                     # Check If-None-Match header from client

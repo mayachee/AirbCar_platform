@@ -134,10 +134,22 @@ export class AuthService {
     return apiClient.post('/api/password-reset/', { email })
   }
 
-  async resetPassword(uidb64: string, token: string, password: string) {
-    return apiClient.post(`/api/reset-password/${uidb64}/${token}/`, {
-      password
+  async verifyPasswordResetEmail(email: string, code: string) {
+    return apiClient.post('/api/password-reset/verify-email/', {
+      email,
+      code
     })
+  }
+
+  async resetPassword(token: string, password: string) {
+    return apiClient.post('/api/password-reset/confirm/', {
+      token,
+      new_password: password,
+    })
+  }
+
+  async validateResetToken(token: string) {
+    return apiClient.get(`/api/password-reset/confirm/?token=${encodeURIComponent(token)}`)
   }
 
   async verifyEmailToken(token: string) {

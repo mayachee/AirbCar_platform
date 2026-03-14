@@ -80,7 +80,7 @@ try:
     from .auth_views import (
         LoginView, RegisterView, RefreshTokenView, VerifyTokenView,
         VerifyEmailView, ResendVerificationEmailView,
-        PasswordResetRequestView, PasswordResetConfirmView, GoogleAuthView
+        PasswordResetRequestView, PasswordResetConfirmView, LogoutView, GoogleAuthView
     )
 except Exception as e:
     print(f"CRITICAL: Error importing auth_views: {e}", file=sys.stderr)
