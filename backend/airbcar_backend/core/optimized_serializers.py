@@ -52,7 +52,7 @@ class CachedSerializerMixin:
             *[str(getattr(instance, field, '')) for field in self.cache_key_fields]
         ]
         cache_key_str = '|'.join(cache_key_parts)
-        cache_key = f"serializer:{hashlib.md5(cache_key_str.encode()).hexdigest()}"
+        cache_key = f"serializer:{hashlib.sha256(cache_key_str.encode()).hexdigest()}"
         
         # Try cache
         cached = cache.get(cache_key)

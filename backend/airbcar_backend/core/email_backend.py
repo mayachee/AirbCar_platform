@@ -13,6 +13,7 @@ import json
 import os
 import urllib.request
 import urllib.error
+import urllib.parse
 from django.conf import settings
 from django.core.mail.backends.base import BaseEmailBackend
 

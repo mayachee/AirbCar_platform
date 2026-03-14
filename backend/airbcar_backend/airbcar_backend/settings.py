@@ -286,7 +286,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework configuration
+# ENABLE_THROTTLING: Default to True in production, False in dev (set ENABLE_THROTTLING=false to disable in prod)
 ENABLE_THROTTLING = os.environ.get('ENABLE_THROTTLING', 'False' if DEBUG else 'True').lower() == 'true'
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -303,17 +305,18 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',  # Removed BrowsableAPIRenderer for production speed
     ),
     'COMPACT_JSON': not DEBUG,  # Remove whitespace from JSON in production
-}
-
-if ENABLE_THROTTLING:
-    REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = (
+    # Rate throttling - enabled by default in production
+    'DEFAULT_THROTTLE_CLASSES': (
         'rest_framework.throttling.AnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle',
-    )
-    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+    ) if ENABLE_THROTTLING else (),
+    'DEFAULT_THROTTLE_RATES': {
         'anon': os.environ.get('THROTTLE_ANON', '100/hour'),
         'user': os.environ.get('THROTTLE_USER', '1000/hour'),
-    }
+    } if ENABLE_THROTTLING else {},
+    # Security: Enforce CSRF on state-changing methods
+    'DEFAULT_CSRF_FAILURE_REASON': 'CSRF token missing or invalid',
+}
 
 # CORS settings
 # Always allow all origins in development (including Docker)

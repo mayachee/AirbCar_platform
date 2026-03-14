@@ -26,13 +26,13 @@ except ImportError:
 
 
 class PartnerListView(APIView):
-    """List all partners."""
-    permission_classes = [AllowAny]
+    """List all partners - read is public, creation requires authentication."""
 
     def get_permissions(self):
         """Allow public reads, require auth for creation."""
-        if self.request.method == 'POST':
+        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             return [IsAuthenticated()]
+        # GET requests are public
         return [AllowAny()]
     
     def get(self, request):

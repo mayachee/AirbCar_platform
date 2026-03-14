@@ -83,16 +83,35 @@ export const usePasswordReset = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
   const requestPasswordReset = async (email) => {
     try {
       setLoading(true);
       setError('');
       setSuccessMessage('');
+      setResetToken('');
       await authService.requestPasswordReset(email);
-      setSuccessMessage('Password reset email sent');
+      setSuccessMessage('Check your email for a verification code');
     } catch (err) {
       setError(err.message || 'Failed to send password reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyPasswordResetEmail = async (email, code) => {
+    try {
+      setLoading(true);
+      setError('');
+      setSuccessMessage('');
+      const response = await authService.verifyPasswordResetEmail(email, code);
+      setResetToken(response.data?.reset_token || '');
+      setSuccessMessage('Email verified! Enter your new password');
+      return response.data?.reset_token;
+    } catch (err) {
+      setError(err.message || 'Failed to verify email code');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -105,6 +124,7 @@ export const usePasswordReset = () => {
       setSuccessMessage('');
       await authService.resetPassword(token, newPassword);
       setSuccessMessage('Password reset successfully');
+      setResetToken('');
     } catch (err) {
       setError(err.message || 'Failed to reset password');
     } finally {
@@ -116,7 +136,9 @@ export const usePasswordReset = () => {
     loading,
     error,
     successMessage,
+    resetToken,
     requestPasswordReset,
+    verifyPasswordResetEmail,
     resetPassword
   };
 };
