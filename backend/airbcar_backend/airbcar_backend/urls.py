@@ -6,6 +6,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 def favicon_view(request):
     """Handle favicon requests to avoid 400 errors."""
@@ -14,6 +15,9 @@ def favicon_view(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('favicon.ico', favicon_view, name='favicon'),  # Handle favicon requests
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('', include('core.urls')),  # Include core app URLs
 ]
 

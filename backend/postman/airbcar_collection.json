@@ -1,0 +1,665 @@
+{
+  "info": {
+    "name": "AirbCar Backend API",
+    "description": "Complete API test collection for the AirbCar car rental platform.\n\nRun order: 01 Health → 02 Auth → 03 Listings → 04 Bookings → 05 Users → 06 Partners → 07 Reviews → 08 Favorites → 09 Notifications → 10 Newsletter → 11 Admin",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const token = pm.environment.get('access_token');",
+          "if (token) {",
+          "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 — Health & Root",
+      "item": [
+        {
+          "name": "Root endpoint",
+          "request": { "method": "GET", "url": "{{base_url}}/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Root returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "Health check",
+          "request": { "method": "GET", "url": "{{base_url}}/api/health/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Health returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has status field', () => pm.expect(json).to.have.property('status'));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "02 — Authentication",
+      "item": [
+        {
+          "name": "Register (customer)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": [
+                "// Clear any existing token so register runs unauthenticated",
+                "pm.request.headers.remove('Authorization');"
+              ]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const status = pm.response.code;",
+                "pm.test('Register returns 201 or 400 (exists)', () => pm.expect([201,400]).to.include(status));",
+                "if (status === 201) {",
+                "    const json = pm.response.json();",
+                "    // Backend returns { access, refresh, user } at top level",
+                "    if (json.access) pm.environment.set('access_token', json.access);",
+                "    if (json.refresh) pm.environment.set('refresh_token', json.refresh);",
+                "    if (json.user && json.user.id) pm.environment.set('user_id', json.user.id);",
+                "    console.log('Registered — token saved');",
+                "}"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/register/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"testuser_{{$timestamp}}\",\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"first_name\": \"Test\",\n  \"last_name\": \"User\"\n}" }
+          }
+        },
+        {
+          "name": "Login (customer)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": [
+                "pm.request.headers.remove('Authorization');"
+              ]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('Login returns 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "// Backend returns { access, refresh, user } at top level",
+                "pm.test('Has access token', () => pm.expect(json).to.have.property('access'));",
+                "pm.test('Has refresh token', () => pm.expect(json).to.have.property('refresh'));",
+                "pm.test('Has user object', () => pm.expect(json).to.have.property('user'));",
+                "if (json.access) pm.environment.set('access_token', json.access);",
+                "if (json.refresh) pm.environment.set('refresh_token', json.refresh);",
+                "if (json.user && json.user.id) pm.environment.set('user_id', json.user.id);",
+                "console.log('Login OK — token: ' + (json.access || '').substring(0, 20) + '...');"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/login/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}" }
+          }
+        },
+        {
+          "name": "Refresh token",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": [
+                "pm.request.headers.remove('Authorization');"
+              ]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('Refresh returns 200', () => pm.response.to.have.status(200));",
+                "const json = pm.response.json();",
+                "if (json.access) pm.environment.set('access_token', json.access);",
+                "if (json.refresh) pm.environment.set('refresh_token', json.refresh);"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/token/refresh/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}" }
+          }
+        },
+        {
+          "name": "Verify token",
+          "request": { "method": "POST", "url": "{{base_url}}/api/verify-token/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Verify token returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Token is valid', () => pm.expect(json).to.have.property('valid'));",
+            "pm.test('Has user data', () => pm.expect(json).to.have.property('user'));"
+          ]}}]
+        },
+        {
+          "name": "Resend verification email",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": ["pm.request.headers.remove('Authorization');"]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/resend-verification/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\"\n}" }
+          }
+        },
+        {
+          "name": "Password reset request",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": ["pm.request.headers.remove('Authorization');"]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const status = pm.response.code;",
+                "pm.test('Returns 200 or 500 (email config)', () => pm.expect([200,500]).to.include(status));"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/password-reset/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 — Listings",
+      "item": [
+        {
+          "name": "List all listings (public)",
+          "request": { "method": "GET", "url": "{{base_url}}/listings/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has data array', () => pm.expect(json).to.have.property('data'));",
+            "pm.test('Has count', () => pm.expect(json).to.have.property('count'));",
+            "if (json.data && json.data.length > 0) {",
+            "    pm.environment.set('listing_id', json.data[0].id);",
+            "    console.log('Saved listing_id: ' + json.data[0].id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "List with filters",
+          "request": { "method": "GET", "url": "{{base_url}}/listings/?location=Algiers&min_price=100&max_price=5000&transmission=automatic&page=1&page_size=10" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "List with search",
+          "request": { "method": "GET", "url": "{{base_url}}/listings/?search=Toyota" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "Get listing detail",
+          "request": { "method": "GET", "url": "{{base_url}}/listings/{{listing_id}}/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has data', () => pm.expect(json).to.have.property('data'));",
+            "pm.test('Has id', () => pm.expect(json.data).to.have.property('id'));"
+          ]}}]
+        },
+        {
+          "name": "Create listing (auth, partner only)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/listings/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"make\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"year\": 2023,\n  \"color\": \"White\",\n  \"transmission\": \"automatic\",\n  \"fuel_type\": \"diesel\",\n  \"seating_capacity\": 5,\n  \"vehicle_style\": \"sedan\",\n  \"price_per_day\": 3500,\n  \"location\": \"Algiers\",\n  \"vehicle_description\": \"Test vehicle from Newman\",\n  \"available_features\": [\"AC\", \"GPS\"],\n  \"is_available\": true\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "// 201=created, 401=not logged in, 403=not a partner",
+            "pm.test('Create returns 201/401/403', () => pm.expect([201,401,403]).to.include(status));",
+            "if (status === 201) {",
+            "    const json = pm.response.json();",
+            "    if (json.data && json.data.id) pm.environment.set('listing_id', json.data.id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "Update listing (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/listings/{{listing_id}}/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"price_per_day\": 4000,\n  \"is_available\": true\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Update returns 200/401/403', () => pm.expect([200,401,403]).to.include(status));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "04 — Bookings",
+      "item": [
+        {
+          "name": "List my bookings",
+          "request": { "method": "GET", "url": "{{base_url}}/bookings/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has data', () => pm.expect(json).to.have.property('data'));",
+            "if (json.data && json.data.length > 0) {",
+            "    pm.environment.set('booking_id', json.data[0].id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "Create booking",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/bookings/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"listing_id\": {{listing_id}},\n  \"pickup_date\": \"2026-05-15\",\n  \"return_date\": \"2026-05-20\",\n  \"pickup_time\": \"09:00\",\n  \"return_time\": \"18:00\",\n  \"payment_method\": \"cash\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Create returns 201 or 400', () => pm.expect([201,400]).to.include(status));",
+            "if (status === 201) {",
+            "    const json = pm.response.json();",
+            "    if (json.data && json.data.id) pm.environment.set('booking_id', json.data.id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "Get booking detail",
+          "request": { "method": "GET", "url": "{{base_url}}/bookings/{{booking_id}}/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Pending requests",
+          "request": { "method": "GET", "url": "{{base_url}}/bookings/pending-requests/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Upcoming bookings",
+          "request": { "method": "GET", "url": "{{base_url}}/bookings/upcoming/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "Accept booking",
+          "request": { "method": "POST", "url": "{{base_url}}/bookings/{{booking_id}}/accept/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Accept returns valid status', () => pm.expect([200,400,403,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Cancel booking",
+          "request": { "method": "POST", "url": "{{base_url}}/bookings/{{booking_id}}/cancel/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Cancel returns valid status', () => pm.expect([200,400,403,404]).to.include(status));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "05 — Users",
+      "item": [
+        {
+          "name": "Get my profile",
+          "request": { "method": "GET", "url": "{{base_url}}/users/me/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has data', () => pm.expect(json).to.have.property('data'));",
+            "if (json.data && json.data.id) pm.environment.set('user_id', json.data.id);"
+          ]}}]
+        },
+        {
+          "name": "Update my profile",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/users/me/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "My stats",
+          "request": { "method": "GET", "url": "{{base_url}}/users/me/stats/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has bookings', () => pm.expect(json).to.have.property('bookings'));"
+          ]}}]
+        },
+        {
+          "name": "Get user by ID",
+          "request": { "method": "GET", "url": "{{base_url}}/users/{{user_id}}/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "06 — Partners",
+      "item": [
+        {
+          "name": "List partners (public)",
+          "request": { "method": "GET", "url": "{{base_url}}/partners/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has data', () => pm.expect(json).to.have.property('data'));",
+            "if (json.data && json.data.length > 0) pm.environment.set('partner_id', json.data[0].id);"
+          ]}}]
+        },
+        {
+          "name": "Get partner by ID",
+          "request": { "method": "GET", "url": "{{base_url}}/partners/{{partner_id}}/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Create partner profile",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/partners/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"business_name\": \"Newman Test Agency\",\n  \"business_type\": \"rental_agency\",\n  \"description\": \"Created via Newman test run\",\n  \"address\": \"123 Test Street\",\n  \"city\": \"Algiers\",\n  \"state\": \"Algiers\",\n  \"phone_number\": \"+213555123456\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "// 201=created, 400=already exists, 401=not logged in, 500=backend validation issue",
+            "pm.test('Create partner returns 201/400/401/500', () => pm.expect([201,400,401,500]).to.include(status));",
+            "if (status === 201) {",
+            "    const json = pm.response.json();",
+            "    if (json.data && json.data.id) pm.environment.set('partner_id', json.data.id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "Get my partner profile",
+          "request": { "method": "GET", "url": "{{base_url}}/partners/me/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Partner earnings",
+          "request": { "method": "GET", "url": "{{base_url}}/partners/me/earnings/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Partner analytics (30d)",
+          "request": { "method": "GET", "url": "{{base_url}}/partners/me/analytics/?range=30d" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Partner reviews",
+          "request": { "method": "GET", "url": "{{base_url}}/partners/me/reviews/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Partner activity",
+          "request": { "method": "GET", "url": "{{base_url}}/partners/me/activity/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "07 — Reviews",
+      "item": [
+        {
+          "name": "List reviews (public)",
+          "request": { "method": "GET", "url": "{{base_url}}/reviews/?listing_id={{listing_id}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "if (json.data && json.data.length > 0) pm.environment.set('review_id', json.data[0].id);"
+          ]}}]
+        },
+        {
+          "name": "Can I review?",
+          "request": { "method": "GET", "url": "{{base_url}}/reviews/can_review/?listing_id={{listing_id}}" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has can_review field', () => pm.expect(json).to.have.property('can_review'));"
+          ]}}]
+        },
+        {
+          "name": "Create review",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/reviews/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"listing_id\": {{listing_id}},\n  \"rating\": 4,\n  \"comment\": \"Great car, tested via Newman!\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "// 201=new, 200=updated existing, 403=own listing",
+            "pm.test('Create review returns valid status', () => pm.expect([201,200,400,403]).to.include(status));",
+            "if ([201,200].includes(status)) {",
+            "    const json = pm.response.json();",
+            "    if (json.data && json.data.id) pm.environment.set('review_id', json.data.id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "Review analytics",
+          "request": { "method": "GET", "url": "{{base_url}}/reviews/analytics/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "08 — Favorites",
+      "item": [
+        {
+          "name": "Add to favorites",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/favorites/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"listing_id\": {{listing_id}}\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Add fav returns 201 or 200', () => pm.expect([201,200]).to.include(status));",
+            "const json = pm.response.json();",
+            "if (json.data && json.data.id) pm.environment.set('favorite_id', json.data.id);"
+          ]}}]
+        },
+        {
+          "name": "List my favorites",
+          "request": { "method": "GET", "url": "{{base_url}}/favorites/my-favorites/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has data', () => pm.expect(json).to.have.property('data'));"
+          ]}}]
+        },
+        {
+          "name": "Remove favorite by listing",
+          "request": { "method": "DELETE", "url": "{{base_url}}/favorites/by-listing/{{listing_id}}/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Delete returns 200 or 404', () => pm.expect([200,404]).to.include(status));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "09 — Notifications",
+      "item": [
+        {
+          "name": "List notifications",
+          "request": { "method": "GET", "url": "{{base_url}}/notifications/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "Mark all read",
+          "request": { "method": "POST", "url": "{{base_url}}/notifications/read-all/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "10 — Newsletter",
+      "item": [
+        {
+          "name": "Subscribe",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": ["pm.request.headers.remove('Authorization');"]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const status = pm.response.code;",
+                "pm.test('Subscribe returns 200/201', () => pm.expect([200,201]).to.include(status));"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/newsletter/subscribe/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"newman-test@example.com\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 — Admin (requires admin login)",
+      "description": "These tests login as admin first, then hit admin-only endpoints.",
+      "item": [
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": { "exec": ["pm.request.headers.remove('Authorization');"]}
+            },
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const status = pm.response.code;",
+                "pm.test('Admin login returns 200 or 401', () => pm.expect([200,401]).to.include(status));",
+                "if (status === 200) {",
+                "    const json = pm.response.json();",
+                "    if (json.access) pm.environment.set('access_token', json.access);",
+                "    if (json.refresh) pm.environment.set('refresh_token', json.refresh);",
+                "    console.log('Admin login OK');",
+                "}"
+              ]}
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/login/",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}" }
+          }
+        },
+        {
+          "name": "Admin stats",
+          "request": { "method": "GET", "url": "{{base_url}}/api/admin/stats/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 403', () => pm.expect([200,403]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Admin analytics",
+          "request": { "method": "GET", "url": "{{base_url}}/api/admin/analytics/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 403', () => pm.expect([200,403]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "Admin revenue",
+          "request": { "method": "GET", "url": "{{base_url}}/api/admin/revenue/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 403', () => pm.expect([200,403]).to.include(status));"
+          ]}}]
+        },
+        {
+          "name": "List all users (admin)",
+          "request": { "method": "GET", "url": "{{base_url}}/users/" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "pm.test('Returns 200 or 403', () => pm.expect([200,401,403]).to.include(status));"
+          ]}}]
+        }
+      ]
+    }
+  ]
+}

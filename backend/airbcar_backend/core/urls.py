@@ -195,11 +195,11 @@ if views.MarkAllNotificationsReadView is not None:
 if views.NewsletterSubscribeView is not None:
     urlpatterns.append(path('api/newsletter/subscribe/', views.NewsletterSubscribeView.as_view(), name='newsletter-subscribe'))
 
-# Admin endpoints
+# Admin endpoints (use api/admin/ to avoid collision with Django's built-in /admin/ site)
 if views.AdminStatsView is not None:
-    urlpatterns.append(path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'))
+    urlpatterns.append(path('api/admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'))
 if views.AdminAnalyticsView is not None:
-    urlpatterns.append(path('admin/analytics/', views.AdminAnalyticsView.as_view(), name='admin-analytics'))
+    urlpatterns.append(path('api/admin/analytics/', views.AdminAnalyticsView.as_view(), name='admin-analytics'))
 if views.AdminRevenueView is not None:
-    urlpatterns.append(path('admin/revenue/', views.AdminRevenueView.as_view(), name='admin-revenue'))
+    urlpatterns.append(path('api/admin/revenue/', views.AdminRevenueView.as_view(), name='admin-revenue'))
 

@@ -15,5 +15,9 @@ httpx[http2]
 requests==2.31.0
 setuptools>=56.0.0
 
+# ===== TESTING DEPENDENCIES =====
+schemathesis==3.28.0  # 🔥 AUTOMATIC API TESTING - Just run it, no code needed!
+drf-spectacular==0.27.0  # OpenAPI schema generation
+
 # Optional: Redis for production caching (requires external Redis service)
 # django-redis==5.4.0 

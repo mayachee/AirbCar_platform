@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     'core',
 ]
 
@@ -303,6 +304,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',  # Removed BrowsableAPIRenderer for production speed
     ),
     'COMPACT_JSON': not DEBUG,  # Remove whitespace from JSON in production
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 if ENABLE_THROTTLING:
@@ -386,6 +388,14 @@ CORS_ALLOW_HEADERS = [
 
 # JWT Settings
 from datetime import timedelta
+
+# DRF Spectacular (OpenAPI/Swagger) Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'AirbCar API',
+    'DESCRIPTION': 'Car rental platform API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),

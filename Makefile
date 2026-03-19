@@ -104,3 +104,4 @@ fclean: clean
 	@echo "$(GREEN)Full cleanup completed!$(RESET)"
 
 re: clean run
+
