@@ -9,7 +9,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     services:
       db:
         image: postgres:15
@@ -25,184 +25,53 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      # redis:
-      #   image: redis:7
-      #   ports:
-      #     - 6379:6379
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-      - name: Wait for Postgres
-        run: |
-          until pg_isready -h localhost -p 5432; do sleep 1; done
+          python-version: "3.11"
 
       - name: Install backend dependencies
+        working-directory: backend
         run: |
-          cd backend
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest pytest-django pytest-cov factory-boy Faker
 
-      - name: Debug database configuration
-        run: |
-          cd backend/airbcar_backend
-          echo "=== Environment Variables ==="
-          echo "GITHUB_ACTIONS: $GITHUB_ACTIONS"
-          echo "DATABASE_HOST: $DATABASE_HOST"
-          echo "DATABASE_NAME: $DATABASE_NAME"
-          echo "DATABASE_USER: $DATABASE_USER"
-          echo "DATABASE_PASSWORD: [hidden]"
-          echo "DJANGO_SETTINGS_MODULE: $DJANGO_SETTINGS_MODULE"
-          echo ""
-          echo "=== Django Settings Check ==="
-          python -c "
-          import os
-          import sys
-          sys.path.append('.')
-          import django
-          django.setup()
-          from django.conf import settings
-          print('Settings module loaded:', settings.SETTINGS_MODULE)
-          print('Database HOST:', settings.DATABASES['default']['HOST'])
-          print('Database NAME:', settings.DATABASES['default']['NAME'])
-          print('Database USER:', settings.DATABASES['default']['USER'])
-          print('Database PORT:', settings.DATABASES['default']['PORT'])
-          " || echo "Django setup failed"
+      - name: Run backend tests (pytest)
+        working-directory: backend/airbcar_backend
         env:
-          GITHUB_ACTIONS: true
+          CI: "true"
+          SECRET_KEY: "ci-test-key"
+          USE_SQLITE_FOR_TESTS: "true"
+          GITHUB_ACTIONS: "true"
           DATABASE_HOST: localhost
           DATABASE_PORT: 5432
           DATABASE_NAME: airbcar_db
           DATABASE_USER: airbcar_user
           DATABASE_PASSWORD: amineamine
           DJANGO_SETTINGS_MODULE: airbcar_backend.settings
-
-      - name: Test database connection
         run: |
-          cd backend/airbcar_backend
-          python -c "
-          import os
-          import sys
-          sys.path.append('.')
-          import django
-          django.setup()
-          from django.db import connection
-          from django.conf import settings
-          print('Testing connection with HOST:', settings.DATABASES['default']['HOST'])
-          print('Database NAME:', settings.DATABASES['default']['NAME'])
-          print('Database USER:', settings.DATABASES['default']['USER'])
-          print('Database PORT:', settings.DATABASES['default']['PORT'])
-          print('SSL Mode:', settings.DATABASES['default']['OPTIONS'].get('sslmode', 'not set'))
-          try:
-              cursor = connection.cursor()
-              cursor.execute('SELECT 1')
-              print('Database connection successful!')
-          except Exception as e:
-              print(f'Database connection failed: {e}')
-              sys.exit(1)
-          "
-        env:
-          GITHUB_ACTIONS: true
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_NAME: airbcar_db
-          DATABASE_USER: airbcar_user
-          DATABASE_PASSWORD: amineamine
-          DJANGO_SETTINGS_MODULE: airbcar_backend.settings
-
-      - name: Verify Django settings are correct
-        run: |
-          cd backend/airbcar_backend
-          echo "=== Testing Django Configuration ==="
-          python -c "
-          import os
-          print('Environment DJANGO_SETTINGS_MODULE:', os.environ.get('DJANGO_SETTINGS_MODULE'))
-          import django
-          django.setup()
-          from django.conf import settings
-          print('Django settings module:', settings.SETTINGS_MODULE)
-          print('Database configuration:')
-          print('  ENGINE:', settings.DATABASES['default']['ENGINE'])
-          print('  HOST:', settings.DATABASES['default']['HOST'])
-          print('  NAME:', settings.DATABASES['default']['NAME'])
-          print('  USER:', settings.DATABASES['default']['USER'])
-          print('  PORT:', settings.DATABASES['default']['PORT'])
-          print('  SSL Mode:', settings.DATABASES['default']['OPTIONS'].get('sslmode', 'not set'))
-          # Only check HOST if not using SQLite
-          if settings.DATABASES['default']['ENGINE'] != 'django.db.backends.sqlite3':
-              if settings.DATABASES['default']['HOST'] != 'localhost':
-                  print('ERROR: Database HOST is not localhost!')
-                  exit(1)
-              else:
-                  print('SUCCESS: Database HOST is correctly set to localhost')
-          else:
-              print('SQLite detected, skipping HOST check.')
-          "
-        env:
-          GITHUB_ACTIONS: true
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_NAME: airbcar_db
-          DATABASE_USER: airbcar_user
-          DATABASE_PASSWORD: amineamine
-          DJANGO_SETTINGS_MODULE: airbcar_backend.settings
-
-      - name: Run database migrations
-        run: |
-          cd backend/airbcar_backend
-          echo "=== Pre-migration debug ==="
-          echo "DJANGO_SETTINGS_MODULE: $DJANGO_SETTINGS_MODULE"
-          export DJANGO_SETTINGS_MODULE=airbcar_backend.settings
-          echo "=== Running migrations with Django manage.py ==="
-          python manage.py migrate
-        env:
-          GITHUB_ACTIONS: true
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_NAME: airbcar_db
-          DATABASE_USER: airbcar_user
-          DATABASE_PASSWORD: amineamine
-          DJANGO_SETTINGS_MODULE: airbcar_backend.settings
-
-      - name: Run backend tests
-        run: |
-          cd backend/airbcar_backend
-          export DJANGO_SETTINGS_MODULE=airbcar_backend.settings
-          python manage.py test
-        env:
-          GITHUB_ACTIONS: true
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_NAME: airbcar_db
-          DATABASE_USER: airbcar_user
-          DATABASE_PASSWORD: amineamine
-          DJANGO_SETTINGS_MODULE: airbcar_backend.settings
+          python -m pytest tests -v
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install --legacy-peer-deps
+        working-directory: frontend
+        run: npm install --legacy-peer-deps
 
       - name: Run frontend linting (non-blocking)
-        run: |
-          cd frontend
-          npm run lint || true
+        working-directory: frontend
+        run: npm run lint || true
 
       - name: Run frontend build
-        run: |
-          cd frontend
-          npm run build
+        working-directory: frontend
         env:
-          ESLINT_NO_DEV_ERRORS: true
-          CI: false
+          ESLINT_NO_DEV_ERRORS: "true"
+          CI: "false"
+        run: npm run build
