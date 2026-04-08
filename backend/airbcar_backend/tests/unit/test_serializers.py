@@ -3,8 +3,11 @@ Unit tests for serializers.
 Tests serialization, deserialization, and validation.
 """
 import pytest
+import io
 from decimal import Decimal
 from rest_framework import serializers
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from core.serializers import (
     UserSerializer, PartnerSerializer, 
@@ -76,6 +79,27 @@ class TestUserSerializer:
         user = UserFactory()
         serializer = UserSerializer(user, context={'request': None})
         assert serializer.data['id'] == user.id
+
+    def test_user_serializer_rejects_single_license_side_upload(self, db):
+        """User update must include both license sides for verification."""
+        user = UserFactory(role='customer')
+
+        img = Image.new('RGB', (800, 500), color=(240, 240, 240))
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG')
+        upload = SimpleUploadedFile('front.jpg', buffer.getvalue(), content_type='image/jpeg')
+
+        class DummyRequest:
+            FILES = {'license_front_document': upload}
+            data = {}
+
+        serializer = UserSerializer(user, data={}, partial=True, context={'request': DummyRequest()})
+        assert serializer.is_valid(), serializer.errors
+
+        with pytest.raises(serializers.ValidationError) as exc_info:
+            serializer.save()
+
+        assert 'license_documents' in exc_info.value.detail
 
 
 @pytest.mark.unit

@@ -10,6 +10,7 @@ from .image_utils import (
     normalize_image_entry,
     upload_file_to_supabase_storage
 )
+from .license_verification import verify_driving_license_images
 
 # Import email utilities from parent utils.py module
 # Since we're in core/utils/__init__.py, we need to import from core.utils (the .py file)
@@ -96,6 +97,7 @@ __all__ = [
     'combine_images',
     'normalize_image_entry',
     'upload_file_to_supabase_storage',
+    'verify_driving_license_images',
     # Email utilities
     'send_verification_email',
     'send_password_reset_email',

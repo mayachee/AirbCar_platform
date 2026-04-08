@@ -3,10 +3,20 @@ Integration tests for User API endpoints.
 Tests user profile, updates, and user management.
 """
 import pytest
+import io
 from rest_framework import status
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from core.models import User
 from tests.factories import UserFactory
+
+
+def _make_upload(name='doc.jpg'):
+    image = Image.new('RGB', (900, 560), color=(245, 245, 240))
+    buf = io.BytesIO()
+    image.save(buf, format='JPEG')
+    return SimpleUploadedFile(name, buf.getvalue(), content_type='image/jpeg')
 
 
 @pytest.mark.integration
@@ -222,3 +232,17 @@ class TestUserDocumentUpload:
         # Placeholder for license upload test
         
         pytest.skip("License upload test requires proper setup")
+
+    def test_upload_document_endpoint_rejects_single_side(self, db, authenticated_client):
+        """Bypass guard: upload-document endpoint must reject front-only payloads."""
+        url = '/users/me/upload-document/'
+        response = authenticated_client.post(
+            url,
+            {'license_front_document': _make_upload('front.jpg')},
+            format='multipart',
+        )
+
+        if response.status_code == 404:
+            pytest.skip('Upload-document endpoint not found')
+
+        assert response.status_code == 400

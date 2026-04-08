@@ -23,6 +23,7 @@ from ..serializers import (
     ReviewSerializer, UserSerializer,
 )
 from ..supabase_storage import upload_file_to_supabase
+from ..utils.license_verification import verify_driving_license_images
 
 
 SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
@@ -251,6 +252,28 @@ class BookingListView(APIView):
             
             # Determine booking status based on instant_booking setting
             booking_status = 'confirmed' if listing.instant_booking else 'pending'
+
+            # Enforce front/back pair and verify before any upload attempt.
+            has_front = 'license_front_document' in request.FILES
+            has_back = 'license_back_document' in request.FILES
+            if has_front != has_back:
+                return Response({
+                    'error': 'Both license sides are required',
+                    'message': 'Please upload license_front_document and license_back_document together'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if has_front and has_back:
+                verification = verify_driving_license_images(
+                    request.FILES['license_front_document'],
+                    request.FILES['license_back_document'],
+                )
+                if not verification.get('is_valid'):
+                    return Response({
+                        'error': 'License verification failed',
+                        'errors': verification.get('errors', []),
+                        'warnings': verification.get('warnings', []),
+                        'verification': verification,
+                    }, status=status.HTTP_400_BAD_REQUEST)
             
             # Prepare booking data - create clean copy without file objects
             booking_data = {}

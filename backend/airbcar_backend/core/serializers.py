@@ -5,6 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification
+from .utils.license_verification import verify_driving_license_images
 
 User = get_user_model()
 
@@ -100,6 +101,27 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Update user profile and handle document uploads to Supabase Storage."""
         request = self.context.get('request')
+
+        # Enforce pair validation: if one side is uploaded, both sides must be uploaded together.
+        if request and request.FILES:
+            has_front = 'license_front_document' in request.FILES
+            has_back = 'license_back_document' in request.FILES
+
+            if has_front != has_back:
+                raise serializers.ValidationError({
+                    'license_documents': 'Please upload both front and back license images together for verification.'
+                })
+
+            if has_front and has_back:
+                verification = verify_driving_license_images(
+                    front_image=request.FILES['license_front_document'],
+                    back_image=request.FILES['license_back_document'],
+                )
+                if not verification.get('is_valid'):
+                    raise serializers.ValidationError({
+                        'license_documents': verification.get('errors', ['License verification failed']),
+                        'license_verification': verification,
+                    })
         
         # Handle document uploads to Supabase Storage
         # Process files from request.FILES and upload to Supabase

@@ -3,12 +3,22 @@ Integration tests for Booking API endpoints.
 Tests booking creation, status updates, and payment workflow.
 """
 import pytest
+import io
 from rest_framework import status
 from datetime import timedelta
 from django.utils import timezone
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from core.models import Booking
 from tests.factories import UserFactory, BookingFactory, ListingFactory, PartnerFactory
+
+
+def _make_upload(name='doc.jpg'):
+    image = Image.new('RGB', (900, 560), color=(245, 245, 240))
+    buf = io.BytesIO()
+    image.save(buf, format='JPEG')
+    return SimpleUploadedFile(name, buf.getvalue(), content_type='image/jpeg')
 
 
 @pytest.mark.integration
@@ -135,6 +145,28 @@ class TestBookingCreationAPI:
         # Should fail when return is before pickup
         if response.status_code in [400, 422]:
             assert response.status_code in [400, 422]
+
+    def test_create_booking_rejects_single_license_side(self, db, authenticated_client, listing):
+        """Bypass guard: booking endpoint must reject front-only license uploads."""
+        url = '/bookings/'
+        pickup_date = (timezone.now().date() + timedelta(days=1))
+        return_date = (timezone.now().date() + timedelta(days=4))
+
+        data = {
+            'listing': listing.id,
+            'pickup_date': str(pickup_date),
+            'return_date': str(return_date),
+            'pickup_location': 'Downtown',
+            'return_location': 'Downtown',
+            'payment_method': 'online',
+            'license_front_document': _make_upload('front.jpg'),
+        }
+        response = authenticated_client.post(url, data, format='multipart')
+
+        if response.status_code == 404:
+            pytest.skip('Booking creation endpoint not found')
+
+        assert response.status_code == 400
 
 
 @pytest.mark.integration

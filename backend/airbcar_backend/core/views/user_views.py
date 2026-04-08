@@ -17,6 +17,7 @@ from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
 )
+from ..utils.license_verification import verify_driving_license_images
 
 
 class UserListView(APIView):
@@ -331,50 +332,55 @@ class UserDocumentUploadView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        """Upload license front or back document."""
+        """Upload and verify license front/back documents together."""
         try:
-            if 'document' not in request.FILES:
+            has_front = 'license_front_document' in request.FILES
+            has_back = 'license_back_document' in request.FILES
+
+            if not (has_front and has_back):
                 return Response({
-                    'error': 'Missing document file',
-                    'message': 'Please provide a document file'
+                    'error': 'Missing required license files',
+                    'message': 'Please provide both license_front_document and license_back_document'
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
-            document = request.FILES['document']
-            doc_type = request.data.get('type', 'license_front')  # license_front or license_back
-            
-            # Validate file type and size
+
+            front_file = request.FILES['license_front_document']
+            back_file = request.FILES['license_back_document']
+
+            # Validate file type and size for both files
             MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-            if document.size > MAX_FILE_SIZE:
+            allowed_types = {'image/jpeg', 'image/png', 'image/jpg', 'image/webp'}
+
+            for side, file_obj in (('front', front_file), ('back', back_file)):
+                if file_obj.size > MAX_FILE_SIZE:
+                    return Response({
+                        'error': 'File too large',
+                        'message': f'Maximum file size is 5MB for {side} image'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                if file_obj.content_type not in allowed_types:
+                    return Response({
+                        'error': 'Invalid file type',
+                        'message': f'Only JPEG, PNG, JPG, and WEBP files are allowed for {side} image'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            verification = verify_driving_license_images(front_file, back_file)
+            if not verification.get('is_valid'):
                 return Response({
-                    'error': 'File too large',
-                    'message': 'Maximum file size is 5MB'
+                    'error': 'License verification failed',
+                    'errors': verification.get('errors', []),
+                    'warnings': verification.get('warnings', []),
+                    'verification': verification,
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Allowed MIME types
-            allowed_types = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
-            if document.content_type not in allowed_types:
-                return Response({
-                    'error': 'Invalid file type',
-                    'message': 'Only JPEG, PNG, and PDF files are allowed'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Update user document
-            if doc_type == 'license_front':
-                request.user.license_front_document = document
-            elif doc_type == 'license_back':
-                request.user.license_back_document = document
-            else:
-                return Response({
-                    'error': 'Invalid document type',
-                    'message': 'Type must be license_front or license_back'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
+
+            # Save verified files
+            request.user.license_front_document = front_file
+            request.user.license_back_document = back_file
             request.user.save()
-            
+
             serializer = UserSerializer(request.user, context={'request': request})
             return Response({
-                'message': 'Document uploaded successfully',
-                'data': serializer.data
+                'message': 'License documents uploaded and verified successfully',
+                'data': serializer.data,
+                'verification': verification,
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

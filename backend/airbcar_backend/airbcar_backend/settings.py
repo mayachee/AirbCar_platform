@@ -229,6 +229,27 @@ DATABASES = {
     }
 }
 
+# Test runner fallback: use SQLite if explicit DB env vars are not configured.
+# Set USE_SQLITE_FOR_TESTS=false to force Postgres during tests.
+IS_TEST_RUN = ('pytest' in ' '.join(sys.argv).lower()) or ('test' in sys.argv)
+USE_SQLITE_FOR_TESTS = os.environ.get('USE_SQLITE_FOR_TESTS', 'true').lower() == 'true'
+HAS_EXPLICIT_DB_CONFIG = any(
+    os.environ.get(k)
+    for k in ('DATABASE_URL', 'DATABASE_NAME', 'DATABASE_HOST', 'PGHOST')
+)
+if IS_TEST_RUN and USE_SQLITE_FOR_TESTS and not HAS_EXPLICIT_DB_CONFIG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'test_db.sqlite3'),
+        }
+    }
+
+if IS_TEST_RUN:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
 # Custom User Model
 AUTH_USER_MODEL = 'core.User'
 
