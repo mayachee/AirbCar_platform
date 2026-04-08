@@ -99,6 +99,21 @@ class TestUserUpdateAPI:
         if response.status_code in [403, 404, 405]:
             assert response.status_code in [403, 404, 405]
 
+    def test_update_profile_single_license_side_returns_400_not_500(self, db, authenticated_client):
+        """Uploading one license side should be a validation error (400), not server error (500)."""
+        url = '/users/me/'
+        response = authenticated_client.put(
+            url,
+            {'license_front_document': _make_upload('front.jpg')},
+            format='multipart',
+        )
+
+        if response.status_code == 404:
+            pytest.skip('User update endpoint not found')
+
+        assert response.status_code == 400
+        assert 'error' in response.data
+
 
 @pytest.mark.integration
 @pytest.mark.django_db

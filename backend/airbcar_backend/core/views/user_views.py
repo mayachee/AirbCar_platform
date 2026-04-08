@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.db.models import Q, F, DecimalField, Avg, Sum, Count
 from django.utils import timezone
 from django.db import transaction, OperationalError
@@ -154,6 +155,14 @@ class UserMeView(APIView):
                     return Response({
                         'error': error_msg,
                         'message': error_msg
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                except DRFValidationError as ve:
+                    # Surface validation details as 400 instead of 500.
+                    if settings.DEBUG:
+                        print(f"❌ User validation error: {ve.detail}")
+                    return Response({
+                        'error': 'Validation failed',
+                        'errors': ve.detail,
                     }, status=status.HTTP_400_BAD_REQUEST)
             
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
