@@ -127,3 +127,43 @@ class TestLicenseVerification:
         )
 
         assert result["is_valid"] is False
+
+    def test_rejects_expired_license_from_ocr_date(self):
+        front = _make_test_image(text="DRIVING LICENCE NAME BIRTH ISSUED")
+        back = _make_test_image(text="CATEGORIES CODES")
+
+        ocr_outputs = iter(
+            [
+                "driving licence issued 01.01.2018 exp 01.01.2020",
+                "categories codes a1 b c1 valid to 01.01.2020",
+            ]
+        )
+
+        result = verify_driving_license_images(
+            front,
+            back,
+            ocr_extractor=lambda _img: next(ocr_outputs),
+        )
+
+        assert result["is_valid"] is False
+        assert result["date_check"]["is_expired"] is True
+
+    def test_accepts_future_expiry_from_ocr_date(self):
+        front = _make_test_image(text="DRIVING LICENCE NAME BIRTH ISSUED")
+        back = _make_test_image(text="CATEGORIES CODES")
+
+        ocr_outputs = iter(
+            [
+                "driving licence issued 01.01.2023 exp 01.01.2035",
+                "categories codes a1 b c1 valid to 01.01.2035",
+            ]
+        )
+
+        result = verify_driving_license_images(
+            front,
+            back,
+            ocr_extractor=lambda _img: next(ocr_outputs),
+        )
+
+        assert result["is_valid"] is True
+        assert result["date_check"]["is_expired"] is False

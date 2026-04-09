@@ -8,7 +8,7 @@ from rest_framework import status
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
-from core.models import User
+from core.models import User, LicenseVerificationRecord
 from tests.factories import UserFactory
 
 
@@ -261,3 +261,73 @@ class TestUserDocumentUpload:
             pytest.skip('Upload-document endpoint not found')
 
         assert response.status_code == 400
+
+    def test_upload_document_endpoint_stores_verification_record(self, db, authenticated_client, user, monkeypatch):
+        """Successful upload-document verification should be persisted."""
+        url = '/users/me/upload-document/'
+
+        def fake_verify(*args, **kwargs):
+            return {
+                'is_valid': True,
+                'score': 0.88,
+                'detected_country': 'FR',
+                'date_check': {'issue_date': '2021-02-01', 'expiry_date': '2028-02-01', 'is_expired': False},
+                'errors': [],
+                'warnings': [],
+                'checks': {},
+            }
+
+        monkeypatch.setattr('core.views.user_views.verify_driving_license_images', fake_verify)
+
+        response = authenticated_client.post(
+            url,
+            {
+                'license_front_document': _make_upload('front.jpg'),
+                'license_back_document': _make_upload('back.jpg'),
+            },
+            format='multipart',
+        )
+
+        if response.status_code == 404:
+            pytest.skip('Upload-document endpoint not found')
+
+        assert response.status_code == 200
+        record = LicenseVerificationRecord.objects.filter(user=user, context='user_upload').first()
+        assert record is not None
+        assert record.is_valid is True
+        assert record.detected_country == 'FR'
+
+    def test_upload_document_endpoint_ignores_audit_persist_failure(self, db, authenticated_client, monkeypatch):
+        """Audit persistence failures should not block successful upload verification responses."""
+        url = '/users/me/upload-document/'
+
+        def fake_verify(*args, **kwargs):
+            return {
+                'is_valid': True,
+                'score': 0.88,
+                'detected_country': 'FR',
+                'date_check': {'issue_date': '2021-02-01', 'expiry_date': '2028-02-01', 'is_expired': False},
+                'errors': [],
+                'warnings': [],
+                'checks': {},
+            }
+
+        monkeypatch.setattr('core.views.user_views.verify_driving_license_images', fake_verify)
+        monkeypatch.setattr(
+            'core.utils.license_verification_persistence.LicenseVerificationRecord.objects.create',
+            lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError('audit write failed')),
+        )
+
+        response = authenticated_client.post(
+            url,
+            {
+                'license_front_document': _make_upload('front.jpg'),
+                'license_back_document': _make_upload('back.jpg'),
+            },
+            format='multipart',
+        )
+
+        if response.status_code == 404:
+            pytest.skip('Upload-document endpoint not found')
+
+        assert response.status_code == 200

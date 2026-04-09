@@ -13,7 +13,7 @@ from core.serializers import (
     UserSerializer, PartnerSerializer, 
     ListingCompactSerializer, SimpleListingSerializer
 )
-from core.models import User, Partner, Listing
+from core.models import User, Partner, Listing, LicenseVerificationRecord
 from tests.factories import UserFactory, PartnerFactory, ListingFactory
 
 
@@ -80,6 +80,32 @@ class TestUserSerializer:
         serializer = UserSerializer(user, context={'request': None})
         assert serializer.data['id'] == user.id
 
+    def test_user_serializer_includes_latest_verification_summary(self, db):
+        """Serializer should expose latest persisted verification summary."""
+        user = UserFactory(role='customer')
+        LicenseVerificationRecord.objects.create(
+            user=user,
+            context='profile_update',
+            is_valid=True,
+            score=0.93,
+            detected_country='MA',
+            errors=[],
+            warnings=['OCR engine unavailable'],
+            payload={'is_valid': True},
+        )
+
+        serializer = UserSerializer(user, context={'include_latest_license_verification': True})
+        summary = serializer.data['latest_license_verification']
+        assert summary is not None
+        assert summary['is_valid'] is True
+        assert summary['detected_country'] == 'MA'
+
+    def test_user_serializer_omits_latest_verification_by_default(self, db):
+        """Latest verification should be excluded unless explicitly requested."""
+        user = UserFactory(role='customer')
+        serializer = UserSerializer(user)
+        assert 'latest_license_verification' not in serializer.data
+
     def test_user_serializer_rejects_single_license_side_upload(self, db):
         """User update must include both license sides for verification."""
         user = UserFactory(role='customer')
@@ -100,6 +126,47 @@ class TestUserSerializer:
             serializer.save()
 
         assert 'license_documents' in exc_info.value.detail
+
+    def test_user_serializer_stores_failed_license_verification(self, db, monkeypatch):
+        """Failed profile license verification should be persisted for auditability."""
+        user = UserFactory(role='customer')
+
+        img = Image.new('RGB', (900, 560), color=(240, 240, 240))
+        front_buffer = io.BytesIO()
+        img.save(front_buffer, format='JPEG')
+        front = SimpleUploadedFile('front.jpg', front_buffer.getvalue(), content_type='image/jpeg')
+
+        back_buffer = io.BytesIO()
+        img.save(back_buffer, format='JPEG')
+        back = SimpleUploadedFile('back.jpg', back_buffer.getvalue(), content_type='image/jpeg')
+
+        def fake_verify(*args, **kwargs):
+            return {
+                'is_valid': False,
+                'score': 0.21,
+                'detected_country': 'MA',
+                'date_check': {'issue_date': '2020-01-01', 'expiry_date': '2024-01-01', 'is_expired': True},
+                'errors': ['Expired license'],
+                'warnings': [],
+                'checks': {},
+            }
+
+        monkeypatch.setattr('core.serializers.verify_driving_license_images', fake_verify)
+
+        class DummyRequest:
+            FILES = {'license_front_document': front, 'license_back_document': back}
+            data = {}
+
+        serializer = UserSerializer(user, data={}, partial=True, context={'request': DummyRequest()})
+        assert serializer.is_valid(), serializer.errors
+
+        with pytest.raises(serializers.ValidationError):
+            serializer.save()
+
+        record = LicenseVerificationRecord.objects.get(user=user, context='profile_update')
+        assert record.is_valid is False
+        assert record.is_expired is True
+        assert 'Expired license' in record.errors
 
 
 @pytest.mark.unit

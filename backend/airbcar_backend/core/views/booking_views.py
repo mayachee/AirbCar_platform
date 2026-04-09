@@ -24,6 +24,7 @@ from ..serializers import (
 )
 from ..supabase_storage import upload_file_to_supabase
 from ..utils.license_verification import verify_driving_license_images
+from ..utils.license_verification_persistence import store_license_verification_result
 
 
 SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
@@ -268,6 +269,11 @@ class BookingListView(APIView):
                     request.FILES['license_back_document'],
                 )
                 if not verification.get('is_valid'):
+                    store_license_verification_result(
+                        user=request.user,
+                        verification=verification,
+                        context='booking_create',
+                    )
                     return Response({
                         'error': 'License verification failed',
                         'errors': verification.get('errors', []),
@@ -369,6 +375,16 @@ class BookingListView(APIView):
 
                         # Save booking
                         booking = serializer.save(**save_kwargs)
+
+                        if has_front and has_back:
+                            store_license_verification_result(
+                                user=request.user,
+                                verification=verification,
+                                context='booking_create',
+                                booking=booking,
+                                front_document_url=license_front_url,
+                                back_document_url=license_back_url,
+                            )
                         
                         # If instant booking, mark payment as paid (assuming payment is processed)
                         if listing.instant_booking and request.data.get('payment_status') == 'paid':

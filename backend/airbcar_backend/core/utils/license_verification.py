@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import re
+from datetime import date
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from PIL import Image, ImageStat
@@ -86,6 +87,22 @@ COUNTRY_HINTS = {
     "united states": "US",
     "canada": "CA",
 }
+
+EXPIRY_MARKERS = (
+    "expiry",
+    "expires",
+    "exp",
+    "valid to",
+    "valid until",
+    "4b",
+)
+
+ISSUE_MARKERS = (
+    "issue",
+    "issued",
+    "iss",
+    "4a",
+)
 
 
 OCRExtractor = Callable[[Image.Image], str]
@@ -166,6 +183,13 @@ def verify_driving_license_images(
         if detected_country == "UNKNOWN":
             warnings.append("Could not confidently detect issuing country (accepted as international)")
 
+        combined_text = " ".join([front_result.get("ocr_text", ""), back_result.get("ocr_text", "")])
+        date_check = _validate_license_dates(combined_text)
+        if date_check["is_expired"]:
+            errors.append("Driver's license appears expired based on OCR-detected date")
+        if date_check["warning"]:
+            warnings.append(date_check["warning"])
+
         ocr_available = front_result.get("ocr_available") and back_result.get("ocr_available")
         if not ocr_available:
             warnings.append("OCR engine unavailable: verification used image-quality and layout heuristics only")
@@ -180,6 +204,7 @@ def verify_driving_license_images(
             "is_valid": is_valid,
             "score": combined_score,
             "detected_country": detected_country,
+            "date_check": date_check,
             "errors": errors,
             "warnings": warnings,
             "checks": {
@@ -402,3 +427,100 @@ def _public_side_result(side_result: Dict[str, Any]) -> Dict[str, Any]:
     public.pop("grayscale_thumbnail", None)
     public.pop("thumbnail_bytes", None)
     return public
+
+
+def _validate_license_dates(text: str) -> Dict[str, Any]:
+    """Best-effort date validation from OCR text.
+
+    Returns date details and expiration status. If OCR does not provide
+    confident date candidates, no hard failure is produced.
+    """
+    normalized = (text or "").lower()
+    expiry_dates = _extract_dates_near_markers(normalized, EXPIRY_MARKERS)
+    issue_dates = _extract_dates_near_markers(normalized, ISSUE_MARKERS)
+
+    # Fallback to generic date extraction if marker-based extraction fails.
+    if not expiry_dates:
+        generic_dates = _extract_all_dates(normalized)
+        if generic_dates:
+            expiry_dates = [max(generic_dates)]
+
+    warning = None
+    selected_expiry = max(expiry_dates) if expiry_dates else None
+    selected_issue = min(issue_dates) if issue_dates else None
+
+    is_expired = bool(selected_expiry and selected_expiry < date.today())
+
+    if not selected_expiry:
+        warning = "Could not confidently detect license expiry date from OCR"
+    elif selected_issue and selected_issue > selected_expiry:
+        warning = "Detected issue date appears later than expiry date; OCR date quality may be low"
+
+    return {
+        "is_expired": is_expired,
+        "expiry_date": selected_expiry.isoformat() if selected_expiry else None,
+        "issue_date": selected_issue.isoformat() if selected_issue else None,
+        "expiry_candidates": [d.isoformat() for d in sorted(expiry_dates)],
+        "issue_candidates": [d.isoformat() for d in sorted(issue_dates)],
+        "warning": warning,
+    }
+
+
+def _extract_dates_near_markers(text: str, markers: Tuple[str, ...]) -> List[date]:
+    found: List[date] = []
+    for marker in markers:
+        for match in re.finditer(re.escape(marker), text):
+            start = max(0, match.start() - 20)
+            end = min(len(text), match.end() + 40)
+            chunk = text[start:end]
+            found.extend(_extract_all_dates(chunk))
+    return _dedupe_dates(found)
+
+
+def _extract_all_dates(text: str) -> List[date]:
+    dates: List[date] = []
+
+    # dd/mm/yyyy or dd.mm.yy formats
+    for m in re.finditer(r"\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b", text):
+        day = int(m.group(1))
+        month = int(m.group(2))
+        year_raw = int(m.group(3))
+        year = _normalize_year(year_raw)
+        parsed = _safe_date(year, month, day)
+        if parsed:
+            dates.append(parsed)
+
+    # yyyy-mm-dd format
+    for m in re.finditer(r"\b(\d{4})[./-](\d{1,2})[./-](\d{1,2})\b", text):
+        year = int(m.group(1))
+        month = int(m.group(2))
+        day = int(m.group(3))
+        parsed = _safe_date(year, month, day)
+        if parsed:
+            dates.append(parsed)
+
+    return _dedupe_dates(dates)
+
+
+def _normalize_year(year_raw: int) -> int:
+    if year_raw >= 100:
+        return year_raw
+    # Common card formats use yy and usually represent 20xx for active licenses.
+    # Keep a conservative pivot for historical issues.
+    return 2000 + year_raw if year_raw <= 50 else 1900 + year_raw
+
+
+def _safe_date(year: int, month: int, day: int) -> Optional[date]:
+    try:
+        parsed = date(year, month, day)
+    except ValueError:
+        return None
+
+    # Ignore obvious OCR garbage outside realistic licensing range.
+    if parsed.year < 1950 or parsed.year > 2100:
+        return None
+    return parsed
+
+
+def _dedupe_dates(values: List[date]) -> List[date]:
+    return sorted(set(values))

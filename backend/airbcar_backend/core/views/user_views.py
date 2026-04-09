@@ -19,6 +19,7 @@ from ..serializers import (
     ReviewSerializer, UserSerializer,
 )
 from ..utils.license_verification import verify_driving_license_images
+from ..utils.license_verification_persistence import store_license_verification_result
 
 
 class UserListView(APIView):
@@ -95,7 +96,10 @@ class UserMeView(APIView):
     def get(self, request):
         """Get current user profile."""
         try:
-            serializer = UserSerializer(request.user, context={'request': request})
+            serializer = UserSerializer(
+                request.user,
+                context={'request': request, 'include_latest_license_verification': True}
+            )
             return Response({
                 'data': serializer.data
             }, status=status.HTTP_200_OK)
@@ -144,7 +148,10 @@ class UserMeView(APIView):
                             print(f"✅ User profile updated successfully")
                         
                         return Response({
-                            'data': UserSerializer(request.user, context={'request': request}).data,
+                            'data': UserSerializer(
+                                request.user,
+                                context={'request': request, 'include_latest_license_verification': True}
+                            ).data,
                             'message': 'Profile updated successfully'
                         }, status=status.HTTP_200_OK)
                 except ValueError as ve:
@@ -373,6 +380,11 @@ class UserDocumentUploadView(APIView):
 
             verification = verify_driving_license_images(front_file, back_file)
             if not verification.get('is_valid'):
+                store_license_verification_result(
+                    user=request.user,
+                    verification=verification,
+                    context='user_upload',
+                )
                 return Response({
                     'error': 'License verification failed',
                     'errors': verification.get('errors', []),
@@ -384,6 +396,12 @@ class UserDocumentUploadView(APIView):
             request.user.license_front_document = front_file
             request.user.license_back_document = back_file
             request.user.save()
+
+            store_license_verification_result(
+                user=request.user,
+                verification=verification,
+                context='user_upload',
+            )
 
             serializer = UserSerializer(request.user, context={'request': request})
             return Response({

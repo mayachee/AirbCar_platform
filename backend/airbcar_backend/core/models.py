@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from datetime import date as date_cls
 from django.conf import settings
 import secrets
 import json
@@ -46,6 +47,64 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} ({self.role})"
+
+
+class LicenseVerificationRecord(models.Model):
+    """Persisted record of each license verification attempt."""
+
+    CONTEXT_PROFILE_UPDATE = 'profile_update'
+    CONTEXT_USER_UPLOAD = 'user_upload'
+    CONTEXT_BOOKING_CREATE = 'booking_create'
+
+    CONTEXT_CHOICES = [
+        (CONTEXT_PROFILE_UPDATE, 'Profile Update'),
+        (CONTEXT_USER_UPLOAD, 'User Document Upload'),
+        (CONTEXT_BOOKING_CREATE, 'Booking Create'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='license_verifications')
+    booking = models.ForeignKey('Booking', on_delete=models.SET_NULL, null=True, blank=True, related_name='license_verifications')
+    context = models.CharField(max_length=30, choices=CONTEXT_CHOICES)
+
+    is_valid = models.BooleanField(default=False)
+    score = models.FloatField(null=True, blank=True)
+    detected_country = models.CharField(max_length=10, blank=True, default='UNKNOWN')
+
+    issue_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+    is_expired = models.BooleanField(default=False)
+
+    front_document_url = models.URLField(max_length=500, blank=True, null=True)
+    back_document_url = models.URLField(max_length=500, blank=True, null=True)
+
+    errors = models.JSONField(default=list, blank=True)
+    warnings = models.JSONField(default=list, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['context', 'created_at']),
+            models.Index(fields=['is_valid', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"LicenseVerificationRecord(user={self.user_id}, valid={self.is_valid}, context={self.context})"
+
+    @staticmethod
+    def parse_iso_date(value):
+        """Parse YYYY-MM-DD values safely from OCR payloads."""
+        if not value:
+            return None
+        if isinstance(value, date_cls):
+            return value
+        try:
+            return date_cls.fromisoformat(str(value))
+        except (TypeError, ValueError):
+            return None
 
 
 class Partner(models.Model):

@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 
-from core.models import Booking
+from core.models import Booking, LicenseVerificationRecord
 from tests.factories import UserFactory, BookingFactory, ListingFactory, PartnerFactory
 
 
@@ -167,6 +167,58 @@ class TestBookingCreationAPI:
             pytest.skip('Booking creation endpoint not found')
 
         assert response.status_code == 400
+
+    def test_create_booking_stores_license_verification_record(
+        self,
+        db,
+        authenticated_client,
+        user,
+        listing,
+        monkeypatch,
+    ):
+        """Successful booking verification should create a persisted audit record."""
+        url = '/bookings/'
+        pickup_date = (timezone.now().date() + timedelta(days=1))
+        return_date = (timezone.now().date() + timedelta(days=4))
+
+        def fake_verify(*args, **kwargs):
+            return {
+                'is_valid': True,
+                'score': 0.91,
+                'detected_country': 'MA',
+                'date_check': {'issue_date': '2022-01-01', 'expiry_date': '2029-01-01', 'is_expired': False},
+                'errors': [],
+                'warnings': [],
+                'checks': {},
+            }
+
+        def fake_upload(*args, **kwargs):
+            return 'https://example.com/license.jpg'
+
+        monkeypatch.setattr('core.views.booking_views.verify_driving_license_images', fake_verify)
+        monkeypatch.setattr('core.views.booking_views.upload_file_to_supabase', fake_upload)
+
+        data = {
+            'listing': listing.id,
+            'pickup_date': str(pickup_date),
+            'return_date': str(return_date),
+            'pickup_location': 'Downtown',
+            'return_location': 'Downtown',
+            'payment_method': 'online',
+            'license_front_document': _make_upload('front.jpg'),
+            'license_back_document': _make_upload('back.jpg'),
+        }
+        response = authenticated_client.post(url, data, format='multipart')
+
+        if response.status_code == 404:
+            pytest.skip('Booking creation endpoint not found')
+
+        assert response.status_code == 201
+        record = LicenseVerificationRecord.objects.filter(user=user, context='booking_create').first()
+        assert record is not None
+        assert record.is_valid is True
+        assert record.booking is not None
+        assert record.detected_country == 'MA'
 
 
 @pytest.mark.integration

@@ -98,6 +98,14 @@ export const useAccountPage = () => {
       // Map frontend camelCase to backend snake_case
       const profileData = mapFrontendToBackend(accountData);
 
+      const hasNewLicenseFront = Boolean(accountData.licenseFrontDocumentFile);
+      const hasNewLicenseBack = Boolean(accountData.licenseBackDocumentFile);
+      if (hasNewLicenseFront !== hasNewLicenseBack) {
+        setSaveMessage('Please upload both front and back license documents together.');
+        setSaving(false);
+        return;
+      }
+
       const hasDocumentUploads = Boolean(
         accountData.idFrontDocumentFile || 
         accountData.idBackDocumentFile ||
@@ -185,25 +193,47 @@ export const useAccountPage = () => {
       console.error('Error updating profile:', error);
       
       let errorMessage = 'Failed to update profile. Please try again.';
-      
-      // Try to get specific error message from backend response
-      const backendError = error.response?.data?.message || error.response?.data?.error || error.response?.data?.detail || (error.response?.data && typeof error.response.data === 'string' ? error.response.data : null);
 
-      if (backendError) {
-        // Use the specific backend error message
-        errorMessage = typeof backendError === 'string' ? backendError : JSON.stringify(backendError);
-      } else if (error.message) {
-        if (error.message.includes('400')) {
-          errorMessage = 'Invalid profile data. Please check all required fields are filled correctly.';
-        } else if (error.message.includes('401') || error.message.includes('403')) {
-          errorMessage = 'Authentication required. Please log in again.';
-        } else if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'Could not connect to server. Please check your connection and try again.';
+      // Enhanced API client exposes payload on error.data; keep axios-style fallback too.
+      const errorPayload = error?.data || error?.response?.data;
+      const fieldErrors = errorPayload?.errors;
+
+      if (fieldErrors) {
+        const licenseErrors = fieldErrors?.license_documents;
+        if (Array.isArray(licenseErrors) && licenseErrors.length > 0) {
+          errorMessage = licenseErrors.join('\n');
+        } else if (typeof licenseErrors === 'string') {
+          errorMessage = licenseErrors;
         } else {
-          errorMessage = error.message;
+          const firstFieldError = Object.values(fieldErrors).find(Boolean);
+          if (Array.isArray(firstFieldError) && firstFieldError.length > 0) {
+            errorMessage = firstFieldError.join('\n');
+          } else if (typeof firstFieldError === 'string') {
+            errorMessage = firstFieldError;
+          } else {
+            errorMessage = 'Validation failed. Please check your form fields.';
+          }
+        }
+      } else {
+        // Try to get specific error message from backend response
+        const backendError = errorPayload?.message || errorPayload?.error || errorPayload?.detail || (typeof errorPayload === 'string' ? errorPayload : null);
+
+        if (backendError) {
+          // Use the specific backend error message
+          errorMessage = typeof backendError === 'string' ? backendError : JSON.stringify(backendError);
+        } else if (error.message) {
+          if (error.message.includes('400')) {
+            errorMessage = 'Invalid profile data. Please check all required fields are filled correctly.';
+          } else if (error.message.includes('401') || error.message.includes('403')) {
+            errorMessage = 'Authentication required. Please log in again.';
+          } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = 'Could not connect to server. Please check your connection and try again.';
+          } else {
+            errorMessage = error.message;
+          }
         }
       }
-      
+
       setSaveMessage(errorMessage);
     } finally {
       setSaving(false);

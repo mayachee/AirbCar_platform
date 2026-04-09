@@ -4,8 +4,9 @@ DRF serializers for core app.
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification
+from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord
 from .utils.license_verification import verify_driving_license_images
+from .utils.license_verification_persistence import store_license_verification_result
 
 User = get_user_model()
 
@@ -14,6 +15,12 @@ class UserSerializer(serializers.ModelSerializer):
     """User serializer."""
     profile_picture_url = serializers.SerializerMethodField()
     is_partner = serializers.SerializerMethodField()
+    latest_license_verification = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.context.get('include_latest_license_verification', False):
+            self.fields.pop('latest_license_verification', None)
     
     class Meta:
         model = User
@@ -26,9 +33,28 @@ class UserSerializer(serializers.ModelSerializer):
             # License Information
             'license_number', 'license_origin_country', 'issue_date', 'expiry_date',
             # License Documents
-            'license_front_document_url', 'license_back_document_url'
+            'license_front_document_url', 'license_back_document_url',
+            'latest_license_verification'
         ]
         read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
+
+    def get_latest_license_verification(self, obj):
+        record = LicenseVerificationRecord.objects.filter(user=obj).order_by('-created_at').first()
+        if not record:
+            return None
+        return {
+            'id': record.id,
+            'context': record.context,
+            'is_valid': record.is_valid,
+            'score': record.score,
+            'detected_country': record.detected_country,
+            'issue_date': record.issue_date.isoformat() if record.issue_date else None,
+            'expiry_date': record.expiry_date.isoformat() if record.expiry_date else None,
+            'is_expired': record.is_expired,
+            'errors': record.errors,
+            'warnings': record.warnings,
+            'created_at': record.created_at.isoformat(),
+        }
 
     def get_is_partner(self, obj):
         """Check if user is a partner (no extra DB queries)."""
@@ -101,6 +127,7 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Update user profile and handle document uploads to Supabase Storage."""
         request = self.context.get('request')
+        verification = None
 
         # Enforce pair validation: if one side is uploaded, both sides must be uploaded together.
         if request and request.FILES:
@@ -118,6 +145,11 @@ class UserSerializer(serializers.ModelSerializer):
                     back_image=request.FILES['license_back_document'],
                 )
                 if not verification.get('is_valid'):
+                    store_license_verification_result(
+                        user=instance,
+                        verification=verification,
+                        context='profile_update',
+                    )
                     raise serializers.ValidationError({
                         'license_documents': verification.get('errors', ['License verification failed']),
                         'license_verification': verification,
@@ -196,6 +228,15 @@ class UserSerializer(serializers.ModelSerializer):
                     if settings.DEBUG:
                         print(f"❌ License back upload failed: {e}")
                     print(f"Warning: Failed to upload license back document. Error: {e}")
+
+            if verification is not None:
+                store_license_verification_result(
+                    user=instance,
+                    verification=verification,
+                    context='profile_update',
+                    front_document_url=instance.license_front_document_url,
+                    back_document_url=instance.license_back_document_url,
+                )
 
         # Handle profile picture deletion manually (as field is not in serializer)
         if request and 'profile_picture' in request.data:
