@@ -37,72 +37,31 @@ export function AuthProvider({ children }) {
         return
       }
 
-      // For now, just check if token exists and try to decode it
-      // In a production environment, you'd verify with the backend
+      // Always verify the token with the backend — never trust client-side JWT decoding
+      // for authorization decisions (role, is_partner, is_staff, etc.)
+      const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
-        const currentTime = Date.now() / 1000
-        
-        if (payload.exp < currentTime) {
-          // Token expired
+        const res = await fetch(`${apiUrl}/users/me/`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+
+        if (res.ok) {
+          const profileData = await res.json()
+          const userData = profileData?.data || profileData
+          if (userData && userData.id) {
+            setUser(userData)
+          } else {
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('refresh_token')
+          }
+        } else if (res.status === 401) {
+          // Token rejected by backend — clear it
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
-          setLoading(false)
-          return
         }
-        
-        // Initial user setup from token payload
-        const userData = {
-          id: payload.user_id,
-          username: payload.username,
-          email: payload.email || '',
-          first_name: payload.first_name || '',
-          last_name: payload.last_name || '',
-          is_partner: payload.is_partner || false,
-          is_verified: payload.is_verified || false,
-          is_staff: payload.is_staff || false,
-          is_superuser: payload.is_superuser || false,
-          role: payload.role || 'user'
-        }
-
-        // Fetch latest user data from backend to get updated status (like is_partner)
-        const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        try {
-          console.log(`🔍 Fetching user profile from ${apiUrl}/users/me/`)
-          const res = await fetch(`${apiUrl}/users/me/`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-          
-          if (res.ok) {
-            const profileData = await res.json()
-            console.log('👤 User profile fetched:', profileData)
-            if (profileData && profileData.data) {
-              // Merge profile data with token data
-              // The backend serializer now returns 'is_partner'
-              const updatedUser = { ...userData, ...profileData.data }
-              // Ensure we use the latest is_partner status from DB
-              if (updatedUser.is_partner === undefined && profileData.data.is_partner !== undefined) {
-                 updatedUser.is_partner = profileData.data.is_partner
-              }
-              console.log('✅ Updated user state:', updatedUser)
-              setUser(updatedUser)
-            } else {
-              setUser(userData)
-            }
-          } else {
-             console.warn('⚠️ Fetch profile failed:', res.status, res.statusText)
-             setUser(userData)
-          }
-        } catch (fetchError) {
-          console.error('❌ Failed to fetch user profile:', fetchError)
-          setUser(userData)
-        }
+        // Any other status (500, network error) — keep token, show as loading failed
       } catch {
-        // Invalid token format
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
+        // Network error — don't clear the token, user may be offline
       }
     } catch (error) {
       console.error('Auth check failed:', error)
@@ -119,9 +78,6 @@ export function AuthProvider({ children }) {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_DJANGO_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
       const loginUrl = `${apiUrl}/api/login/`
-      
-      console.log('🔐 Attempting login:', { email, apiUrl: loginUrl })
-      
       const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
@@ -130,8 +86,6 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password }),
       })
       
-      console.log('📡 Login response:', { status: response.status, statusText: response.statusText, ok: response.ok })
-
       if (response.ok) {
         const data = await response.json()
         
@@ -139,62 +93,28 @@ export function AuthProvider({ children }) {
         localStorage.setItem('access_token', data.access)
         localStorage.setItem('refresh_token', data.refresh)
         
-        // Set user data (from Django's custom serializer)
+        // Set user data from backend response — this is the authoritative source
         if (data.user) {
           setUser(data.user)
         } else {
-          // If no user data in response, fetch it
-          if (isClient) {
-            await checkAuth()
-          }
+          await checkAuth()
         }
 
-        // Handle role-based redirection if enabled
+        // Role-based redirect using backend-provided user data only
         if (redirect && isClient && window?.location) {
-          const token = data.access
-          if (token) {
-            try {
-              const payload = JSON.parse(atob(token.split('.')[1]))
-              const userRole = payload.role || 'user'
-              const isPartner = payload.is_partner || false
-              const isStaff = payload.is_staff || false
-              const isSuperuser = payload.is_superuser || false
-              
-              // Debug: Log the token payload
-              console.log('🔍 Full Token payload:', payload)
-              console.log('🔍 Role detection:', { userRole, isPartner, isStaff, isSuperuser })
-              
-              // FORCE admin redirection for ANY staff or superuser
-              let redirectPath = '/'
-              
-              // Check if user is admin (HIGHEST priority - force redirect)
-              if (isStaff === true || isSuperuser === true) {
-                redirectPath = '/admin/dashboard'
-                console.log('🚀 ADMIN DETECTED - Forcing redirect to:', redirectPath)
-              }
-              // Check if user is partner (second priority)
-              else if (isPartner === true || userRole === 'partner') {
-                redirectPath = '/partner/dashboard'
-                console.log('🏢 PARTNER DETECTED - Redirecting to:', redirectPath)
-              }
-              // Regular user (default)
-              else {
-                redirectPath = redirectTo === '/' ? '/' : redirectTo
-                console.log('👤 USER DETECTED - Redirecting to:', redirectPath)
-              }
-              
-              console.log(`User role: ${userRole}, isStaff: ${isStaff}, isSuperuser: ${isSuperuser}, isPartner: ${isPartner}`)
-              console.log(`Redirecting to: ${redirectPath}`)
-              
-              // Use window.location for navigation to ensure it works everywhere
-              window.location.href = redirectPath
-            } catch (tokenError) {
-              console.error('Error parsing token:', tokenError)
-              if (redirectTo !== '/') {
-                window.location.href = redirectTo
-              }
-            }
+          const userData = data.user || {}
+          const isStaff = userData.is_staff === true
+          const isSuperuser = userData.is_superuser === true
+          const isPartner = userData.is_partner === true || userData.role === 'partner'
+
+          let redirectPath = redirectTo === '/' ? '/' : redirectTo
+          if (isStaff || isSuperuser) {
+            redirectPath = '/admin/dashboard'
+          } else if (isPartner) {
+            redirectPath = '/partner/dashboard'
           }
+
+          window.location.href = redirectPath
         }
         
         return { success: true, user: data.user }
@@ -221,12 +141,6 @@ export function AuthProvider({ children }) {
           // If response is not JSON, use status text
           errorMessage = response.statusText || errorMessage
         }
-        
-        console.error('Login failed:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorMessage
-        })
         
         return { success: false, error: errorMessage }
       }
@@ -265,8 +179,6 @@ export function AuthProvider({ children }) {
         }),
       }
       
-      console.log('Registering user:', { apiUrl, requestBody: { ...requestBody, password: '***' } })
-      
       const response = await fetch(`${apiUrl}/api/register/`, {
         method: 'POST',
         headers: {
@@ -275,8 +187,6 @@ export function AuthProvider({ children }) {
         body: JSON.stringify(requestBody),
       })
       
-      console.log('Registration response status:', response.status)
-
       if (response.ok) {
         // After successful registration, automatically log the user in without redirect
         const loginResult = await login(email, password, { redirect: false })
@@ -320,9 +230,7 @@ export function AuthProvider({ children }) {
           errorMessage = allErrors || JSON.stringify(errorData)
         }
         
-        console.error('Registration error:', errorData)
-        
-        return { 
+        return {
           success: false, 
           error: errorMessage 
         }

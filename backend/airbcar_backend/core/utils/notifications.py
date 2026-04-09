@@ -3,12 +3,13 @@ Notification helper utilities.
 Creates Notification objects for various events.
 """
 from ..models import Notification
+from .telegram import notify_user_telegram
 
 
 def create_notification(user, title, message, notif_type='info', related_object_id=None, related_object_type=None):
     """Create a notification for a user."""
     try:
-        return Notification.objects.create(
+        notification = Notification.objects.create(
             user=user,
             title=title,
             message=message,
@@ -16,6 +17,12 @@ def create_notification(user, title, message, notif_type='info', related_object_
             related_object_id=related_object_id,
             related_object_type=related_object_type,
         )
+        # Telegram is best-effort and must never block core app flows.
+        try:
+            notify_user_telegram(user, title, message)
+        except Exception as e:
+            print(f"[TELEGRAM] Failed to send Telegram notification: {e}")
+        return notification
     except Exception as e:
         print(f"[NOTIFICATION] Failed to create notification for {user}: {e}")
         return None
@@ -124,4 +131,17 @@ def notify_booking_cancelled(owner, booking):
         notif_type='warning',
         related_object_id=booking.id,
         related_object_type='booking',
+    )
+
+
+def notify_booking_tomorrow(user, booking):
+    """Notify a user that a booking pickup is tomorrow."""
+    listing_name = f"{booking.listing.make} {booking.listing.model}"
+    return create_notification(
+        user=user,
+        title='Booking Reminder: Pickup Tomorrow',
+        message=f'Reminder: your booking #{booking.id} for {listing_name} starts tomorrow ({booking.pickup_date}).',
+        notif_type='info',
+        related_object_id=booking.id,
+        related_object_type='booking_reminder',
     )

@@ -203,3 +203,12 @@ if views.AdminAnalyticsView is not None:
 if views.AdminRevenueView is not None:
     urlpatterns.append(path('api/admin/revenue/', views.AdminRevenueView.as_view(), name='admin-revenue'))
 
+# Telegram bot endpoints
+try:
+    from .views.telegram_views import TelegramWebhookView, TelegramLinkView
+    urlpatterns.append(path('api/telegram/webhook/', TelegramWebhookView.as_view(), name='telegram-webhook'))
+    urlpatterns.append(path('api/telegram/link/', TelegramLinkView.as_view(), name='telegram-link'))
+except Exception as _tg_err:
+    import sys
+    print(f"WARNING: Telegram views failed to load: {_tg_err}", file=sys.stderr)
+

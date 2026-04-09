@@ -22,6 +22,93 @@ import Footer from '@/components/layout/Footer';
 
 import { apiClient } from '@/lib/api/client';
 
+function TelegramConnect() {
+  const [status, setStatus] = useState(null); // null | { connected: bool, link: string }
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    apiClient.get('/api/telegram/link/')
+      .then(r => setStatus({ connected: r.data.connected, link: r.data.link }))
+      .catch(() => {});
+  }, []);
+
+  const handleConnect = async () => {
+    setLoading(true);
+    try {
+      const r = await apiClient.get('/api/telegram/link/');
+      setStatus({ connected: r.data.connected, link: r.data.link });
+      window.open(r.data.link, '_blank');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setLoading(true);
+    try {
+      await apiClient.delete('/api/telegram/link/');
+      setStatus(prev => ({ ...prev, connected: false }));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <span className="text-2xl">✈️</span>
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Telegram Notifications</h3>
+          <p className="text-sm text-gray-500">Get booking updates instantly on Telegram</p>
+        </div>
+      </div>
+
+      {status === null ? (
+        <div className="h-8 bg-gray-100 rounded animate-pulse w-32" />
+      ) : status.connected ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-sm font-medium">
+            <span>✅</span> Connected to @AirbcarBot
+          </div>
+          <p className="text-xs text-gray-500">
+            You receive new booking requests, confirmations, and reviews on Telegram.
+          </p>
+          <button
+            onClick={handleDisconnect}
+            disabled={loading}
+            className="text-sm text-red-600 hover:underline disabled:opacity-50"
+          >
+            Disconnect
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Connect your Telegram to receive real-time alerts for new bookings, cancellations, and reviews — and add cars directly from the bot.
+          </p>
+          <button
+            onClick={handleConnect}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-[#229ED9] hover:bg-[#1a8cc3] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.1 13.398l-2.95-.924c-.64-.203-.654-.64.136-.954l11.566-4.461c.537-.194 1.006.131.833.947l.209.215z"/>
+            </svg>
+            {loading ? 'Opening...' : 'Connect Telegram'}
+          </button>
+          <p className="text-xs text-gray-400">
+            Opens @AirbcarBot — send <code>/start</code> to link your account.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PartnerDashboard() {
   const { user, loading } = useAuth();
   const t = useTranslations('partner');
@@ -459,7 +546,7 @@ export default function PartnerDashboard() {
         {currentView === 'dashboard' && (
           <div className="space-y-8">
             <PartnerStats stats={stats} loading={dataLoading} />
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Pending Requests */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -572,6 +659,10 @@ export default function PartnerDashboard() {
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <TelegramConnect />
+            </div>
           </div>
         )}
 
@@ -596,6 +687,7 @@ export default function PartnerDashboard() {
             rejectBooking={rejectBooking}
             cancelBooking={cancelBooking}
             hasPartnerProfile={hasPartnerProfile}
+            onAddVehicle={handleAddVehicle}
           />
         )}
 
@@ -623,12 +715,15 @@ export default function PartnerDashboard() {
         )}
 
         {currentView === 'profile' && (
-          <PartnerProfileSettings
-            partnerData={partnerData}
-            hasPartnerProfile={hasPartnerProfile}
-            onUpdate={handleProfileUpdate}
-            loading={dataLoading}
-          />
+          <div className="space-y-6">
+            <PartnerProfileSettings
+              partnerData={partnerData}
+              hasPartnerProfile={hasPartnerProfile}
+              onUpdate={handleProfileUpdate}
+              loading={dataLoading}
+            />
+            <TelegramConnect />
+          </div>
         )}
       </div>
 

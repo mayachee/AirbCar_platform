@@ -60,7 +60,7 @@ class ListingListView(APIView):
         # PERFORMANCE: Use only() to fetch minimal fields (reduces DB transfer by 50-70%)
         # NOTE: Use actual model field names, not serializer aliases
         # (seating_capacity not 'seats', vehicle_style not 'style', 'brand' is alias for 'make')
-        base_fields = ['id', 'make', 'model', 'year', 'price_per_day', 'location', 'images', 
+        base_fields = ['id', 'make', 'model', 'year', 'price_per_day', 'security_deposit', 'location', 'images', 
                        'transmission', 'fuel_type', 'seating_capacity', 'rating', 'review_count', 'is_available',
                        'created_at', 'updated_at', 'partner_id', 'vehicle_style', 'color']
         
@@ -431,6 +431,7 @@ class ListingListView(APIView):
                 'model_name': 'model',
                 'dailyRate': 'price_per_day',
                 'price': 'price_per_day',
+                'securityDeposit': 'security_deposit',
                 'features': 'available_features',
                 'description': 'vehicle_description',
             }
@@ -475,7 +476,7 @@ class ListingListView(APIView):
             # This is a safety measure to ensure compatibility with older frontend code
             valid_model_fields = [
                 'make', 'model', 'year', 'color', 'transmission', 'fuel_type',
-                'seating_capacity', 'vehicle_style', 'price_per_day', 'location',
+                'seating_capacity', 'vehicle_style', 'price_per_day', 'security_deposit', 'location',
                 'vehicle_description', 'available_features', 'images', 'is_available',
                 'is_verified', 'instant_booking', 'partner_id'
             ]
@@ -502,6 +503,12 @@ class ListingListView(APIView):
             if 'price_per_day' in listing_data and isinstance(listing_data['price_per_day'], str):
                 try:
                     listing_data['price_per_day'] = float(listing_data['price_per_day'])
+                except (ValueError, TypeError):
+                    pass
+
+            if 'security_deposit' in listing_data and isinstance(listing_data['security_deposit'], str):
+                try:
+                    listing_data['security_deposit'] = float(listing_data['security_deposit'])
                 except (ValueError, TypeError):
                     pass
             
@@ -831,6 +838,7 @@ class ListingListView(APIView):
                             'model_name': 'model',
                             'dailyRate': 'price_per_day',
                             'price': 'price_per_day',
+                            'securityDeposit': 'security_deposit',
                             'features': 'available_features',
                             'description': 'vehicle_description',
                         }
@@ -855,11 +863,11 @@ class ListingListView(APIView):
                             listing_data['color'] = 'White'
                         
                         # Ensure numeric fields are correctly typed
-                        numeric_fields = ['year', 'price_per_day', 'seating_capacity']
+                        numeric_fields = ['year', 'price_per_day', 'security_deposit', 'seating_capacity']
                         for field in numeric_fields:
                             if field in listing_data and isinstance(listing_data[field], str):
                                 try:
-                                    if field == 'price_per_day':
+                                    if field in ('price_per_day', 'security_deposit'):
                                         listing_data[field] = float(listing_data[field])
                                     else:
                                         listing_data[field] = int(listing_data[field])
@@ -869,7 +877,7 @@ class ListingListView(APIView):
                         # Remove unknown fields that might cause issues
                         valid_model_fields = [
                             'make', 'model', 'year', 'color', 'transmission', 'fuel_type',
-                            'seating_capacity', 'vehicle_style', 'price_per_day', 'location',
+                            'seating_capacity', 'vehicle_style', 'price_per_day', 'security_deposit', 'location',
                             'vehicle_description', 'available_features', 'images', 'is_available',
                             'is_verified', 'instant_booking', 'partner_id'
                         ]
@@ -1144,6 +1152,12 @@ class ListingDetailView(APIView):
             if 'price_per_day' in listing_data and isinstance(listing_data['price_per_day'], str):
                 try:
                     listing_data['price_per_day'] = float(listing_data['price_per_day'])
+                except (ValueError, TypeError):
+                    pass
+
+            if 'security_deposit' in listing_data and isinstance(listing_data['security_deposit'], str):
+                try:
+                    listing_data['security_deposit'] = float(listing_data['security_deposit'])
                 except (ValueError, TypeError):
                     pass
             

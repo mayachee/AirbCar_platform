@@ -25,6 +25,7 @@ export default function AddVehicleModal({
     model: '',
     year: '',
     price_per_day: '',
+    security_deposit: '5000',
     location: '',
     description: '',
     features: [],
@@ -71,6 +72,7 @@ export default function AddVehicleModal({
         model: vehicleData.model || vehicleData.model_name || '',
         year: vehicleData.year || '',
         price_per_day: vehicleData.price_per_day || vehicleData.dailyRate || vehicleData.price || '',
+        security_deposit: (vehicleData.security_deposit ?? vehicleData.securityDeposit ?? '5000'),
         location: vehicleData.location || '',
         description: vehicleData.description || vehicleData.vehicle_description || '',
         features: vehicleData.features || vehicleData.available_features || [],
@@ -90,6 +92,7 @@ export default function AddVehicleModal({
         model: '',
         year: '',
         price_per_day: '',
+        security_deposit: '5000',
         location: '',
         description: '',
         features: [],
@@ -138,6 +141,7 @@ export default function AddVehicleModal({
     if (!formData.model) validationErrors.model = 'Model is required';
     if (!formData.year) validationErrors.year = 'Year is required';
     if (!formData.price_per_day) validationErrors.price_per_day = 'Price per day is required';
+    if (!formData.security_deposit) validationErrors.security_deposit = 'Security deposit is required';
     if (!formData.location) validationErrors.location = 'Location is required';
 
     if (Object.keys(validationErrors).length > 0) {
@@ -186,6 +190,7 @@ export default function AddVehicleModal({
           uploadFormData.append('model', formData.model);
           uploadFormData.append('year', formData.year);
           uploadFormData.append('price_per_day', formData.price_per_day);
+          uploadFormData.append('security_deposit', formData.security_deposit);
           uploadFormData.append('location', formData.location);
           uploadFormData.append('description', formData.description || '');
           uploadFormData.append('fuel_type', formData.fuel_type);
@@ -269,6 +274,7 @@ export default function AddVehicleModal({
         model: formData.model,
         year: formData.year,
         price_per_day: formData.price_per_day,
+        security_deposit: formData.security_deposit,
         location: formData.location,
         vehicle_description: formData.description || '',
         available_features: formData.features || [],
@@ -312,6 +318,7 @@ export default function AddVehicleModal({
         model: '',
         year: '',
         price_per_day: '',
+        security_deposit: '5000',
         location: '',
         description: '',
         features: [],
@@ -441,6 +448,22 @@ export default function AddVehicleModal({
     if (!formData.price_per_day || formData.price_per_day <= 0) {
       newErrors.price_per_day = 'Valid daily rate is required';
     }
+    if (!formData.security_deposit || formData.security_deposit < 0) {
+      newErrors.security_deposit = 'Valid security deposit is required';
+    }
+    const validImageCount = (formData.pictures || []).filter((img) => {
+      if (!img) return false;
+      if (img instanceof File) return true;
+      if (typeof img === 'string') return img.trim() !== '' && img.trim() !== '/carsymbol.jpg';
+      if (typeof img === 'object' && img.url) {
+        const url = String(img.url).trim();
+        return url !== '' && url !== '/carsymbol.jpg';
+      }
+      return false;
+    }).length;
+    if (validImageCount < 3) {
+      newErrors.pictures = 'At least 3 images are required for listing quality.';
+    }
     if (!formData.location.trim()) newErrors.location = 'Location is required';
     if (!formData.fuel_type) newErrors.fuel_type = 'Fuel type is required';
     if (!formData.transmission) newErrors.transmission = 'Transmission is required';
@@ -464,6 +487,7 @@ export default function AddVehicleModal({
       // Parse numeric values and handle empty strings
       const yearValue = formData.year ? parseInt(formData.year, 10) : null;
       const priceValue = formData.price_per_day ? parseFloat(formData.price_per_day) : null;
+      const securityDepositValue = formData.security_deposit ? parseFloat(formData.security_deposit) : null;
       const seatingValue = formData.seating_capacity ? parseInt(formData.seating_capacity, 10) : null;
       
       // Validate parsed values
@@ -475,6 +499,12 @@ export default function AddVehicleModal({
       
       if (isNaN(priceValue) || priceValue <= 0) {
         setErrors({ price_per_day: 'Please enter a valid price' });
+        setLoading(false);
+        return;
+      }
+
+      if (isNaN(securityDepositValue) || securityDepositValue < 0) {
+        setErrors({ security_deposit: 'Please enter a valid security deposit' });
         setLoading(false);
         return;
       }
@@ -492,6 +522,7 @@ export default function AddVehicleModal({
         year: yearValue,
         location: formData.location.trim(),
         price_per_day: priceValue,
+        security_deposit: securityDepositValue,
         fuel_type: formData.fuel_type,
         transmission: formData.transmission,
         seating_capacity: seatingValue,
@@ -625,6 +656,7 @@ export default function AddVehicleModal({
         model: '',
         year: '',
         price_per_day: '',
+        security_deposit: '5000',
         location: '',
         description: '',
         features: [],
@@ -855,7 +887,7 @@ export default function AddVehicleModal({
           </div>
 
           {/* Pricing & Location */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Daily Rate ($) *
@@ -873,6 +905,25 @@ export default function AddVehicleModal({
                 placeholder="e.g., 50"
               />
               {errors.price_per_day && <p className="text-red-500 text-xs mt-1">{errors.price_per_day}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                Security Deposit ($) *
+              </label>
+              <input
+                type="number"
+                name="security_deposit"
+                value={formData.security_deposit}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${
+                  errors.security_deposit ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                }`}
+                placeholder="e.g., 5000"
+              />
+              {errors.security_deposit && <p className="text-red-500 text-xs mt-1">{errors.security_deposit}</p>}
             </div>
 
             <div>

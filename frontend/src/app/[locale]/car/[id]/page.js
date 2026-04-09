@@ -10,6 +10,7 @@ import { useVehicleData } from './hooks/useVehicleData'
 import { useSearchParams as useSearchParamsHook } from './hooks/useSearchParams'
 import { buildBookingUrl, buildSearchUrl } from './utils/navigation'
 import { calculateTotalPrice } from './utils/pricing'
+import { trackEvent } from '@/lib/analytics/tracking'
 import { useToast } from '@/contexts/ToastContext'
 import PageTransition from './components/PageTransition'
 import AnimatedBreadcrumb from './components/AnimatedBreadcrumb'
@@ -76,11 +77,20 @@ function CarDetailsContent() {
     }
     
     const price = vehicle.price || vehicle.price_per_day || vehicle.dailyRate || 0
-    const { total } = calculateTotalPrice(price, searchDetails.duration)
+    const securityDeposit = Number(vehicle.security_deposit ?? vehicle.securityDeposit ?? 5000)
+    const { total } = calculateTotalPrice(price, searchDetails.duration, securityDeposit)
     const bookingUrl = buildBookingUrl({
       vehicleId: String(vehicleId), // Ensure it's a string
       searchDetails,
       totalPrice: total
+    })
+
+    trackEvent('booking_cta_clicked', {
+      listing_id: String(vehicleId),
+      location: vehicle.location || '',
+      duration: Number(searchDetails.duration) || 1,
+      price_per_day: Number(price) || 0,
+      security_deposit: securityDeposit,
     })
     
     console.log('Navigating to booking:', { vehicleId, bookingUrl, vehicle })

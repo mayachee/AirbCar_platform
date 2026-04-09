@@ -4,6 +4,7 @@ DRF serializers for core app.
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.utils import timezone
 from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord
 from .utils.license_verification import verify_driving_license_images
 from .utils.license_verification_persistence import store_license_verification_result
@@ -267,6 +268,7 @@ class SimpleListingSerializer(serializers.ModelSerializer):
     model_name = serializers.CharField(source='model', read_only=True)
     dailyRate = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
     price = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
+    securityDeposit = serializers.DecimalField(source='security_deposit', max_digits=10, decimal_places=2, read_only=True)
     image = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
@@ -276,7 +278,7 @@ class SimpleListingSerializer(serializers.ModelSerializer):
         model = Listing
         fields = [
             'id', 'title', 'name', 'make', 'brand', 'model', 'model_name', 'year', 
-            'price_per_day', 'dailyRate', 'price', 'location', 
+            'price_per_day', 'dailyRate', 'price', 'security_deposit', 'securityDeposit', 'location', 
             'rating', 'review_count', 'image', 'images', 'is_available', 'is_verified',
             'fuel_type', 'transmission', 'seats',
         ]
@@ -496,6 +498,7 @@ class ListingCompactSerializer(serializers.ModelSerializer):
     style = serializers.CharField(source='vehicle_style', read_only=True)
     dailyRate = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
     price = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
+    securityDeposit = serializers.DecimalField(source='security_deposit', max_digits=10, decimal_places=2, read_only=True)
     fuelType = serializers.CharField(source='fuel_type', read_only=True)
     verified = serializers.BooleanField(source='is_verified', read_only=True)
     reviewCount = serializers.IntegerField(source='review_count', read_only=True)
@@ -511,7 +514,7 @@ class ListingCompactSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'make', 'brand', 'model', 'model_name', 'year', 'color',
             'transmission', 'fuel_type', 'fuelType', 'seating_capacity', 'seats',
-            'vehicle_style', 'style', 'price_per_day', 'dailyRate', 'price',
+            'vehicle_style', 'style', 'price_per_day', 'dailyRate', 'price', 'security_deposit', 'securityDeposit',
             'location', 'images', 'is_available', 'isAvailable', 'is_verified', 'verified',
             'instant_booking', 'instantBooking', 'rating', 'review_count', 'reviewCount',
             'created_at', 'updated_at', 'name', 'partner_id',
@@ -585,6 +588,7 @@ class ListingSerializer(serializers.ModelSerializer):
     style = serializers.CharField(source='vehicle_style', read_only=True)
     dailyRate = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
     price = serializers.DecimalField(source='price_per_day', max_digits=10, decimal_places=2, read_only=True)
+    securityDeposit = serializers.DecimalField(source='security_deposit', max_digits=10, decimal_places=2, read_only=True)
     description = serializers.CharField(source='vehicle_description', read_only=True)
     features = serializers.JSONField(source='available_features', read_only=True)
     instantBooking = serializers.BooleanField(source='instant_booking', read_only=True)
@@ -604,6 +608,7 @@ class ListingSerializer(serializers.ModelSerializer):
     seating_capacity = serializers.IntegerField(required=False)
     vehicle_style = serializers.ChoiceField(choices=Listing.STYLE_CHOICES, required=False)
     price_per_day = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    security_deposit = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     location = serializers.CharField(required=False, allow_blank=False)
     vehicle_description = serializers.CharField(required=False, allow_blank=True)
     available_features = serializers.JSONField(required=False)
@@ -617,7 +622,7 @@ class ListingSerializer(serializers.ModelSerializer):
             'id', 'partner', 'partner_id', 'make', 'brand', 'model', 'model_name',
             'year', 'color', 'transmission', 'fuel_type', 'fuelType',
             'seating_capacity', 'seats', 'vehicle_style', 'style',
-            'price_per_day', 'dailyRate', 'price', 'location',
+            'price_per_day', 'dailyRate', 'price', 'security_deposit', 'securityDeposit', 'location',
             'vehicle_description', 'description', 'available_features', 'features',
             'images', 'is_available', 'isAvailable', 'is_verified', 'verified',
             'instant_booking', 'instantBooking', 'rating', 'review_count', 'reviewCount',
@@ -631,9 +636,52 @@ class ListingSerializer(serializers.ModelSerializer):
         return f"{obj.make} {obj.model} {obj.year}"
     
     def validate(self, data):
-        """Custom validation for listing data."""
-        # When doing partial updates, only validate fields that are present
-        # This allows partial updates without requiring all fields
+        """Custom validation for listing quality and consistency."""
+        current_year = timezone.now().year
+
+        year = data.get('year', getattr(self.instance, 'year', None))
+        if year is not None and (year < 1990 or year > current_year + 1):
+            raise serializers.ValidationError({'year': f'Year must be between 1990 and {current_year + 1}.'})
+
+        seating_capacity = data.get('seating_capacity', getattr(self.instance, 'seating_capacity', None))
+        if seating_capacity is not None and (seating_capacity < 2 or seating_capacity > 9):
+            raise serializers.ValidationError({'seating_capacity': 'Seating capacity must be between 2 and 9.'})
+
+        price_per_day = data.get('price_per_day', getattr(self.instance, 'price_per_day', None))
+        if price_per_day is not None and price_per_day <= 0:
+            raise serializers.ValidationError({'price_per_day': 'Price per day must be greater than 0.'})
+
+        security_deposit = data.get('security_deposit', getattr(self.instance, 'security_deposit', None))
+        if security_deposit is not None and security_deposit < 0:
+            raise serializers.ValidationError({'security_deposit': 'Security deposit cannot be negative.'})
+
+        # Enforce minimum listing quality for active/public listings.
+        is_available = data.get('is_available', getattr(self.instance, 'is_available', True))
+        incoming_images = data.get('images', None)
+        existing_images = getattr(self.instance, 'images', []) if self.instance else []
+        images_source = incoming_images if incoming_images is not None else existing_images
+        if images_source is None:
+            images_source = []
+
+        valid_image_count = 0
+        for img in images_source:
+            if isinstance(img, str):
+                cleaned = img.strip()
+                if cleaned and cleaned != '/carsymbol.jpg':
+                    valid_image_count += 1
+            elif isinstance(img, dict):
+                cleaned = str(img.get('url', '')).strip()
+                if cleaned and cleaned != '/carsymbol.jpg':
+                    valid_image_count += 1
+
+        should_enforce_image_quality = (
+            self.instance is None or
+            incoming_images is not None or
+            ('is_available' in data and is_available)
+        )
+        if should_enforce_image_quality and is_available and valid_image_count < 3:
+            raise serializers.ValidationError({'images': 'At least 3 real images are required for an active listing.'})
+
         return data
     
     def to_representation(self, instance):

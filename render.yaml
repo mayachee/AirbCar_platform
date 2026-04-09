@@ -11,6 +11,7 @@ services:
       cd airbcar_backend &&
       python manage.py migrate --noinput &&
       python manage.py collectstatic --noinput &&
+      python manage.py setup_telegram_webhook --url ${RENDER_EXTERNAL_URL:-} || true &&
       gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30 --config ../gunicorn_config.py
 
     rootDir: backend
@@ -26,12 +27,10 @@ services:
         value: postgres.wtbmqtmmdobfvvecinif
       - key: DATABASE_PASSWORD
         sync: false  # Set this manually in Render dashboard for security
-        # Value: Mayache+123455
       
       # Django Configuration
       - key: SECRET_KEY
         sync: false  # Set this manually in Render dashboard for security
-        # Value: AHZHdcJj7GgqAbvqbOZSK-RpA4tAws7NmvGK1hdp7GLXySV7CM2YY3XJ677PQZ_QmkE
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
@@ -77,4 +76,16 @@ services:
         value: "1"
       - key: PORT
         value: "8000"
+
+      # Telegram Notifications
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false  # Set this in Render dashboard
+      - key: TELEGRAM_DEFAULT_CHAT_ID
+        sync: false  # Set this in Render dashboard
+      - key: TELEGRAM_NOTIFICATIONS_ENABLED
+        value: "true"
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false  # e.g. AirbcarBot (without @)
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false  # Random secret to verify webhook requests
 

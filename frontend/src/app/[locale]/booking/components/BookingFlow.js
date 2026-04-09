@@ -296,7 +296,7 @@ export default function BookingFlow({
   const dailyRate = Number(vehicle?.price_per_day ?? vehicle?.pricePerDay ?? vehicle?.dailyRate ?? 0)
   const rentalSubtotal = Number.isFinite(dailyRate) ? dailyRate * parsedDays : 0
   const serviceFee = 25
-  const safetyDeposit = 5000
+  const safetyDeposit = Number(vehicle?.security_deposit ?? vehicle?.securityDeposit ?? 5000)
   const computedTotal = rentalSubtotal + serviceFee + safetyDeposit
   const totalNumeric = Number(totalPrice)
   const displayTotal = Number.isFinite(totalNumeric) ? totalNumeric : computedTotal

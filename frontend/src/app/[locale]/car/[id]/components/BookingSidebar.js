@@ -43,8 +43,9 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
   // Safely get price with fallback
   const price = vehicle.price || vehicle.price_per_day || vehicle.dailyRate || 0
+  const securityDeposit = Number(vehicle.security_deposit ?? vehicle.securityDeposit ?? 5000)
   const duration = searchDetails?.duration || 1
-  const { basePrice, serviceFee, total } = calculateTotalPrice(price, duration)
+  const { basePrice, serviceFee, total } = calculateTotalPrice(price, duration, securityDeposit)
   
   // Safely get insurance info
   const insurance = vehicle.insurance || {}
@@ -153,7 +154,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-400">{t('security_deposit')}</span>
-              <span className="font-medium text-white">{formatPrice(5000)}</span>
+              <span className="font-medium text-white">{formatPrice(securityDeposit)}</span>
             </div>
             <div className="text-xs text-green-400/70 text-right mb-2">
               {t('refunded_after_rental')}

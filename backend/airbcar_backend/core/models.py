@@ -42,6 +42,8 @@ class User(AbstractUser):
     license_front_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for front license hosted on Supabase')
     license_back_document_url = models.URLField(max_length=500, blank=True, null=True, help_text='Public URL for back license hosted on Supabase')
     
+    telegram_chat_id = models.CharField(max_length=50, blank=True, null=True, help_text='Telegram chat ID for notifications')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -201,6 +203,7 @@ class Listing(models.Model):
     
     # Pricing and Location
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    security_deposit = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], default=5000)
     location = models.CharField(max_length=200)
     
     # Description and Features

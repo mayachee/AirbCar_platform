@@ -491,6 +491,7 @@ export default function DashboardContent({
             acceptBooking={acceptBooking}
             rejectBooking={rejectBooking}
             cancelBooking={cancelBooking}
+            onAddVehicle={handleAddVehicle}
           />
         </ComponentLoader>
       )}

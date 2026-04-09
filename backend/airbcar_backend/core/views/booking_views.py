@@ -25,9 +25,10 @@ from ..serializers import (
 from ..supabase_storage import upload_file_to_supabase
 from ..utils.license_verification import verify_driving_license_images
 from ..utils.license_verification_persistence import store_license_verification_result
+from ..utils.telegram import notify_user_telegram
 
 
-SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
+DEFAULT_SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
 SERVICE_FEE_AMOUNT = Decimal('25.00')
 
 
@@ -44,6 +45,15 @@ def _create_notification_safe(**kwargs):
         # cleanly without aborting the outer transaction.
         with transaction.atomic():
             Notification.objects.create(**kwargs)
+        try:
+            user = kwargs.get('user')
+            title = kwargs.get('title', '')
+            message = kwargs.get('message', '')
+            if user and title and message:
+                notify_user_telegram(user, title, message)
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"Telegram notification skipped (non-blocking): {e}")
     except (ProgrammingError, OperationalError, DatabaseError) as e:
         if settings.DEBUG:
             print(f"Notification creation skipped (non-blocking): {e}")
@@ -249,7 +259,8 @@ class BookingListView(APIView):
             # Calculate total amount
             # return_date is treated as checkout date (exclusive), so day-count is the difference
             days = (return_date - pickup_date).days
-            total_amount = (listing.price_per_day * days) + SAFE_DEPOSIT_AMOUNT + SERVICE_FEE_AMOUNT
+            security_deposit = listing.security_deposit if listing.security_deposit is not None else DEFAULT_SAFE_DEPOSIT_AMOUNT
+            total_amount = (listing.price_per_day * days) + security_deposit + SERVICE_FEE_AMOUNT
             
             # Determine booking status based on instant_booking setting
             booking_status = 'confirmed' if listing.instant_booking else 'pending'
@@ -278,7 +289,6 @@ class BookingListView(APIView):
                         'error': 'License verification failed',
                         'errors': verification.get('errors', []),
                         'warnings': verification.get('warnings', []),
-                        'verification': verification,
                     }, status=status.HTTP_400_BAD_REQUEST)
             
             # Prepare booking data - create clean copy without file objects
@@ -343,12 +353,33 @@ class BookingListView(APIView):
                                 print(f"License back upload failed: {e}")
 
                     with transaction.atomic():
+                        # Re-check availability with a row-level lock to prevent
+                        # race conditions where two requests pass the pre-check
+                        # simultaneously and both create overlapping bookings.
+                        listing_locked = Listing.objects.select_for_update().get(pk=listing.pk)
+                        if not listing_locked.is_available:
+                            return Response(
+                                {'error': 'Listing is not available'},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        double_check_conflict = Booking.objects.filter(
+                            listing=listing_locked,
+                            status__in=['pending', 'confirmed', 'active'],
+                            pickup_date__lt=return_date,
+                            return_date__gt=pickup_date,
+                        ).exists()
+                        if double_check_conflict:
+                            return Response(
+                                {'error': 'Listing is not available for the selected dates'},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+
                         # Prepare arguments for save()
                         # CRITICAL: We pass customer explicitly because it is read_only in serializer
                         # CRITICAL: listing and partner are also read_only in serializer
                         save_kwargs = {
                             'customer': request.user,
-                            'listing': listing,
+                            'listing': listing_locked,
                             'partner': partner,
                         }
                         

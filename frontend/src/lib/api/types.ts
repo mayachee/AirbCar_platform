@@ -72,6 +72,7 @@ export interface Vehicle extends BaseEntity {
   fuel_type: string;
   seats: number;
   price_per_day: number;
+  security_deposit?: number;
   location: string;
   pictures: string[];
   description?: string;

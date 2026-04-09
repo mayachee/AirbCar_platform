@@ -1,7 +1,9 @@
-export const calculateTotalPrice = (price, duration) => {
-  const basePrice = price * duration
+export const calculateTotalPrice = (price, duration, securityDepositValue = 5000) => {
+  const safePrice = Number(price) || 0
+  const safeDuration = Math.max(1, Number(duration) || 1)
+  const securityDeposit = Number.isFinite(Number(securityDepositValue)) ? Number(securityDepositValue) : 5000
+  const basePrice = safePrice * safeDuration
   const serviceFee = 25
-  const securityDeposit = 5000
   return {
     basePrice,
     serviceFee,

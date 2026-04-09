@@ -370,19 +370,20 @@ if DEBUG:
 # Add production frontend URL from environment if provided
 FRONTEND_URL_ENV = os.environ.get('FRONTEND_URL', '')
 if FRONTEND_URL_ENV:
-    # Remove trailing slash and add both http and https versions
+    # Remove trailing slash and add safe canonical variants.
     frontend_url = FRONTEND_URL_ENV.rstrip('/')
     if frontend_url not in CORS_ALLOWED_ORIGINS:
         CORS_ALLOWED_ORIGINS.append(frontend_url)
-    # Also add without www and with www
+    # Add alternate hostnames for HTTPS only.
     if frontend_url.startswith('https://'):
         domain = frontend_url.replace('https://', '')
         if f"https://www.{domain}" not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(f"https://www.{domain}")
+    elif DEBUG and frontend_url.startswith('http://'):
+        # Keep HTTP only for local development.
+        domain = frontend_url.replace('http://', '')
         if f"http://www.{domain}" not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(f"http://www.{domain}")
-        if f"http://{domain}" not in CORS_ALLOWED_ORIGINS:
-            CORS_ALLOWED_ORIGINS.append(f"http://{domain}")
 
 # Allow all HTTP methods including DELETE
 CORS_ALLOW_METHODS = [
@@ -456,6 +457,24 @@ FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3001')
 
 # Backend URL for media files and API
 BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8000')
+
+# Telegram notifications
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '').strip()
+TELEGRAM_DEFAULT_CHAT_ID = os.environ.get('TELEGRAM_DEFAULT_CHAT_ID', '').strip()
+
+# Backward-compatibility for legacy/mistyped env names.
+_legacy_chat_id = os.environ.get('TELEGRAM_CHAT_ID', '').strip() or os.environ.get('telegram_chat_id', '').strip()
+if not TELEGRAM_DEFAULT_CHAT_ID and _legacy_chat_id:
+    TELEGRAM_DEFAULT_CHAT_ID = _legacy_chat_id
+
+# If a token-like value was accidentally set in chat-id env, recover automatically.
+if not TELEGRAM_BOT_TOKEN and TELEGRAM_DEFAULT_CHAT_ID and ':' in TELEGRAM_DEFAULT_CHAT_ID:
+    TELEGRAM_BOT_TOKEN = TELEGRAM_DEFAULT_CHAT_ID
+    TELEGRAM_DEFAULT_CHAT_ID = ''
+
+TELEGRAM_NOTIFICATIONS_ENABLED = os.environ.get('TELEGRAM_NOTIFICATIONS_ENABLED', 'true').lower() == 'true'
+TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', '').strip()
+TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET', '').strip()
 
 # CSRF trusted origins (required for secure cross-site POSTs when using cookies)
 def _url_to_origin(url: str) -> str:

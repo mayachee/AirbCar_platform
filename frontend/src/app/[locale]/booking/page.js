@@ -7,6 +7,7 @@ import Footer from '@/components/layout/Footer'
 import { useAuth } from '@/contexts/AuthContext'
 import { apiClient } from '@/lib/api/client'
 import { authService } from '@/features/auth/services/authService'
+import { trackEvent } from '@/lib/analytics/tracking'
 import { BookingSummary, UserInfo, BookingNotice, BookingSuccess, BookingForm, BookingBreadcrumb } from './components'
 import BookingFlow from './components/BookingFlow'
 
@@ -259,6 +260,12 @@ function BookingPageContent() {
     try {
       setLoading(true)
       setError(null)
+      trackEvent('booking_submit_started', {
+        listing_id: String(validCarId),
+        pickup_date: pickupDateState || '',
+        return_date: returnDateState || '',
+        payment_method: paymentMethod || 'online',
+      })
 
       // Format dates properly for backend with selected times
       const startTime = new Date(pickupDateState)
@@ -294,7 +301,7 @@ function BookingPageContent() {
       if (!Number.isFinite(totalAmount)) {
         const days = Math.max(1, Math.ceil((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60 * 24)))
         const pricePerDay = Number(vehicle?.price_per_day ?? vehicle?.pricePerDay ?? vehicle?.dailyRate ?? 0)
-        const securityDeposit = 5000
+        const securityDeposit = Number(vehicle?.security_deposit ?? vehicle?.securityDeposit ?? 5000)
         const serviceFee = 25
         totalAmount = Number.isFinite(pricePerDay) ? (pricePerDay * days) + securityDeposit + serviceFee : (securityDeposit + serviceFee)
       }
@@ -327,9 +334,19 @@ function BookingPageContent() {
       const booking = responseData?.data || responseData
       setBookingData(booking)
       setBookingCreated(true)
+      trackEvent('booking_submit_success', {
+        listing_id: String(validCarId),
+        booking_id: booking?.id || null,
+        total_amount: totalAmount,
+      })
     } catch (err) {
       console.error('Error creating booking:', err)
       setError(formatBookingError(err))
+      trackEvent('booking_submit_failed', {
+        listing_id: String(validCarId),
+        status: err?.status || null,
+        error: String(err?.message || 'unknown_error'),
+      })
     } finally {
       setLoading(false)
     }

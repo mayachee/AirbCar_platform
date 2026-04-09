@@ -6,6 +6,7 @@ import { SelectField } from '@/components/ui/select-field';
 import { MOROCCAN_CITIES } from '@/constants';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { trackEvent } from '@/lib/analytics/tracking';
 
 export default function SearchForm({ onSearch, initialValues = {} }) {
   const t = useTranslations('search');
@@ -76,6 +77,14 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
     return options;
   };
 
+  const getNextDayStr = (dateStr) => {
+    const parsed = ymdToLocalDate(dateStr);
+    if (!parsed || Number.isNaN(parsed.getTime())) return tomorrowStr;
+    const next = new Date(parsed);
+    next.setDate(next.getDate() + 1);
+    return dateToYmd(next);
+  };
+
   // Validation
   const validate = () => {
     const newErrors = {};
@@ -93,7 +102,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
     } else if (pickupDate) {
       const pickup = new Date(pickupDate);
       const returnD = new Date(returnDate);
-      if (returnD < pickup) {
+      if (returnD <= pickup) {
         newErrors.returnDate = t('sf_return_after_pickup');
       }
     }
@@ -121,9 +130,10 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
     const newPickupDate = e.target.value;
     setPickupDate(newPickupDate);
     
-    // If return date is before new pickup date, update it to be at least same day or next day
-    if (returnDate && newPickupDate && returnDate < newPickupDate) {
-      setReturnDate(newPickupDate);
+    // Keep rental period at least one day: return must be strictly after pickup.
+    const minReturnDate = getNextDayStr(newPickupDate);
+    if (!returnDate || (newPickupDate && returnDate <= newPickupDate)) {
+      setReturnDate(minReturnDate);
     }
     
     if (touched.pickupDate && errors.pickupDate) {
@@ -150,13 +160,27 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
 
     setIsSubmitting(true);
     try {
+      trackEvent('search_submitted', {
+        location: location.trim(),
+        pickup_date: pickupDate,
+        return_date: returnDate,
+      });
+
       await onSearch({
         location: location.trim(),
         pickupDate,
         returnDate
       });
+
+      trackEvent('search_completed', {
+        location: location.trim(),
+      });
     } catch (error) {
       console.error('Search error:', error);
+      trackEvent('search_failed', {
+        location: location.trim(),
+        error: String(error?.message || 'unknown_error'),
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -247,7 +271,7 @@ export default function SearchForm({ onSearch, initialValues = {} }) {
             id="returnDate"
             value={returnDate}
             onChange={handleReturnDateChange}
-            options={buildDateOptions(pickupDate || todayStr, 180)}
+            options={buildDateOptions(getNextDayStr(pickupDate || todayStr), 180)}
             triggerProps={{ 
               'aria-label': t('sf_return_date'),
               onBlur: () => handleBlur('returnDate')

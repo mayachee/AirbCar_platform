@@ -22,7 +22,8 @@ export default function EnhancedBookingManagement({
   acceptBooking,
   rejectBooking,
   cancelBooking,
-  hasPartnerProfile = true
+  hasPartnerProfile = true,
+  onAddVehicle = null,
 }) {
   const { user: currentUser } = useAuth();
   const t = useTranslations('partner_dashboard');
@@ -431,6 +432,15 @@ export default function EnhancedBookingManagement({
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('manage_vehicle_bookings')}</p>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {typeof onAddVehicle === 'function' && (
+              <button
+                onClick={onAddVehicle}
+                className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+              >
+                <Car className="h-4 w-4" />
+                <span>Add Vehicle</span>
+              </button>
+            )}
             <button
               onClick={loadBookings}
               disabled={loading}
