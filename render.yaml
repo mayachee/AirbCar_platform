@@ -9,9 +9,11 @@ services:
       pip install -r requirements.txt
     startCommand: >-
       cd airbcar_backend &&
-      python manage.py migrate --noinput &&
-      gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30
+      (python manage.py migrate --noinput || echo "[WARN] migrate failed, continuing") &&
+      (python manage.py collectstatic --noinput || echo "[WARN] collectstatic failed, continuing") &&
+      gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30 --config ../gunicorn_config.py
 
+    healthCheckPath: /api/health/
     rootDir: backend
     envVars:
       # Database Configuration
