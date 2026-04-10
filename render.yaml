@@ -7,11 +7,10 @@ services:
     buildCommand: |
       pip install --upgrade pip setuptools wheel &&
       pip install -r requirements.txt
-    startCommand: |
+    startCommand: >-
       cd airbcar_backend &&
       python manage.py migrate --noinput &&
-      python manage.py collectstatic --noinput &&
-      gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30 --config ../gunicorn_config.py
+      gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30
 
     rootDir: backend
     envVars:
@@ -70,6 +69,11 @@ services:
       #   sync: false
       #   # Value: your-service-role-key-here
       
+      # SSL redirect: Render's proxy handles HTTP→HTTPS, app must NOT redirect internally
+      # or Render's internal health checks (plain HTTP) get 301s and mark deploys as failed.
+      - key: SECURE_SSL_REDIRECT
+        value: "false"
+
       # Optional Performance Settings
       - key: GUNICORN_WORKERS
         value: "1"

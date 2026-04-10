@@ -131,8 +131,10 @@ ROOT_URLCONF = 'airbcar_backend.urls'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 
-# Redirect HTTP->HTTPS in production (can be disabled if handled upstream).
-SECURE_SSL_REDIRECT = (not DEBUG) and (os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true')
+# SSL redirect: disabled by default because Render's load balancer handles HTTP→HTTPS.
+# The app receives plain HTTP internally; enabling redirect here breaks Render health checks.
+# Set SECURE_SSL_REDIRECT=true only if running without a terminating proxy.
+SECURE_SSL_REDIRECT = (not DEBUG) and (os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() == 'true')
 
 # Cookies
 SESSION_COOKIE_SECURE = not DEBUG
