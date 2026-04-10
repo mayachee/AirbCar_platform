@@ -103,12 +103,13 @@ export function AuthProvider({ children }) {
         // Role-based redirect using backend-provided user data only
         if (redirect && isClient && window?.location) {
           const userData = data.user || {}
-          const isStaff = userData.is_staff === true
-          const isSuperuser = userData.is_superuser === true
-          const isPartner = userData.is_partner === true || userData.role === 'partner'
+          const role = userData.role || ''
+          const isAdmin = userData.is_staff === true || userData.is_superuser === true
+                          || role === 'admin' || role === 'ceo'
+          const isPartner = userData.is_partner === true || role === 'partner'
 
           let redirectPath = redirectTo === '/' ? '/' : redirectTo
-          if (isStaff || isSuperuser) {
+          if (isAdmin) {
             redirectPath = '/admin/dashboard'
           } else if (isPartner) {
             redirectPath = '/partner/dashboard'

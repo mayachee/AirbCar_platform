@@ -26,7 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'first_name', 'last_name', 'role', 'is_partner', 
+            'id', 'username', 'email', 'first_name', 'last_name', 'role', 'is_partner',
+            'is_staff', 'is_superuser',
             'phone_number', 'profile_picture_url',
             'is_verified', 'date_joined',
             # Personal Information
@@ -37,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
             'license_front_document_url', 'license_back_document_url',
             'latest_license_verification'
         ]
-        read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username']
+        read_only_fields = ['id', 'date_joined', 'role', 'is_verified', 'username', 'is_staff', 'is_superuser']
 
     def get_latest_license_verification(self, obj):
         record = LicenseVerificationRecord.objects.filter(user=obj).order_by('-created_at').first()
