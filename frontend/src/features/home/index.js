@@ -7,6 +7,7 @@ export { default as HowItWorks } from './components/HowItWorks';
 export { default as TrustSignals } from './components/TrustSignals';
 export { default as RentalProviders } from './components/RentalProviders';
 export { default as InfoSection } from './components/InfoSection';
+export { default as GlobeSection } from './components/GlobeSection';
 export { default as TipCard } from './components/TipCard';
 
 // Optional: also expose a single barrel for all home components

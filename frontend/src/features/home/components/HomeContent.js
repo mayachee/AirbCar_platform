@@ -10,6 +10,7 @@ import PopularDestinations from "@/features/home/components/PopularDestinations"
 import Footer from "@/components/layout/Footer";
 import RentalProviders from "@/features/home/components/RentalProviders";
 import InfoSection from "@/features/home/components/InfoSection";
+import GlobeSection from "@/features/home/components/GlobeSection";
 
 export default function HomeContent() {
   const searchParams = useSearchParams();
@@ -122,6 +123,7 @@ export default function HomeContent() {
       <PopularDestinations />
       <CarTypes />
       <InfoSection />
+      <GlobeSection />
       <RentalProviders />
       <HowItWorks />
       <Footer />

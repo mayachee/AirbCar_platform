@@ -106,6 +106,21 @@ export interface Partner extends BaseEntity {
   vehicles: Vehicle[];
 }
 
+export interface GlobePartnerInfo {
+  id: number;
+  name: string;
+  rating: number;
+  reviewCount: number;
+  logo: string | null;
+}
+
+export interface CityMarker {
+  city: string;
+  lat: number;
+  lng: number;
+  partners: GlobePartnerInfo[];
+}
+
 export interface ListingFilters {
   location?: string;
   pickup_date?: string;
