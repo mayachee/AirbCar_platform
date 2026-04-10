@@ -11,7 +11,6 @@ services:
       cd airbcar_backend &&
       python manage.py migrate --noinput &&
       python manage.py collectstatic --noinput &&
-      python manage.py setup_telegram_webhook --url ${RENDER_EXTERNAL_URL:-} || true &&
       gunicorn airbcar_backend.wsgi:application --bind 0.0.0.0:$PORT --workers ${GUNICORN_WORKERS:-1} --timeout 120 --graceful-timeout 30 --config ../gunicorn_config.py
 
     rootDir: backend
