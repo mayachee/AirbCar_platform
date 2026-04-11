@@ -12,10 +12,10 @@ from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset
+from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, PartnerFollow, PartnerPost
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
-    ReviewSerializer, UserSerializer, PartnerSerializer, PartnerDetailSerializer,
+    ReviewSerializer, UserSerializer, PartnerSerializer, PartnerDetailSerializer, PartnerPostSerializer,
 )
 
 # Notification helpers
@@ -292,20 +292,32 @@ class PartnerDetailView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request, pk):
-        """Get partner detail by ID."""
+        """Get partner detail by ID — includes social data (follower_count, is_following, recent posts)."""
         try:
-            # Use explicit Prefetch to ensure ALL listings are returned (no filtering)
             partner = Partner.objects.select_related('user').prefetch_related(
                 Prefetch('listings', queryset=Listing.objects.all().order_by('-created_at'))
             ).get(pk=pk)
             serializer = PartnerDetailSerializer(partner, context={'request': request})
             if settings.DEBUG:
                 print(f"PartnerDetailView: Partner {partner.id} has {partner.listings.count()} listings")
-                # print(f"PartnerDetailView: Serializer data keys: {serializer.data.keys()}")
-            return Response({
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-            
+
+            # Social data
+            follower_count = PartnerFollow.objects.filter(partner=partner).count()
+            is_following = (
+                request.user.is_authenticated and
+                PartnerFollow.objects.filter(partner=partner, user=request.user).exists()
+            )
+            recent_posts = PartnerPost.objects.filter(
+                partner=partner, is_active=True
+            ).select_related('linked_listing').order_by('-created_at')[:5]
+
+            data = dict(serializer.data)
+            data['follower_count'] = follower_count
+            data['is_following'] = is_following
+            data['recent_posts'] = PartnerPostSerializer(recent_posts, many=True, context={'request': request}).data
+
+            return Response({'data': data}, status=status.HTTP_200_OK)
+
         except Partner.DoesNotExist:
             return Response({
                 'error': 'Partner not found'

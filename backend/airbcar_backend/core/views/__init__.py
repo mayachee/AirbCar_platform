@@ -144,6 +144,28 @@ except Exception as e:
     traceback.print_exc(file=sys.stderr)
     NewsletterSubscribeView = None
 
+# Social (listing comments & reactions, partner follows & posts, trip posts, user follows, feed)
+try:
+    from .social_views import (
+        ListingCommentListView, ListingCommentDetailView, ListingReactionView,
+        PartnerFollowView, PartnerPostListView, PartnerPostDetailView,
+        UserFollowView,
+        TripPostListView, TripPostDetailView, TripPostReactionView,
+        TripPostCommentListView, TripPostCommentDetailView,
+        SocialFeedView,
+        CommunityImageUploadView,
+    )
+except Exception as e:
+    print(f"Error importing social_views: {e}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    ListingCommentListView = ListingCommentDetailView = ListingReactionView = None
+    PartnerFollowView = PartnerPostListView = PartnerPostDetailView = None
+    UserFollowView = None
+    TripPostListView = TripPostDetailView = TripPostReactionView = None
+    TripPostCommentListView = TripPostCommentDetailView = None
+    SocialFeedView = None
+    CommunityImageUploadView = None
+
 # Import admin views from existing admin_views.py
 try:
     from ..admin_views import AdminStatsView, AdminAnalyticsView, AdminRevenueView
@@ -153,6 +175,14 @@ except Exception as e:
     AdminStatsView = AdminAnalyticsView = AdminRevenueView = None
 
 __all__ = [
+    # Social
+    'ListingCommentListView', 'ListingCommentDetailView', 'ListingReactionView',
+    'PartnerFollowView', 'PartnerPostListView', 'PartnerPostDetailView',
+    'UserFollowView',
+    'TripPostListView', 'TripPostDetailView', 'TripPostReactionView',
+    'TripPostCommentListView', 'TripPostCommentDetailView',
+    'SocialFeedView',
+    'CommunityImageUploadView',
     # Listings
     'ListingListView', 'ListingDetailView',
     # Bookings

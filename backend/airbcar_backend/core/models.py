@@ -550,3 +550,182 @@ class NewsletterSubscriber(models.Model):
     def __str__(self):
         return self.email
 
+
+class PartnerFollow(models.Model):
+    """A user following a partner agency."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='followers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'partner']
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['partner']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} follows {self.partner.business_name}"
+
+
+class PartnerPost(models.Model):
+    """Content post by a partner agency — feeds the social activity stream."""
+    POST_TYPE_CHOICES = [
+        ('update', 'Update'),
+        ('promotion', 'Promotion'),
+        ('new_car', 'New Car'),
+    ]
+    partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='posts')
+    content = models.TextField()
+    post_type = models.CharField(max_length=20, choices=POST_TYPE_CHOICES, default='update')
+    image_url = models.URLField(max_length=500, blank=True, null=True)
+    linked_listing = models.ForeignKey(
+        Listing, on_delete=models.SET_NULL, null=True, blank=True, related_name='partner_posts'
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['partner', 'is_active', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"Post by {self.partner.business_name} ({self.post_type})"
+
+
+class ListingComment(models.Model):
+    """Open social comment on a car listing — no booking required, supports threading."""
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listing_comments')
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies'
+    )
+    content = models.TextField()
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['listing', 'is_active', 'created_at']),
+            models.Index(fields=['parent']),
+            models.Index(fields=['user']),
+        ]
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.listing}"
+
+
+class ListingReaction(models.Model):
+    """Emoji reaction on a car listing — one per user, changeable."""
+    REACTION_CHOICES = [
+        ('like', '👍'),
+        ('love', '❤️'),
+        ('fire', '🔥'),
+        ('wow', '😮'),
+    ]
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listing_reactions')
+    reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['listing', 'user']
+        indexes = [
+            models.Index(fields=['listing']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} reacted {self.reaction} on {self.listing}"
+
+
+class UserFollow(models.Model):
+    """A user following another user."""
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_following')
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_followers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['follower', 'following']
+        indexes = [
+            models.Index(fields=['follower']),
+            models.Index(fields=['following']),
+        ]
+
+    def __str__(self):
+        return f"{self.follower.username} follows {self.following.username}"
+
+
+class TripPost(models.Model):
+    """Customer trip post — shared after a completed booking."""
+    booking = models.OneToOneField(
+        Booking, on_delete=models.CASCADE, related_name='trip_post',
+        help_text='Must be a completed booking owned by this user.'
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_posts')
+    caption = models.TextField(blank=True, default='')
+    images = models.JSONField(default=list, blank=True, help_text='List of Supabase image URLs')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_active', 'created_at']),
+            models.Index(fields=['is_active', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"TripPost by {self.user.username} for booking {self.booking_id}"
+
+
+class TripPostReaction(models.Model):
+    """Emoji reaction on a trip post — one per user, changeable."""
+    REACTION_CHOICES = [
+        ('like', '👍'),
+        ('love', '❤️'),
+        ('fire', '🔥'),
+        ('wow', '😮'),
+    ]
+    trip_post = models.ForeignKey(TripPost, on_delete=models.CASCADE, related_name='reactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_post_reactions')
+    reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['trip_post', 'user']
+        indexes = [
+            models.Index(fields=['trip_post']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} reacted {self.reaction} on trip post {self.trip_post_id}"
+
+
+class TripPostComment(models.Model):
+    """Comment on a trip post — supports one level of threading."""
+    trip_post = models.ForeignKey(TripPost, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_post_comments')
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies'
+    )
+    content = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['trip_post', 'is_active', 'created_at']),
+            models.Index(fields=['parent']),
+        ]
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on trip post {self.trip_post_id}"
+

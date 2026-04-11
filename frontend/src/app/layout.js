@@ -1,11 +1,11 @@
-import { Outfit, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { getOrganizationSchema, getLocalBusinessSchema } from "@/lib/seoConfig";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -182,7 +182,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body 
-        className={`${outfit.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
+        className={`${inter.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning={true}
       >
         {children}

@@ -2,9 +2,8 @@
 
 import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { motion, useScroll, useTransform } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Search, SlidersHorizontal, Grid3x3, List, X, Filter, Car, MapPin, Calendar, TrendingUp, Shield, Clock, Star, Zap } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Car, MapPin, Zap, Shield, Clock, Star } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { SearchFilters, SearchResults, LoadingSkeleton, SearchForm, useSearch, useFavorites } from '@/features/search';
@@ -16,17 +15,9 @@ function SearchContent() {
   const t = useTranslations('search');
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [visibleCount, setVisibleCount] = useState(6);
 
-  // Scroll animations for hero text
-  const { scrollY } = useScroll();
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
-  const heroScale = useTransform(scrollY, [0, 300], [1, 1.1]);
-  const heroFilter = useTransform(scrollY, [0, 300], ["blur(0px)", "blur(8px)"]);
-  const heroY = useTransform(scrollY, [0, 300], [0, -50]);
-  
   // Calculate default dates
   const today = new Date();
   const next2Days = new Date(today);
@@ -71,16 +62,15 @@ function SearchContent() {
 
   // Ensure filteredCars is always an array
   const safeFilteredCars = Array.isArray(filteredCars) ? filteredCars : [];
-  
+
   // Sync URL params with filters when URL changes
   useEffect(() => {
     const newFilters = {};
-    
-    // Only update if URL params are different from current filters
+
     const locationFromUrl = searchParams.get('location');
     const pickupDateFromUrl = searchParams.get('pickupDate');
     const returnDateFromUrl = searchParams.get('dropoffDate') || searchParams.get('returnDate');
-    
+
     if (locationFromUrl !== null && locationFromUrl !== filters.location) {
       newFilters.location = locationFromUrl;
     }
@@ -90,14 +80,12 @@ function SearchContent() {
     if (returnDateFromUrl !== null && returnDateFromUrl !== filters.returnDate) {
       newFilters.returnDate = returnDateFromUrl;
     }
-    
-    // Only update if there are changes
+
     if (Object.keys(newFilters).length > 0) {
-      console.log('📍 Syncing URL params to filters:', newFilters);
       updateFilters(newFilters);
     }
   }, [searchParams, filters, updateFilters]);
-  
+
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(6);
@@ -121,51 +109,31 @@ function SearchContent() {
 
   // Handle search form submission
   const handleSearchFormSubmit = (formData) => {
-    // Update filters state
     updateFilters({
       location: formData.location,
       pickupDate: formData.pickupDate,
       returnDate: formData.returnDate
     });
-    
-    // Also update URL to persist the search params
+
     const params = new URLSearchParams();
     if (formData.location) params.set('location', formData.location);
     if (formData.pickupDate) params.set('pickupDate', formData.pickupDate);
     if (formData.returnDate) params.set('returnDate', formData.returnDate);
-    
+
     const queryString = params.toString();
     const newUrl = queryString ? `/search?${queryString}` : '/search';
-    
-    console.log('Updating search URL with params:', {
-      location: formData.location,
-      pickupDate: formData.pickupDate,
-      returnDate: formData.returnDate,
-      url: newUrl
-    });
-    
     router.push(newUrl);
   };
 
   // Handle view details (redirect to car page with search params)
   const handleViewDetails = (car) => {
-    // Build URL with current search filters (dates, location)
     const params = new URLSearchParams();
     if (filters.location) params.set('location', filters.location);
     if (filters.pickupDate) params.set('pickupDate', filters.pickupDate);
     if (filters.returnDate) params.set('returnDate', filters.returnDate);
-    
+
     const queryString = params.toString();
     const url = `/car/${car.id}${queryString ? `?${queryString}` : ''}`;
-    
-    console.log('Navigating to car details with params:', {
-      carId: car.id,
-      location: filters.location,
-      pickupDate: filters.pickupDate,
-      returnDate: filters.returnDate,
-      url
-    });
-    
     router.push(url);
   };
 
@@ -199,6 +167,29 @@ function SearchContent() {
   // Check if there are any search criteria
   const hasSearchCriteria = filters.location || filters.pickupDate || filters.returnDate;
 
+  // Vehicle type quick-filter chips (from Stitch design)
+  const vehicleTypeChips = [
+    { value: '', label: t('car_type_all') },
+    { value: 'Sedan', label: t('sf_sedan') },
+    { value: 'SUV', label: t('sf_suv') },
+    { value: 'Convertible', label: t('sf_convertible') },
+    { value: 'City', label: t('sf_city') },
+    { value: '4x4', label: t('sf_4x4') },
+    { value: 'Coupe', label: t('sf_coupe') },
+    { value: 'Family', label: t('sf_family') },
+  ];
+
+  // Active type chip
+  const activeTypeChip = filters.style?.length === 1 ? filters.style[0] : '';
+
+  const handleTypeChipClick = (value) => {
+    if (value === '') {
+      handleFilterChange({ style: [] });
+    } else {
+      handleFilterChange({ style: [value] });
+    }
+  };
+
   // Features to show when no search results
   const features = useMemo(() => [
     { icon: Zap, title: t('feature_instant_booking'), description: t('feature_instant_booking_desc') },
@@ -208,256 +199,257 @@ function SearchContent() {
   ], [t]);
 
   return (
-    <div className="min-h-screen bg-[#0F172A] relative overflow-hidden">
-      {/* Abstract Background Pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
-        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
-      </div>
-
+    <div className="min-h-screen bg-[var(--surface-base)]">
       <Header />
-      
-      {/* Hero Section - Modern & Stylish */}
-      <section className="relative text-white pt-32 pb-12 md:pt-60 md:pb-32">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
-          <div className="max-w-5xl mx-auto relative z-20">
-            {/* Search Form Container */}
-            <div className='flex flex-col gap-4 max-w-7xl mx-auto'>
-              <h1 className="relative flex flex-col items-center justify-center">
-                <span className="text-4xl sm:text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 tracking-tighter uppercase drop-shadow-sm">
-                  {t('heading_line1')}
-                </span>
-                <span className="text-5xl sm:text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 via-orange-500 to-orange-600 tracking-tighter uppercase drop-shadow-lg mt-[-10px] sm:mt-[-20px]">
-                  {t('heading_line2')}
-                </span>
+      {/* Search Header — compact, editorial */}
+      <section className="pt-28 pb-6 md:pt-32 md:pb-8 bg-[var(--surface-base)]">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            {/* Title row */}
+            <div className="mb-6">
+              <h1 className="headline-lg text-[var(--text-primary)]">
+                {t('explore_fleet')}
               </h1>
-              <SearchForm 
-                onSearch={handleSearchFormSubmit}
-                initialValues={{
-                  location: filters.location,
-                  pickupDate: filters.pickupDate,
-                  returnDate: filters.returnDate
-                }}
-              />
+              <p className="body-md text-[var(--text-secondary)] mt-2">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block h-4 w-4 rounded-full border-2 border-[var(--color-orange-500)] border-t-transparent animate-spin" />
+                    {t('searching')}
+                  </span>
+                ) : safeFilteredCars.length > 0 ? (
+                  <>
+                    <span className="font-semibold text-[var(--color-orange-500)]">{safeFilteredCars.length}</span>{' '}
+                    {t('vehicles_available').replace('{count}', '')}
+                    {filters.location && (
+                      <span className="text-[var(--text-muted)]">
+                        {' '}&middot;{' '}{filters.location}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  t('find_perfect_car')
+                )}
+              </p>
             </div>
 
+            {/* Search Form */}
+            <SearchForm
+              onSearch={handleSearchFormSubmit}
+              initialValues={{
+                location: filters.location,
+                pickupDate: filters.pickupDate,
+                returnDate: filters.returnDate
+              }}
+            />
           </div>
         </div>
       </section>
 
-      {/* Main Content Section */}
-      <main className="min-h-screen relative z-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Results Header */}
-          <div className="mb-8">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div>
-                <h2 className="text-3xl font-bold text-white tracking-tight">
-                  {loading ? (
-                    <span className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full border-2 border-orange-500 border-t-transparent animate-spin" />
-                      {t('searching')}
-                    </span>
-                  ) : (
-                    <>
-                      {safeFilteredCars.length > 0 ? (
-                        <>
-                          <span className="text-orange-500">{safeFilteredCars.length}</span>{' '}
-                          <span className="text-white">{t('vehicles_available').replace('{count}', '')}</span>
-                        </>
-                      ) : hasSearchCriteria ? (
-                        t('no_vehicles_found')
-                      ) : (
-                        t('browse_all')
-                      )}
-                    </>
-                  )}
-                </h2>
-                <p className="text-gray-400 mt-2 flex items-center gap-2">
-                  {hasSearchCriteria ? (
-                    <>
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      {t('matching_criteria')}
-                    </>
-                  ) : (
-                    t('find_perfect_car')
-                  )}
-                </p>
-              </div>
-              
-              {/* View Controls */}
-              <div className="flex items-center gap-3">
-                {/* Mobile Filter Toggle */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-                  className="lg:hidden flex items-center gap-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl"
+      {/* Type chips + sort controls */}
+      <div className="sticky top-16 z-30 bg-[var(--surface-base)] shadow-ambient-sm">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Vehicle type chips */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {vehicleTypeChips.map((chip) => (
+                <button
+                  key={chip.value}
+                  onClick={() => handleTypeChipClick(chip.value)}
+                  className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                    (chip.value === '' && filters.style?.length === 0) || activeTypeChip === chip.value
+                      ? 'bg-[var(--color-orange-500)] text-white shadow-ambient-sm'
+                      : 'bg-[var(--surface-1)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
+                  }`}
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span className="font-medium">{t('filters')}</span>
-                  {activeFiltersCount > 0 && (
-                    <span className="ml-1 px-2 py-0.5 bg-orange-500/20 text-orange-400 text-xs rounded-full font-bold">
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </Button>
-            
-                {/* Sort Options */}
-                <div className="flex items-center gap-2 px-2">
-                  <span className="text-sm text-gray-400 font-medium hidden sm:inline">{t('sort_by')}</span>
-                  <SelectField
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    options={[
-                      { value: 'price_low', label: t('sort_price_low') },
-                      { value: 'price_high', label: t('sort_price_high') },
-                      { value: 'rating', label: t('sort_highest_rated') },
-                      { value: 'newest', label: t('sort_newest') },
-                    ]}
-                    className="border-none bg-transparent text-sm font-semibold text-white focus:ring-0 cursor-pointer py-1 pr-8 pl-2"
-                    contentProps={{
-                      className: "bg-[#0F172A] border-white/10 text-white"
-                    }}
-                  />
-                </div>
-              </div>
+                  {chip.label}
+                </button>
+              ))}
             </div>
-            
-            {/* Active Filters Bar */}
-            {activeFiltersCount > 0 && (
-              <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-white/10">
-                <span className="text-sm font-medium text-gray-400">{t('active_filters')}</span>
-                {filters.location && (
-                  <span className="inline-flex items-center px-3 py-1 bg-white/10 border border-white/10 rounded-full text-sm text-white shadow-sm backdrop-blur-sm">
-                    <MapPin className="h-3 w-3 mr-1.5 text-orange-400" />
-                    {filters.location}
-                    <button onClick={() => handleFilterChange({ location: '' })} className="ml-2 hover:text-red-400 text-gray-400">
-                      <X className="h-3 w-3" />
-                    </button>
+
+            {/* Sort + filter controls */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Mobile Filter Toggle */}
+              <button
+                onClick={() => setShowFiltersMobile(!showFiltersMobile)}
+                className="lg:hidden flex items-center gap-2 px-3 py-2 rounded-full bg-[var(--surface-1)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)] text-sm font-medium transition-colors"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {t('filters')}
+                {activeFiltersCount > 0 && (
+                  <span className="ml-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-[var(--color-orange-500)] text-white text-[10px] font-bold">
+                    {activeFiltersCount}
                   </span>
                 )}
-                {/* Add more filter tags here if needed */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 font-medium text-sm ml-auto"
-                >
-                  {t('clear_all')}
-                </Button>
-              </div>
-            )}
-          </div>
+              </button>
 
-          {/* Filters Mobile Overlay */}
-          {showFiltersMobile && (
-            <>
-              <div 
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
-                onClick={() => setShowFiltersMobile(false)}
-              />
-              <div className="fixed inset-y-0 left-0 w-80 bg-[#0F172A] shadow-2xl z-50 overflow-y-auto lg:hidden border-r border-white/10">
-                <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#0F172A] sticky top-0 z-10">
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <SlidersHorizontal className="h-5 w-5 text-orange-500" />
-                    {t('filters')}
-                  </h3>
-                  <button
-                    onClick={() => setShowFiltersMobile(false)}
-                    className="p-2 hover:bg-white/10 rounded-xl transition-colors text-gray-400 hover:text-white"
-                  >
-                    <X className="h-5 w-5" />
+              {/* Sort */}
+              <div className="flex items-center gap-1.5">
+                <span className="label-xs text-[var(--text-muted)] hidden sm:inline">{t('sort_by')}</span>
+                <SelectField
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  options={[
+                    { value: 'price_low', label: t('sort_price_low') },
+                    { value: 'price_high', label: t('sort_price_high') },
+                    { value: 'rating', label: t('sort_highest_rated') },
+                    { value: 'newest', label: t('sort_newest') },
+                  ]}
+                  className="bg-[var(--surface-1)] text-sm font-semibold text-[var(--text-primary)] rounded-full px-3 py-2 focus:ring-1 focus:ring-[var(--color-orange-500)]/30 cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Filters Bar */}
+      {activeFiltersCount > 0 && (
+        <div className="bg-[var(--surface-1)]">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto py-3 flex flex-wrap items-center gap-2">
+              <span className="label-xs text-[var(--text-muted)]">{t('active_filters')}</span>
+              {filters.location && (
+                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
+                  <MapPin className="h-3 w-3 mr-1.5 text-[var(--color-orange-500)]" />
+                  {filters.location}
+                  <button onClick={() => handleFilterChange({ location: '' })} className="ml-2 text-[var(--text-muted)] hover:text-[var(--color-kc-error)]">
+                    <X className="h-3 w-3" />
                   </button>
-                </div>
-                <div className="p-6">
+                </span>
+              )}
+              {filters.verified && (
+                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
+                  <Shield className="h-3 w-3 mr-1.5 text-[var(--color-kc-tertiary)]" />
+                  {t('sf_verified_agencies')}
+                  <button onClick={() => handleFilterChange({ verified: false })} className="ml-2 text-[var(--text-muted)] hover:text-[var(--color-kc-error)]">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {filters.instantBooking && (
+                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
+                  <Zap className="h-3 w-3 mr-1.5 text-[var(--color-orange-500)]" />
+                  {t('sf_instant_booking')}
+                  <button onClick={() => handleFilterChange({ instantBooking: false })} className="ml-2 text-[var(--text-muted)] hover:text-[var(--color-kc-error)]">
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              <button
+                onClick={clearFilters}
+                className="ml-auto text-sm font-semibold text-[var(--color-orange-500)] hover:text-[var(--color-orange-600)] transition-colors"
+              >
+                {t('clear_all')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filters Mobile Overlay */}
+      {showFiltersMobile && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setShowFiltersMobile(false)}
+          />
+          <div className="fixed inset-y-0 left-0 w-80 bg-[var(--surface-base)] shadow-ambient-lg z-50 overflow-y-auto lg:hidden">
+            <div className="p-5 flex items-center justify-between bg-[var(--surface-base)] sticky top-0 z-10 shadow-ambient-sm">
+              <h3 className="title-lg text-[var(--text-primary)] flex items-center gap-2">
+                <SlidersHorizontal className="h-5 w-5 text-[var(--color-orange-500)]" />
+                {t('filters')}
+              </h3>
+              <button
+                onClick={() => setShowFiltersMobile(false)}
+                className="p-2 rounded-full hover:bg-[var(--surface-1)] transition-colors text-[var(--text-secondary)]"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              <SearchFilters
+                filters={filters}
+                onFilterChange={handleFilterChange}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Main Content */}
+      <main className="py-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
+            {/* Filters Sidebar — Desktop */}
+            <aside className="hidden lg:block lg:w-72 flex-shrink-0">
+              <div className="sticky top-36">
+                <div className="bg-[var(--surface-container-lowest)] rounded-2xl p-5 shadow-ambient">
+                  <div className="flex items-center justify-between mb-5 pb-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <h3 className="title-lg text-[var(--text-primary)] flex items-center gap-2">
+                      <SlidersHorizontal className="h-5 w-5 text-[var(--color-orange-500)]" />
+                      {t('filters')}
+                    </h3>
+                    {activeFiltersCount > 0 && (
+                      <button
+                        onClick={clearFilters}
+                        className="label-xs text-[var(--color-orange-500)] hover:text-[var(--color-orange-600)]"
+                      >
+                        {t('reset')}
+                      </button>
+                    )}
+                  </div>
                   <SearchFilters
                     filters={filters}
                     onFilterChange={handleFilterChange}
                   />
                 </div>
               </div>
-            </>
-          )}
-
-        <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar - Desktop */}
-            <aside className="hidden lg:block lg:w-72 flex-shrink-0">
-              <div className="sticky top-8">
-                <div className="bg-white/5 rounded-2xl border border-white/10 p-5 shadow-sm backdrop-blur-sm">
-                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <SlidersHorizontal className="h-5 w-5 text-orange-500" />
-                      {t('filters')}
-                    </h3>
-                    {activeFiltersCount > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearFilters}
-                        className="text-xs text-gray-400 hover:text-white h-auto py-1 px-2"
-                      >
-                        {t('reset')}
-                      </Button>
-                    )}
-                  </div>
-            <SearchFilters
-              filters={filters}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-              </div>
             </aside>
 
-          {/* Results */}
+            {/* Results */}
             <div className="flex-1 min-w-0">
-            {loading ? (
-                <div className="space-y-6">
-                  <LoadingSkeleton count={6} />
-                </div>
-              ) : filteredCars.length === 0 ? (
-                <div className="space-y-12">
-                  {/* Empty State - Modern */}
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-12 text-center shadow-sm relative overflow-hidden backdrop-blur-sm">
-                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 to-orange-600" />
-                    <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl opacity-50" />
-                    <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl opacity-50" />
-                    
+              {loading ? (
+                <LoadingSkeleton count={6} />
+              ) : safeFilteredCars.length === 0 ? (
+                <div className="space-y-10">
+                  {/* Empty State */}
+                  <div className="bg-[var(--surface-container-lowest)] rounded-2xl p-10 text-center shadow-ambient relative overflow-hidden">
+                    {/* Subtle glow accent */}
+                    <div className="glow-orange w-64 h-64 -bottom-20 -right-20 absolute" />
+
                     <div className="relative z-10">
                       {hasSearchCriteria ? (
                         <>
-                          <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 shadow-sm backdrop-blur-md">
-                            <Search className="h-10 w-10 text-orange-400" />
+                          <div className="w-16 h-16 bg-[var(--surface-1)] rounded-2xl flex items-center justify-center mx-auto mb-5">
+                            <Search className="h-8 w-8 text-[var(--color-orange-500)]" />
                           </div>
-                          <h3 className="text-2xl font-bold text-white mb-3">{t('empty_heading')}</h3>
-                          <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                          <h3 className="headline-md text-[var(--text-primary)] mb-2">{t('empty_heading')}</h3>
+                          <p className="body-md text-[var(--text-secondary)] mb-8 max-w-md mx-auto">
                             {t('empty_description')}
                           </p>
-                          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Button
-                              variant="outline"
+                          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button
                               onClick={clearFilters}
-                              className="border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent"
+                              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-primary)] bg-[var(--surface-1)] hover:bg-[var(--surface-2)] transition-colors"
                             >
                               {t('clear_all_filters')}
-                            </Button>
-                            <Button
+                            </button>
+                            <button
                               onClick={() => router.push('/')}
-                              className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20"
+                              className="btn-brand px-6 py-2.5 text-sm"
                             >
                               {t('start_new_search')}
-                            </Button>
+                            </button>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="w-20 h-20 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 -rotate-3 shadow-sm backdrop-blur-md">
-                            <Car className="h-10 w-10 text-blue-400" />
+                          <div className="w-16 h-16 bg-[var(--surface-1)] rounded-2xl flex items-center justify-center mx-auto mb-5">
+                            <Car className="h-8 w-8 text-[var(--color-kc-tertiary)]" />
                           </div>
-                          <h3 className="text-2xl font-bold text-white mb-3">{t('start_heading')}</h3>
-                          <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                          <h3 className="headline-md text-[var(--text-primary)] mb-2">{t('start_heading')}</h3>
+                          <p className="body-md text-[var(--text-secondary)] mb-8 max-w-md mx-auto">
                             {t('start_description')}
                           </p>
                         </>
@@ -465,23 +457,23 @@ function SearchContent() {
                     </div>
                   </div>
 
-                  {/* Features Section - Modern Cards */}
+                  {/* Features Section */}
                   {!hasSearchCriteria && (
                     <div>
-                      <h3 className="text-xl font-bold text-white mb-6">{t('why_choose')}</h3>
+                      <h3 className="title-lg text-[var(--text-primary)] mb-5">{t('why_choose')}</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {features.map((feature, index) => {
                           const Icon = feature.icon;
                           return (
-                            <div 
+                            <div
                               key={index}
-                              className="bg-white/5 rounded-2xl border border-white/10 p-5 hover:bg-white/10 transition-all duration-300 group hover:-translate-y-1 backdrop-blur-sm"
+                              className="bg-[var(--surface-container-lowest)] rounded-xl p-5 shadow-ambient hover:shadow-ambient-lg transition-all duration-300 group hover:-translate-y-0.5"
                             >
-                              <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500/20 transition-colors">
-                                <Icon className="h-5 w-5 text-orange-400" />
+                              <div className="w-10 h-10 bg-[var(--color-orange-500)]/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-[var(--color-orange-500)]/15 transition-colors">
+                                <Icon className="h-5 w-5 text-[var(--color-orange-500)]" />
                               </div>
-                              <h4 className="font-bold text-white mb-1">{feature.title}</h4>
-                              <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+                              <h4 className="font-bold text-[var(--text-primary)] text-sm mb-1">{feature.title}</h4>
+                              <p className="text-[var(--text-secondary)] text-xs leading-relaxed">{feature.description}</p>
                             </div>
                           );
                         })}
@@ -490,44 +482,38 @@ function SearchContent() {
                   )}
                 </div>
               ) : (
-                <div className={viewMode === 'grid' 
-                  ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' 
-                  : 'space-y-4'
-                }>
-              <SearchResults
-                filteredCars={visibleCars}
-                onViewDetails={handleViewDetails}
-                onToggleFavorite={handleToggleFavorite}
-                isFavorite={isFavorite}
-                favoritesLoading={favoritesLoading}
-              />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  <SearchResults
+                    filteredCars={visibleCars}
+                    onViewDetails={handleViewDetails}
+                    onToggleFavorite={handleToggleFavorite}
+                    isFavorite={isFavorite}
+                    favoritesLoading={favoritesLoading}
+                  />
                 </div>
-            )}
-            </div>
-          </div>
+              )}
 
-          {/* Results Footer */}
-          {!loading && safeFilteredCars.length > 0 && (
-            <div className="mt-16 pt-8 border-t border-white/10 text-center">
-              <p className="text-base text-gray-400 mb-6">
-                {t('showing_results').replace('{visible}', Math.min(visibleCount, safeFilteredCars.length)).replace('{total}', safeFilteredCars.length)}
-              </p>
-              
-              {visibleCount < safeFilteredCars.length && (
-                <Button
-                  onClick={handleLoadMore}
-                  className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-2 rounded-xl text-lg font-medium transition-all duration-300 hover:scale-105"
-                >
-                  {t('load_more')}
-                </Button>
+              {/* Results Footer */}
+              {!loading && safeFilteredCars.length > 0 && (
+                <div className="mt-10 pt-6 text-center" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                  <p className="body-md text-[var(--text-secondary)] mb-5">
+                    {t('showing_results').replace('{visible}', Math.min(visibleCount, safeFilteredCars.length)).replace('{total}', safeFilteredCars.length)}
+                  </p>
+
+                  {visibleCount < safeFilteredCars.length && (
+                    <button
+                      onClick={handleLoadMore}
+                      className="px-8 py-3 rounded-xl bg-[var(--surface-1)] text-[var(--text-primary)] font-semibold text-sm hover:bg-[var(--surface-2)] shadow-ambient-sm hover:shadow-ambient transition-all duration-300"
+                    >
+                      {t('load_more')}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
       </main>
-
-      {/* Smooth transition to footer */}
-      <div className="h-24 bg-gradient-to-b from-[#0F172A] to-[#0B0F19]" />
 
       <Footer />
     </div>

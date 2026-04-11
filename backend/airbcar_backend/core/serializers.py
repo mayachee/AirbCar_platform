@@ -5,7 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.utils import timezone
-from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord
+from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord, ListingComment, PartnerPost, TripPost, TripPostComment, TripPostReaction
 from .utils.license_verification import verify_driving_license_images
 from .utils.license_verification_persistence import store_license_verification_result
 
@@ -948,9 +948,153 @@ class ReviewReportSerializer(serializers.ModelSerializer):
 
 class NotificationSerializer(serializers.ModelSerializer):
     """Notification serializer."""
-    
+
     class Meta:
         model = Notification
         fields = ['id', 'title', 'message', 'type', 'is_read', 'created_at', 'related_object_id', 'related_object_type']
         read_only_fields = ['id', 'created_at']
+
+
+class ListingCommentSerializer(serializers.ModelSerializer):
+    """Serializer for social comments on listings."""
+    user = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ListingComment
+        fields = ['id', 'listing', 'parent', 'user', 'content', 'replies', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
+        extra_kwargs = {
+            'listing': {'write_only': True},
+            'parent': {'write_only': True},
+        }
+
+    def get_user(self, obj):
+        return {
+            'id': obj.user.id,
+            'username': obj.user.username,
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
+            'profile_picture_url': obj.user.profile_picture_url,
+        }
+
+    def get_replies(self, obj):
+        # Only top-level comments carry replies; depth guard prevents runaway recursion
+        if obj.parent_id is not None or self.context.get('_comment_depth', 0) >= 1:
+            return []
+        children = obj.replies.filter(is_active=True).order_by('created_at')
+        ctx = {**self.context, '_comment_depth': self.context.get('_comment_depth', 0) + 1}
+        return ListingCommentSerializer(children, many=True, context=ctx).data
+
+
+class PartnerPostSerializer(serializers.ModelSerializer):
+    """Serializer for partner social posts."""
+    partner_name = serializers.CharField(source='partner.business_name', read_only=True)
+    partner_logo_url = serializers.SerializerMethodField()
+    linked_listing_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PartnerPost
+        fields = [
+            'id', 'partner', 'partner_name', 'partner_logo_url',
+            'content', 'post_type', 'image_url',
+            'linked_listing', 'linked_listing_name',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'partner', 'partner_name', 'partner_logo_url', 'created_at']
+        extra_kwargs = {
+            'linked_listing': {'write_only': False, 'required': False, 'allow_null': True},
+        }
+
+    def get_partner_logo_url(self, obj):
+        return obj.partner.logo_url if obj.partner else None
+
+    def get_linked_listing_name(self, obj):
+        if obj.linked_listing:
+            return obj.linked_listing.name
+        return None
+
+
+class TripPostCommentSerializer(serializers.ModelSerializer):
+    """Serializer for comments on trip posts."""
+    user = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TripPostComment
+        fields = ['id', 'trip_post', 'parent', 'user', 'content', 'replies', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
+        extra_kwargs = {
+            'trip_post': {'write_only': True},
+            'parent': {'write_only': True},
+        }
+
+    def get_user(self, obj):
+        return {
+            'id': obj.user.id,
+            'username': obj.user.username,
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
+            'profile_picture_url': obj.user.profile_picture_url,
+        }
+
+    def get_replies(self, obj):
+        if obj.parent_id is not None or self.context.get('_comment_depth', 0) >= 1:
+            return []
+        children = obj.replies.filter(is_active=True).order_by('created_at')
+        ctx = {**self.context, '_comment_depth': self.context.get('_comment_depth', 0) + 1}
+        return TripPostCommentSerializer(children, many=True, context=ctx).data
+
+
+class TripPostSerializer(serializers.ModelSerializer):
+    """Serializer for customer trip posts."""
+    user = serializers.SerializerMethodField()
+    listing_name = serializers.SerializerMethodField()
+    listing_id = serializers.SerializerMethodField()
+    partner_name = serializers.SerializerMethodField()
+    reaction_summary = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TripPost
+        fields = [
+            'id', 'user', 'booking', 'caption', 'images',
+            'listing_name', 'listing_id', 'partner_name',
+            'reaction_summary', 'comment_count',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'user', 'created_at']
+        extra_kwargs = {
+            'booking': {'write_only': True},
+        }
+
+    def get_user(self, obj):
+        return {
+            'id': obj.user.id,
+            'username': obj.user.username,
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
+            'profile_picture_url': obj.user.profile_picture_url,
+        }
+
+    def get_listing_name(self, obj):
+        return obj.booking.listing.name if obj.booking and obj.booking.listing else None
+
+    def get_listing_id(self, obj):
+        return obj.booking.listing_id if obj.booking else None
+
+    def get_partner_name(self, obj):
+        try:
+            return obj.booking.listing.partner.business_name
+        except AttributeError:
+            return None
+
+    def get_reaction_summary(self, obj):
+        from django.db.models import Count
+        return list(
+            obj.reactions.values('reaction').annotate(count=Count('id')).order_by('-count')
+        )
+
+    def get_comment_count(self, obj):
+        return obj.comments.filter(is_active=True).count()
 

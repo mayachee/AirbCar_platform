@@ -25,7 +25,6 @@ export default function PopularDestinations() {
   const jumpScrollLeft = useCallback((nextScrollLeft) => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
     const prevBehavior = container.style.scrollBehavior;
     const prevSnapType = container.style.scrollSnapType;
     container.style.scrollBehavior = 'auto';
@@ -40,40 +39,23 @@ export default function PopularDestinations() {
   const wrapIfOnClone = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
     const cards = getCardElements();
-    // Expect: [lastClone, ...realItems, firstClone]
     if (cards.length < 3) return;
-
     const firstReal = cards[1];
     const lastReal = cards[cards.length - 2];
-
-    // With scroll snap + touchpads, scrollLeft may not match offsetLeft exactly.
-    // So find the nearest card and only wrap if that nearest is a clone.
     const scrollLeft = container.scrollLeft;
     let nearestIdx = 0;
     let bestDist = Infinity;
     for (let i = 0; i < cards.length; i += 1) {
       const dist = Math.abs(scrollLeft - cards[i].offsetLeft);
-      if (dist < bestDist) {
-        bestDist = dist;
-        nearestIdx = i;
-      }
+      if (dist < bestDist) { bestDist = dist; nearestIdx = i; }
     }
-
-    if (nearestIdx === 0) {
-      jumpScrollLeft(lastReal.offsetLeft);
-    } else if (nearestIdx === cards.length - 1) {
-      jumpScrollLeft(firstReal.offsetLeft);
-    }
+    if (nearestIdx === 0) jumpScrollLeft(lastReal.offsetLeft);
+    else if (nearestIdx === cards.length - 1) jumpScrollLeft(firstReal.offsetLeft);
   }, [getCardElements, jumpScrollLeft]);
 
   const scheduleWrapIfNeeded = useCallback(() => {
-    if (scrollEndTimerRef.current) {
-      clearTimeout(scrollEndTimerRef.current);
-    }
-
-    // Debounce: treat "no scroll events for N ms" as scroll end.
+    if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
     scrollEndTimerRef.current = setTimeout(() => {
       scrollEndTimerRef.current = null;
       if (!isPointerDownRef.current) wrapIfOnClone();
@@ -81,91 +63,48 @@ export default function PopularDestinations() {
   }, [wrapIfOnClone]);
 
   const handleDestinationClick = useCallback((destination) => {
-    // Navigate to search page with destination pre-filled
     const searchParams = new URLSearchParams({
       location: destination,
-      pickupDate: new Date().toISOString().split('T')[0], // Today's date
-      dropoffDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Tomorrow's date
+      pickupDate: new Date().toISOString().split('T')[0],
+      dropoffDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     });
-    
     router.push(`/search?${searchParams.toString()}`);
   }, [router]);
 
   const checkScrollPosition = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
-    // With looping enabled, arrows (if rendered) should always be available
-    // as long as there is enough content to scroll.
     const canScroll = container.scrollWidth - container.clientWidth > 4;
     setShowLeftArrow(canScroll);
     setShowRightArrow(canScroll);
   }, []);
 
-  const scrollToLeft = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.scrollBy({
-        left: -300,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const scrollToRight = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.scrollBy({
-        left: 300,
-        behavior: 'smooth'
-      });
-    }
-  };
-
   const handlePointerDown = (e) => {
     const container = scrollContainerRef.current;
     if (!container) return;
     if (e.button !== undefined && e.button !== 0) return;
-    // Ignore touch events to allow native scrolling
     if (e.pointerType === 'touch') return;
-
     isPointerDownRef.current = true;
     didDragRef.current = false;
     startXRef.current = e.clientX;
     startScrollLeftRef.current = container.scrollLeft;
-
     container.style.cursor = 'grabbing';
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      // no-op
-    }
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
   };
 
   const handlePointerMove = (e) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    if (!isPointerDownRef.current) return;
-
+    if (!scrollContainerRef.current || !isPointerDownRef.current) return;
     const dx = e.clientX - startXRef.current;
     if (Math.abs(dx) > 6) didDragRef.current = true;
-    container.scrollLeft = startScrollLeftRef.current - dx;
+    scrollContainerRef.current.scrollLeft = startScrollLeftRef.current - dx;
   };
 
   const endPointerDrag = (e) => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
     isPointerDownRef.current = false;
     container.style.cursor = 'grab';
-
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      // no-op
-    }
-
-    // If scroll snap lands us on a clone, silently jump to the real card.
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch {}
     scheduleWrapIfNeeded();
   };
 
@@ -184,87 +123,33 @@ export default function PopularDestinations() {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
-    // Use native scrollend when available; fallback is the debounced onScroll.
-    const handleScrollEnd = () => {
-      if (!isPointerDownRef.current) wrapIfOnClone();
-      checkScrollPosition();
-    };
-
+    const handleScrollEnd = () => { if (!isPointerDownRef.current) wrapIfOnClone(); checkScrollPosition(); };
     container.addEventListener('scrollend', handleScrollEnd);
-    return () => {
-      container.removeEventListener('scrollend', handleScrollEnd);
-    };
+    return () => container.removeEventListener('scrollend', handleScrollEnd);
   }, [checkScrollPosition, wrapIfOnClone]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
-    // Start on the first real card (index 1) so user can scroll both ways.
     const raf = requestAnimationFrame(() => {
       const cards = getCardElements();
-      if (cards.length >= 2) {
-        jumpScrollLeft(cards[1].offsetLeft);
-      }
+      if (cards.length >= 2) jumpScrollLeft(cards[1].offsetLeft);
       checkScrollPosition();
     });
-
     return () => cancelAnimationFrame(raf);
   }, [checkScrollPosition, getCardElements, jumpScrollLeft]);
 
   useEffect(() => {
-    return () => {
-      if (scrollEndTimerRef.current) {
-        clearTimeout(scrollEndTimerRef.current);
-        scrollEndTimerRef.current = null;
-      }
-    };
+    return () => { if (scrollEndTimerRef.current) { clearTimeout(scrollEndTimerRef.current); scrollEndTimerRef.current = null; } };
   }, []);
 
   const destinations = [
-    {
-      destination: 'Tetouan',
-      image: 'https://ik.imagekit.io/szcfr7vth/tetouan.jpg',
-      kicker: null,
-      subtitle: 'White Dove • Andalusian Heritage',
-      note: 'Most popular: Compact Cars'
-    },
-    {
-      destination: 'Marrakech',
-      image: 'https://ik.imagekit.io/szcfr7vth/unnamed5.jpg',
-      kicker: 'Coming soon',
-      subtitle: 'Imperial City • Red City',
-      note: null
-    },
-    {
-      destination: 'Agadir',
-      image: 'https://ik.imagekit.io/szcfr7vth/agadir.jpg',
-      kicker: 'Coming soon',
-      subtitle: 'Beach Resort • Atlantic Coast',
-      note: null
-    },
-    {
-      destination: 'Tangier',
-      image: 'https://ik.imagekit.io/szcfr7vth/shutterstock2625490969.jpg',
-      kicker: 'Coming soon',
-      subtitle: 'Gateway to Africa • Mediterranean',
-      note: null
-    },
-    {
-      destination: 'Casablanca',
-      image: 'https://ik.imagekit.io/szcfr7vth/casablanca.jpg',
-      kicker: null,
-      subtitle: 'Economic Capital • Modern City',
-      note: 'Most popular: Business Class'
-    },
-    {
-      destination: 'Rabat',
-      image: 'https://ik.imagekit.io/szcfr7vth/rabat.jpg',
-      kicker: null,
-      subtitle: 'Royal Capital • UNESCO Heritage',
-      note: 'Most popular: Luxury & Economy'
-    }
+    { destination: 'Tetouan', image: 'https://ik.imagekit.io/szcfr7vth/tetouan.jpg', kicker: null, subtitle: 'White Dove', note: 'Most popular: Compact Cars' },
+    { destination: 'Marrakech', image: 'https://ik.imagekit.io/szcfr7vth/unnamed5.jpg', kicker: 'Coming soon', subtitle: 'Imperial City', note: null },
+    { destination: 'Agadir', image: 'https://ik.imagekit.io/szcfr7vth/agadir.jpg', kicker: 'Coming soon', subtitle: 'Atlantic Coast', note: null },
+    { destination: 'Tangier', image: 'https://ik.imagekit.io/szcfr7vth/shutterstock2625490969.jpg', kicker: 'Coming soon', subtitle: 'Gateway to Africa', note: null },
+    { destination: 'Casablanca', image: 'https://ik.imagekit.io/szcfr7vth/casablanca.jpg', kicker: null, subtitle: 'Economic Capital', note: 'Most popular: Business Class' },
+    { destination: 'Rabat', image: 'https://ik.imagekit.io/szcfr7vth/rabat.jpg', kicker: null, subtitle: 'Royal Capital', note: 'Most popular: Luxury & Economy' },
   ];
 
   const destinationsForLoop =
@@ -273,49 +158,47 @@ export default function PopularDestinations() {
       : destinations;
 
   return (
-    <section className="py-16 md:py-24 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative py-20 md:py-28 surface-base overflow-hidden">
+      {/* Ambient glow */}
+      <div className="glow-blue absolute -top-40 right-0 w-[500px] h-[500px] opacity-20" />
 
-        <motion.div 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="border-b border-gray-200 pb-6 md:pb-8 mb-8 md:mb-10 flex items-end justify-between gap-8"
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-10 md:mb-14"
         >
-          <div>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">{t('destinations_kicker')}</p>
-            <h2 className="mt-3 text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
-              {t('destinations_heading')}
-            </h2>
+          <div className="flex items-end justify-between gap-8">
+            <div>
+              <p className="label-xs text-[var(--color-orange-500)] mb-3">
+                {t('destinations_kicker')}
+              </p>
+              <h2 className="headline-lg sm:text-4xl md:text-6xl text-[var(--text-primary)] leading-[0.95]">
+                {t('destinations_heading')}
+              </h2>
+            </div>
+            <p className="hidden md:block max-w-sm text-sm text-[var(--text-secondary)] leading-relaxed">
+              {t('destinations_description')}
+            </p>
           </div>
-          <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
-            {t('destinations_description')}
-          </p>
+          <div className="mt-6 h-px bg-gradient-to-r from-[var(--border-medium)] to-transparent" />
         </motion.div>
 
-        {/* City Cards Horizontal Scroll */}
+        {/* City Cards */}
         <div className="relative">
-          <div 
+          <div
             ref={scrollContainerRef}
-            className="flex gap-6 md:gap-8 overflow-x-auto scrollbar-hide cursor-grab select-none pb-6 px-1 snap-x snap-mandatory scroll-smooth"
+            className="flex gap-5 md:gap-6 overflow-x-auto scrollbar-hide cursor-grab select-none pb-4 snap-x snap-mandatory scroll-smooth"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            onScroll={() => {
-              checkScrollPosition();
-              scheduleWrapIfNeeded();
-            }}
+            onScroll={() => { checkScrollPosition(); scheduleWrapIfNeeded(); }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={endPointerDrag}
             onPointerCancel={endPointerDrag}
             onPointerLeave={endPointerDrag}
           >
-            <style jsx>{`
-              .scrollbar-hide::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
-
             {destinationsForLoop.map((d, idx) => {
               const isFeatured = Boolean(d.note);
               return (
@@ -323,87 +206,52 @@ export default function PopularDestinations() {
                   key={`${d.destination}-${idx}`}
                   data-destination-card="true"
                   onClick={() => safeNavigate(d.destination)}
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.92 }}
                   whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true, margin: "-10%" }}
+                  viewport={{ once: true, margin: '-10%' }}
                   transition={{ duration: 0.5 }}
-                  whileHover={{ scale: 1.02, y: -10, transition: { duration: 0.3 } }}
-                  whileTap={{ scale: 0.98 }}
-                  className={
-                    [
-                      'flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer border border-gray-200',
-                      'transition-colors duration-300 hover:border-gray-400',
-                      'snap-start',
-                      'h-[420px] w-[260px] sm:h-[480px] sm:w-[300px] lg:h-[560px] lg:w-[340px]',
-                      isFeatured ? 'shadow-lg hover:shadow-2xl' : ''
-                    ].join(' ')
-                  }
+                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                  className={[
+                    'flex-shrink-0 relative rounded-xl overflow-hidden aspect-[3/4] group cursor-pointer',
+                    'shadow-ambient hover:shadow-ambient-lg',
+                    'snap-start transition-all duration-300',
+                    'h-[400px] w-[250px] sm:h-[460px] sm:w-[280px] lg:h-[540px] lg:w-[320px]',
+                  ].join(' ')}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      safeNavigate(d.destination);
-                    }
-                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); safeNavigate(d.destination); } }}
                   aria-label={`Explore cars in ${d.destination}`}
                 >
                   <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
                     style={{ backgroundImage: `url(${d.image})` }}
-                  ></div>
-                  <div
-                    className={
-                      isFeatured
-                        ? 'absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent'
-                        : 'absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent'
-                    }
-                  ></div>
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#121c2a] via-[#121c2a]/30 to-transparent" />
 
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
-                    <div className="mb-4">
-                      {d.kicker && (
-                        <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mb-2">
-                          {d.kicker}
-                        </p>
-                      )}
-                      <h3
-                        className="text-3xl font-bold mb-2 group-hover:text-orange-500 transition-colors duration-300">
-                        {d.destination}
-                      </h3>
-                      <p className={isFeatured ? 'text-sm font-medium opacity-90 mb-1' : 'text-sm text-white/80 mt-2'}>
-                        {d.subtitle}
-                      </p>
-                      {d.note && <p className="text-xs opacity-75">{d.note}</p>}
-                    </div>
+                  {/* Content overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-1">
+                    {d.kicker && (
+                      <span className="inline-block label-xs px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/70 mb-3">
+                        {d.kicker}
+                      </span>
+                    )}
+                    <h3 className="text-2xl sm:text-3xl font-black tracking-tight mb-1 group-hover:text-[var(--color-orange-500)] transition-colors duration-300">
+                      {d.destination}
+                    </h3>
+                    <p className="text-xs text-white/50 font-medium mb-1">{d.subtitle}</p>
+                    {d.note && <p className="text-[10px] text-[var(--color-orange-500)]/70 font-medium">{d.note}</p>}
 
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        safeNavigate(d.destination);
-                      }}
-                      className="backdrop-blur-md bg-gery-700/20 hover:bg-white hover:text-black px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 transform w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-white">
+                      onClick={(e) => { e.stopPropagation(); safeNavigate(d.destination); }}
+                      className="mt-4 w-full py-2.5 rounded-[var(--radius)] text-xs font-bold tracking-wide uppercase bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    >
                       {t('destinations_explore_cars')}
                     </button>
-                  </div>
-
-                  {isFeatured && (
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  )}
-                  
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-                    <motion.div
-                        className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-                        initial={{ x: '-150%' }}
-                        whileHover={{ x: '150%' }}
-                        transition={{ duration: 0.8, ease: "easeInOut" }}
-                    />
                   </div>
                 </motion.div>
               );
             })}
-
           </div>
         </div>
       </div>

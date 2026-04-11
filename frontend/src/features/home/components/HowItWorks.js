@@ -11,7 +11,7 @@ export default function HowItWorks() {
       image: 'https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_n7ip3xn7ip3xn7ip.png',
       number: '01',
       href: '/search',
-      cta: t('step1_cta')
+      cta: t('step1_cta'),
     },
     {
       step: t('step2_label'),
@@ -19,7 +19,7 @@ export default function HowItWorks() {
       image: 'https://ik.imagekit.io/szcfr7vth/6037a39caf6d7ad747c91a3989608259.jpg',
       number: '02',
       href: '/search',
-      cta: t('step2_cta')
+      cta: t('step2_cta'),
     },
     {
       step: t('step3_label'),
@@ -27,32 +27,39 @@ export default function HowItWorks() {
       image: 'https://ik.imagekit.io/szcfr7vth/ema_travel-by-car_rental_4096x2731.jpg',
       number: '03',
       href: '/search',
-      cta: t('step3_cta')
-    }
+      cta: t('step3_cta'),
+    },
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-white overflow-hidden">
+    <section className="relative py-20 md:py-28 surface-base overflow-hidden">
+      <div className="glow-blue absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] opacity-15" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-10 md:mb-16"
+          className="mb-12 md:mb-20"
         >
-          <p className="text-[11px] tracking-[0.22em] uppercase text-gray-500">{t('how_it_works_kicker')}</p>
-          <div className="mt-4 flex items-end justify-between gap-8">
-            <h2 className="text-4xl md:text-6xl font-black text-gray-900 leading-[0.95] tracking-tight">
-              {t('how_it_works_heading')}
-            </h2>
-            <p className="hidden md:block max-w-md text-sm text-gray-600 leading-relaxed">
+          <div className="flex items-end justify-between gap-8">
+            <div>
+              <p className="label-xs text-[var(--color-orange-500)] mb-3">
+                {t('how_it_works_kicker')}
+              </p>
+              <h2 className="headline-lg sm:text-4xl md:text-6xl text-[var(--text-primary)] leading-[0.95]">
+                {t('how_it_works_heading')}
+              </h2>
+            </div>
+            <p className="hidden md:block max-w-sm text-sm text-[var(--text-secondary)] leading-relaxed">
               {t('how_it_works_description')}
             </p>
           </div>
+          <div className="mt-6 h-px bg-gradient-to-r from-[var(--border-medium)] to-transparent" />
         </motion.div>
 
-        <div className="space-y-20 md:space-y-32">
+        <div className="space-y-16 md:space-y-28">
           {steps.map((step, index) => {
             const reverseOnDesktop = index % 2 === 1;
 
@@ -61,58 +68,55 @@ export default function HowItWorks() {
                 key={step.number}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-10%" }}
-                transition={{ duration: 0.7, delay: index * 0.1 }}
-                className="group grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center"
+                viewport={{ once: true, margin: '-10%' }}
+                transition={{ duration: 0.7, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                className="group grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center"
               >
                 <div className={reverseOnDesktop ? 'lg:order-2' : ''}>
-                  <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-gray-100 aspect-[4/3] transform transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.15)]">
+                  <div className="relative rounded-xl overflow-hidden aspect-[4/3] transition-all duration-500 shadow-ambient hover:shadow-ambient-lg">
                     <img
                       src={step.image}
                       alt={step.title}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       loading="lazy"
-                      onError={(e) => {
-                        e.target.src = '/carsymbol.jpg';
-                      }}
+                      onError={(e) => { e.target.src = '/carsymbol.jpg'; }}
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#121c2a]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </div>
                 </div>
 
                 <div className={reverseOnDesktop ? 'lg:order-1' : ''}>
-                  <div className="flex items-center gap-4 mb-8">
-                    <span className="text-orange-600 font-bold text-sm tracking-widest uppercase">
+                  <div className="flex items-center gap-4 mb-6">
+                    <span className="label-xs text-[var(--color-orange-500)]">
                       {step.step}
                     </span>
-                    <div className="h-px flex-1 bg-gray-200"></div>
-                    <span className="text-6xl font-black text-gray-100 select-none">
+                    <div className="h-px flex-1 bg-[var(--border-subtle)]" />
+                    <span className="text-5xl md:text-7xl font-black text-[var(--text-primary)]/[0.06] select-none leading-none">
                       {step.number}
                     </span>
                   </div>
 
-                  <h3 className="text-3xl md:text-5xl font-bold text-gray-900 leading-[1.1] tracking-tight mb-10 group-hover:text-orange-500 transition-colors duration-300">
+                  <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-[var(--text-primary)] leading-[1.05] tracking-tight mb-8 group-hover:text-[var(--color-orange-500)] transition-colors duration-300">
                     {step.title}
                   </h3>
 
-                  <div>
-                    <Link
-                      href={step.href}
-                      className="inline-flex items-center gap-3 group/link"
-                      aria-label={`${step.cta} - ${step.title}`}
+                  <Link
+                    href={step.href}
+                    className="inline-flex items-center gap-3 group/link"
+                    aria-label={`${step.cta} - ${step.title}`}
+                  >
+                    <span className="text-xs font-bold tracking-[0.15em] uppercase text-[var(--text-secondary)] pb-1 group-hover/link:text-[var(--color-orange-500)] transition-all duration-300" style={{ borderBottom: '1px solid var(--border-medium)' }}>
+                      {step.cta}
+                    </span>
+                    <svg
+                      className="w-4 h-4 text-[var(--text-muted)] transition-all duration-300 group-hover/link:text-[var(--color-orange-500)] group-hover/link:translate-x-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <span className="text-sm font-bold tracking-widest uppercase text-gray-900 border-b-2 border-gray-200 pb-1 group-hover/link:border-orange-600 transition-all">
-                        {step.cta}
-                      </span>
-                      <svg 
-                        className="w-5 h-5 text-gray-900 transform transition-transform group-hover/link:translate-x-1" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
-                    </Link>
-                  </div>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
                 </div>
               </motion.article>
             );

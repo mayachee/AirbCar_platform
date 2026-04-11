@@ -1,39 +1,46 @@
 import Link from 'next/link';
-import TipCard from './TipCard';
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
 export default function InfoSection() {
   const t = useTranslations('home');
 
   return (
-    <section className="relative w-full h-[60vh] md:h-screen bg-gradient-to-r from-slate-900 to-slate-800 overflow-hidden">
+    <section className="relative w-full h-[55vh] md:h-[80vh] overflow-hidden">
       {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/info-background.png')" }}></div>
-      
-      {/* Enhanced Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent"></div>
-      
-      {/* Decorative Elements */}
-      <div className="absolute top-10 right-10 w-32 h-32 bg-orange-500/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-10 left-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
-      
-      {/* Content */}
-      <div className="relative h-full flex items-end justify-start px-4 sm:px-8 md:px-12 lg:px-20 py-12 sm:py-16 md:py-20">
-        <div className="max-w-3xl w-full">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
+        style={{ backgroundImage: "url('/info-background.png')" }}
+      />
+
+      {/* Warm editorial gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[var(--surface-base)]/80 via-[var(--surface-base)]/50 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-base)] via-transparent to-[var(--surface-base)]/30" />
+
+      {/* Content — asymmetric margins for editorial feel */}
+      <div className="relative h-full flex items-end justify-start px-4 sm:px-8 md:px-12 lg:px-20 py-14 sm:py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-2xl w-full"
+        >
           <Link href="/mission" className="group block">
-            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight drop-shadow-md">
+            <h2 className="display-lg sm:text-4xl md:text-5xl lg:text-7xl text-[var(--text-primary)] leading-[0.95]">
               {t('info_heading_line1')}
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 pb-1 transition-all duration-300 group-hover:opacity-90">
+              <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-orange-600)] to-[var(--color-orange-500)]">
                 {t('info_heading_line2')}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="inline-block ml-3 w-8 h-8 sm:w-10 sm:h-10 text-orange-400 transition-transform duration-300 group-hover:translate-x-2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
-                </svg>
               </span>
             </h2>
+            <div className="mt-8 inline-flex items-center gap-3 btn-brand px-8 py-3.5 text-sm tracking-wide group-hover:gap-5 transition-all duration-300">
+              <span>Discover our mission</span>
+              <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

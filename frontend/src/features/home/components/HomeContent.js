@@ -11,6 +11,7 @@ import Footer from "@/components/layout/Footer";
 import RentalProviders from "@/features/home/components/RentalProviders";
 import InfoSection from "@/features/home/components/InfoSection";
 import GlobeSection from "@/features/home/components/GlobeSection";
+import StatsBar from "@/features/home/components/StatsBar";
 
 export default function HomeContent() {
   const searchParams = useSearchParams();
@@ -120,6 +121,7 @@ export default function HomeContent() {
 
       <Header />
       <Hero />
+      <StatsBar />
       <PopularDestinations />
       <CarTypes />
       <InfoSection />

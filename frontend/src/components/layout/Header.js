@@ -11,15 +11,14 @@ import { SelectField } from '@/components/ui/select-field'
 import { useTranslations } from 'next-intl'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
 
-// Navigation items
 const navigationItemKeys = [
   { key: 'nav_search', href: '/search' },
   { key: 'nav_mission', href: '/mission' }
 ]
 
-export default function Header({ theme = 'dark' }) {
+export default function Header({ theme = 'light' }) {
   const { user, loading, logout } = useAuth()
-  const { currency, setCurrency, currencies } = useCurrency() // Get currencies from context
+  const { currency, setCurrency, currencies } = useCurrency()
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isNotifOpen, setIsNotifOpen] = useState(false)
@@ -31,23 +30,11 @@ export default function Header({ theme = 'dark' }) {
   const pathname = usePathname()
 
   const isPartner = !!user && (
-    user.is_partner === true || 
-    user.is_partner === 'true' || 
-    user.is_partner === 1 || 
+    user.is_partner === true ||
+    user.is_partner === 'true' ||
+    user.is_partner === 1 ||
     (user.role && user.role.toLowerCase() === 'partner')
   )
-  
-  // Debug partner status
-  useEffect(() => {
-    if (user) {
-      console.log('👤 Header auth state:', { 
-        id: user.id, 
-        role: user.role, 
-        is_partner: user.is_partner, 
-        computedIsPartner: isPartner 
-      })
-    }
-  }, [user, isPartner])
 
   const isAdmin = !!user && (
     user.email === 'admin@airbcar.com' ||
@@ -67,12 +54,10 @@ export default function Header({ theme = 'dark' }) {
     setIsMenuOpen(prev => !prev)
   }, [])
 
-  // Close menus on route change
   useEffect(() => {
     closeMenu()
   }, [pathname, closeMenu])
 
-  // Glass effect when user scrolls
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8)
     onScroll()
@@ -85,33 +70,24 @@ export default function Header({ theme = 'dark' }) {
     setCurrency(value)
   }
 
-  // Close menus on ESC
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === 'Escape') closeMenu()
     }
-
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [closeMenu])
 
-  // Click outside overlay to close
   useEffect(() => {
     if (!isMenuOpen) return
-
     const onPointerDown = (event) => {
       const target = event.target
       if (!(target instanceof Node)) return
-
       const clickedPanel = menuPanelRef.current?.contains(target)
       const clickedButton = menuButtonRef.current?.contains(target)
-      
-      // Check for clicks inside Radix Select content (which renders in a portal)
       const clickedSelectContent = target.closest('[role="listbox"]') || target.closest('[data-radix-popper-content-wrapper]') || target.closest('.ignore-outside-click')
-      
       if (!clickedPanel && !clickedButton && !clickedSelectContent) closeMenu()
     }
-
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [isMenuOpen, closeMenu])
@@ -124,7 +100,6 @@ export default function Header({ theme = 'dark' }) {
 
   const overlayItems = useMemo(() => {
     const items = [{ label: t('nav_search'), href: '/search' }]
-
     if (!loading) {
       if (user && isPartner) {
         items.push({ label: t('nav_partner_dashboard'), href: '/partner/dashboard', type: 'partner' })
@@ -134,16 +109,13 @@ export default function Header({ theme = 'dark' }) {
     } else {
       items.push({ label: t('nav_be_partner'), href: '/partner' })
     }
-
     items.push({ label: t('nav_mission'), href: '/mission' })
-
     if (!loading) {
       if (user) {
         items.push(
           { label: t('nav_account'), href: '/account' },
           { label: t('nav_my_bookings'), href: '/account?tab=bookings' }
         )
-
         if (isAdmin) items.push({ label: tp('admin_dashboard'), href: '/admin/dashboard' })
       } else {
         items.push(
@@ -152,25 +124,26 @@ export default function Header({ theme = 'dark' }) {
         )
       }
     }
-
     return items
   }, [user, loading, isPartner, isAdmin, t, tc])
 
+  const isDark = theme === 'dark'
+
   const headerClassName = `fixed inset-x-0 top-0 z-40
     transition-all duration-500 ease-in-out
-    ${isScrolled 
-      ? 'py-2 shadow-lg shadow-black/0' 
-      : 'bg-transparent py-6'}`
-  
-  const isLight = theme === 'light'
+    ${isScrolled
+      ? 'py-2 glass-nav shadow-ambient-sm'
+      : `bg-transparent py-5 ${isDark ? '' : ''}`}`
 
-  const navTextClassName = isScrolled 
-    ? (isLight ? 'text-gray-900' : 'text-white') 
-    : (isLight ? 'text-gray-900' : 'text-white drop-shadow-md')
-  
-  const buttonClassName = isScrolled 
-    ? (isLight ? 'bg-white/80 text-gray-900 border-gray-200 shadow-sm' : 'bg-[#0B0F19]/80 text-white border-transparent shadow-sm')
-    : (isLight ? 'bg-white/50 hover:bg-white/80 text-gray-900 backdrop-blur-md border-gray-200 shadow-lg shadow-black/5' : 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-md border-white/10 shadow-lg shadow-black/5')
+  const navTextColor = isScrolled
+    ? 'text-[var(--text-primary)]'
+    : (isDark ? 'text-white' : 'text-[var(--text-primary)]')
+
+  const buttonClassName = isScrolled
+    ? 'bg-[var(--surface-2)] text-[var(--text-primary)] shadow-ambient-sm hover:bg-[var(--surface-3)] transition-all duration-300'
+    : isDark
+      ? 'bg-black/20 hover:bg-black/40 text-white backdrop-blur-md transition-all duration-300'
+      : 'bg-[var(--surface-container-lowest)]/80 hover:bg-[var(--surface-container-lowest)] text-[var(--text-primary)] shadow-ambient-sm backdrop-blur-md transition-all duration-300'
 
   return (
     <>
@@ -185,7 +158,7 @@ export default function Header({ theme = 'dark' }) {
                 aria-label="Open menu"
                 aria-expanded={isMenuOpen}
                 onClick={toggleMenu}
-                className={`group inline-flex items-center justify-center rounded-full px-2.5 sm:px-5 py-2 sm:py-2.5 transition-all duration-300 border ${buttonClassName}`}
+                className={`group inline-flex items-center justify-center rounded-[var(--radius)] px-2.5 sm:px-5 py-2 sm:py-2.5 ${buttonClassName}`}
               >
                 <div className="flex flex-col space-y-1.5 sm:mr-3 group-hover:space-y-0 relative h-3 w-5 justify-center">
                   <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:rotate-45 group-hover:absolute"></span>
@@ -198,7 +171,9 @@ export default function Header({ theme = 'dark' }) {
             {/* Logo */}
             <div className="flex items-center justify-center">
               <Link href="/" className="select-none group flex items-center space-x-3">
-                <span className={`text-3xl font-black text-orange-600 tracking-tighter transition-all duration-300 ${navTextClassName} drop-shadow-[0_0_15px_rgba(255,255,255,0.6)]`}>
+                <span className={`text-3xl font-black tracking-tighter transition-all duration-300 ${
+                  isScrolled || !isDark ? 'text-[var(--color-orange-600)]' : 'text-[var(--color-orange-500)]'
+                }`}>
                   {APP_NAME}
                 </span>
               </Link>
@@ -209,7 +184,7 @@ export default function Header({ theme = 'dark' }) {
               <Link
                 href="/search"
                 aria-label="Search"
-                className={`group ${(!loading && !user) ? 'hidden md:inline-flex' : 'inline-flex'} items-center justify-center rounded-full p-2 sm:p-3 transition-all duration-300 border ${buttonClassName}`}
+                className={`group ${(!loading && !user) ? 'hidden md:inline-flex' : 'inline-flex'} items-center justify-center rounded-[var(--radius)] p-2 sm:p-3 ${buttonClassName}`}
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -222,13 +197,13 @@ export default function Header({ theme = 'dark' }) {
                   <button
                     onClick={() => setIsNotifOpen(!isNotifOpen)}
                     aria-label="Notifications"
-                    className={`group inline-flex items-center justify-center rounded-full p-2 sm:p-3 transition-all duration-300 border ${buttonClassName}`}
+                    className={`group inline-flex items-center justify-center rounded-[var(--radius)] p-2 sm:p-3 ${buttonClassName}`}
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -end-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center shadow-lg">
+                      <span className="absolute -top-1 -end-1 bg-[var(--color-kc-error)] text-white text-[10px] font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center shadow-ambient-sm">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -238,41 +213,41 @@ export default function Header({ theme = 'dark' }) {
                   {isNotifOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
-                      <div className="fixed left-3 right-3 top-16 z-50 sm:absolute sm:left-auto sm:right-auto sm:end-0 sm:top-14 sm:w-96 max-h-[70vh] bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                          <h3 className="text-sm font-bold text-gray-900 dark:text-white">{t('notifications_title')}</h3>
+                      <div className="fixed left-3 right-3 top-16 z-50 sm:absolute sm:left-auto sm:right-auto sm:end-0 sm:top-14 sm:w-96 max-h-[70vh] rounded-xl bg-[var(--surface-container-lowest)] shadow-ambient-lg overflow-hidden">
+                        <div className="p-4 bg-[var(--surface-1)] flex items-center justify-between">
+                          <h3 className="text-sm font-bold text-[var(--text-primary)]">{t('notifications_title')}</h3>
                           <div className="flex items-center gap-2">
                             {unreadCount > 0 && (
-                              <button onClick={() => markAllAsRead()} className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                              <button onClick={() => markAllAsRead()} className="text-xs text-[var(--color-orange-500)] hover:text-[var(--color-orange-600)]">
                                 {t('notifications_mark_all_read')}
                               </button>
                             )}
-                            <button onClick={() => setIsNotifOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <button onClick={() => setIsNotifOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                           </div>
                         </div>
-                        <div className="overflow-y-auto max-h-80 divide-y divide-gray-100 dark:divide-gray-800">
+                        <div className="overflow-y-auto max-h-80">
                           {notifications.length === 0 ? (
                             <div className="p-8 text-center">
-                              <svg className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{t('notifications_empty')}</p>
+                              <svg className="w-10 h-10 mx-auto mb-3 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                              <p className="text-sm text-[var(--text-secondary)]">{t('notifications_empty')}</p>
                             </div>
                           ) : (
                             notifications.map((n) => (
                               <button
                                 key={n.id}
                                 onClick={() => { if (!n.is_read) markAsRead(n.id); setIsNotifOpen(false); }}
-                                className={`w-full text-start p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                                  !n.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                                className={`w-full text-start p-4 hover:bg-[var(--surface-1)] transition-colors ${
+                                  !n.is_read ? 'bg-[var(--color-orange-500)]/[0.06]' : ''
                                 }`}
                               >
                                 <div className="flex items-start gap-3">
-                                  <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                                  <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${!n.is_read ? 'bg-[var(--color-orange-500)]' : 'bg-transparent'}`} />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{n.title}</p>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">{n.message}</p>
-                                    <p className="text-[10px] text-gray-400 mt-1">{(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? t('notifications_just_now') : d < 60 ? t('notifications_minutes_ago', { count: d }) : d < 1440 ? t('notifications_hours_ago', { count: Math.floor(d/60) }) : t('notifications_days_ago', { count: Math.floor(d/1440) }); } catch { return ''; } })()}</p>
+                                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{n.title}</p>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-0.5 line-clamp-2">{n.message}</p>
+                                    <p className="text-[10px] text-[var(--text-muted)] mt-1">{(() => { try { const d = Math.floor((Date.now() - new Date(n.created_at)) / 60000); return d < 1 ? t('notifications_just_now') : d < 60 ? t('notifications_minutes_ago', { count: d }) : d < 1440 ? t('notifications_hours_ago', { count: Math.floor(d/60) }) : t('notifications_days_ago', { count: Math.floor(d/1440) }); } catch { return ''; } })()}</p>
                                   </div>
                                 </div>
                               </button>
@@ -288,7 +263,7 @@ export default function Header({ theme = 'dark' }) {
               {!loading && isPartner && (
                 <Link
                   href="/partner/dashboard"
-                  className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 bg-orange-600 text-white border border-transparent hover:bg-orange-700 shadow-lg shadow-orange-900/20`}
+                  className="hidden md:inline-flex btn-brand px-5 py-2.5 text-sm"
                 >
                   {t('nav_partner_dashboard')}
                 </Link>
@@ -299,7 +274,7 @@ export default function Header({ theme = 'dark' }) {
                   <Link
                     href="/auth?mode=signin"
                     aria-label={tc('sign_in')}
-                    className={`md:hidden group inline-flex items-center justify-center rounded-full p-2 sm:p-3 transition-all duration-300 border ${buttonClassName}`}
+                    className={`md:hidden group inline-flex items-center justify-center rounded-[var(--radius)] p-2 sm:p-3 ${buttonClassName}`}
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -307,13 +282,13 @@ export default function Header({ theme = 'dark' }) {
                   </Link>
                   <Link
                     href="/auth?mode=signin"
-                    className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 border ${buttonClassName}`}
+                    className={`hidden md:inline-flex items-center justify-center rounded-[var(--radius)] px-5 py-2.5 text-sm font-bold transition-all duration-300 ${buttonClassName}`}
                   >
                     {tc('sign_in')}
                   </Link>
                   <Link
                     href="/auth?mode=signup"
-                    className={`hidden md:inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 bg-orange-600 text-white border border-transparent hover:bg-orange-700 shadow-lg shadow-orange-900/20`}
+                    className="hidden md:inline-flex btn-brand px-5 py-2.5 text-sm"
                   >
                     {tc('sign_up')}
                   </Link>
@@ -324,22 +299,23 @@ export default function Header({ theme = 'dark' }) {
         </div>
       </header>
 
+      {/* Full-screen menu overlay */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={closeMenu} />
+          <div className="absolute inset-0 bg-[var(--text-primary)]/40 backdrop-blur-sm transition-opacity" onClick={closeMenu} />
 
           <div
             ref={menuPanelRef}
-            className="airbcar-menu-scroll relative h-full w-full sm:w-[480px] max-w-md bg-[#0B0F19] shadow-2xl px-6 sm:px-8 pt-8 pb-10 overflow-y-auto overscroll-contain
-              animate-in slide-in-from-left duration-300 border-r border-white/10 flex flex-col"
+            className="airbcar-menu-scroll relative h-full w-full sm:w-[480px] max-w-md bg-[var(--surface-base)] shadow-ambient-lg px-6 sm:px-8 pt-8 pb-10 overflow-y-auto overscroll-contain
+              animate-in slide-in-from-left duration-300 flex flex-col"
           >
             <div className="flex items-center justify-between mb-8">
-               <span className="text-sm font-medium text-white/40 uppercase tracking-widest">{t('menu')}</span>
+              <span className="label-sm text-[var(--text-muted)]">{t('menu')}</span>
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={closeMenu}
-                className="group inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+                className="group inline-flex items-center justify-center w-10 h-10 rounded-[var(--radius)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all duration-200"
               >
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -348,67 +324,65 @@ export default function Header({ theme = 'dark' }) {
             </div>
 
             <nav className="flex-1 flex flex-col justify-center -mt-10" aria-label="Site">
-                <div className="space-y-6">
-                  {overlayItems.map((item) => (
-                    <Link
-                      key={`${item.href}-${item.label}`}
-                      href={item.href}
-                      onClick={closeMenu}
-                      className={`group flex items-center text-3xl sm:text-5xl font-bold transition-all duration-300 ${
-                        item.type === 'partner' 
-                          ? 'text-orange-500 hover:text-white' 
-                          : 'text-white hover:text-orange-500'
-                      }`}
-                    >
-                      <span className="transition-transform duration-300 group-hover:translate-x-2 flex items-center gap-4">
-                        {item.label}
-                        {item.type === 'partner' && (
-                          <svg className="w-6 h-6 sm:w-8 sm:h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        )}
-                      </span>
-                    </Link>
-                  ))}
+              <div className="space-y-6">
+                {overlayItems.map((item) => (
+                  <Link
+                    key={`${item.href}-${item.label}`}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className={`group flex items-center text-3xl sm:text-5xl font-bold transition-all duration-300 ${
+                      item.type === 'partner'
+                        ? 'text-[var(--color-orange-500)] hover:text-[var(--color-orange-600)]'
+                        : 'text-[var(--text-primary)] hover:text-[var(--color-orange-500)]'
+                    }`}
+                  >
+                    <span className="transition-transform duration-300 group-hover:translate-x-2 flex items-center gap-4">
+                      {item.label}
+                      {item.type === 'partner' && (
+                        <svg className="w-6 h-6 sm:w-8 sm:h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      )}
+                    </span>
+                  </Link>
+                ))}
 
-                  {user && !loading && (
-                    <button
-                      type="button"
-                      onClick={handleSignOut}
-                      className="group flex items-center text-3xl sm:text-5xl font-bold text-white hover:text-orange-500 transition-colors duration-300 text-left w-full"
-                    >
-                      <span className="transition-transform duration-300 group-hover:translate-x-2">{tc('sign_out')}</span>
-                    </button>
-                  )}
-                </div>
+                {user && !loading && (
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="group flex items-center text-3xl sm:text-5xl font-bold text-[var(--text-primary)] hover:text-[var(--color-orange-500)] transition-colors duration-300 text-left w-full"
+                  >
+                    <span className="transition-transform duration-300 group-hover:translate-x-2">{tc('sign_out')}</span>
+                  </button>
+                )}
+              </div>
             </nav>
 
-            <div className="mt-auto pt-8 border-t border-white/10">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold tracking-wider text-white/40 mb-2">
-                      {t('settings_language')}
-                    </label>
-                    <LanguageSwitcher />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold tracking-wider text-white/40 mb-2">
-                      {t('settings_currency')}
-                    </label>
-                      <SelectField
-                        value={currency}
-                        onChange={(e) => handleCurrencyChange(e)}
-                        contentProps={{ className: 'z-[100] ignore-outside-click', position: 'popper' }}
-                        options={currencies.map(c => ({ value: c.code, label: c.label }))}
-                        className="w-full rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm text-white focus:ring-orange-500/50 focus:border-orange-500/50 transition-colors"
-                      />
-                  </div>
+            <div className="mt-auto pt-8 bg-[var(--surface-1)] -mx-6 sm:-mx-8 px-6 sm:px-8 py-6 rounded-t-xl">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label-xs text-[var(--text-muted)] mb-2 block">
+                    {t('settings_language')}
+                  </label>
+                  <LanguageSwitcher />
                 </div>
-                
-                <div className="mt-8 text-center">
-                    <p className="text-xs text-white/20">© {new Date().getFullYear()} {APP_NAME}. {tc('all_rights_reserved')}</p>
+                <div>
+                  <label className="label-xs text-[var(--text-muted)] mb-2 block">
+                    {t('settings_currency')}
+                  </label>
+                  <SelectField
+                    value={currency}
+                    onChange={(e) => handleCurrencyChange(e)}
+                    contentProps={{ className: 'z-[100] ignore-outside-click', position: 'popper' }}
+                    options={currencies.map(c => ({ value: c.code, label: c.label }))}
+                    className="w-full rounded-[var(--radius)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-sm text-[var(--text-primary)] focus:ring-[var(--color-orange-500)]/50 focus:border-[var(--color-orange-500)]/50 transition-colors"
+                  />
                 </div>
+              </div>
+              <div className="mt-6 text-center">
+                <p className="text-xs text-[var(--text-muted)]">&copy; {new Date().getFullYear()} {APP_NAME}. {tc('all_rights_reserved')}</p>
+              </div>
             </div>
           </div>
         </div>

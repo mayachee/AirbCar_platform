@@ -8,7 +8,6 @@ import { useTranslations } from 'next-intl';
 
 export default function Hero() {
   const t = useTranslations('home');
-  // Get current date and default drop-off date (2 days later)
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 2);
@@ -41,7 +40,6 @@ export default function Hero() {
   const buildDateOptions = (startDateStr, days) => {
     const start = ymdToLocalDate(startDateStr);
     if (!start || Number.isNaN(start.getTime())) return [];
-
     const options = [];
     const seen = new Set();
     for (let i = 0; i <= days; i += 1) {
@@ -55,35 +53,12 @@ export default function Hero() {
     return options;
   };
 
-  const heroBlurFieldClass =
-    'bg-white/10 hover:bg-white/15 ' +
-    'dark:bg-white/10 dark:hover:bg-white/15 ' +
-    'border border-white/25 hover:border-white/35 ' +
-    'dark:border-white/25 dark:hover:border-white/35 ' +
-    'text-white ' +
-    'backdrop-blur-xl backdrop-saturate-150 ' +
-    'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:backdrop-saturate-150 ' +
-    'focus:ring-orange-500/30 focus:border-orange-400';
-
-  const heroBlurContentClass =
-    'border border-white/20 bg-white/10 text-white ' +
-    'dark:border-white/20 dark:bg-white/10 dark:text-white ' +
-    'backdrop-blur-2xl backdrop-saturate-150 ' +
-    'supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150';
-  
   const [searchForm, setSearchForm] = useState({
     location: 'Tetouan',
     pickupDate: todayStr,
     dropoffDate: tomorrowStr,
   });
   const router = useRouter();
-
-  const handleInputChange = (e) => {
-    setSearchForm(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
 
   const handlePickupDateChange = (e) => {
     const nextPickupDate = e.target.value;
@@ -109,124 +84,141 @@ export default function Hero() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Create search params from form data
     const searchParams = new URLSearchParams({
       location: searchForm.location,
       pickupDate: searchForm.pickupDate,
-      dropoffDate: searchForm.dropoffDate
+      dropoffDate: searchForm.dropoffDate,
     });
-    
-    // Navigate to search results page
     router.push(`/search?${searchParams.toString()}`);
   };
 
-  // viewport reveal
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, amount: 0.3 });
 
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden min-h-[800px] md:min-h-0 md:h-[680px] bg-slate-800"
+      className="relative overflow-hidden min-h-[860px] md:min-h-0 md:h-[740px]"
       style={{ backgroundImage: 'url(/sven-d-a4S6KUuLeoM-unsplash.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
-      {/* overlays */}
-      <div className="absolute inset-0 bg-black/30" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+      {/* Overlays — warm tonal gradients */}
+      <div className="absolute inset-0 bg-[var(--surface-base)]/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-base)] via-[var(--surface-base)]/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[var(--surface-base)]/50 to-transparent" />
 
-      <div className="relative max-w-7xl mx-auto h-full flex md:items-end px-4 pt-40 md:pt-0 pb-12 md:pb-16">
-        <div className="w-full">
-          {/* Headline */}
+      {/* Ambient glow */}
+      <div className="glow-orange absolute -bottom-40 -left-40 w-[600px] h-[600px] opacity-30" />
+
+      <div className="relative max-w-7xl mx-auto h-full flex md:items-end px-4 sm:px-6 lg:px-8 pt-36 md:pt-0 pb-14 md:pb-20">
+        {/* Intentional asymmetry — wider left margin on desktop */}
+        <div className="w-full max-w-5xl md:ml-4 lg:ml-8">
+          {/* Editorial headline */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 28 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="text-left"
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-white leading-tight">
+            <h1 className="display-lg sm:text-5xl md:text-7xl text-[var(--text-primary)] leading-[0.95]">
               {t('hero_heading')}
             </h1>
-            <p className="text-white/80 text-lg mt-3">{t('hero_subheading')}</p>
+            <p className="text-[var(--text-secondary)] text-base sm:text-lg mt-4 max-w-lg leading-relaxed font-light">
+              {t('hero_subheading')}
+            </p>
           </motion.div>
 
-          {/* Search Form */}
+          {/* Search Form — glass card with surface-container-lowest */}
           <motion.form
             onSubmit={handleSearch}
-            initial={{ opacity: 0, y: 16, scale: 0.99 }}
-            animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-            transition={{ delay: 0.08, duration: 0.5 }}
-            className="mt-6 md:mt-8 rounded-2xl p-5 md:p-8 max-w-6xl w-full border border-white/25 shadow-2xl bg-transparent supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-120"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.12, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-8 md:mt-10 rounded-xl p-5 md:p-7 max-w-4xl bg-[var(--surface-container-lowest)]/90 backdrop-blur-xl shadow-ambient-lg"
           >
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
-            {/* Pickup Location */}
-            <div className="md:col-span-1">
-              <label htmlFor="hero-location" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-                {t('hero_pickup_location')}
-              </label>
-              <SelectField
-                id="hero-location"
-                value={searchForm.location}
-                placeholder={t('hero_select_city')}
-                onChange={(e) =>
-                  setSearchForm((prev) => ({
-                    ...prev,
-                    location: e.target.value,
-                  }))
-                }
-                options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
-                triggerProps={{ 'aria-label': 'Pickup location' }}
-                contentProps={{ className: heroBlurContentClass }}
-                className={heroBlurFieldClass}
-              />
-            </div>
-            
-            {/* Pickup Date */}
-            <div className="md:col-span-1">
-              <label htmlFor="hero-pickup-date" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-                {t('hero_pickup_date')}
-              </label>
-              <SelectField
-                id="hero-pickup-date"
-                value={searchForm.pickupDate}
-                onChange={handlePickupDateChange}
-                options={buildDateOptions(todayStr, 180)}
-                triggerProps={{ 'aria-label': 'Pickup date' }}
-                contentProps={{ className: heroBlurContentClass }}
-                required
-                className={heroBlurFieldClass}
-              />
-            </div>
-            
-            {/* Drop-off Date */}
-            <div className="md:col-span-1">
-              <label htmlFor="hero-dropoff-date" className="block text-xs font-semibold tracking-wide text-white/90 mb-2">
-                {t('hero_dropoff_date')}
-              </label>
-              <SelectField
-                id="hero-dropoff-date"
-                value={searchForm.dropoffDate}
-                onChange={handleDropoffDateChange}
-                options={buildDateOptions(searchForm.pickupDate || todayStr, 180)}
-                triggerProps={{ 'aria-label': 'Drop-off date' }}
-                contentProps={{ className: heroBlurContentClass }}
-                required
-                className={heroBlurFieldClass}
-              />
-            </div>
-            
-            {/* Search Button */}
-            <div className="md:col-span-1 flex items-end">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                type="submit"
-                className="w-full py-4 px-6 rounded-xl font-bold text-lg text-white border border-orange/20 bg-orange-500 shadow-lg hover:shadow-xl hover:bg-orange-700/[0.65] focus:outline-none focus:ring-4 focus:ring-orange-500/40 backdrop-blur-2xl backdrop-saturate-150 transition-colors"
-              >
-                {t('hero_search_button')}
-              </motion.button>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Pickup Location */}
+              <div>
+                <label htmlFor="hero-location" className="label-xs text-[var(--text-muted)] mb-2 block">
+                  {t('hero_pickup_location')}
+                </label>
+                <SelectField
+                  id="hero-location"
+                  value={searchForm.location}
+                  placeholder={t('hero_select_city')}
+                  onChange={(e) =>
+                    setSearchForm((prev) => ({ ...prev, location: e.target.value }))
+                  }
+                  options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
+                  triggerProps={{ 'aria-label': 'Pickup location' }}
+                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] rounded-[var(--radius)] transition-all duration-200 focus:ring-[var(--color-orange-500)]/30"
+                />
+              </div>
+
+              {/* Pickup Date */}
+              <div>
+                <label htmlFor="hero-pickup-date" className="label-xs text-[var(--text-muted)] mb-2 block">
+                  {t('hero_pickup_date')}
+                </label>
+                <SelectField
+                  id="hero-pickup-date"
+                  value={searchForm.pickupDate}
+                  onChange={handlePickupDateChange}
+                  options={buildDateOptions(todayStr, 180)}
+                  triggerProps={{ 'aria-label': 'Pickup date' }}
+                  required
+                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-[var(--radius)] transition-all duration-200 focus:ring-[var(--color-orange-500)]/30"
+                />
+              </div>
+
+              {/* Drop-off Date */}
+              <div>
+                <label htmlFor="hero-dropoff-date" className="label-xs text-[var(--text-muted)] mb-2 block">
+                  {t('hero_dropoff_date')}
+                </label>
+                <SelectField
+                  id="hero-dropoff-date"
+                  value={searchForm.dropoffDate}
+                  onChange={handleDropoffDateChange}
+                  options={buildDateOptions(searchForm.pickupDate || todayStr, 180)}
+                  triggerProps={{ 'aria-label': 'Drop-off date' }}
+                  required
+                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-[var(--radius)] transition-all duration-200 focus:ring-[var(--color-orange-500)]/30"
+                />
+              </div>
+
+              {/* Search Button */}
+              <div className="flex items-end">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  type="submit"
+                  className="btn-brand w-full py-4 px-6 text-base tracking-wide"
+                >
+                  {t('hero_search_button')}
+                </motion.button>
+              </div>
             </div>
           </motion.form>
+
+          {/* Trust badges */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.35, duration: 0.5 }}
+            className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-2"
+          >
+            {[
+              { label: t('hero_trust_cancellation') },
+              { label: t('hero_trust_no_fees') },
+              { label: t('hero_trust_support') },
+            ].map((badge) => (
+              <span key={badge.label} className="flex items-center gap-2 text-xs text-[var(--text-secondary)] font-medium">
+                <svg className="w-3.5 h-3.5 text-[var(--color-kc-tertiary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                {badge.label}
+              </span>
+            ))}
+          </motion.div>
         </div>
       </div>
     </section>

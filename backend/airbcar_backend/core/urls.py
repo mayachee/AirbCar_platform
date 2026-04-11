@@ -101,6 +101,46 @@ if views.ListingListView is not None:
 if views.ListingDetailView is not None:
     urlpatterns.append(path('listings/<int:pk>/', views.ListingDetailView.as_view(), name='listing-detail'))
 
+# Listing social endpoints (comments & reactions)
+if views.ListingCommentListView is not None:
+    urlpatterns.append(path('listings/<int:listing_id>/comments/', views.ListingCommentListView.as_view(), name='listing-comments'))
+if views.ListingCommentDetailView is not None:
+    urlpatterns.append(path('listings/<int:listing_id>/comments/<int:comment_id>/', views.ListingCommentDetailView.as_view(), name='listing-comment-detail'))
+if views.ListingReactionView is not None:
+    urlpatterns.append(path('listings/<int:listing_id>/reactions/', views.ListingReactionView.as_view(), name='listing-reactions'))
+
+# Partner social endpoints (follow & posts)
+if views.PartnerFollowView is not None:
+    urlpatterns.append(path('partners/<int:partner_id>/follow/', views.PartnerFollowView.as_view(), name='partner-follow'))
+if views.PartnerPostListView is not None:
+    urlpatterns.append(path('partners/<int:partner_id>/posts/', views.PartnerPostListView.as_view(), name='partner-posts'))
+if views.PartnerPostDetailView is not None:
+    urlpatterns.append(path('partners/<int:partner_id>/posts/<int:post_id>/', views.PartnerPostDetailView.as_view(), name='partner-post-detail'))
+
+# User follows
+if views.UserFollowView is not None:
+    urlpatterns.append(path('users/<int:user_id>/follow/', views.UserFollowView.as_view(), name='user-follow'))
+
+# Trip posts
+if views.TripPostListView is not None:
+    urlpatterns.append(path('trips/', views.TripPostListView.as_view(), name='trip-post-list'))
+if views.TripPostDetailView is not None:
+    urlpatterns.append(path('trips/<int:trip_id>/', views.TripPostDetailView.as_view(), name='trip-post-detail'))
+if views.TripPostReactionView is not None:
+    urlpatterns.append(path('trips/<int:trip_id>/reactions/', views.TripPostReactionView.as_view(), name='trip-post-reactions'))
+if views.TripPostCommentListView is not None:
+    urlpatterns.append(path('trips/<int:trip_id>/comments/', views.TripPostCommentListView.as_view(), name='trip-post-comments'))
+if views.TripPostCommentDetailView is not None:
+    urlpatterns.append(path('trips/<int:trip_id>/comments/<int:comment_id>/', views.TripPostCommentDetailView.as_view(), name='trip-post-comment-detail'))
+
+# Social feed
+if views.SocialFeedView is not None:
+    urlpatterns.append(path('feed/', views.SocialFeedView.as_view(), name='social-feed'))
+
+# Community image upload
+if views.CommunityImageUploadView is not None:
+    urlpatterns.append(path('api/community/upload-image/', views.CommunityImageUploadView.as_view(), name='community-image-upload'))
+
 # Favorites endpoints
 if views.FavoriteListView is not None:
     urlpatterns.append(path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'))

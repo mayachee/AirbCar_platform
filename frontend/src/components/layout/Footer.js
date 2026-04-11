@@ -15,9 +15,6 @@ export default function Footer() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
-  // Pages that exist and can be prefetched
-  const existingPages = ['/mission', '/search', '/partner', '/booking']
-  
   const footerSections = [
     {
       title: t('section_company'),
@@ -46,44 +43,29 @@ export default function Footer() {
 
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault()
-    
     if (!email.trim()) {
       setError(t('newsletter_error_empty'))
       return
     }
-    
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       setError(t('newsletter_error_invalid'))
       return
     }
-    
     setIsLoading(true)
     setError('')
     setSuccess(false)
-    
     try {
-      const response = await apiClient.post('/api/newsletter/subscribe/', { email }, { skipAuth: true })
+      await apiClient.post('/api/newsletter/subscribe/', { email }, { skipAuth: true })
       setSuccess(true)
       setEmail('')
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setSuccess(false)
-      }, 5000)
+      setTimeout(() => setSuccess(false), 5000)
     } catch (error) {
-      console.error('Newsletter subscription error:', error)
-      // Extract error message from different possible error structures
       let errorMessage = t('newsletter_error_generic')
-      if (error?.message) {
-        errorMessage = error.message
-      } else if (error?.data?.error) {
-        errorMessage = error.data.error
-      } else if (error?.data?.detail) {
-        errorMessage = error.data.detail
-      } else if (typeof error === 'string') {
-        errorMessage = error
-      }
+      if (error?.message) errorMessage = error.message
+      else if (error?.data?.error) errorMessage = error.data.error
+      else if (error?.data?.detail) errorMessage = error.data.detail
+      else if (typeof error === 'string') errorMessage = error
       setError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -130,53 +112,42 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="relative bg-[#0B0F19] text-white overflow-hidden">
-      {/* Deep Space Background */}
-      <div className="absolute inset-0 bg-[#0B0F19]" />
-      
-      {/* Main Gradient Mesh */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-orange-950/40 via-[#0B0F19] to-[#0B0F19]" />
-      
-      {/* Vivid Orange Glow (Top Left) */}
-      <div className="absolute -top-[200px] -left-[200px] w-[800px] h-[800px] bg-orange-600/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
-      
-      {/* Subtle Purple/Blue Contrast (Bottom Right) */}
-      <div className="absolute -bottom-[200px] -right-[200px] w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none" />
-      
-      {/* Top Highlight Line (Aurora) */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-orange-500/40 to-transparent shadow-[0_1px_20px_rgba(249,115,22,0.2)]" />
+    <footer className="relative bg-[var(--surface-container-high)] text-[var(--text-primary)] overflow-hidden">
+      {/* Ambient glow */}
+      <div className="glow-orange absolute -top-[200px] -left-[200px] w-[800px] h-[800px] opacity-10 pointer-events-none" />
+      <div className="glow-blue absolute -bottom-[200px] -right-[200px] w-[600px] h-[600px] opacity-8 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 pb-8 sm:pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-24 mb-16 sm:mb-24">
-          {/* Brand Section - Spans 5 columns */}
+          {/* Brand Section */}
           <div className="lg:col-span-5 space-y-6 sm:space-y-8">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
+            <h2 className="headline-lg text-[var(--text-primary)]">
               {t('heading')}
             </h2>
-            <p className="text-gray-400 leading-relaxed max-w-md text-lg font-light">
+            <p className="text-[var(--text-secondary)] leading-relaxed max-w-md text-lg font-light">
               {t('description')}
             </p>
-            
-            {/* Newsletter Form */}
+
+            {/* Newsletter */}
             <form onSubmit={handleNewsletterSubmit} className="relative max-w-md pt-2">
               <div className="relative">
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   placeholder={t('newsletter_placeholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-full py-3.5 pl-6 pr-36 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all backdrop-blur-sm"
+                  className="w-full bg-[var(--surface-container-lowest)] rounded-[var(--radius)] py-3.5 pl-6 pr-36 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)]/40 shadow-ambient-sm transition-all"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isLoading}
-                  className="absolute right-1.5 top-1.5 bottom-1.5 px-6 bg-orange-600 hover:bg-orange-500 text-white text-sm font-medium rounded-full transition-all hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="absolute right-1.5 top-1.5 bottom-1.5 px-6 btn-brand rounded-[calc(var(--radius)-0.125rem)] text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? '...' : t('newsletter_subscribe')}
                 </button>
               </div>
-              {error && <p className="mt-2 text-xs text-red-400 pl-4 animate-in fade-in slide-in-from-top-1">{error}</p>}
-              {success && <p className="mt-2 text-xs text-green-400 pl-4 animate-in fade-in slide-in-from-top-1">{t('newsletter_success')}</p>}
+              {error && <p className="mt-2 text-xs text-[var(--color-kc-error)] pl-4 animate-in fade-in slide-in-from-top-1">{error}</p>}
+              {success && <p className="mt-2 text-xs text-[var(--color-kc-tertiary)] pl-4 animate-in fade-in slide-in-from-top-1">{t('newsletter_success')}</p>}
             </form>
 
             <div className="pt-6 flex gap-5">
@@ -184,7 +155,7 @@ export default function Footer() {
                 <a
                   key={social.name}
                   href={social.href}
-                  className="text-gray-400 hover:text-orange-500 transition-colors transform hover:scale-110 duration-200"
+                  className="text-[var(--text-muted)] hover:text-[var(--color-orange-500)] transition-colors transform hover:scale-110 duration-200"
                   aria-label={social.name}
                 >
                   {social.icon}
@@ -193,12 +164,11 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Links Sections - Spans 7 columns */}
+          {/* Links Sections */}
           <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-12 pt-2">
-            {/* Dynamic Footer Sections */}
             {footerSections.map((section) => (
               <div key={section.title}>
-                <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-6">
+                <h3 className="label-sm text-[var(--text-primary)] mb-6">
                   {section.title}
                 </h3>
                 <ul className="space-y-4">
@@ -206,8 +176,8 @@ export default function Footer() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        prefetch={link.prefetch !== undefined ? link.prefetch : existingPages.includes(link.href)}
-                        className="text-sm text-gray-400 hover:text-orange-500 transition-colors block hover:translate-x-1 duration-200"
+                        prefetch={link.prefetch}
+                        className="text-sm text-[var(--text-secondary)] hover:text-[var(--color-orange-500)] transition-colors block hover:translate-x-1 duration-200"
                       >
                         {link.label}
                       </Link>
@@ -216,40 +186,39 @@ export default function Footer() {
                 </ul>
               </div>
             ))}
-            
-            {/* Contact Info */}
+
             <div>
-                <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-6">
-                  {t('section_contact')}
-                </h3>
-                <ul className="space-y-4 text-sm text-gray-400">
-                    <li>
-                        <a href="mailto:hello@airbcar.com" className="hover:text-orange-500 transition-colors">
-                            hello@airbcar.com
-                        </a>
-                    </li>
-                    <li>Tetouan, Morocco</li>
-                </ul>
+              <h3 className="label-sm text-[var(--text-primary)] mb-6">
+                {t('section_contact')}
+              </h3>
+              <ul className="space-y-4 text-sm text-[var(--text-secondary)]">
+                <li>
+                  <a href="mailto:hello@airbcar.com" className="hover:text-[var(--color-orange-500)] transition-colors">
+                    hello@airbcar.com
+                  </a>
+                </li>
+                <li>Tetouan, Morocco</li>
+              </ul>
             </div>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8 sm:mb-12" />
+        {/* Divider — tonal shift, not a line */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--border-medium)] to-transparent mb-8 sm:mb-12" />
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-gray-500 mb-12 sm:mb-20">
-            <p className="text-center md:text-left">&copy; {currentYear} {APP_NAME}. {tc('all_rights_reserved')}</p>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
-                <Link href="/privacy" className="hover:text-white transition-colors">{t('privacy_policy')}</Link>
-                <Link href="/terms" className="hover:text-white transition-colors">{t('terms_of_service')}</Link>
-                <Link href="/cookies" className="hover:text-white transition-colors">{t('cookie_settings')}</Link>
-            </div>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-[var(--text-muted)] mb-12 sm:mb-20">
+          <p className="text-center md:text-left">&copy; {currentYear} {APP_NAME}. {tc('all_rights_reserved')}</p>
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+            <Link href="/privacy" className="hover:text-[var(--text-primary)] transition-colors">{t('privacy_policy')}</Link>
+            <Link href="/terms" className="hover:text-[var(--text-primary)] transition-colors">{t('terms_of_service')}</Link>
+            <Link href="/cookies" className="hover:text-[var(--text-primary)] transition-colors">{t('cookie_settings')}</Link>
+          </div>
         </div>
 
-        {/* Big Brand Name */}
-        <div className="relative w-full flex justify-center overflow-hidden select-none pointer-events-none opacity-40 pt-8 sm:pt-0 sm:-mb-24">
-          <h1 className="text-[28vw] sm:text-[25vw] leading-[0.7] font-bold text-center tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white/80 to-transparent blur-sm">
+        {/* Big Brand Watermark */}
+        <div className="relative w-full flex justify-center overflow-hidden select-none pointer-events-none opacity-[0.06] pt-8 sm:pt-0 sm:-mb-24">
+          <h1 className="text-[28vw] sm:text-[25vw] leading-[0.7] font-bold text-center tracking-tighter text-[var(--text-primary)]">
             {APP_NAME}
           </h1>
         </div>

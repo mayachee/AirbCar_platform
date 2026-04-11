@@ -9,7 +9,13 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from core.models import Partner, Listing, Booking, Favorite, EmailVerification
+from core.models import (
+    Partner, Listing, Booking, Favorite, EmailVerification,
+    ListingComment, ListingReaction,
+    PartnerFollow, PartnerPost,
+    UserFollow,
+    TripPost, TripPostReaction, TripPostComment,
+)
 
 fake = Faker()
 User = get_user_model()
@@ -130,7 +136,7 @@ class FavoriteFactory(factory.django.DjangoModelFactory):
 
 class EmailVerificationFactory(factory.django.DjangoModelFactory):
     """Factory for creating test EmailVerification objects."""
-    
+
     class Meta:
         model = EmailVerification
 
@@ -139,3 +145,90 @@ class EmailVerificationFactory(factory.django.DjangoModelFactory):
     created_at = factory.LazyFunction(timezone.now)
     expires_at = factory.LazyFunction(lambda: timezone.now() + timedelta(hours=24))
     is_used = False
+
+
+# ---------------------------------------------------------------------------
+# Social layer factories
+# ---------------------------------------------------------------------------
+
+class ListingCommentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ListingComment
+
+    listing = factory.SubFactory(ListingFactory)
+    user = factory.SubFactory(UserFactory)
+    parent = None
+    content = factory.Faker('sentence', nb_words=10)
+    is_active = True
+
+
+class ListingReactionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ListingReaction
+        django_get_or_create = ('listing', 'user')
+
+    listing = factory.SubFactory(ListingFactory)
+    user = factory.SubFactory(UserFactory)
+    reaction = 'like'
+
+
+class PartnerFollowFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = PartnerFollow
+        django_get_or_create = ('user', 'partner')
+
+    user = factory.SubFactory(UserFactory)
+    partner = factory.SubFactory(PartnerFactory)
+
+
+class PartnerPostFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = PartnerPost
+
+    partner = factory.SubFactory(PartnerFactory)
+    content = factory.Faker('paragraph', nb_sentences=2)
+    post_type = 'update'
+    image_url = None
+    linked_listing = None
+    is_active = True
+
+
+class UserFollowFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = UserFollow
+        django_get_or_create = ('follower', 'following')
+
+    follower = factory.SubFactory(UserFactory)
+    following = factory.SubFactory(UserFactory)
+
+
+class TripPostFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TripPost
+
+    booking = factory.SubFactory(BookingFactory, status='completed')
+    user = factory.SelfAttribute('booking.customer')
+    caption = factory.Faker('sentence', nb_words=12)
+    images = factory.LazyFunction(lambda: ['https://example.com/img1.jpg'])
+    is_active = True
+
+
+class TripPostReactionFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TripPostReaction
+        django_get_or_create = ('trip_post', 'user')
+
+    trip_post = factory.SubFactory(TripPostFactory)
+    user = factory.SubFactory(UserFactory)
+    reaction = 'like'
+
+
+class TripPostCommentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TripPostComment
+
+    trip_post = factory.SubFactory(TripPostFactory)
+    user = factory.SubFactory(UserFactory)
+    parent = None
+    content = factory.Faker('sentence', nb_words=8)
+    is_active = True
