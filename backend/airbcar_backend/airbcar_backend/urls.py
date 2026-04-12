@@ -5,12 +5,54 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+import sys
+import traceback
 
 def favicon_view(request):
     """Handle favicon requests to avoid 400 errors."""
     return HttpResponse(status=204)  # No Content
+
+
+def _add_cors_headers(request, response):
+    """Add minimal CORS headers to emergency responses."""
+    origin = request.META.get('HTTP_ORIGIN', '')
+    if origin and ('airbcar.com' in origin or 'onrender.com' in origin):
+        response['Access-Control-Allow-Origin'] = origin
+        response['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+
+def emergency_root_view(request):
+    """Emergency root response used if core URL include fails."""
+    response = JsonResponse({
+        'status': 'degraded',
+        'message': 'Core routes unavailable. Check backend logs.',
+        'version': '1.0.0',
+        'endpoints': {
+            'health': '/api/health/',
+        },
+    }, status=200)
+    return _add_cors_headers(request, response)
+
+
+def emergency_health_view(request):
+    """Emergency health response used if core URL include fails."""
+    response = JsonResponse({
+        'status': 'degraded',
+        'message': 'Server running with emergency routing fallback.',
+    }, status=200)
+    return _add_cors_headers(request, response)
+
+
+def handler500(request):
+    """Global 500 handler that returns JSON for API consumers."""
+    response = JsonResponse({
+        'error': 'internal_server_error',
+        'message': 'An internal error occurred. Check backend logs.',
+    }, status=500)
+    return _add_cors_headers(request, response)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -18,8 +60,17 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    path('', include('core.urls')),  # Include core app URLs
 ]
+
+try:
+    urlpatterns.append(path('', include('core.urls')))  # Include core app URLs
+except Exception as import_error:
+    print(f"CRITICAL: Failed to include core.urls: {import_error}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    urlpatterns += [
+        path('', emergency_root_view, name='emergency-root'),
+        path('api/health/', emergency_health_view, name='emergency-health'),
+    ]
 
 # Serve media files in development and production
 # Note: On Render, the filesystem is ephemeral, so media files may be lost on redeploy
