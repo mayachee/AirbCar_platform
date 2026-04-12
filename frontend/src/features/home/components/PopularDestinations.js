@@ -37,23 +37,8 @@ export default function PopularDestinations() {
   }, []);
 
   const wrapIfOnClone = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const cards = getCardElements();
-    if (cards.length === destinations.length) return;
-    if (cards.length < 3) return;
-    const firstReal = cards[1];
-    const lastReal = cards[cards.length - 2];
-    const scrollLeft = container.scrollLeft;
-    let nearestIdx = 0;
-    let bestDist = Infinity;
-    for (let i = 0; i < cards.length; i += 1) {
-      const dist = Math.abs(scrollLeft - cards[i].offsetLeft);
-      if (dist < bestDist) { bestDist = dist; nearestIdx = i; }
-    }
-    if (nearestIdx === 0) jumpScrollLeft(lastReal.offsetLeft);
-    else if (nearestIdx === cards.length - 1) jumpScrollLeft(firstReal.offsetLeft);
-  }, [getCardElements, jumpScrollLeft]);
+    // Loop clones were removed; keep as no-op to avoid stale scroll listeners.
+  }, []);
 
   const scheduleWrapIfNeeded = useCallback(() => {
     if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
@@ -133,12 +118,10 @@ export default function PopularDestinations() {
     const container = scrollContainerRef.current;
     if (!container) return;
     const raf = requestAnimationFrame(() => {
-      const cards = getCardElements();
-      if (cards.length >= 2 && cards.length !== destinations.length) jumpScrollLeft(cards[1].offsetLeft);
       checkScrollPosition();
     });
     return () => cancelAnimationFrame(raf);
-  }, [checkScrollPosition, getCardElements, jumpScrollLeft, destinations.length]);
+  }, [checkScrollPosition]);
 
   useEffect(() => {
     return () => { if (scrollEndTimerRef.current) { clearTimeout(scrollEndTimerRef.current); scrollEndTimerRef.current = null; } };
