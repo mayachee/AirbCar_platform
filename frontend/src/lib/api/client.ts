@@ -69,14 +69,18 @@ export class ApiClient {
       }
     }
 
-    // Handle body - check if it's FormData
+    // Handle body and Content-Type carefully to avoid unnecessary CORS preflights.
     const isFormData = body instanceof FormData;
-    
-    // Only add Content-Type for non-FormData bodies
-    if (!isFormData) {
+    const hasBody = body !== undefined && body !== null;
+    const shouldSendJsonBody = hasBody && !isFormData;
+
+    if (isFormData) {
+      // Browser sets multipart boundary automatically.
+      delete requestHeaders['Content-Type'];
+    } else if (shouldSendJsonBody) {
       requestHeaders['Content-Type'] = 'application/json';
     } else {
-      // Remove Content-Type for FormData - browser will set it with boundary
+      // For GET/HEAD or empty-body requests, do not send Content-Type.
       delete requestHeaders['Content-Type'];
     }
 
@@ -91,7 +95,7 @@ export class ApiClient {
         response = await fetch(url, {
           method,
           headers: requestHeaders,
-          body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+          body: hasBody ? (isFormData ? body : JSON.stringify(body)) : undefined,
           signal: controller.signal,
         });
       } catch (fetchError: any) {

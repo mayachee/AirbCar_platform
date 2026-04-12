@@ -269,7 +269,13 @@
     "providers_new": "جديد",
     "providers_category_city": "المدينة",
     "providers_category_type": "النوع",
-    "providers_category_bookings": "الحجوزات"
+    "providers_category_bookings": "الحجوزات",
+    "network_kicker": "شبكتنا",
+    "network_heading_prefix": "شركاء في",
+    "network_heading_highlight": "المغرب",
+    "network_description": "مرر فوق أي مدينة لاكتشاف مزودي التأجير القريبين منك.",
+    "network_stat_partners": "الشركاء",
+    "network_stat_cities": "مدن مغطاة"
   },
   "auth": {
     "signin_heading": "تسجيل الدخول إلى حسابك",
@@ -334,6 +340,8 @@
   "search": {
     "heading_line1": "اعثر على",
     "heading_line2": "سيارتك المثالية",
+    "explore_fleet": "استكشف الأسطول",
+    "car_type_all": "الكل",
     "searching": "جاري البحث...",
     "vehicles_available": "{count} سيارة متاحة",
     "no_vehicles_found": "لم يتم العثور على سيارات",

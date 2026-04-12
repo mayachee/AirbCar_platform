@@ -131,10 +131,8 @@ ROOT_URLCONF = 'airbcar_backend.urls'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 
-# SSL redirect: disabled by default because Render's load balancer handles HTTP→HTTPS.
-# The app receives plain HTTP internally; enabling redirect here breaks Render health checks.
-# Set SECURE_SSL_REDIRECT=true only if running without a terminating proxy.
-SECURE_SSL_REDIRECT = (not DEBUG) and (os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() == 'true')
+# Redirect HTTP->HTTPS in production (can be disabled if handled upstream).
+SECURE_SSL_REDIRECT = (not DEBUG) and (os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true')
 
 # Cookies
 SESSION_COOKIE_SECURE = not DEBUG
@@ -382,7 +380,7 @@ if FRONTEND_URL_ENV:
         if f"https://www.{domain}" not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(f"https://www.{domain}")
     elif DEBUG and frontend_url.startswith('http://'):
-        # Keep HTTP only for local development.
+        # Keep HTTP alternates only for local development.
         domain = frontend_url.replace('http://', '')
         if f"http://www.{domain}" not in CORS_ALLOWED_ORIGINS:
             CORS_ALLOWED_ORIGINS.append(f"http://www.{domain}")
@@ -459,22 +457,6 @@ FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3001')
 
 # Backend URL for media files and API
 BACKEND_URL = os.environ.get('BACKEND_URL', 'http://localhost:8000')
-
-# Telegram notifications
-TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '').strip()
-TELEGRAM_DEFAULT_CHAT_ID = os.environ.get('TELEGRAM_DEFAULT_CHAT_ID', '').strip()
-
-# Backward-compatibility for legacy/mistyped env names.
-_legacy_chat_id = os.environ.get('TELEGRAM_CHAT_ID', '').strip() or os.environ.get('telegram_chat_id', '').strip()
-if not TELEGRAM_DEFAULT_CHAT_ID and _legacy_chat_id:
-    TELEGRAM_DEFAULT_CHAT_ID = _legacy_chat_id
-
-# If a token-like value was accidentally set in chat-id env, recover automatically.
-if not TELEGRAM_BOT_TOKEN and TELEGRAM_DEFAULT_CHAT_ID and ':' in TELEGRAM_DEFAULT_CHAT_ID:
-    TELEGRAM_BOT_TOKEN = TELEGRAM_DEFAULT_CHAT_ID
-    TELEGRAM_DEFAULT_CHAT_ID = ''
-
-TELEGRAM_NOTIFICATIONS_ENABLED = os.environ.get('TELEGRAM_NOTIFICATIONS_ENABLED', 'true').lower() == 'true'
 TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', '').strip()
 TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET', '').strip()
 

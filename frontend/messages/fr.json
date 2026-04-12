@@ -304,7 +304,13 @@
     "providers_new": "Nouveau",
     "providers_category_city": "Ville",
     "providers_category_type": "Type",
-    "providers_category_bookings": "Réservations"
+    "providers_category_bookings": "Réservations",
+    "network_kicker": "Notre Réseau",
+    "network_heading_prefix": "Partenaires à travers",
+    "network_heading_highlight": "le Maroc",
+    "network_description": "Survolez une ville pour découvrir nos prestataires de location près de chez vous.",
+    "network_stat_partners": "Partenaires",
+    "network_stat_cities": "Villes couvertes"
   },
   "auth": {
     "signin_heading": "Connectez-vous à votre compte",
@@ -369,6 +375,8 @@
   "search": {
     "heading_line1": "Trouvez votre",
     "heading_line2": "voiture idéale",
+    "explore_fleet": "Explorez la flotte",
+    "car_type_all": "Tous",
     "searching": "Recherche en cours...",
     "vehicles_available": "{count} véhicules disponibles",
     "no_vehicles_found": "Aucun véhicule trouvé",

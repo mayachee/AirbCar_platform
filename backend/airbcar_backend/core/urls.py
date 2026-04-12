@@ -12,6 +12,7 @@ except Exception as e:
     # If views fail to import, create minimal fallback
     print(f"CRITICAL: Failed to import views module: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
+    import_error_message = str(e)
     
     # Create emergency fallback views
     from rest_framework.views import APIView
@@ -24,7 +25,7 @@ except Exception as e:
             return Response({
                 'status': 'error',
                 'message': 'Views module failed to import. Check server logs.',
-                'error': str(e) if hasattr(e, '__str__') else 'Unknown error'
+                'error': import_error_message or 'Unknown error'
             }, status=500)
     
     # Create a minimal views object
@@ -34,6 +35,10 @@ except Exception as e:
         LoginView = EmergencyRootView
         RegisterView = EmergencyRootView
         serve_media = None
+
+        def __getattr__(self, _name):
+            # Return None for any missing optional view so URL registration doesn't crash.
+            return None
     
     views = ViewsModule()
 

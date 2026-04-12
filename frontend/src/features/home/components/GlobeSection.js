@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { getCityCoords } from '@/lib/moroccanCityCoords';
 
 const GlobeCanvas = dynamic(() => import('./GlobeCanvas'), {
@@ -41,6 +42,7 @@ function groupByCityWithCoords(rawPartners) {
 const API_BASE = process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000';
 
 export default function GlobeSection() {
+  const t = useTranslations('home');
   const [cityMarkers, setCityMarkers] = useState([]);
   const [tooltip, setTooltip] = useState({ marker: null, position: { x: 0, y: 0 } });
   const [globeSize, setGlobeSize] = useState(520);
@@ -62,10 +64,7 @@ export default function GlobeSection() {
     let mounted = true;
     (async () => {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = `Bearer ${token}`;
-        const res = await fetch(`${API_BASE}/partners/?page=1&page_size=100&sort=-rating`, { headers });
+        const res = await fetch(`${API_BASE}/partners/?page=1&page_size=100&sort=-rating`);
         if (!res.ok) return;
         const json = await res.json();
         const rows = json?.results || json?.data?.results || json?.data || json || [];
@@ -103,17 +102,17 @@ export default function GlobeSection() {
         >
           <div className="inline-flex items-center gap-2.5 label-xs text-[var(--text-muted)]">
             <span className="h-px w-8 bg-gradient-to-r from-transparent to-[var(--color-orange-500)]/60" aria-hidden="true" />
-            Notre R&eacute;seau
+            {t('network_kicker')}
             <span className="h-px w-8 bg-gradient-to-l from-transparent to-[var(--color-orange-500)]/60" aria-hidden="true" />
           </div>
           <h2 className="mt-3 headline-lg sm:text-5xl text-[var(--text-primary)] leading-[1.05]">
-            Partenaires &agrave; travers{' '}
+            {t('network_heading_prefix')}{' '}
             <span className="bg-gradient-to-r from-[var(--color-orange-600)] to-[var(--color-orange-500)] bg-clip-text text-transparent">
-              le Maroc
+              {t('network_heading_highlight')}
             </span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-[var(--text-secondary)] max-w-lg mx-auto">
-            Survolez une ville pour d&eacute;couvrir nos prestataires de location pr&egrave;s de chez vous.
+            {t('network_description')}
           </p>
         </motion.div>
 
@@ -164,8 +163,8 @@ export default function GlobeSection() {
             className="mt-10 flex justify-center gap-8 sm:gap-16"
           >
             {[
-              { value: cityMarkers.reduce((a, c) => a + c.partners.length, 0), label: 'Partners' },
-              { value: cityMarkers.length, label: 'Cities covered' },
+              { value: cityMarkers.reduce((a, c) => a + c.partners.length, 0), label: t('network_stat_partners') },
+              { value: cityMarkers.length, label: t('network_stat_cities') },
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
                 <p className="text-3xl sm:text-4xl font-black text-[var(--text-primary)]">{value}+</p>

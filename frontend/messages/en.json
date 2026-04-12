@@ -269,7 +269,13 @@
     "providers_new": "New",
     "providers_category_city": "City",
     "providers_category_type": "Type",
-    "providers_category_bookings": "Bookings"
+    "providers_category_bookings": "Bookings",
+    "network_kicker": "Our Network",
+    "network_heading_prefix": "Partners across",
+    "network_heading_highlight": "Morocco",
+    "network_description": "Hover a city to discover nearby rental providers.",
+    "network_stat_partners": "Partners",
+    "network_stat_cities": "Cities covered"
   },
   "auth": {
     "signin_heading": "Sign in to your account",
@@ -334,6 +340,8 @@
   "search": {
     "heading_line1": "Find your",
     "heading_line2": "Perfect Car",
+    "explore_fleet": "Explore Fleet",
+    "car_type_all": "All",
     "searching": "Searching...",
     "vehicles_available": "{count} vehicles available",
     "no_vehicles_found": "No vehicles found",

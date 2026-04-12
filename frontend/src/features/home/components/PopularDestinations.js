@@ -40,6 +40,7 @@ export default function PopularDestinations() {
     const container = scrollContainerRef.current;
     if (!container) return;
     const cards = getCardElements();
+    if (cards.length === destinations.length) return;
     if (cards.length < 3) return;
     const firstReal = cards[1];
     const lastReal = cards[cards.length - 2];
@@ -133,11 +134,11 @@ export default function PopularDestinations() {
     if (!container) return;
     const raf = requestAnimationFrame(() => {
       const cards = getCardElements();
-      if (cards.length >= 2) jumpScrollLeft(cards[1].offsetLeft);
+      if (cards.length >= 2 && cards.length !== destinations.length) jumpScrollLeft(cards[1].offsetLeft);
       checkScrollPosition();
     });
     return () => cancelAnimationFrame(raf);
-  }, [checkScrollPosition, getCardElements, jumpScrollLeft]);
+  }, [checkScrollPosition, getCardElements, jumpScrollLeft, destinations.length]);
 
   useEffect(() => {
     return () => { if (scrollEndTimerRef.current) { clearTimeout(scrollEndTimerRef.current); scrollEndTimerRef.current = null; } };
@@ -152,10 +153,7 @@ export default function PopularDestinations() {
     { destination: 'Rabat', image: 'https://ik.imagekit.io/szcfr7vth/rabat.jpg', kicker: null, subtitle: 'Royal Capital', note: 'Most popular: Luxury & Economy' },
   ];
 
-  const destinationsForLoop =
-    destinations.length > 1
-      ? [destinations[destinations.length - 1], ...destinations, destinations[0]]
-      : destinations;
+  const destinationsForLoop = destinations;
 
   return (
     <section className="relative py-20 md:py-28 surface-base overflow-hidden">
