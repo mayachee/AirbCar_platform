@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg, Sum, Count, Min, Prefetch
+from django.db.models import Q, F, DecimalField, Avg, Sum, Count, Min, Prefetch, Value
 from django.utils import timezone
 from django.db import transaction, OperationalError
 from datetime import datetime, timedelta
@@ -46,11 +46,17 @@ class PartnerListView(APIView):
             if not (show_all and is_admin):
                 partners = partners.filter(is_verified=True)
             
-            partners = partners.annotate(
+            # Be resilient to schema/data issues in listing aggregation.
+            try:
+                partners = partners.annotate(
                     min_price_per_day=Min(
                         'listings__price_per_day',
                         filter=Q(listings__is_available=True, listings__is_verified=True),
                     )
+                )
+            except Exception:
+                partners = partners.annotate(
+                    min_price_per_day=Value(None, output_field=DecimalField(max_digits=10, decimal_places=2))
                 )
             
             # Filter by rating if provided
@@ -69,8 +75,16 @@ class PartnerListView(APIView):
                 partners = partners.order_by('-rating')
             
             # Pagination
-            page = int(request.query_params.get('page', 1))
-            page_size = int(request.query_params.get('page_size', 20))
+            try:
+                page = int(request.query_params.get('page', 1))
+            except (TypeError, ValueError):
+                page = 1
+            try:
+                page_size = int(request.query_params.get('page_size', 20))
+            except (TypeError, ValueError):
+                page_size = 20
+            page = max(page, 1)
+            page_size = max(page_size, 1)
             page_size = min(page_size, 100)
             
             total_count = partners.count()
@@ -79,10 +93,19 @@ class PartnerListView(APIView):
             
             partners = partners[start:end]
             
-            serializer = PartnerSerializer(partners, many=True, context={'request': request})
+            # Serialize row-by-row so a single bad partner row doesn't fail the whole endpoint.
+            serialized_partners = []
+            for partner in partners:
+                try:
+                    serialized_partners.append(
+                        PartnerSerializer(partner, context={'request': request}).data
+                    )
+                except Exception:
+                    traceback.print_exc()
+
             return Response({
-                'data': serializer.data,
-                'count': len(serializer.data),
+                'data': serialized_partners,
+                'count': len(serialized_partners),
                 'total_count': total_count,
                 'page': page,
                 'page_size': page_size,
@@ -91,11 +114,11 @@ class PartnerListView(APIView):
             
         except Exception as e:
             error_msg = str(e)
-            if settings.DEBUG:
-                print(f"Error in PartnerListView: {error_msg}")
+            print(f"Error in PartnerListView: {error_msg}")
+            traceback.print_exc()
             return Response({
                 'error': 'An error occurred',
-                'message': error_msg if settings.DEBUG else None
+                'message': error_msg if settings.DEBUG else 'Failed to list partners'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request):
