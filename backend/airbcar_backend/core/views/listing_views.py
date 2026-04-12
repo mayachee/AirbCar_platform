@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db.models import Q, F, DecimalField, Avg, Sum, Exists, OuterRef
+from django.db.models import Q, F, DecimalField, Avg, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.db import transaction, OperationalError
@@ -210,17 +210,15 @@ class ListingListView(APIView):
                         'count': 0
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
-                # Get listings that have bookings overlapping with the requested dates
-                # Optimized: Use a subquery with Exists instead of values_list to avoid loading all IDs into memory
-                conflicting_bookings = Booking.objects.filter(
-                    listing=OuterRef('pk'),
+                # Exclude listings with conflicting bookings.
+                # Use an id__in subquery for broad DB compatibility and predictable SQL.
+                conflicting_listing_ids = Booking.objects.filter(
                     status__in=['pending', 'confirmed', 'active'],
                     pickup_date__lt=return_d,
                     return_date__gt=pickup
-                )
-                
-                # Exclude listings with conflicting bookings using Exists for better performance
-                queryset = queryset.exclude(Exists(conflicting_bookings))
+                ).values_list('listing_id', flat=True)
+
+                queryset = queryset.exclude(id__in=conflicting_listing_ids)
             except ValueError:
                 # Invalid date format, ignore date filtering
                 pass
