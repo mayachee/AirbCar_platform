@@ -1705,6 +1705,7 @@
   },
   "partner_benefits": {
     "heading": "Benefits for partners",
+    "featured_heading": "Mission Control for Every Fleet",
     "description": "Everything you need to successfully run and scale your rental business.",
     "benefit_1_title": "Predictable earnings",
     "benefit_1_desc": "Consistent demand and instant payouts with transparent fees.",
@@ -1750,7 +1751,8 @@
     "label": "REACH THE WORLD",
     "heading": "Ready to get more rentals?",
     "description": "Setting up takes less than 5 minutes to complete, and its free!",
-    "button": "SIGNUP NOW"
+    "button": "SIGNUP NOW",
+    "button_secondary": "Explore Vehicles"
   },
   "partner_testimonial": {
     "quote_start": "Getting our vehicle online was",

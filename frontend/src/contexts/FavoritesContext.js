@@ -15,6 +15,7 @@ export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const operatingOnRef = useRef(new Set());
+  const isDev = process.env.NODE_ENV !== 'production';
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -24,7 +25,7 @@ export function FavoritesProvider({ children }) {
         if (stored) {
           const parsed = JSON.parse(stored);
           setFavorites(new Set(parsed));
-          console.log('📦 Loaded favorites from localStorage:', parsed.length);
+          if (isDev) console.log('📦 Loaded favorites from localStorage:', parsed.length);
         }
       }
     } catch (err) {
@@ -37,7 +38,7 @@ export function FavoritesProvider({ children }) {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('favorites_list', JSON.stringify([...favorites]));
-        console.log('💾 Saved favorites:', favorites.size);
+        if (isDev) console.log('💾 Saved favorites:', favorites.size);
       } catch (err) {
         console.error('Failed to save favorites:', err);
       }
@@ -52,7 +53,7 @@ export function FavoritesProvider({ children }) {
     setFavorites(prev => {
       const newSet = new Set(prev);
       newSet.add(id);
-      console.log('➕ Added favorite:', id);
+      if (isDev) console.log('➕ Added favorite:', id);
       return newSet;
     });
 
@@ -67,7 +68,7 @@ export function FavoritesProvider({ children }) {
     setFavorites(prev => {
       const newSet = new Set(prev);
       newSet.delete(id);
-      console.log('➖ Removed favorite:', id);
+      if (isDev) console.log('➖ Removed favorite:', id);
       return newSet;
     });
 
@@ -82,10 +83,10 @@ export function FavoritesProvider({ children }) {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
         newSet.delete(id);
-        console.log('➖ Toggled removed:', id);
+        if (isDev) console.log('➖ Toggled removed:', id);
       } else {
         newSet.add(id);
-        console.log('➕ Toggled added:', id);
+        if (isDev) console.log('➕ Toggled added:', id);
       }
       return newSet;
     });

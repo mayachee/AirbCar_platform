@@ -1704,6 +1704,7 @@
   },
   "partner_benefits": {
     "heading": "Avantages pour les partenaires",
+    "featured_heading": "Centre de pilotage pour chaque flotte",
     "description": "Tout ce dont vous avez besoin pour gérer et développer avec succès votre entreprise de location.",
     "benefit_1_title": "Revenus prévisibles",
     "benefit_1_desc": "Demande constante et paiements instantanés avec des frais transparents.",
@@ -1749,7 +1750,8 @@
     "label": "REJOIGNEZ LE MONDE",
     "heading": "Prêt à obtenir plus de locations ?",
     "description": "La configuration prend moins de 5 minutes et c'est gratuit !",
-    "button": "INSCRIVEZ-VOUS MAINTENANT"
+    "button": "INSCRIVEZ-VOUS MAINTENANT",
+    "button_secondary": "Explorer les véhicules"
   },
   "partner_testimonial": {
     "quote_start": "Obtenir notre véhicule en ligne était",
