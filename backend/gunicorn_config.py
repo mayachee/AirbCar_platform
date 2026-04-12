@@ -6,11 +6,11 @@ import os
 # Bind to 0.0.0.0 to accept external connections (required for Render)
 bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 
-# Worker configuration - gevent for async handling
-worker_class = "gevent"  # Changed from 'sync' to 'gevent' for 3x more concurrent users
-workers = int(os.environ.get('GUNICORN_WORKERS', 2))  # 2 gevent workers on free tier (was CPU*2+1)
-worker_connections = 1000  # Each gevent worker can handle 1000 concurrent connections!
-timeout = 120  # Increased to 120 seconds to handle slow database queries
+# Worker configuration - prioritize stability in production
+# gevent can be unstable in some constrained/free-tier runtime combinations.
+worker_class = "sync"
+workers = int(os.environ.get('GUNICORN_WORKERS', 1))
+timeout = 120
 keepalive = 5  # Increased keepalive
 graceful_timeout = 30
 max_requests = 1000
