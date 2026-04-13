@@ -117,11 +117,7 @@ function CarDetailsContent() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 relative">
-        {/* Clean Professional Background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]" />
-        </div>
+      <div className="min-h-screen bg-white relative">
 
         <div className="relative z-10">
           <Header />
@@ -228,7 +224,7 @@ function CarDetailsContent() {
           )}
           
           {/* Smooth transition to footer */}
-          <div className="h-24 bg-gradient-to-b from-gray-50/20 to-white" />
+          <div className="h-24 bg-white" />
           <Footer />
         </div>
       </div>
@@ -243,3 +239,4 @@ export default function CarDetails() {
     </Suspense>
   )
 }
+
