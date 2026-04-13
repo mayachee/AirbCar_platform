@@ -160,6 +160,28 @@ export class VehicleService {
       throw error;
     }
   }
+
+  // --- SOCIAL LAYER ---
+
+  async getVehicleComments(vehicleId: number) {
+    return apiClient.get(`/listings/${vehicleId}/comments/`);
+  }
+
+  async addVehicleComment(vehicleId: number, comment: string) {
+    return apiClient.post(`/listings/${vehicleId}/comments/`, { comment });
+  }
+
+  async getVehicleReactions(vehicleId: number) {
+    return apiClient.get(`/listings/${vehicleId}/reactions/`);
+  }
+
+  async addVehicleReaction(vehicleId: number, reaction: string = 'like') {
+    return apiClient.post(`/listings/${vehicleId}/reactions/`, { reaction });
+  }
+
+  async removeVehicleReaction(vehicleId: number) {
+    return apiClient.delete(`/listings/${vehicleId}/reactions/`);
+  }
 }
 
 // Create and export a singleton instance
