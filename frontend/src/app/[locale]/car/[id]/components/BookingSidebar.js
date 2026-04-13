@@ -49,7 +49,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
   return (
     <div className="lg:col-span-1">
       <motion.div
-        className="sticky top-6 relative z-10"
+        className="sticky top-[100px] z-10 w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
@@ -87,11 +87,11 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             onClick={onChangeDates}
           >
             <div className="flex-1 pr-4">
-              <label className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1.5">CHECK-IN</label>
+              <label className="block text-xs text-gray-600 font-semibold uppercase tracking-wider mb-1.5">CHECK-IN</label>
               <div className="text-sm font-bold text-gray-900">{selectedDates.pickup || "Select Date"}</div>
             </div>
             <div className="flex-1 pl-4">
-              <label className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1.5">CHECK-OUT</label>
+              <label className="block text-xs text-gray-600 font-semibold uppercase tracking-wider mb-1.5">CHECK-OUT</label>
               <div className="text-sm font-bold text-gray-900">{selectedDates.return || "Select Date"}</div>
             </div>
           </motion.div>

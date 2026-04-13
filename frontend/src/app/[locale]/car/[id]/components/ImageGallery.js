@@ -13,8 +13,8 @@ export default function ImageGallery({ vehicle }) {
       />
 
       {/* Title Block - Bottom Left */}
-      <div className="bg-white/80 backdrop-blur-md rounded-tr-3xl p-8 absolute bottom-0 left-0 max-w-2xl">
-        <h1 className="font-bold text-4xl md:text-5xl text-gray-900 leading-tight">
+      <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-tr-3xl p-8 pb-20 md:pb-6 absolute bottom-0 left-0 max-w-2xl">
+        <h1 className="font-bold text-4xl md:text-5xl text-black leading-tight">
           {vehicle?.make} {vehicle?.model} {vehicle?.year}
         </h1>
         <div className="flex items-center gap-2 mt-3 text-[#ea580c] font-bold">

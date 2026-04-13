@@ -26,7 +26,7 @@ export default function VehicleDetails({ vehicle }) {
         <h2 className="text-2xl font-bold text-gray-900">Technical Specifications</h2>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {/* Drive */}
         <div className="bg-orange-50/50 rounded-full px-4 py-3 flex flex-col items-center justify-center text-center shadow-sm border border-orange-100 hover:shadow-md transition-all">
           <Settings className="text-[#ea580c] w-6 h-6 mb-1" />
@@ -67,18 +67,18 @@ export default function VehicleDetails({ vehicle }) {
             STORAGE
           </span>
           <span className="font-bold text-gray-900 text-sm capitalize">
-            {vehicle.storage || '2 Bags'}
+            {vehicle.luggage_capacity || vehicle.luggageCapacity || '2 Bags'}
           </span>
         </div>
 
         {/* Range */}
-        <div className="bg-orange-50/50 rounded-full px-4 py-3 flex flex-col items-center justify-center text-center shadow-sm border border-orange-100 hover:shadow-md transition-all">
+        <div className="bg-orange-50/50 rounded-full px-4 py-3 flex flex-col items-center justify-center text-center shadow-sm border border-orange-100 hover:shadow-md transition-all col-span-2 md:col-span-1">
           <MapPin className="text-[#ea580c] w-6 h-6 mb-1" />
           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">
             RANGE
           </span>
           <span className="font-bold text-gray-900 text-sm capitalize">
-            {vehicle.range || '350 Mi'}
+            {vehicle.range_km || 'Unlimited'}
           </span>
         </div>
       </div>
