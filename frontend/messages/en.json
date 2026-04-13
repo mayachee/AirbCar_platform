@@ -1,6 +1,8 @@
 {
   "reviews": {
     "page_title": "Reviews",
+    "sign_in": "Sign in",
+    "to_leave_review": "to leave a comment",
     "add_review": "Add Review",
     "edit_review": "Edit Review",
     "your_rating": "Your Rating",

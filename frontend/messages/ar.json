@@ -1,6 +1,8 @@
 {
   "reviews": {
     "page_title": "التقييمات",
+    "sign_in": "تسجيل الدخول",
+    "to_leave_review": "لترك تعليق",
     "add_review": "إضافة تقييم",
     "edit_review": "تعديل التقييم",
     "your_rating": "تقييمك",

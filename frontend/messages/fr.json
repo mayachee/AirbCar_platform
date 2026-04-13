@@ -1,6 +1,8 @@
 {
   "reviews": {
     "page_title": "Avis",
+    "sign_in": "Se connecter",
+    "to_leave_review": "pour laisser un commentaire",
     "add_review": "Ajouter un avis",
     "edit_review": "Modifier l'avis",
     "your_rating": "Votre évaluation",
