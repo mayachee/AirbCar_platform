@@ -45,17 +45,17 @@ export default function Restrictions({ vehicle }) {
     <div className="space-y-6 mb-8">
       {/* Car Rules & Restrictions */}
       <div className="">
-        <div className="flex items-center mb-5">
-          <div className="p-2 bg-red-500/10 rounded-none mr-3">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
+        <div className="flex items-center justify-start mb-5">
+          <div className="p-2.5 bg-red-50 rounded-2xl mr-4 shadow-sm shadow-red-100/50">
+            <AlertTriangle className="w-6 h-6 text-red-500" />
           </div>
-          <h3 className="text-xl font-bold text-white">{t('car_rules_restrictions')}</h3>
+          <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">{t('car_rules_restrictions')}</h3>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {displayRestrictions.map((restriction, index) => (
-            <div key={index} className="flex items-start space-x-3 p-3">
-              <XCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-gray-300 leading-relaxed">{restriction}</span>
+            <div key={index} className="flex items-start space-x-4 p-4 bg-white border border-gray-100 rounded-3xl shadow-sm shadow-gray-200/50">
+              <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                  <span className="text-base font-medium text-gray-700 leading-relaxed">{restriction}</span>
             </div>
           ))}
         </div>
@@ -63,18 +63,18 @@ export default function Restrictions({ vehicle }) {
 
       {/* Partner Information */}
       {owner && (
-        <div className="bg-gradient-to-br from-orange-500/10 to-transparent rounded-none border border-orange-500/20 shadow-sm p-6 backdrop-blur-sm">
-          <div className="flex items-center mb-5">
-            <div className="p-2 bg-orange-500/20 rounded-none mr-3">
-              <Shield className="w-5 h-5 text-orange-400" />
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm shadow-gray-200/50 p-6 mt-10">
+          <div className="flex items-center mb-6">
+            <div className="p-2.5 bg-orange-50 rounded-2xl mr-4 shadow-sm shadow-orange-100/50">
+              <Shield className="w-6 h-6 text-orange-500" />
             </div>
-            <h3 className="text-xl font-bold text-white">{t('owner_information')}</h3>
+            <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">{t('owner_information')}</h3>
           </div>
 
           <div className="space-y-4">
             {/* Partner Logo and Company Name */}
             {companyName && (
-              <div className="flex items-start space-x-4 pb-4">
+              <div className="flex items-center space-x-5 pb-6 border-b border-gray-100">
                 {/* Logo */}
                 {partnerSlug ? (
                   <Link 
@@ -85,7 +85,7 @@ export default function Restrictions({ vehicle }) {
                       <img 
                         src={owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture} 
                         alt={companyName}
-                        className="w-16 h-16 rounded-none object-cover border-2 border-orange-500/20 shadow-sm"
+                        className="w-16 h-16 rounded-2xl object-cover shadow-sm shadow-gray-200/50"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -93,7 +93,7 @@ export default function Restrictions({ vehicle }) {
                       />
                     ) : null}
                     <div 
-                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-none flex items-center justify-center text-white text-xl font-bold border-2 border-orange-500/20 shadow-sm"
+                      className="w-16 h-16 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl flex items-center justify-center text-orange-600 text-2xl font-extrabold shadow-sm shadow-orange-200/50"
                       style={{ display: (owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture) ? 'none' : 'flex' }}
                     >
                       {companyName[0]?.toUpperCase() || 'P'}
@@ -105,7 +105,7 @@ export default function Restrictions({ vehicle }) {
                       <img 
                         src={owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture} 
                         alt={companyName}
-                        className="w-16 h-16 rounded-none object-cover border-2 border-orange-200 shadow-sm"
+                        className="w-16 h-16 rounded-2xl object-cover shadow-sm shadow-gray-200/50"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -113,7 +113,7 @@ export default function Restrictions({ vehicle }) {
                       />
                     ) : null}
                     <div 
-                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-none flex items-center justify-center text-white text-xl font-bold border-2 border-orange-200 shadow-sm"
+                      className="w-16 h-16 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl flex items-center justify-center text-orange-600 text-2xl font-extrabold shadow-sm shadow-orange-200/50"
                       style={{ display: (owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture) ? 'none' : 'flex' }}
                     >
                       {companyName[0]?.toUpperCase() || 'P'}
@@ -123,19 +123,19 @@ export default function Restrictions({ vehicle }) {
                 
                 {/* Company Name */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">{t('hosted_by')}</p>
+                  <p className="text-sm font-semibold text-gray-400 mb-0.5 uppercase tracking-wider">{t('hosted_by')}</p>
                   {partnerSlug ? (
                     <Link 
                       href={`/partner/${partnerSlug}`}
-                      className="text-lg font-bold text-orange-500 transition-colors block truncate"
+                      className="text-xl font-extrabold text-gray-900 hover:text-orange-500 transition-colors block truncate"
                     >
                       {companyName}
                     </Link>
                   ) : (
-                    <p className="text-lg font-bold text-gray-900 truncate">{companyName}</p>
+                    <p className="text-xl font-extrabold text-gray-900 truncate">{companyName}</p>
                   )}
                   {owner.businessType && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium bg-blue-100 text-blue-800 mt-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 mt-2 tracking-wide uppercase">
                       {owner.businessType}
                     </span>
                   )}
@@ -145,7 +145,7 @@ export default function Restrictions({ vehicle }) {
 
             {/* Verified Badge */}
                   {owner.verified && (
-              <div className="pt-3">
+              <div className="pt-2">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <span className="text-sm font-medium text-green-700">{t('verified_partner')}</span>

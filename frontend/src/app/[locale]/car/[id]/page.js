@@ -20,6 +20,7 @@ import VehicleHeader from './components/VehicleHeader'
 import ImageGallery from './components/ImageGallery'
 import OwnerBlock from './components/OwnerBlock'
 import VehicleDetails from './components/VehicleDetails'
+import VehicleThread from './components/VehicleThread'
 import PickupLocation from './components/PickupLocation'
 import Restrictions from './components/Restrictions'
 import Reviews from './components/Reviews'
@@ -163,6 +164,10 @@ function CarDetailsContent() {
 
                 <AnimatedSection index={3}>
                   <VehicleDetails vehicle={vehicle} />
+                </AnimatedSection>
+
+                <AnimatedSection index={4}>
+                  <VehicleThread vehicle={vehicle} />
                 </AnimatedSection>
 
                 {/* Mobile Booking Sidebar */}

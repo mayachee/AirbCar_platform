@@ -33,41 +33,41 @@ export default function VehicleHeader({ vehicle }) {
       }}
     >
       <motion.h1
-        className="text-3xl font-bold text-white mb-2"
+        className="text-4xl font-extrabold text-gray-900 tracking-tight mb-3"
         variants={itemVariants}
       >
         {vehicle.name}
       </motion.h1>
       <motion.div
-        className="flex items-center gap-4 text-sm text-gray-400 flex-wrap"
+        className="flex items-center gap-4 text-sm text-gray-500 flex-wrap font-medium"
         variants={itemVariants}
       >
         <Tooltip.Provider>
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <motion.div
-                className="flex items-center cursor-help"
+                className="flex items-center cursor-help text-gray-900"
                 whileHover={{ scale: 1.05 }}
               >
                 <motion.svg
-                  className="w-4 h-4 text-yellow-400 mr-1"
+                  className="w-4 h-4 text-orange-500 mr-1.5"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   whileHover={{ rotate: 15, scale: 1.1 }}
                 >
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </motion.svg>
-                <span className="font-medium">{vehicle.rating}</span>
-                <span className="ml-1">({vehicle.reviewCount} reviews)</span>
+                <span className="font-bold">{vehicle.rating}</span>
+                <span className="ml-1 text-gray-500">({vehicle.reviewCount} reviews)</span>
               </motion.div>
             </Tooltip.Trigger>
             <Tooltip.Portal>
               <Tooltip.Content
-                className="bg-gray-900 text-white px-2 py-1 rounded text-xs z-50"
+                className="bg-white text-gray-900 px-3 py-2 rounded-xl text-xs font-medium z-50 shadow-md shadow-gray-200/50 border border-gray-100"
                 sideOffset={5}
               >
                 Average rating from {vehicle.reviewCount} reviews
-                <Tooltip.Arrow className="fill-gray-900" />
+                <Tooltip.Arrow className="fill-white" />
               </Tooltip.Content>
             </Tooltip.Portal>
           </Tooltip.Root>

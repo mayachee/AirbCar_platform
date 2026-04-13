@@ -16,29 +16,29 @@ export default function AnimatedBreadcrumb({ vehicleName }) {
       transition={{ duration: 0.3 }}
       aria-label="Breadcrumb"
     >
-      <ol className="flex items-center space-x-2 text-sm text-gray-400">
+      <ol className="flex items-center space-x-2 text-sm text-gray-500">
         <li>
           <Link 
             href="/" 
-            className="flex items-center hover:text-orange-400 transition-colors"
+            className="flex items-center hover:text-orange-500 transition-colors"
             aria-label="Home"
           >
             <Home className="w-4 h-4" />
           </Link>
         </li>
         <li>
-          <ChevronRight className="w-4 h-4 text-gray-600" />
+          <ChevronRight className="w-4 h-4 text-gray-400" />
         </li>
         <li>
-          <Link href="/search" className="hover:text-orange-400 transition-colors">
+          <Link href="/search" className="hover:text-orange-500 transition-colors">
             Search
           </Link>
         </li>
         <li>
-          <ChevronRight className="w-4 h-4 text-gray-600" />
+          <ChevronRight className="w-4 h-4 text-gray-400" />
         </li>
         <li 
-          className="text-white font-medium truncate max-w-[150px] sm:max-w-md" 
+          className="text-gray-900 font-semibold truncate max-w-[150px] sm:max-w-md" 
           title={vehicleName}
         >
           {vehicleName || 'Vehicle Details'}
