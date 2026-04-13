@@ -1,11 +1,10 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-
 import { motion } from 'framer-motion'
-import * as Tooltip from '@radix-ui/react-tooltip'
 import { calculateTotalPrice } from '../utils/pricing'
 import { useCurrency } from '@/contexts/CurrencyContext'
+import { ChevronRight, ShieldCheck } from 'lucide-react'
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -47,202 +46,132 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
   const duration = searchDetails?.duration || 1
   const { basePrice, serviceFee, total } = calculateTotalPrice(price, duration, securityDeposit)
   
-  // Safely get insurance info
-  const insurance = vehicle.insurance || {}
-  const insuranceCoverage = insurance.coverage || 'Full coverage included'
-  const insuranceDeductible = insurance.deductible || '5000 MAD'
-  
-  // Safely get mileage info
-  const mileage = vehicle.mileage || {}
-  const mileageIncluded = mileage.included || 200
-  const mileageOverage = mileage.overage || '5 MAD/km'
-  
-  // Safely get availability info
-  const availability = vehicle.availability || {}
-  const advanceNotice = availability.advanceNotice || '24 hours'
-  const minTripLength = availability.minTripLength || '1 day'
-  
   return (
     <div className="lg:col-span-1">
       <motion.div
-        className="sticky top-6"
+        className="sticky top-6 relative z-10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
         <motion.div
-          className="bg-white/5 rounded-none border border-white/10 shadow-lg p-6 backdrop-blur-sm"
+          className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden"
           variants={cardVariants}
           initial="hidden"
           animate="visible"
-          whileHover={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
         >
-          {/* Price */}
+          {/* Top Row: Price & Pill */}
           <motion.div
-            className="text-center mb-6"
+            className="flex items-start justify-between mb-6"
             variants={itemVariants}
           >
-            <motion.div
-              className="text-3xl font-bold text-white"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{
-                type: 'spring',
-                stiffness: 200,
-                damping: 15,
-                delay: 0.2,
-              }}
-            >
-              {formatPrice(price)}
-            </motion.div>
-            <motion.div
-              className="text-gray-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              {t('per_day')}
-            </motion.div>
+            <div>
+              <div className="flex items-baseline gap-1 pt-1">
+                <span className="text-[32px] md:text-[40px] font-extrabold text-gray-900 leading-none">
+                  {formatPrice(price).replace(/\sMAD|MAD/, '').trim()}
+                </span>
+                <span className="text-sm font-medium text-gray-400 mt-2">
+                  MAD / {t('day')}
+                </span>
+              </div>
+            </div>
+            <div className="bg-orange-100 text-orange-600 text-[10px] font-bold px-2 py-1 rounded-md tracking-wider">
+              RECOMMENDED
+            </div>
           </motion.div>
 
-          {/* Date Picker */}
+          {/* Check-in/out Box */}
           <motion.div
-            className="bg-white/5 rounded-none p-4 mb-6 border border-white/10"
+            className="border border-gray-200 rounded-xl p-4 flex divide-x mb-6 cursor-pointer hover:bg-gray-50 transition-colors"
             variants={itemVariants}
+            onClick={onChangeDates}
           >
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <label className="block text-xs font-medium text-gray-400 mb-1">{t('pickup')}</label>
-                <div className="text-sm font-medium text-white">{selectedDates.pickup}</div>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.45 }}
-              >
-                <label className="block text-xs font-medium text-gray-400 mb-1">{t('return')}</label>
-                <div className="text-sm font-medium text-white">{selectedDates.return}</div>
-              </motion.div>
+            <div className="flex-1 pr-4">
+              <label className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">CHECK-IN</label>
+              <div className="text-sm font-bold text-gray-900">{selectedDates.pickup || "Select Date"}</div>
             </div>
-            <motion.button
-              onClick={onChangeDates}
-              className="w-full mt-3 py-2 text-sm text-orange-400 font-medium border border-orange-500/30 rounded-none hover:bg-orange-500/10 transition-colors"
-              whileHover={{ scale: 1.02, backgroundColor: 'rgba(249, 115, 22, 0.1)' }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-            >
-              {t('change_dates')}
-            </motion.button>
+            <div className="flex-1 pl-4">
+              <label className="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">CHECK-OUT</label>
+              <div className="text-sm font-bold text-gray-900">{selectedDates.return || "Select Date"}</div>
+            </div>
           </motion.div>
 
-          {/* Trip Summary */}
-          <motion.div
-            className="border-t border-b border-white/10 py-4 mb-6"
-            variants={itemVariants}
-          >
-              <div className="flex justify-between items-center mb-2 text-sm">
-              <span className="text-gray-400">{duration} {duration === 1 ? t('day') : t('days')} {t('rental')}</span>
-              <span className="font-medium text-white">{formatPrice(basePrice)}</span>
-            </div>
-            <div className="flex justify-between items-center mb-2 text-sm">
-              <span className="text-gray-400">{t('service_fee')}</span>
-              <span className="font-medium text-white">{formatPrice(serviceFee)}</span>
+          {/* Price Breakdown */}
+          <motion.div className="space-y-3 mb-6" variants={itemVariants}>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-500">{formatPrice(price)} x {duration} {duration === 1 ? t('day') : t('days')}</span>
+              <span className="font-bold text-gray-900">{formatPrice(basePrice)}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-400">{t('security_deposit')}</span>
-              <span className="font-medium text-white">{formatPrice(securityDeposit)}</span>
+              <span className="text-gray-500">{t('service_fee')}</span>
+              <span className="font-bold text-gray-900">{formatPrice(serviceFee)}</span>
             </div>
-            <div className="text-xs text-green-400/70 text-right mb-2">
-              {t('refunded_after_rental')}
+            
+            <div className="pt-4 mt-4 border-t border-gray-100 flex justify-between items-center">
+              <span className="font-bold text-lg text-gray-900">Total</span>
+              <span className="font-bold text-lg text-red-600">{formatPrice(total)}</span>
             </div>
-            <div className="flex justify-between items-center font-semibold text-lg pt-2 border-t border-white/10 mt-2 text-white">
-              <span>{t('total')}</span>
-              <span>{formatPrice(total)}</span>
+          </motion.div>
+
+          {/* Security Deposit Box */}
+          <motion.div
+            className="bg-orange-50 border border-orange-100 rounded-xl p-4 my-6"
+            variants={itemVariants}
+          >
+            <div className="flex items-center gap-1 text-[10px] text-orange-500 font-bold uppercase tracking-wider mb-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              SECURITY DEPOSIT
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-red-600 text-lg">{formatPrice(securityDeposit)}</span>
+              <span className="text-gray-500 text-xs font-medium">(Refundable)</span>
+            </div>
+            <div className="italic text-[10px] text-gray-400 mt-1">
+              Fully refunded 48 hours after safe return
             </div>
           </motion.div>
 
           {/* Book Button */}
-          <motion.button
-            onClick={onBookNow}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-none transition-colors mb-4"
-            variants={itemVariants}
-            whileHover={{ 
-              scale: 1.02,
-              backgroundColor: '#ea580c',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-          >
-            {t('book_now')}
-          </motion.button>
-
-          {/* Insurance Info */}
-          <motion.div
-            className="bg-green-500/10 border border-green-500/20 rounded-none p-4 mb-4"
-            variants={itemVariants}
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          >
-            <div className="flex items-start space-x-2">
-              <motion.svg
-                className="w-5 h-5 text-green-400 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.5 }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </motion.svg>
-                <div>
-                <div className="font-medium text-green-400">{t('protected_by_insurance')}</div>
-                <div className="text-sm text-green-300">{insuranceCoverage}</div>
-                <div className="text-xs text-green-400/80 mt-1">{t('deductible_label', { amount: insuranceDeductible })}</div>
-              </div>
+          <motion.div variants={itemVariants} className="mt-2">
+            <button
+              onClick={onBookNow}
+              className="bg-[#ea580c] hover:bg-[#c2410c] text-white rounded-xl w-full py-4 font-bold shadow-md transition-all active:scale-[0.98]"
+            >
+              Confirm Booking
+            </button>
+            <div className="text-center text-[10px] text-gray-400 uppercase tracking-widest mt-3 font-semibold">
+              YOU WON&apos;T BE CHARGED YET
             </div>
           </motion.div>
+        </motion.div>
 
-          {/* What's Included */}
-          <motion.div
-            className="space-y-3"
-            variants={itemVariants}
-          >
-            <h4 className="font-medium text-white">{t('whats_included')}</h4>
-            <div className="space-y-2">
-              <div className="flex items-center text-sm text-gray-300">
-                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{mileageIncluded} {t('km_included')}</span>
+        {/* Support Chat */}
+        <motion.div
+          className="mt-6 bg-gray-50 hover:bg-gray-100 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-colors shadow-sm border border-gray-100"
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.6 }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 bg-white rounded-full overflow-hidden flex items-center justify-center shadow-sm border border-gray-100">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Karim" alt="Agent" className="w-full h-full object-cover" />
               </div>
-              <div className="flex items-center text-sm text-gray-300">
-                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{t('comprehensive_insurance')}</span>
-              </div>
-              <div className="flex items-center text-sm text-gray-300">
-                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{t('roadside_assistance')}</span>
-              </div>
-              <div className="flex items-center text-sm text-gray-300">
-                <svg className="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{t('free_cancellation')}</span>
-              </div>
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
-          </motion.div>
+            <div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">NEED HELP?</div>
+              <div className="text-sm font-bold text-gray-900">Chat with Karim</div>
+            </div>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-400 border border-gray-100">
+            <ChevronRight className="w-4 h-4" />
+          </div>
         </motion.div>
       </motion.div>
     </div>
   )
 }
+
 

@@ -128,6 +128,12 @@ class Partner(models.Model):
     review_count = models.IntegerField(default=0)
     total_bookings = models.IntegerField(default=0)
     total_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    # Kinetic Concierge specific fields
+    elite_status = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(5)], help_text="1 to 5 level for Kinetic Concierge")
+    response_time = models.CharField(max_length=50, blank=True, null=True, default="< 1 hour", help_text="e.g., '< 15 mins'")
+    experience_years = models.IntegerField(default=0, help_text="Years in the business, e.g. 12")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -200,6 +206,10 @@ class Listing(models.Model):
     fuel_type = models.CharField(max_length=20, choices=FUEL_TYPE_CHOICES)
     seating_capacity = models.IntegerField()  # seats
     vehicle_style = models.CharField(max_length=20, choices=STYLE_CHOICES)  # style
+    
+    # Kinetic Concierge Vehicle Specs
+    luggage_capacity = models.CharField(max_length=50, blank=True, null=True, help_text="e.g., '2 Large Bags'")
+    range_km = models.CharField(max_length=50, blank=True, null=True, help_text="e.g., 'Unlimited', '450 km'")
     
     # Pricing and Location
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])

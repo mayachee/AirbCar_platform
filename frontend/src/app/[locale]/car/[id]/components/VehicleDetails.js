@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl'
+import { Settings, Users, Fuel, Briefcase, MapPin } from 'lucide-react'
 
 export default function VehicleDetails({ vehicle }) {
   const t = useTranslations('car_details')
@@ -18,57 +19,90 @@ export default function VehicleDetails({ vehicle }) {
   // Get seats
   const seats = vehicle.seats || vehicle.seating_capacity || 'N/A'
   
-  // Get name
-  const name = vehicle.name || `${vehicle.make || ''} ${vehicle.model || ''}`.trim() || 'Unknown Vehicle'
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-      {/* Specifications */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">{t('car_details')}</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-400">{t('make_model')}</span>
-            <span className="font-medium text-gray-200">{name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">{t('year')}</span>
-            <span className="font-medium text-gray-200">{vehicle.year || 'N/A'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">{t('seats')}</span>
-            <span className="font-medium text-gray-200">{seats}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">{t('transmission')}</span>
-            <span className="font-medium capitalize text-gray-200">{transmission}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">{t('fuel_type')}</span>
-            <span className="font-medium capitalize text-gray-200">{fuelType}</span>
-          </div>
+    <div className="my-12">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-1.5 h-6 bg-[#9a4b3d] rounded-full"></div>
+        <h2 className="text-2xl font-bold text-gray-900">Technical Specifications</h2>
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {/* Drive */}
+        <div className="bg-[#f8f9fc] rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <Settings className="text-[#a2513f] w-5 h-5 mb-2" />
+          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+            DRIVE
+          </span>
+          <span className="font-bold text-gray-900 text-sm capitalize">
+            {transmission}
+          </span>
+        </div>
+
+        {/* Capacity */}
+        <div className="bg-[#f8f9fc] rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <Users className="text-[#a2513f] w-5 h-5 mb-2" />
+          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+            CAPACITY
+          </span>
+          <span className="font-bold text-gray-900 text-sm capitalize">
+            {seats} Persons
+          </span>
+        </div>
+
+        {/* Fuel */}
+        <div className="bg-[#f8f9fc] rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <Fuel className="text-[#a2513f] w-5 h-5 mb-2" />
+          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+            FUEL
+          </span>
+          <span className="font-bold text-gray-900 text-sm capitalize">
+            {fuelType}
+          </span>
+        </div>
+
+        {/* Storage */}
+        <div className="bg-[#f8f9fc] rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <Briefcase className="text-[#a2513f] w-5 h-5 mb-2" />
+          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+            STORAGE
+          </span>
+          <span className="font-bold text-gray-900 text-sm capitalize">
+            {vehicle.storage || '2 Bags'}
+          </span>
+        </div>
+
+        {/* Range */}
+        <div className="bg-[#f8f9fc] rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <MapPin className="text-[#a2513f] w-5 h-5 mb-2" />
+          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1">
+            RANGE
+          </span>
+          <span className="font-bold text-gray-900 text-sm capitalize">
+            {vehicle.range || '350 Mi'}
+          </span>
         </div>
       </div>
 
-      {/* Features */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">{t('features')}</h3>
-        <div className="grid grid-cols-1 gap-2">
-          {features.length > 0 ? (
-            features.map((feature, index) => (
-              <div key={index} className="flex items-center">
-                <svg className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm text-gray-300">{feature}</span>
+      {features.length > 0 && (
+        <div className="mt-12">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-1.5 h-6 bg-[#9a4b3d] rounded-full"></div>
+            <h2 className="text-2xl font-bold text-gray-900">{t('features')}</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {features.map((feature, index) => (
+              <div 
+                key={index} 
+                className="text-[10px] font-bold uppercase tracking-wider text-gray-700 bg-gray-100 border border-gray-200 px-3 py-2 rounded-full"
+              >
+                {feature}
               </div>
-            ))
-          ) : (
-            <p className="text-gray-400 text-sm">{t('no_features_listed')}</p>
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
+
 

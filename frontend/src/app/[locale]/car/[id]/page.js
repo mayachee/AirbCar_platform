@@ -18,6 +18,7 @@ import AnimatedSection from './components/AnimatedSection'
 import SearchSummary from './components/SearchSummary'
 import VehicleHeader from './components/VehicleHeader'
 import ImageGallery from './components/ImageGallery'
+import OwnerBlock from './components/OwnerBlock'
 import VehicleDetails from './components/VehicleDetails'
 import PickupLocation from './components/PickupLocation'
 import Restrictions from './components/Restrictions'
@@ -160,6 +161,10 @@ function CarDetailsContent() {
                     onSelectImage={selectImage}
                     onShowFullGallery={() => setShowFullGallery(true)}
                   />
+                </AnimatedSection>
+
+                <AnimatedSection index={2.5}>
+                  <OwnerBlock />
                 </AnimatedSection>
 
                 <AnimatedSection index={3}>

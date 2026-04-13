@@ -81,17 +81,17 @@
   --color-chart-5: var(--chart-5);
 
   /* Radius — Kinetic Concierge scale */
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
 }
 
 /* ============================================================
    ROOT VARIABLES — Light Mode (Kinetic Concierge)
    ============================================================ */
 :root {
-  --radius: 0.75rem;
+  --radius: 1.5rem;
 
   /* Primary surfaces */
   --background: #f9f9ff;
@@ -106,7 +106,7 @@
   --popover-foreground: #121c2a;
 
   /* Primary — gradient from primary to primary_container */
-  --primary: #9d4300;
+  --primary: #ea580c;
   --primary-foreground: #ffffff;
 
   /* Secondary */
@@ -161,9 +161,9 @@
   --glass-border: rgba(224, 192, 177, 0.12);
 
   /* Brand accents */
-  --color-orange-600: #9d4300;
+  --color-orange-600: #ea580c;
   --color-orange-500: #f97316;
-  --color-brand-glow: rgba(249, 115, 22, 0.15);
+  --color-brand-glow: rgba(234, 88, 12, 0.15);
 }
 
 /* ============================================================

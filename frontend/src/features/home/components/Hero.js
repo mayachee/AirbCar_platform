@@ -149,7 +149,7 @@ export default function Hero() {
                   }
                   options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
                   triggerProps={{ 'aria-label': 'Pickup location' }}
-                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] rounded-[var(--radius)] transition-all duration-200 focus:ring-[var(--color-orange-500)]/30"
+                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] rounded-2xl transition-all duration-200 focus:ring-2 focus:ring-[var(--color-orange-500)]/30"
                 />
               </div>
 
@@ -165,7 +165,7 @@ export default function Hero() {
                   options={buildDateOptions(todayStr, 180)}
                   triggerProps={{ 'aria-label': 'Pickup date' }}
                   required
-                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-[var(--radius)] transition-all duration-200 focus:ring-[var(--color-orange-500)]/30"
+                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-2xl transition-all duration-200 focus:ring-2 focus:ring-[var(--color-orange-500)]/30"
                 />
               </div>
 
@@ -181,7 +181,7 @@ export default function Hero() {
                   options={buildDateOptions(searchForm.pickupDate || todayStr, 180)}
                   triggerProps={{ 'aria-label': 'Drop-off date' }}
                   required
-                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-[var(--radius)] transition-all duration-200 focus:ring-[var(--color-orange-500)]/30"
+                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-2xl transition-all duration-200 focus:ring-2 focus:ring-[var(--color-orange-500)]/30"
                 />
               </div>
 

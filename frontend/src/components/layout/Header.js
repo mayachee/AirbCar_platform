@@ -158,7 +158,7 @@ export default function Header({ theme = 'light' }) {
                 aria-label="Open menu"
                 aria-expanded={isMenuOpen}
                 onClick={toggleMenu}
-                className={`group inline-flex items-center justify-center rounded-[var(--radius)] px-2.5 sm:px-5 py-2 sm:py-2.5 ${buttonClassName}`}
+                className={`group inline-flex items-center justify-center rounded-2xl px-2.5 sm:px-5 py-2 sm:py-2.5 ${buttonClassName}`}
               >
                 <div className="flex flex-col space-y-1.5 sm:mr-3 group-hover:space-y-0 relative h-3 w-5 justify-center">
                   <span className="w-5 h-0.5 bg-current rounded-full transition-all duration-300 group-hover:rotate-45 group-hover:absolute"></span>
@@ -184,7 +184,7 @@ export default function Header({ theme = 'light' }) {
               <Link
                 href="/search"
                 aria-label="Search"
-                className={`group ${(!loading && !user) ? 'hidden md:inline-flex' : 'inline-flex'} items-center justify-center rounded-[var(--radius)] p-2 sm:p-3 ${buttonClassName}`}
+                className={`group ${(!loading && !user) ? 'hidden md:inline-flex' : 'inline-flex'} items-center justify-center rounded-2xl p-2 sm:p-3 ${buttonClassName}`}
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -197,7 +197,7 @@ export default function Header({ theme = 'light' }) {
                   <button
                     onClick={() => setIsNotifOpen(!isNotifOpen)}
                     aria-label="Notifications"
-                    className={`group inline-flex items-center justify-center rounded-[var(--radius)] p-2 sm:p-3 ${buttonClassName}`}
+                    className={`group inline-flex items-center justify-center rounded-2xl p-2 sm:p-3 ${buttonClassName}`}
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -274,7 +274,7 @@ export default function Header({ theme = 'light' }) {
                   <Link
                     href="/auth?mode=signin"
                     aria-label={tc('sign_in')}
-                    className={`md:hidden group inline-flex items-center justify-center rounded-[var(--radius)] p-2 sm:p-3 ${buttonClassName}`}
+                    className={`md:hidden group inline-flex items-center justify-center rounded-2xl p-2 sm:p-3 ${buttonClassName}`}
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -282,7 +282,7 @@ export default function Header({ theme = 'light' }) {
                   </Link>
                   <Link
                     href="/auth?mode=signin"
-                    className={`hidden md:inline-flex items-center justify-center rounded-[var(--radius)] px-5 py-2.5 text-sm font-bold transition-all duration-300 ${buttonClassName}`}
+                    className={`hidden md:inline-flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-bold transition-all duration-300 ${buttonClassName}`}
                   >
                     {tc('sign_in')}
                   </Link>
@@ -315,7 +315,7 @@ export default function Header({ theme = 'light' }) {
                 type="button"
                 aria-label="Close menu"
                 onClick={closeMenu}
-                className="group inline-flex items-center justify-center w-10 h-10 rounded-[var(--radius)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all duration-200"
+                className="group inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all duration-200"
               >
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -376,7 +376,7 @@ export default function Header({ theme = 'light' }) {
                     onChange={(e) => handleCurrencyChange(e)}
                     contentProps={{ className: 'z-[100] ignore-outside-click', position: 'popper' }}
                     options={currencies.map(c => ({ value: c.code, label: c.label }))}
-                    className="w-full rounded-[var(--radius)] bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-sm text-[var(--text-primary)] focus:ring-[var(--color-orange-500)]/50 focus:border-[var(--color-orange-500)]/50 transition-colors"
+                    className="w-full rounded-2xl bg-[var(--surface-2)] hover:bg-[var(--surface-3)] text-sm text-[var(--text-primary)] focus:ring-[var(--color-orange-500)]/50 focus:border-[var(--color-orange-500)]/50 transition-colors"
                   />
                 </div>
               </div>

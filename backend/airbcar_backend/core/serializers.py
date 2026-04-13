@@ -336,7 +336,7 @@ class PartnerSerializer(serializers.ModelSerializer):
                   'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
                   'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
                    'phone_number', 'first_name', 'last_name', 'company_name',
-                   'address', 'city', 'state']
+                   'address', 'city', 'state', 'elite_status', 'response_time', 'experience_years']
         read_only_fields = ['id', 'created_at', 'logo_url']
         extra_kwargs = {
             'logo': {'write_only': True},
@@ -515,7 +515,7 @@ class ListingCompactSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'make', 'brand', 'model', 'model_name', 'year', 'color',
             'transmission', 'fuel_type', 'fuelType', 'seating_capacity', 'seats',
-            'vehicle_style', 'style', 'price_per_day', 'dailyRate', 'price', 'security_deposit', 'securityDeposit',
+            'vehicle_style', 'style', 'luggage_capacity', 'range_km', 'price_per_day', 'dailyRate', 'price', 'security_deposit', 'securityDeposit',
             'location', 'images', 'is_available', 'isAvailable', 'is_verified', 'verified',
             'instant_booking', 'instantBooking', 'rating', 'review_count', 'reviewCount',
             'created_at', 'updated_at', 'name', 'partner_id',
@@ -607,6 +607,8 @@ class ListingSerializer(serializers.ModelSerializer):
     transmission = serializers.ChoiceField(choices=Listing.TRANSMISSION_CHOICES, required=False)
     fuel_type = serializers.ChoiceField(choices=Listing.FUEL_TYPE_CHOICES, required=False)
     seating_capacity = serializers.IntegerField(required=False)
+    luggage_capacity = serializers.CharField(required=False, allow_blank=True)
+    range_km = serializers.CharField(required=False, allow_blank=True)
     vehicle_style = serializers.ChoiceField(choices=Listing.STYLE_CHOICES, required=False)
     price_per_day = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
     security_deposit = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
@@ -623,6 +625,7 @@ class ListingSerializer(serializers.ModelSerializer):
             'id', 'partner', 'partner_id', 'make', 'brand', 'model', 'model_name',
             'year', 'color', 'transmission', 'fuel_type', 'fuelType',
             'seating_capacity', 'seats', 'vehicle_style', 'style',
+            'luggage_capacity', 'range_km',
             'price_per_day', 'dailyRate', 'price', 'security_deposit', 'securityDeposit', 'location',
             'vehicle_description', 'description', 'available_features', 'features',
             'images', 'is_available', 'isAvailable', 'is_verified', 'verified',

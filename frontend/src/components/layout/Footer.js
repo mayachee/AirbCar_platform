@@ -137,7 +137,7 @@ export default function Footer() {
                   placeholder={t('newsletter_placeholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[var(--surface-container-lowest)] rounded-[var(--radius)] py-3.5 pl-6 pr-36 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)]/40 shadow-ambient-sm transition-all"
+                  className="w-full bg-[var(--surface-container-lowest)] rounded-3xl py-3.5 pl-6 pr-36 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-orange-500)]/40 shadow-ambient-sm transition-all"
                 />
                 <button
                   type="submit"
