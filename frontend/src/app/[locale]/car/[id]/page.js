@@ -16,7 +16,6 @@ import PageTransition from './components/PageTransition'
 import AnimatedBreadcrumb from './components/AnimatedBreadcrumb'
 import AnimatedSection from './components/AnimatedSection'
 import SearchSummary from './components/SearchSummary'
-import VehicleHeader from './components/VehicleHeader'
 import ImageGallery from './components/ImageGallery'
 import OwnerBlock from './components/OwnerBlock'
 import VehicleDetails from './components/VehicleDetails'
@@ -124,13 +123,30 @@ function CarDetailsContent() {
           <Header />
           
           {/* Animated Breadcrumb */}
-          <AnimatedBreadcrumb vehicleName={vehicle.name} />
+          <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-6">
+            <AnimatedBreadcrumb vehicleName={vehicle.name} />
+          </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pb-12">
+            
+            {/* Hero Gallery Section */}
+            <AnimatedSection index={1}>
+              <ImageGallery 
+                vehicle={vehicle}
+                currentImageIndex={currentImageIndex}
+                onNextImage={nextImage}
+                onPrevImage={prevImage}
+                onSelectImage={selectImage}
+                onShowFullGallery={() => setShowFullGallery(true)}
+              />
+            </AnimatedSection>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mt-12">
+              
               {/* Left Column - Main Content */}
               <motion.div
-                className="lg:col-span-2 space-y-8"
+                className="lg:col-span-8 space-y-12"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
@@ -140,21 +156,6 @@ function CarDetailsContent() {
                     searchDetails={searchDetails}
                     selectedDates={selectedDates}
                     onModifySearch={handleModifySearch}
-                  />
-                </AnimatedSection>
-
-                <AnimatedSection index={1}>
-                  <VehicleHeader vehicle={vehicle} />
-                </AnimatedSection>
-
-                <AnimatedSection index={2}>
-                  <ImageGallery 
-                    vehicle={vehicle}
-                    currentImageIndex={currentImageIndex}
-                    onNextImage={nextImage}
-                    onPrevImage={prevImage}
-                    onSelectImage={selectImage}
-                    onShowFullGallery={() => setShowFullGallery(true)}
                   />
                 </AnimatedSection>
 
@@ -196,7 +197,7 @@ function CarDetailsContent() {
 
               {/* Right Column - Booking Sidebar */}
               <motion.div
-                className="hidden lg:block lg:col-span-1"
+                className="hidden lg:block lg:col-span-4"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ 
