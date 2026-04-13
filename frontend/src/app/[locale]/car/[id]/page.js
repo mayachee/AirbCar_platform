@@ -117,12 +117,10 @@ function CarDetailsContent() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#0F172A] relative overflow-hidden dark">
-        {/* Abstract Background Pattern */}
+      <div className="min-h-screen bg-gray-50 relative">
+        {/* Clean Professional Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-none bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
-          <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-none bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]" />
         </div>
 
         <div className="relative z-10">
@@ -230,7 +228,7 @@ function CarDetailsContent() {
           )}
           
           {/* Smooth transition to footer */}
-          <div className="h-24 bg-gradient-to-b from-[#0F172A]/20 to-[#0B0F19]" />
+          <div className="h-24 bg-gradient-to-b from-gray-50/20 to-white" />
           <Footer />
         </div>
       </div>
