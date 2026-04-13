@@ -18,11 +18,11 @@ export default function ContactHero() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full border border-orange-500/20 bg-orange-500/5 backdrop-blur-md text-orange-400 text-[10px] md:text-sm font-bold uppercase tracking-wider mb-6 md:mb-8 hover:bg-orange-500/10 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-none border border-orange-500/20 bg-orange-500/5 backdrop-blur-md text-orange-400 text-[10px] md:text-sm font-bold uppercase tracking-wider mb-6 md:mb-8 hover:bg-orange-500/10 transition-colors"
         >
             <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-orange-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-none bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-none h-1.5 w-1.5 md:h-2 md:w-2 bg-orange-500"></span>
             </span>
             Get in Touch
         </motion.div>

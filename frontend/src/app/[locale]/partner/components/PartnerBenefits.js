@@ -39,14 +39,14 @@ export default function PartnerBenefits() {
           {benefits.map((benefit, i) => (
             <motion.div
               key={i}
-              className="p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
+              className="p-8 rounded-none border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all duration-300"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
               whileHover={{ y: -8 }}
             >
-              <div className={`p-4 rounded-xl w-fit mb-6 ${benefit.color}`}>
+              <div className={`p-4 rounded-none w-fit mb-6 ${benefit.color}`}>
                 <benefit.icon className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold mb-3 text-white">{benefit.title}</h3>

@@ -222,7 +222,7 @@ export default function BlogPage() {
       <section className="py-12 px-4 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {blogPosts.map((post) => (
-            <article key={post.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
+            <article key={post.id} className="bg-white rounded-none shadow-lg overflow-hidden hover:shadow-xl transition">
               <img
                 src={post.image}
                 alt={post.title}
@@ -272,11 +272,11 @@ export default function BlogPage() {
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="flex-1 px-4 py-3 rounded-none border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-6 py-3 rounded-none font-semibold hover:bg-blue-700 transition"
             >
               Subscribe
             </button>

@@ -190,7 +190,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
   return (
     <div className="p-8 space-y-6">
       {successMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-none shadow-lg flex items-center space-x-2 animate-slide-in">
           <CheckCircle className="h-5 w-5" />
           <span>{successMessage}</span>
           <button onClick={() => setSuccessMessage('')} className="ml-2 hover:text-green-200">
@@ -200,7 +200,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       )}
 
       {error && (
-        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-none shadow-lg flex items-center space-x-2 animate-slide-in">
           <AlertCircle className="h-5 w-5" />
           <span>{error}</span>
           <button onClick={() => setError(null)} className="ml-2 hover:text-red-200">
@@ -232,7 +232,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
               placeholder={t('favorites_search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
           <SelectField
@@ -244,9 +244,9 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
               { value: 'price-high', label: t('favorites_sort_price_high') },
               { value: 'name', label: t('favorites_sort_name') },
             ]}
-            className="px-4 py-2 rounded-lg"
+            className="px-4 py-2 rounded-none"
           />
-          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+          <div className="flex border border-gray-300 rounded-none overflow-hidden">
             <button
               onClick={() => setViewMode('grid')}
               className={`px-4 py-2 ${viewMode === 'grid' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
@@ -277,7 +277,7 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       />
 
       {!isLoading && searchTerm && filteredFavorites.length === 0 && (
-        <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
+        <div className="bg-white rounded-none shadow-sm border p-12 text-center">
           <Search className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">{t('favorites_empty')}</h3>
           <p className="text-gray-600 mb-4">{t('favorites_search')} &quot;{searchTerm}&quot;</p>
@@ -288,11 +288,11 @@ export default function FavoritesTab({ favorites: propFavorites, loading: propLo
       )}
 
       {!isLoading && !searchTerm && displayFavorites.length === 0 && (
-        <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
+        <div className="bg-white rounded-none shadow-sm border p-12 text-center">
           <Heart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">{t('favorites_empty')}</h3>
           <p className="text-gray-600 mb-4">No favorites yet. Start adding your favorite cars!</p>
-          <button onClick={() => router.push('/search')} className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium">
+          <button onClick={() => router.push('/search')} className="px-6 py-2 bg-orange-500 text-white rounded-none hover:bg-orange-600 font-medium">
             Browse Cars
           </button>
         </div>

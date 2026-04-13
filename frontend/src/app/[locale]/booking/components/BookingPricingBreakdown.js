@@ -20,7 +20,7 @@ export default function BookingPricingBreakdown({
   const finalTotal = subtotal + serviceFee + securityFee + insuranceFee;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-none shadow-sm border border-gray-200 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Breakdown</h3>
       
       <div className="space-y-3">

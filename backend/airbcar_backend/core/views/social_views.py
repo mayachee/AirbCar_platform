@@ -1,10 +1,11 @@
 """
 Social layer views: listing comments, listing reactions, partner follows, partner posts.
 """
-from rest_framework import status
+from rest_framework import status, viewsets, exceptions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action
 from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
@@ -15,8 +16,9 @@ from ..models import (
     Partner, PartnerFollow, PartnerPost,
     User, UserFollow,
     Booking, TripPost, TripPostReaction, TripPostComment,
+    CommunityPost, CommunityPostReaction, CommunityPostComment,
 )
-from ..serializers import ListingCommentSerializer, PartnerPostSerializer, TripPostSerializer, TripPostCommentSerializer
+from ..serializers import ListingCommentSerializer, PartnerPostSerializer, TripPostSerializer, TripPostCommentSerializer, CommunityPostSerializer, CommunityPostCommentSerializer
 
 
 def _paginate(queryset, request):
@@ -342,9 +344,10 @@ class SocialFeedView(APIView):
         posts_base = PartnerPost.objects.filter(is_active=True, **partner_filter)
         listings_base = _Listing.objects.filter(is_available=True, is_verified=True, **partner_filter)
         trips_base = TripPost.objects.filter(is_active=True)
+        community_base = CommunityPost.objects.filter(is_active=True)
 
-        # Accurate total across all three sources (3 cheap COUNT queries).
-        total_count = posts_base.count() + listings_base.count() + trips_base.count()
+        # Accurate total across all sources (4 cheap COUNT queries).
+        total_count = posts_base.count() + listings_base.count() + trips_base.count() + community_base.count()
 
         # Fetch enough rows from each source to cover the current page after merge-sort.
         fetch_limit = page * page_size
@@ -365,6 +368,12 @@ class SocialFeedView(APIView):
         trips_qs = (
             trips_base
             .select_related('user', 'booking__listing__partner')
+            .order_by('-created_at')[:fetch_limit]
+        )
+
+        community_qs = (
+            community_base
+            .select_related('author', 'listing__partner')
             .order_by('-created_at')[:fetch_limit]
         )
 
@@ -400,8 +409,13 @@ class SocialFeedView(APIView):
             for t in trips_qs
         ]
 
+        community_items = [
+            {'type': 'community', 'created_at': c.created_at, 'data': CommunityPostSerializer(c).data}
+            for c in community_qs
+        ]
+
         # Merge and sort by created_at descending, then paginate
-        merged = sorted(post_items + listing_items + trip_items, key=lambda x: x['created_at'], reverse=True)
+        merged = sorted(post_items + listing_items + trip_items + community_items, key=lambda x: x['created_at'], reverse=True)
         start = (page - 1) * page_size
         page_items = merged[start:start + page_size]
 
@@ -721,3 +735,88 @@ class CommunityImageUploadView(APIView):
                 {'error': f'Image upload failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+class CommunityPostViewSet(viewsets.ModelViewSet):
+    """
+    CRUD endpoint for CommunityPosts.
+    Accessible at /community-posts/
+    """
+    serializer_class = CommunityPostSerializer
+    queryset = CommunityPost.objects.filter(is_active=True).select_related('author', 'listing')
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user and getattr(self.request.user, 'role', None) not in ('admin', 'ceo'):
+            raise exceptions.PermissionDenied('You may not delete this post.')
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
+
+    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated], url_path='reactions')
+    def toggle_reaction(self, request, pk=None):
+        post = self.get_object()
+        
+        if request.method == 'POST':
+            reaction_type = request.data.get('reaction_type', 'like').strip().lower()
+            valid_types = [typ[0] for typ in CommunityPostReaction.REACTION_TYPES]
+            if reaction_type not in valid_types:
+                return Response({'error': 'Invalid reaction type.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            reaction, created = CommunityPostReaction.objects.update_or_create(
+                post=post, user=request.user,
+                defaults={'reaction_type': reaction_type}
+            )
+            return Response({'status': 'reacted', 'type': reaction.reaction_type}, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+            
+        elif request.method == 'DELETE':
+            deleted, _ = CommunityPostReaction.objects.filter(post=post, user=request.user).delete()
+            if deleted:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response({'error': 'Reaction not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['get', 'post'], permission_classes=[], url_path='comments')
+    def comments(self, request, pk=None):
+        post = self.get_object()
+        
+        if request.method == 'GET':
+            comments_qs = CommunityPostComment.objects.filter(
+                post=post, parent__isnull=True, is_active=True
+            ).select_related('user').order_by('created_at')
+            return Response(CommunityPostCommentSerializer(comments_qs, many=True).data)
+
+        if not request.user.is_authenticated:
+            return Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        content = request.data.get('content', '').strip()
+        if not content:
+            return Response({'error': 'Content cannot be empty.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        parent_id = request.data.get('parent_id')
+        parent = None
+        if parent_id:
+            parent = CommunityPostComment.objects.filter(pk=parent_id, post=post, is_active=True).first()
+            if not parent:
+                return Response({'error': 'Parent not found.'}, status=status.HTTP_404_NOT_FOUND)
+            if parent.parent_id is not None:
+                return Response({'error': 'Nested replies disallowed.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comment = CommunityPostComment.objects.create(
+            post=post, user=request.user, parent=parent, content=content
+        )
+        return Response(CommunityPostCommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated], url_path='comments/(?P<comment_id>[^/.]+)')
+    def delete_comment(self, request, pk=None, comment_id=None):
+        comment = get_object_or_404(CommunityPostComment, pk=comment_id, post_id=pk)
+        if comment.user != request.user and getattr(request.user, 'role', None) not in ('admin', 'ceo'):
+            return Response({'error': 'Not allowed.'}, status=status.HTTP_403_FORBIDDEN)
+        comment.is_active = False
+        comment.save(update_fields=['is_active'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+

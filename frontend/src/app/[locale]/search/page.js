@@ -214,7 +214,7 @@ function SearchContent() {
               <p className="body-md text-[var(--text-secondary)] mt-2">
                 {loading ? (
                   <span className="flex items-center gap-2">
-                    <span className="inline-block h-4 w-4 rounded-full border-2 border-[var(--color-orange-500)] border-t-transparent animate-spin" />
+                    <span className="inline-block h-4 w-4 rounded-none border-2 border-[var(--color-orange-500)] border-t-transparent animate-spin" />
                     {t('searching')}
                   </span>
                 ) : safeFilteredCars.length > 0 ? (
@@ -256,7 +256,7 @@ function SearchContent() {
                 <button
                   key={chip.value}
                   onClick={() => handleTypeChipClick(chip.value)}
-                  className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                  className={`whitespace-nowrap px-4 py-2 rounded-none text-sm font-semibold transition-all duration-200 ${
                     (chip.value === '' && filters.style?.length === 0) || activeTypeChip === chip.value
                       ? 'bg-[var(--color-orange-500)] text-white shadow-ambient-sm'
                       : 'bg-[var(--surface-1)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]'
@@ -272,12 +272,12 @@ function SearchContent() {
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-                className="lg:hidden flex items-center gap-2 px-3 py-2 rounded-full bg-[var(--surface-1)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)] text-sm font-medium transition-colors"
+                className="lg:hidden flex items-center gap-2 px-3 py-2 rounded-none bg-[var(--surface-1)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)] text-sm font-medium transition-colors"
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 {t('filters')}
                 {activeFiltersCount > 0 && (
-                  <span className="ml-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-[var(--color-orange-500)] text-white text-[10px] font-bold">
+                  <span className="ml-0.5 w-5 h-5 flex items-center justify-center rounded-none bg-[var(--color-orange-500)] text-white text-[10px] font-bold">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -295,7 +295,7 @@ function SearchContent() {
                     { value: 'rating', label: t('sort_highest_rated') },
                     { value: 'newest', label: t('sort_newest') },
                   ]}
-                  className="bg-[var(--surface-1)] text-sm font-semibold text-[var(--text-primary)] rounded-full px-3 py-2 focus:ring-1 focus:ring-[var(--color-orange-500)]/30 cursor-pointer"
+                  className="bg-[var(--surface-1)] text-sm font-semibold text-[var(--text-primary)] rounded-none px-3 py-2 focus:ring-1 focus:ring-[var(--color-orange-500)]/30 cursor-pointer"
                 />
               </div>
             </div>
@@ -310,7 +310,7 @@ function SearchContent() {
             <div className="max-w-6xl mx-auto py-3 flex flex-wrap items-center gap-2">
               <span className="label-xs text-[var(--text-muted)]">{t('active_filters')}</span>
               {filters.location && (
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-none bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
                   <MapPin className="h-3 w-3 mr-1.5 text-[var(--color-orange-500)]" />
                   {filters.location}
                   <button onClick={() => handleFilterChange({ location: '' })} className="ml-2 text-[var(--text-muted)] hover:text-[var(--color-kc-error)]">
@@ -319,7 +319,7 @@ function SearchContent() {
                 </span>
               )}
               {filters.verified && (
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-none bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
                   <Shield className="h-3 w-3 mr-1.5 text-[var(--color-kc-tertiary)]" />
                   {t('sf_verified_agencies')}
                   <button onClick={() => handleFilterChange({ verified: false })} className="ml-2 text-[var(--text-muted)] hover:text-[var(--color-kc-error)]">
@@ -328,7 +328,7 @@ function SearchContent() {
                 </span>
               )}
               {filters.instantBooking && (
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-none bg-[var(--surface-container-lowest)] text-sm text-[var(--text-primary)] shadow-ambient-sm">
                   <Zap className="h-3 w-3 mr-1.5 text-[var(--color-orange-500)]" />
                   {t('sf_instant_booking')}
                   <button onClick={() => handleFilterChange({ instantBooking: false })} className="ml-2 text-[var(--text-muted)] hover:text-[var(--color-kc-error)]">
@@ -362,7 +362,7 @@ function SearchContent() {
               </h3>
               <button
                 onClick={() => setShowFiltersMobile(false)}
-                className="p-2 rounded-full hover:bg-[var(--surface-1)] transition-colors text-[var(--text-secondary)]"
+                className="p-2 rounded-none hover:bg-[var(--surface-1)] transition-colors text-[var(--text-secondary)]"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -384,7 +384,7 @@ function SearchContent() {
             {/* Filters Sidebar — Desktop */}
             <aside className="hidden lg:block lg:w-72 flex-shrink-0">
               <div className="sticky top-36">
-                <div className="bg-[var(--surface-container-lowest)] rounded-2xl p-5 shadow-ambient">
+                <div className="bg-[var(--surface-container-lowest)] rounded-none p-5 shadow-ambient">
                   <div className="flex items-center justify-between mb-5 pb-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <h3 className="title-lg text-[var(--text-primary)] flex items-center gap-2">
                       <SlidersHorizontal className="h-5 w-5 text-[var(--color-orange-500)]" />
@@ -414,14 +414,14 @@ function SearchContent() {
               ) : safeFilteredCars.length === 0 ? (
                 <div className="space-y-10">
                   {/* Empty State */}
-                  <div className="bg-[var(--surface-container-lowest)] rounded-2xl p-10 text-center shadow-ambient relative overflow-hidden">
+                  <div className="bg-[var(--surface-container-lowest)] rounded-none p-10 text-center shadow-ambient relative overflow-hidden">
                     {/* Subtle glow accent */}
                     <div className="glow-orange w-64 h-64 -bottom-20 -right-20 absolute" />
 
                     <div className="relative z-10">
                       {hasSearchCriteria ? (
                         <>
-                          <div className="w-16 h-16 bg-[var(--surface-1)] rounded-2xl flex items-center justify-center mx-auto mb-5">
+                          <div className="w-16 h-16 bg-[var(--surface-1)] rounded-none flex items-center justify-center mx-auto mb-5">
                             <Search className="h-8 w-8 text-[var(--color-orange-500)]" />
                           </div>
                           <h3 className="headline-md text-[var(--text-primary)] mb-2">{t('empty_heading')}</h3>
@@ -431,7 +431,7 @@ function SearchContent() {
                           <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <button
                               onClick={clearFilters}
-                              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-primary)] bg-[var(--surface-1)] hover:bg-[var(--surface-2)] transition-colors"
+                              className="px-6 py-2.5 rounded-none text-sm font-semibold text-[var(--text-primary)] bg-[var(--surface-1)] hover:bg-[var(--surface-2)] transition-colors"
                             >
                               {t('clear_all_filters')}
                             </button>
@@ -445,7 +445,7 @@ function SearchContent() {
                         </>
                       ) : (
                         <>
-                          <div className="w-16 h-16 bg-[var(--surface-1)] rounded-2xl flex items-center justify-center mx-auto mb-5">
+                          <div className="w-16 h-16 bg-[var(--surface-1)] rounded-none flex items-center justify-center mx-auto mb-5">
                             <Car className="h-8 w-8 text-[var(--color-kc-tertiary)]" />
                           </div>
                           <h3 className="headline-md text-[var(--text-primary)] mb-2">{t('start_heading')}</h3>
@@ -467,9 +467,9 @@ function SearchContent() {
                           return (
                             <div
                               key={index}
-                              className="bg-[var(--surface-container-lowest)] rounded-xl p-5 shadow-ambient hover:shadow-ambient-lg transition-all duration-300 group hover:-translate-y-0.5"
+                              className="bg-[var(--surface-container-lowest)] rounded-none p-5 shadow-ambient hover:shadow-ambient-lg transition-all duration-300 group hover:-translate-y-0.5"
                             >
-                              <div className="w-10 h-10 bg-[var(--color-orange-500)]/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-[var(--color-orange-500)]/15 transition-colors">
+                              <div className="w-10 h-10 bg-[var(--color-orange-500)]/10 rounded-none flex items-center justify-center mb-3 group-hover:bg-[var(--color-orange-500)]/15 transition-colors">
                                 <Icon className="h-5 w-5 text-[var(--color-orange-500)]" />
                               </div>
                               <h4 className="font-bold text-[var(--text-primary)] text-sm mb-1">{feature.title}</h4>
@@ -503,7 +503,7 @@ function SearchContent() {
                   {visibleCount < safeFilteredCars.length && (
                     <button
                       onClick={handleLoadMore}
-                      className="px-8 py-3 rounded-xl bg-[var(--surface-1)] text-[var(--text-primary)] font-semibold text-sm hover:bg-[var(--surface-2)] shadow-ambient-sm hover:shadow-ambient transition-all duration-300"
+                      className="px-8 py-3 rounded-none bg-[var(--surface-1)] text-[var(--text-primary)] font-semibold text-sm hover:bg-[var(--surface-2)] shadow-ambient-sm hover:shadow-ambient transition-all duration-300"
                     >
                       {t('load_more')}
                     </button>

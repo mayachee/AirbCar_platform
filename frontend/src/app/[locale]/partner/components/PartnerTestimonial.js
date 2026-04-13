@@ -10,7 +10,7 @@ export default function PartnerTestimonial() {
     <section id="testimonials" className="relative py-24 scroll-mt-16 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 relative z-10">
         <motion.div
-          className="relative bg-orange-500/5 border border-orange-500/10 rounded-3xl p-8 md:p-16 backdrop-blur-sm"
+          className="relative bg-orange-500/5 border border-orange-500/10 rounded-none p-8 md:p-16 backdrop-blur-sm"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -67,8 +67,8 @@ export default function PartnerTestimonial() {
               viewport={{ once: true }}
               transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
             >
-              <div className="absolute inset-0 bg-orange-500/20 rounded-3xl transform rotate-6 translate-x-4 translate-y-4" />
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-square border-2 border-white/10">
+              <div className="absolute inset-0 bg-orange-500/20 rounded-none transform rotate-6 translate-x-4 translate-y-4" />
+              <div className="relative rounded-none overflow-hidden shadow-2xl aspect-square border-2 border-white/10">
                 <img 
                   src="https://pbs.twimg.com/profile_images/1917726086734979074/GupYtYsR_400x400.jpg" 
                   alt="M. Yassine AYACHE" 

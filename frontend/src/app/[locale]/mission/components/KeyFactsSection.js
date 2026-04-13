@@ -18,9 +18,9 @@ export default function KeyFactsSection({ factsVisible }) {
             <img 
               src="/public/car-rental-tips.jpg" 
               alt="Car sharing impact" 
-              className="w-full h-96 object-cover rounded-xl shadow-lg"
+              className="w-full h-96 object-cover rounded-none shadow-lg"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent rounded-none"></div>
             <div className="absolute bottom-6 left-6 text-white">
               <div className="text-3xl font-bold">Making a difference</div>
               <div className="text-lg opacity-90">One shared ride at a time</div>
@@ -29,23 +29,23 @@ export default function KeyFactsSection({ factsVisible }) {
           
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-none"></div>
               <span className="text-gray-700 text-lg">Every shared car removes 15 private vehicles from roads</span>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-none"></div>
               <span className="text-gray-700 text-lg">65% reduction in carbon emissions per user</span>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-none"></div>
               <span className="text-gray-700 text-lg">Saves users an average of $4,000 annually</span>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-none"></div>
               <span className="text-gray-700 text-lg">Available 24/7 in major Moroccan cities</span>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-none"></div>
               <span className="text-gray-700 text-lg">Over 95% customer satisfaction rate</span>
             </div>
           </div>

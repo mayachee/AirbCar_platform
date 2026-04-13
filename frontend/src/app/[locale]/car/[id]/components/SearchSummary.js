@@ -5,7 +5,7 @@ export default function SearchSummary({ searchDetails, selectedDates, onModifySe
   if (!searchDetails.location) return null
 
   return (
-    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6 backdrop-blur-sm">
+    <div className="bg-blue-500/10 border border-blue-500/20 rounded-none p-4 mb-6 backdrop-blur-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4 text-sm">
           <div className="flex items-center">

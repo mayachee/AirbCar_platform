@@ -146,6 +146,12 @@ if views.SocialFeedView is not None:
 if views.CommunityImageUploadView is not None:
     urlpatterns.append(path('api/community/upload-image/', views.CommunityImageUploadView.as_view(), name='community-image-upload'))
 
+if views.CommunityPostViewSet is not None:
+    from rest_framework.routers import DefaultRouter
+    router = DefaultRouter()
+    router.register(r'community-posts', views.CommunityPostViewSet, basename='community-post')
+    urlpatterns.extend(router.urls)
+
 # Favorites endpoints
 if views.FavoriteListView is not None:
     urlpatterns.append(path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'))

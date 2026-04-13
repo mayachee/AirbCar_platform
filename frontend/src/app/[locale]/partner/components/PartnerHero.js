@@ -40,12 +40,12 @@ export default function PartnerHero() {
           {/* Text Content */}
           <motion.div variants={fadeInUp} className="relative z-10">
             <motion.div 
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-orange-400 text-sm font-semibold mb-6 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-none bg-white/10 border border-white/10 text-orange-400 text-sm font-semibold mb-6 backdrop-blur-sm"
               whileHover={{ scale: 1.05 }}
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-none bg-orange-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-none h-2 w-2 bg-orange-500"></span>
               </span>
               {t('badge')}
             </motion.div>
@@ -64,7 +64,7 @@ export default function PartnerHero() {
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <motion.a 
                 href="/auth/signup?role=partner" 
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-orange-700/80 text-white font-semibold hover:bg-orange-700/80 backdrop-blur flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 border border-orange-500/20 backdrop-blur-sm transition-all"
+                className="w-full sm:w-auto px-8 py-4 rounded-none bg-orange-700/80 text-white font-semibold hover:bg-orange-700/80 backdrop-blur flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 border border-orange-500/20 backdrop-blur-sm transition-all"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -73,7 +73,7 @@ export default function PartnerHero() {
               </motion.a>
               <motion.a 
                 href="#how-it-works" 
-                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-black/20 hover:bg-black/40 text-white font-semibold border border-white/10 backdrop-blur-md shadow-lg shadow-black/5 flex items-center justify-center transition-all"
+                className="w-full sm:w-auto px-8 py-4 rounded-none bg-black/20 hover:bg-black/40 text-white font-semibold border border-white/10 backdrop-blur-md shadow-lg shadow-black/5 flex items-center justify-center transition-all"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -105,7 +105,7 @@ export default function PartnerHero() {
             className="relative lg:h-[600px] flex items-center justify-center"
             variants={fadeInUp}
           >
-            <div className="relative w-full aspect-[4/3] lg:aspect-auto lg:h-full rounded-3xl overflow-hidden shadow-2xl border border-orange-500/10 bg-orange-500/5 backdrop-blur-sm">
+            <div className="relative w-full aspect-[4/3] lg:aspect-auto lg:h-full rounded-none overflow-hidden shadow-2xl border border-orange-500/10 bg-orange-500/5 backdrop-blur-sm">
               <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/10 to-blue-500/10 mix-blend-overlay z-10 pointer-events-none" />
               <img 
                 src="/bg_image.png" 
@@ -116,13 +116,13 @@ export default function PartnerHero() {
             
             {/* Floating Card 1 */}
             <motion.div 
-              className="absolute -bottom-6 -left-6 bg-[#1E293B] p-4 rounded-xl shadow-xl border border-white/10 hidden md:block z-30"
+              className="absolute -bottom-6 -left-6 bg-[#1E293B] p-4 rounded-none shadow-xl border border-white/10 hidden md:block z-30"
               initial={{ y: 20, opacity: 0 }}
               animate={heroInView ? { y: 0, opacity: 1 } : {}}
               transition={{ delay: 0.5 }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 font-bold">
+                <div className="w-10 h-10 rounded-none bg-green-500/20 flex items-center justify-center text-green-400 font-bold">
                   $
                 </div>
                 <div>
@@ -134,13 +134,13 @@ export default function PartnerHero() {
 
              {/* Floating Card 2 */}
              <motion.div 
-              className="absolute top-10 -right-6 bg-[#1E293B] p-4 rounded-xl shadow-xl border border-white/10 hidden md:block z-30"
+              className="absolute top-10 -right-6 bg-[#1E293B] p-4 rounded-none shadow-xl border border-white/10 hidden md:block z-30"
               initial={{ y: -20, opacity: 0 }}
               animate={heroInView ? { y: 0, opacity: 1 } : {}}
               transition={{ delay: 0.7 }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-none bg-green-500 animate-pulse" />
                 <div className="text-sm font-semibold text-white">{t('card_2_text')}</div>
               </div>
             </motion.div>

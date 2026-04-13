@@ -24,19 +24,19 @@ export default function SafetyRiderSection() {
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
+                <div className="bg-white/5 rounded-none p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
                     <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_1_title')}</h3>
                     <p className="text-sm text-gray-400">{t('rider_feature_1_desc')}</p>
                 </div>
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
+                <div className="bg-white/5 rounded-none p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
                     <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_2_title')}</h3>
                     <p className="text-sm text-gray-400">{t('rider_feature_2_desc')}</p>
                 </div>
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
+                <div className="bg-white/5 rounded-none p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
                     <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_3_title')}</h3>
                     <p className="text-sm text-gray-400">{t('rider_feature_3_desc')}</p>
                 </div>
-                <div className="bg-white/5 rounded-2xl p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
+                <div className="bg-white/5 rounded-none p-6 border border-white/10 hover:border-orange-500/50 transition-colors">
                     <h3 className="text-xl font-semibold mb-2 text-white">{t('rider_feature_4_title')}</h3>
                     <p className="text-sm text-gray-400">{t('rider_feature_4_desc')}</p>
                 </div>
@@ -50,7 +50,7 @@ export default function SafetyRiderSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-             <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+             <div className="relative rounded-none overflow-hidden border border-white/10 shadow-2xl">
                 <div className="aspect-[4/3] relative bg-gray-800">
                     <img 
                      src="https://ik.imagekit.io/szcfr7vth/New%20folder/helena-lopes-e3OUQGT9bWU-unsplash.jpg" 

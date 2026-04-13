@@ -470,7 +470,7 @@ class ReviewReaction(models.Model):
         ('sad', '😢'),
         ('angry', '😡'),
     ]
-    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='reactions')
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='community_reactions')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_reactions')
     reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -598,7 +598,7 @@ class PartnerPost(models.Model):
 
 class ListingComment(models.Model):
     """Open social comment on a car listing — no booking required, supports threading."""
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='comments')
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='community_comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listing_comments')
     parent = models.ForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies'
@@ -629,7 +629,7 @@ class ListingReaction(models.Model):
         ('fire', '🔥'),
         ('wow', '😮'),
     ]
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='reactions')
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='community_reactions')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='listing_reactions')
     reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -693,7 +693,7 @@ class TripPostReaction(models.Model):
         ('fire', '🔥'),
         ('wow', '😮'),
     ]
-    trip_post = models.ForeignKey(TripPost, on_delete=models.CASCADE, related_name='reactions')
+    trip_post = models.ForeignKey(TripPost, on_delete=models.CASCADE, related_name='community_reactions')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_post_reactions')
     reaction = models.CharField(max_length=10, choices=REACTION_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -710,7 +710,7 @@ class TripPostReaction(models.Model):
 
 class TripPostComment(models.Model):
     """Comment on a trip post — supports one level of threading."""
-    trip_post = models.ForeignKey(TripPost, on_delete=models.CASCADE, related_name='comments')
+    trip_post = models.ForeignKey(TripPost, on_delete=models.CASCADE, related_name='community_comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_post_comments')
     parent = models.ForeignKey(
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies'
@@ -728,4 +728,71 @@ class TripPostComment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user.username} on trip post {self.trip_post_id}"
+
+
+class CommunityPost(models.Model):
+    """User-generated community discussion post, optionally linking a listing."""
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_posts')
+    listing = models.ForeignKey(Listing, on_delete=models.SET_NULL, null=True, blank=True, related_name='community_mentions')
+    content = models.TextField()
+    images = models.JSONField(default=list, blank=True, help_text="List of image URLs if provided")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['is_active', '-created_at']),
+            models.Index(fields=['author', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"CommunityPost {self.id} by {self.author.username}"
+
+
+class CommunityPostReaction(models.Model):
+    REACTION_TYPES = [
+        ('like', 'Like'),
+        ('love', 'Love'),
+        ('haha', 'Haha'),
+        ('wow', 'Wow'),
+        ('sad', 'Sad'),
+        ('angry', 'Angry'),
+    ]
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='community_reactions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_post_reactions')
+    reaction_type = models.CharField(max_length=20, choices=REACTION_TYPES, default='like')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('post', 'user')
+        indexes = [
+            models.Index(fields=['post', 'reaction_type']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} {self.reaction_type} post {self.post_id}"
+
+
+class CommunityPostComment(models.Model):
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name='community_comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_post_comments')
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies'
+    )
+    content = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['post', 'is_active', 'created_at']),
+            models.Index(fields=['parent']),
+        ]
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on post {self.post_id}"
+
 

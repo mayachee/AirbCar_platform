@@ -12,8 +12,8 @@ export default function HelpHero() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-gradient-to-b from-orange-600/10 to-transparent -z-10 blur-[100px] pointer-events-none" />
       
       {/* Floating Shapes */}
-      <div className="absolute top-20 right-10 w-40 h-40 md:w-64 md:h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-10 left-10 w-32 h-32 md:w-48 md:h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-20 right-10 w-40 h-40 md:w-64 md:h-64 bg-orange-500/10 rounded-none blur-3xl pointer-events-none animate-pulse" />
+      <div className="absolute bottom-10 left-10 w-32 h-32 md:w-48 md:h-48 bg-amber-500/10 rounded-none blur-3xl pointer-events-none" />
 
       <div className="container mx-auto max-w-4xl text-center relative z-10">
         <motion.div
@@ -21,8 +21,8 @@ export default function HelpHero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-orange-500/20 bg-orange-500/5 backdrop-blur-md text-orange-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-6">
-            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-none border border-orange-500/20 bg-orange-500/5 backdrop-blur-md text-orange-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-6">
+            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-none bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
             {t('badge')}
           </div>
           
@@ -40,7 +40,7 @@ export default function HelpHero() {
           <div className="pt-2 md:pt-4">
               <Link 
                   href="/contact"
-                  className="inline-flex items-center gap-2 md:gap-3 bg-white text-black px-6 py-3 md:px-10 md:py-5 rounded-full font-bold text-sm md:text-lg hover:bg-gray-100 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:-translate-y-1 transform duration-300"
+                  className="inline-flex items-center gap-2 md:gap-3 bg-white text-black px-6 py-3 md:px-10 md:py-5 rounded-none font-bold text-sm md:text-lg hover:bg-gray-100 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] hover:-translate-y-1 transform duration-300"
               >
                   {t('button')}
                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

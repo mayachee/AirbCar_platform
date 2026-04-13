@@ -21,7 +21,7 @@ export default function ChallengeSection() {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          className="absolute top-1/4 right-1/4 w-96 h-96 bg-orange-400/20 rounded-full blur-3xl"
+          className="absolute top-1/4 right-1/4 w-96 h-96 bg-orange-400/20 rounded-none blur-3xl"
         />
       </div>
 
@@ -76,12 +76,12 @@ export default function ChallengeSection() {
               transition={{ duration: 0.6 }}
             >
               <motion.div
-                className="relative rounded-3xl overflow-hidden shadow-2xl group"
+                className="relative rounded-none overflow-hidden shadow-2xl group"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
                 {/* Glass-morphism border effect */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-none blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 <img
                   src="https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_kup2cukup2cukup2.png"

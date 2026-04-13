@@ -18,8 +18,8 @@ export default function TermsPage() {
     <div className="min-h-screen bg-[#0F172A] relative overflow-hidden font-sans text-gray-100">
       {/* Abstract Background Pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
-        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-none bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-none bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
       </div>
 
@@ -69,7 +69,7 @@ export default function TermsPage() {
                  <p className="leading-relaxed text-gray-300">
                   <strong>{t('simply_put_2')}</strong>
                 </p>
-                <div className="bg-emerald-900/20 p-4 rounded-lg border border-emerald-800/50">
+                <div className="bg-emerald-900/20 p-4 rounded-none border border-emerald-800/50">
                   <h4 className="font-semibold text-emerald-300 mb-2">{t('responsibilities_title')}</h4>
                   <ul className="list-disc pl-5 space-y-1 text-sm text-emerald-200/80">
                     <li>{t('responsibility_1')}</li>
@@ -104,7 +104,7 @@ export default function TermsPage() {
                   t('prohibited_6')
                 ].map((activity, index) => (
                   <li key={index} className="flex items-start gap-2 text-sm bg-gray-800/50 p-3 rounded border border-gray-700/50">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 block" />
+                    <span className="w-1.5 h-1.5 rounded-none bg-red-400 mt-2 block" />
                     {activity}
                   </li>
                 ))}
@@ -163,7 +163,7 @@ export default function TermsPage() {
               </p>
             </section>
 
-            <section className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+            <section className="bg-gray-800/50 rounded-none p-6 border border-gray-700">
                <h2 className="text-lg font-bold text-white mb-2">{t('heading_8')}</h2>
                <p className="text-gray-300 mb-2">
                  <strong>{t('simply_put_8')}</strong>

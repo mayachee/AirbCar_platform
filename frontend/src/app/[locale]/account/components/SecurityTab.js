@@ -20,7 +20,7 @@ export default function SecurityTab({ emailVerified, onRefreshVerification, onDe
       {/* Email Verification Status */}
       <div className="mb-8">
         <h4 className="text-lg font-medium text-white mb-4">{t('security_email_verification')}</h4>
-        <div className={`rounded-lg p-6 ${
+        <div className={`rounded-none p-6 ${
           emailVerified ? 'bg-green-50' : 'bg-yellow-50'
         }`}>
           <div className="flex items-center justify-between">
@@ -41,7 +41,7 @@ export default function SecurityTab({ emailVerified, onRefreshVerification, onDe
             {!emailVerified && (
               <button
                 onClick={onRefreshVerification}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
+                className="px-4 py-2 bg-yellow-600 text-white rounded-none hover:bg-yellow-700 transition-colors text-sm font-medium"
               >
                 {t('security_resend_email')}
               </button>
@@ -53,7 +53,7 @@ export default function SecurityTab({ emailVerified, onRefreshVerification, onDe
       {/* Account Actions */}
       <div>
         <h4 className="text-lg font-medium text-white mb-4">{t('security_account_actions')}</h4>
-        <div className="border border-red-200 rounded-lg p-6 bg-red-50">
+        <div className="border border-red-200 rounded-none p-6 bg-red-50">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-red-900">{t('security_delete_account')}</p>
@@ -64,7 +64,7 @@ export default function SecurityTab({ emailVerified, onRefreshVerification, onDe
             <button
               onClick={onDeleteAccount}
               disabled={false}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-red-600 text-white rounded-none hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
             >
               {t('security_delete_account')}
             </button>

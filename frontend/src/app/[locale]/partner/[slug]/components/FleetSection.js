@@ -48,7 +48,7 @@ export default function FleetSection({ listings = [] }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-lg border border-white/10 p-12 text-center my-8"
+        className="bg-white/5 backdrop-blur-sm rounded-none shadow-lg border border-white/10 p-12 text-center my-8"
       >
         <motion.div
           animate={{ rotate: [0, 10, -10, 0] }}
@@ -91,7 +91,7 @@ export default function FleetSection({ listings = [] }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-none text-sm font-medium transition-all ${
                 filter === 'all'
                   ? 'bg-orange-500 text-white'
                   : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
@@ -101,7 +101,7 @@ export default function FleetSection({ listings = [] }) {
             </button>
             <button
               onClick={() => setFilter('available')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-sm font-medium transition-all ${
                 filter === 'available'
                   ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                   : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
@@ -112,7 +112,7 @@ export default function FleetSection({ listings = [] }) {
             </button>
             <button
               onClick={() => setFilter('unavailable')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-none text-sm font-medium transition-all ${
                 filter === 'unavailable'
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                   : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
@@ -147,7 +147,7 @@ export default function FleetSection({ listings = [] }) {
             >
               <Link
                 href={`/car/${listing.id}`}
-                className={`block bg-white/5 backdrop-blur-sm rounded-2xl shadow-md border border-white/10 hover:bg-white/10 hover:border-orange-500/30 transition-all overflow-hidden group ${
+                className={`block bg-white/5 backdrop-blur-sm rounded-none shadow-md border border-white/10 hover:bg-white/10 hover:border-orange-500/30 transition-all overflow-hidden group ${
                   isUnavailable ? 'opacity-60' : ''
                 }`}
               >
@@ -166,7 +166,7 @@ export default function FleetSection({ listings = [] }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
                   {/* Price Badge */}
-                  <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                  <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-none border border-white/10">
                     <span className="text-lg font-bold text-orange-400">
                       {formatPrice(Number(price))}
                     </span>
@@ -175,7 +175,7 @@ export default function FleetSection({ listings = [] }) {
 
                   {/* Unavailable Badge */}
                   {isUnavailable && (
-                    <div className="absolute top-4 left-4 bg-red-500/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-red-400/30">
+                    <div className="absolute top-4 left-4 bg-red-500/80 backdrop-blur-md px-3 py-1.5 rounded-none border border-red-400/30">
                       <span className="text-xs font-semibold text-white">Unavailable</span>
                     </div>
                   )}
@@ -191,7 +191,7 @@ export default function FleetSection({ listings = [] }) {
                     {/* Rating */}
                     {rating > 0 && (
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center bg-yellow-500/10 px-2 py-1 rounded-lg border border-yellow-500/20">
+                        <div className="flex items-center bg-yellow-500/10 px-2 py-1 rounded-none border border-yellow-500/20">
                           <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                           <span className="ml-1 text-sm font-semibold text-gray-200">{rating.toFixed(1)}</span>
                         </div>

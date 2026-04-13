@@ -97,7 +97,7 @@ export default function AnimatedImage({
             scale: scaleSpring,
             opacity: opacitySpring,
           }}
-          className="w-full h-auto object-cover rounded-lg sm:rounded-xl shadow-2xl will-change-transform"
+          className="w-full h-auto object-cover rounded-none sm:rounded-none shadow-2xl will-change-transform"
           loading="lazy"
           whileHover={{ 
             scale: 1.03,
@@ -110,7 +110,7 @@ export default function AnimatedImage({
         />
         {/* Enhanced gradient overlay */}
         <motion.div 
-          className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/5 pointer-events-none rounded-lg sm:rounded-xl"
+          className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/5 pointer-events-none rounded-none sm:rounded-none"
           style={{ 
             opacity: opacitySpring
           }}

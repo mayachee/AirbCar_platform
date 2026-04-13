@@ -510,7 +510,7 @@ function AuthForm() {
         </div>
 
         <div className="w-full max-w-md mx-4 relative z-10">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-none shadow-2xl overflow-hidden">
             <div className="p-8">
               {/* Logo */}
               <motion.div
@@ -536,7 +536,7 @@ function AuthForm() {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  className="mx-auto h-16 w-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 border border-green-500/30"
+                  className="mx-auto h-16 w-16 bg-green-500/20 rounded-none flex items-center justify-center mb-6 border border-green-500/30"
                 >
                   <motion.svg
                     initial={{ pathLength: 0 }}
@@ -589,7 +589,7 @@ function AuthForm() {
       </div>
 
       <div className="relative z-10 w-full max-w-md mx-4 lg:mx-0">
-        <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+        <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-none shadow-2xl overflow-hidden border border-white/20">
           <div className="py-10 px-6 sm:px-10">
           {/* Logo with enhanced styling */}
           <motion.div
@@ -607,14 +607,14 @@ function AuthForm() {
 
           {/* Enhanced Tab Navigation */}
           <div className="mb-10">
-            <div className="relative flex space-x-1 bg-white/10 p-1.5 rounded-xl border border-white/10">
+            <div className="relative flex space-x-1 bg-white/10 p-1.5 rounded-none border border-white/10">
               <motion.button
                 type="button"
                 onClick={() => {
                   setActiveTab('signin')
                   setError('')
                 }}
-                className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 z-10 ${
+                className={`relative flex-1 py-3 px-4 rounded-none text-sm font-semibold transition-all duration-300 z-10 ${
                   activeTab === 'signin'
                     ? 'text-white'
                     : 'text-white/60 hover:text-white'
@@ -625,7 +625,7 @@ function AuthForm() {
                 {activeTab === 'signin' && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className="absolute inset-0 bg-orange-500 rounded-lg shadow-lg"
+                    className="absolute inset-0 bg-orange-500 rounded-none shadow-lg"
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -637,7 +637,7 @@ function AuthForm() {
                   setActiveTab('signup')
                   setError('')
                 }}
-                className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-300 z-10 ${
+                className={`relative flex-1 py-3 px-4 rounded-none text-sm font-semibold transition-all duration-300 z-10 ${
                   activeTab === 'signup'
                     ? 'text-white'
                     : 'text-white/60 hover:text-white'
@@ -648,7 +648,7 @@ function AuthForm() {
                 {activeTab === 'signup' && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className="absolute inset-0 bg-orange-500 rounded-lg shadow-lg"
+                    className="absolute inset-0 bg-orange-500 rounded-none shadow-lg"
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
@@ -677,7 +677,7 @@ function AuthForm() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm"
+                  className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-none text-sm shadow-sm"
                 >
                   {error}
                 </motion.div>
@@ -699,7 +699,7 @@ function AuthForm() {
                     id="signin-email"
                     type="email"
                     autoComplete="email"
-                    className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                    className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                     placeholder={t('signin_email_placeholder')}
                   />
                   </div>
@@ -723,7 +723,7 @@ function AuthForm() {
                       id="signin-password"
                       type="password"
                       autoComplete="current-password"
-                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder={t('signin_password_placeholder')}
                     />
                   </div>
@@ -752,7 +752,7 @@ function AuthForm() {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02, y: -2 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all overflow-hidden group"
+                  className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-none shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all overflow-hidden group"
                 >
                   {/* Shine effect */}
                   {!isLoading && (
@@ -775,7 +775,7 @@ function AuthForm() {
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-none"
                         />
                         {t('signin_loading')}
                       </>
@@ -797,8 +797,8 @@ function AuthForm() {
                   style={{ minHeight: '44px' }}
                 >
                   {!googleReady && (
-                    <div className="w-full flex justify-center items-center py-3.5 px-4 border border-white/20 rounded-xl bg-white/10">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                    <div className="w-full flex justify-center items-center py-3.5 px-4 border border-white/20 rounded-none bg-white/10">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-none animate-spin mr-2" />
                       <span className="text-sm text-white/80">{t('signin_google_loading')}</span>
                     </div>
                   )}
@@ -814,7 +814,7 @@ function AuthForm() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-xl bg-red-50 border-2 border-red-200 p-4 shadow-sm"
+                  className="rounded-none bg-red-50 border-2 border-red-200 p-4 shadow-sm"
                 >
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -849,7 +849,7 @@ function AuthForm() {
                         id="signup-firstName"
                         type="text"
                         autoComplete="given-name"
-                        className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                        className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                         placeholder={t('signup_first_name_placeholder')}
                       />
                     </div>
@@ -873,7 +873,7 @@ function AuthForm() {
                         id="signup-lastName"
                         type="text"
                         autoComplete="family-name"
-                        className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                        className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                         placeholder={t('signup_last_name_placeholder')}
                       />
                     </div>
@@ -898,7 +898,7 @@ function AuthForm() {
                       id="signup-email"
                       type="email"
                       autoComplete="email"
-                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder={t('signup_email_placeholder')}
                     />
                   </div>
@@ -922,7 +922,7 @@ function AuthForm() {
                       id="signup-phoneNumber"
                       type="tel"
                       autoComplete="tel"
-                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder={t('signup_phone_placeholder')}
                     />
                   </div>
@@ -946,7 +946,7 @@ function AuthForm() {
                       id="signup-password"
                       type="password"
                       autoComplete="new-password"
-                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                      className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                       placeholder={t('signup_password_placeholder')}
                     />
                   </div>
@@ -1002,7 +1002,7 @@ function AuthForm() {
                           {...registerSignUp('businessName')}
                           id="signup-businessName"
                           type="text"
-                          className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                          className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                           placeholder={t('signup_business_name_placeholder')}
                         />
                       </div>
@@ -1025,7 +1025,7 @@ function AuthForm() {
                           {...registerSignUp('taxId')}
                           id="signup-taxId"
                           type="text"
-                          className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                          className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                           placeholder={t('signup_tax_id_placeholder')}
                         />
                       </div>
@@ -1044,7 +1044,7 @@ function AuthForm() {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02, y: -2 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all overflow-hidden group"
+                  className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-none shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all overflow-hidden group"
                 >
                   {/* Shine effect */}
                   {!isLoading && (
@@ -1067,7 +1067,7 @@ function AuthForm() {
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-none"
                         />
                         {t('signup_loading')}
                       </>
@@ -1102,7 +1102,7 @@ function AuthLoading() {
       </div>
       
       <div className="relative z-10 text-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/20 border-t-orange-500 mx-auto mb-4"></div>
+        <div className="animate-spin rounded-none h-10 w-10 border-4 border-white/20 border-t-orange-500 mx-auto mb-4"></div>
         <p className="text-white/80 font-medium">Loading...</p>
       </div>
     </div>

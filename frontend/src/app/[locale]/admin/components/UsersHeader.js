@@ -15,7 +15,7 @@ export default function UsersHeader({ totalUsers, onExport, exportLoading }) {
           <button
             onClick={onExport}
             disabled={exportLoading}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-none hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {exportLoading ? 'Exporting...' : 'Export CSV'}
           </button>

@@ -32,7 +32,7 @@ export default function BookingSummary({ duration, pickupDate, returnDate, total
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-none shadow-sm border border-gray-200">
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
         <h2 className="text-lg font-semibold text-black">Booking Summary</h2>
       </div>
@@ -40,7 +40,7 @@ export default function BookingSummary({ duration, pickupDate, returnDate, total
         {pickupDate && (
           <div className="flex items-start justify-between">
             <div className="flex items-center flex-1">
-              <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
+              <div className="p-2 bg-blue-50 rounded-none flex-shrink-0">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -56,7 +56,7 @@ export default function BookingSummary({ duration, pickupDate, returnDate, total
         {returnDate && (
           <div className="flex items-start justify-between">
             <div className="flex items-center flex-1">
-              <div className="p-2 bg-orange-50 rounded-lg flex-shrink-0">
+              <div className="p-2 bg-orange-50 rounded-none flex-shrink-0">
                 <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -71,7 +71,7 @@ export default function BookingSummary({ duration, pickupDate, returnDate, total
         )}
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="flex items-center">
-            <div className="p-2 bg-green-50 rounded-lg">
+            <div className="p-2 bg-green-50 rounded-none">
               <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -82,7 +82,7 @@ export default function BookingSummary({ duration, pickupDate, returnDate, total
             </div>
           </div>
         </div>
-        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+        <div className="bg-orange-50 rounded-none p-4 border border-orange-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Amount</p>

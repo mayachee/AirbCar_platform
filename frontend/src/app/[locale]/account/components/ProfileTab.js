@@ -117,7 +117,7 @@ export default function ProfileTab({
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-none p-4">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
@@ -138,7 +138,7 @@ export default function ProfileTab({
         <div className="flex flex-col items-end gap-3">
           {saveMessage && (
             <div
-              className={`p-3 rounded-lg border text-sm font-medium ${
+              className={`p-3 rounded-none border text-sm font-medium ${
                 saveMessage.includes('success')
                   ? 'bg-green-500/10 text-green-400 border-green-500/20'
                   : 'bg-red-500/10 text-red-400 border-red-500/20'
@@ -150,7 +150,7 @@ export default function ProfileTab({
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="bg-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-105 disabled:transform-none flex items-center gap-2"
+            className="bg-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-3 rounded-none font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-105 disabled:transform-none flex items-center gap-2"
           >
             {saving ? (
               <>

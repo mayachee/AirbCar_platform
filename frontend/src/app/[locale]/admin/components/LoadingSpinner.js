@@ -13,7 +13,7 @@ export default function LoadingSpinner({ size = 'lg', fullScreen = false }) {
 
   return (
     <div className={containerClass}>
-      <div className={`animate-spin rounded-full border-b-2 border-orange-500 ${sizeClasses[size]}`}></div>
+      <div className={`animate-spin rounded-none border-b-2 border-orange-500 ${sizeClasses[size]}`}></div>
     </div>
   );
 }

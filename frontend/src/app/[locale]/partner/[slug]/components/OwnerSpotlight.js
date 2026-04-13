@@ -41,7 +41,7 @@ export default function OwnerSpotlight({ partner }) {
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 overflow-hidden relative group">
+    <div className="bg-white/5 backdrop-blur-sm rounded-none shadow-sm border border-white/10 overflow-hidden relative group">
       {/* Cover Image */}
       <div className="h-32 sm:h-48 bg-gradient-to-r from-orange-500/20 via-blue-600/20 to-purple-600/20 relative overflow-hidden">
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
@@ -52,7 +52,7 @@ export default function OwnerSpotlight({ partner }) {
         <div className="flex flex-col sm:flex-row items-start justify-between -mt-12 sm:-mt-16 mb-4">
            {/* Profile Picture */}
            <div className="relative mb-4 sm:mb-0">
-             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-[#0F172A] bg-[#0F172A] overflow-hidden shadow-xl ring-2 ring-white/10">
+             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-none border-4 border-[#0F172A] bg-[#0F172A] overflow-hidden shadow-xl ring-2 ring-white/10">
                 {logo ? (
                   <img
                     src={logo}
@@ -72,7 +72,7 @@ export default function OwnerSpotlight({ partner }) {
                 </div>
              </div>
              {isVerified && (
-               <div className="absolute bottom-1 right-1 bg-[#0F172A] rounded-full p-1 ring-2 ring-[#0F172A]">
+               <div className="absolute bottom-1 right-1 bg-[#0F172A] rounded-none p-1 ring-2 ring-[#0F172A]">
                  <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/20" />
                </div>
              )}
@@ -87,7 +87,7 @@ export default function OwnerSpotlight({ partner }) {
                {companyName}
              </h1>
              {isVerified && (
-                <span className="px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium">
+                <span className="px-2 py-0.5 rounded-none bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium">
                   {t('verified')}
                 </span>
              )}
@@ -97,7 +97,7 @@ export default function OwnerSpotlight({ partner }) {
              {businessType || t('car_rental_partner')} 
              {location && (
                <>
-                 <span className="w-1 h-1 rounded-full bg-gray-600"></span>
+                 <span className="w-1 h-1 rounded-none bg-gray-600"></span>
                  <span className="text-gray-400">{location}</span>
                </>
              )}
@@ -143,8 +143,8 @@ export default function OwnerSpotlight({ partner }) {
                <h2 className="text-xl font-bold text-white mb-4">{t('contact_information')}</h2>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  {email && (
-                   <a href={`mailto:${email}`} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/item">
-                     <div className="p-2 rounded-full bg-orange-500/10 group-hover/item:bg-orange-500/20 transition-colors">
+                   <a href={`mailto:${email}`} className="flex items-center gap-3 p-3 rounded-none bg-white/5 hover:bg-white/10 transition-colors group/item">
+                     <div className="p-2 rounded-none bg-orange-500/10 group-hover/item:bg-orange-500/20 transition-colors">
                        <Mail className="h-5 w-5 text-orange-500" />
                      </div>
                      <div className="flex flex-col">
@@ -155,8 +155,8 @@ export default function OwnerSpotlight({ partner }) {
                  )}
                  
                  {phone && (
-                   <a href={`tel:${phone}`} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/item">
-                     <div className="p-2 rounded-full bg-orange-500/10 group-hover/item:bg-orange-500/20 transition-colors">
+                   <a href={`tel:${phone}`} className="flex items-center gap-3 p-3 rounded-none bg-white/5 hover:bg-white/10 transition-colors group/item">
+                     <div className="p-2 rounded-none bg-orange-500/10 group-hover/item:bg-orange-500/20 transition-colors">
                        <Phone className="h-5 w-5 text-orange-500" />
                      </div>
                      <div className="flex flex-col">

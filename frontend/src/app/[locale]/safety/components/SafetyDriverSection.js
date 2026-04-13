@@ -31,7 +31,7 @@ export default function SafetyDriverSection() {
                 t('driver_check_4')
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-gray-200">
-                  <span className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 text-sm">✓</span>
+                  <span className="w-6 h-6 rounded-none bg-orange-500/20 flex items-center justify-center text-orange-500 text-sm">✓</span>
                   {item}
                 </li>
               ))}
@@ -45,7 +45,7 @@ export default function SafetyDriverSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-             <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+             <div className="relative rounded-none overflow-hidden border border-white/10 shadow-2xl">
                 <div className="aspect-[4/3] relative bg-gray-800">
                    {/* Placeholder for Driver Image */}
                    <img 
@@ -56,8 +56,8 @@ export default function SafetyDriverSection() {
                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 </div>
                 <div className="absolute bottom-6 left-6 right-6">
-                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-xl">
+                    <div className="bg-white/10 backdrop-blur-md rounded-none p-4 border border-white/20 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-none bg-green-500 flex items-center justify-center text-white font-bold text-xl">
                             A
                         </div>
                         <div>

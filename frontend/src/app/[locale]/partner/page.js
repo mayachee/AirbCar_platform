@@ -179,15 +179,15 @@ export default function PartnerLandingPage() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <motion.div
           style={{ y: bgLayerA }}
-          className="absolute -left-72 -top-72 h-[840px] w-[840px] rounded-full bg-orange-600/20 blur-[180px]"
+          className="absolute -left-72 -top-72 h-[840px] w-[840px] rounded-none bg-orange-600/20 blur-[180px]"
         />
         <motion.div
           style={{ y: bgLayerB }}
-          className="absolute right-[-300px] top-[10%] h-[760px] w-[760px] rounded-full bg-cyan-500/12 blur-[190px]"
+          className="absolute right-[-300px] top-[10%] h-[760px] w-[760px] rounded-none bg-cyan-500/12 blur-[190px]"
         />
         <motion.div
           style={{ y: bgLayerC }}
-          className="absolute bottom-[-290px] left-[10%] h-[700px] w-[700px] rounded-full bg-fuchsia-500/8 blur-[220px]"
+          className="absolute bottom-[-290px] left-[10%] h-[700px] w-[700px] rounded-none bg-fuchsia-500/8 blur-[220px]"
         />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:38px_38px]" />
       </div>
@@ -203,9 +203,9 @@ export default function PartnerLandingPage() {
           >
             <motion.span
               variants={reveal}
-              className="inline-flex items-center gap-2 rounded-full bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-300 backdrop-blur"
+              className="inline-flex items-center gap-2 rounded-none bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-300 backdrop-blur"
             >
-              <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_14px_#fb923c]" />
+              <span className="h-2 w-2 rounded-none bg-orange-400 shadow-[0_0_14px_#fb923c]" />
               {hero('badge')}
             </motion.span>
 
@@ -229,14 +229,14 @@ export default function PartnerLandingPage() {
             <motion.div variants={reveal} className="flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/auth/signup?role=partner"
-                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-700 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_38px_rgba(249,115,22,0.32)] transition-all hover:-translate-y-0.5"
+                className="group inline-flex items-center justify-center gap-2 rounded-none bg-gradient-to-br from-orange-500 to-orange-700 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_38px_rgba(249,115,22,0.32)] transition-all hover:-translate-y-0.5"
               >
                 {hero('cta_primary')}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <a
                 href="#process"
-                className="inline-flex items-center justify-center rounded-2xl bg-white/8 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white backdrop-blur transition hover:bg-white/14"
+                className="inline-flex items-center justify-center rounded-none bg-white/8 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white backdrop-blur transition hover:bg-white/14"
               >
                 {hero('cta_secondary')}
               </a>
@@ -244,7 +244,7 @@ export default function PartnerLandingPage() {
 
             <motion.div variants={reveal} className="grid gap-3 sm:grid-cols-3">
               {heroMetrics.map((metric) => (
-                <div key={metric.label} className="rounded-2xl bg-white/7 p-5 backdrop-blur-xl">
+                <div key={metric.label} className="rounded-none bg-white/7 p-5 backdrop-blur-xl">
                   <p className={`text-3xl font-black italic ${metric.tone}`}>{metric.value}</p>
                   <p className="mt-2 text-xs uppercase tracking-[0.15em] text-slate-300">{metric.label}</p>
                 </div>
@@ -274,14 +274,14 @@ export default function PartnerLandingPage() {
             </motion.div>
             <motion.div
               style={{ y: cardFrontY }}
-              className="absolute -bottom-7 -left-4 rounded-2xl bg-[#0d1736]/85 px-5 py-4 backdrop-blur-xl sm:-left-7"
+              className="absolute -bottom-7 -left-4 rounded-none bg-[#0d1736]/85 px-5 py-4 backdrop-blur-xl sm:-left-7"
             >
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-300">{hero('card_1_label')}</p>
               <p className="mt-1 text-2xl font-black italic text-white">{hero('card_1_amount')}</p>
             </motion.div>
             <motion.div
               style={{ y: cardRearY }}
-              className="absolute -right-2 top-6 rounded-2xl bg-[#0d1736]/85 px-5 py-4 text-sm font-semibold text-cyan-200 backdrop-blur-xl sm:-right-6"
+              className="absolute -right-2 top-6 rounded-none bg-[#0d1736]/85 px-5 py-4 text-sm font-semibold text-cyan-200 backdrop-blur-xl sm:-right-6"
             >
               {hero('card_2_text')}
             </motion.div>
@@ -305,9 +305,9 @@ export default function PartnerLandingPage() {
                 key={title}
                 className="group relative overflow-hidden rounded-[2rem] bg-white/7 p-7 backdrop-blur-xl transition hover:-translate-y-1"
               >
-                <div className={`absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gradient-to-br ${accent} blur-3xl`} />
+                <div className={`absolute -right-20 -top-20 h-56 w-56 rounded-none bg-gradient-to-br ${accent} blur-3xl`} />
                 <div className="relative z-10">
-                  <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-orange-300">
+                  <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-none bg-white/10 text-orange-300">
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-2xl font-black italic tracking-tight text-white">{title}</h3>
@@ -329,9 +329,9 @@ export default function PartnerLandingPage() {
                 key={title}
                 className="group relative overflow-hidden rounded-[1.8rem] bg-[#07112e]/85 p-7 backdrop-blur-xl"
               >
-                <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gradient-to-br from-orange-500/20 to-transparent blur-2xl" />
+                <div className="absolute -right-16 -top-16 h-40 w-40 rounded-none bg-gradient-to-br from-orange-500/20 to-transparent blur-2xl" />
                 <div className="relative z-10 grid items-start gap-6 md:grid-cols-[auto_1fr_auto]">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-cyan-300">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-none bg-white/10 text-cyan-300">
                   <Icon className="h-5 w-5" />
                 </div>
 
@@ -341,7 +341,7 @@ export default function PartnerLandingPage() {
                     <p className="mt-3 text-sm leading-relaxed text-slate-300 md:text-base">{text}</p>
                   </div>
 
-                  <div className="hidden items-center gap-2 rounded-xl bg-white/8 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 md:inline-flex">
+                  <div className="hidden items-center gap-2 rounded-none bg-white/8 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200 md:inline-flex">
                     0{index + 1}
                   </div>
                 </div>
@@ -379,7 +379,7 @@ export default function PartnerLandingPage() {
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             {faqCards.map((faq) => (
-              <details key={faq.q} className="group rounded-2xl bg-white/8 p-6 backdrop-blur-xl">
+              <details key={faq.q} className="group rounded-none bg-white/8 p-6 backdrop-blur-xl">
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-xl font-extrabold italic text-white">
                   <span>{faq.q}</span>
                   <ArrowUpRight className="h-5 w-5 shrink-0 transition-transform group-open:rotate-90" />
@@ -392,8 +392,8 @@ export default function PartnerLandingPage() {
 
         <RevealSection className="mx-auto w-full max-w-7xl px-5 pb-24 pt-16 lg:px-10">
           <div className="relative overflow-hidden rounded-[2.4rem] bg-gradient-to-br from-[#0d1738] via-[#0b183f] to-[#0a1128] p-8 md:p-14">
-            <div className="absolute -right-28 -top-28 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
-            <div className="absolute bottom-0 left-0 h-52 w-52 rounded-full bg-cyan-500/10 blur-3xl" />
+            <div className="absolute -right-28 -top-28 h-72 w-72 rounded-none bg-orange-500/20 blur-3xl" />
+            <div className="absolute bottom-0 left-0 h-52 w-52 rounded-none bg-cyan-500/10 blur-3xl" />
 
             <p className="relative z-10 text-[11px] font-semibold uppercase tracking-[0.25em] text-orange-300">{cta('label')}</p>
             <h2 className="relative z-10 mt-5 max-w-4xl text-5xl font-black italic leading-[0.86] tracking-[-0.03em] text-white md:text-7xl">
@@ -404,13 +404,13 @@ export default function PartnerLandingPage() {
             <div className="relative z-10 mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/auth/signup?role=partner"
-                className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-orange-700 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_38px_rgba(249,115,22,0.32)] transition-all hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center rounded-none bg-gradient-to-br from-orange-500 to-orange-700 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white shadow-[0_14px_38px_rgba(249,115,22,0.32)] transition-all hover:-translate-y-0.5"
               >
                 {cta('button')}
               </Link>
               <Link
                 href="/search"
-                className="inline-flex items-center justify-center rounded-2xl bg-white/10 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white transition hover:bg-white/14"
+                className="inline-flex items-center justify-center rounded-none bg-white/10 px-7 py-4 text-sm font-bold uppercase tracking-[0.16em] text-white transition hover:bg-white/14"
               >
                 {cta('button_secondary')}
               </Link>

@@ -250,17 +250,17 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
   }
 
   // Style constants
-  const glassInputClass = "w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-  const glassCardClass = "bg-white/5 border border-white/10 rounded-lg overflow-hidden"
-  const glassBoxClass = "bg-white/5 border border-white/10 rounded-lg p-4"
+  const glassInputClass = "w-full px-4 py-3 rounded-none bg-white/5 border border-white/10 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+  const glassCardClass = "bg-white/5 border border-white/10 rounded-none overflow-hidden"
+  const glassBoxClass = "bg-white/5 border border-white/10 rounded-none p-4"
 
   return (
     <div className="w-full">
       {/* Header - Only show if buttons are not hidden (implies standalone mode) */}
       {!hideButtons && (
-        <div className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 px-6 py-4 border-b border-white/10 mb-6 rounded-t-lg">
+        <div className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 px-6 py-4 border-b border-white/10 mb-6 rounded-none-lg">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500/20 rounded-lg">
+            <div className="p-2 bg-orange-500/20 rounded-none">
               <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -273,9 +273,9 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
         </div>
       )}
 
-      <div className={!hideButtons ? "p-6 space-y-6 bg-white/5 rounded-b-lg border border-t-0 border-white/10" : "space-y-6"}>
+      <div className={!hideButtons ? "p-6 space-y-6 bg-white/5 rounded-none-lg border border-t-0 border-white/10" : "space-y-6"}>
         {!isAuthenticated && (
-          <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 flex gap-3 items-start">
+          <div className="bg-orange-500/10 border border-orange-500/30 rounded-none p-4 flex gap-3 items-start">
             <svg className="w-6 h-6 text-orange-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 9v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -298,7 +298,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
 
         {/* Error Message */}
         {error && (
-          <div ref={errorRef} className="bg-red-500/10 border-l-4 border-red-500 rounded-md p-4 animate-shake">
+          <div ref={errorRef} className="bg-red-500/10 border-l-4 border-red-500 rounded-none p-4 animate-shake">
             <div className="flex items-start">
               <svg className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -313,7 +313,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
 
         {/* Validation Errors */}
         {validationErrors.terms && (
-          <div className="bg-yellow-500/10 border-l-4 border-yellow-500 rounded-md p-4">
+          <div className="bg-yellow-500/10 border-l-4 border-yellow-500 rounded-none p-4">
             <div className="flex items-start">
               <svg className="w-5 h-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -326,7 +326,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
         )}
 
         {/* Safety & Security Info */}
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-4">
           <div className="flex gap-3">
             <div className="flex-shrink-0">
               <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,7 +342,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
 
         {/* Documents Status Check */}
         <div className="mb-6">
-          <div className={`border rounded-lg p-4 ${
+          <div className={`border rounded-none p-4 ${
             hasValidLicenseForBooking 
               ? 'bg-green-500/10 border-green-500/30' 
               : 'bg-yellow-500/10 border-yellow-500/30'
@@ -442,7 +442,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
           
           {/* Show success message if complete license exists in database */}
           {hasCompleteLicenseInDatabase && (
-            <div className="mb-4 p-4 bg-green-500/10 border-2 border-green-500/30 rounded-lg">
+            <div className="mb-4 p-4 bg-green-500/10 border-2 border-green-500/30 rounded-none">
               <div className="flex items-start gap-3">
                 <svg className="w-6 h-6 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -490,7 +490,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
           )}
           
           {validationErrors.license && (
-            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-none">
               <p className="text-sm text-red-700 flex items-center gap-2">
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -513,7 +513,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               {/* Show existing document from profile if available */}
               {user?.license_front_document_url && !licenseFrontFile ? (
               <div className="mt-1">
-                <div className="p-4 border-2 border-green-500/30 rounded-lg bg-green-500/10">
+                <div className="p-4 border-2 border-green-500/30 rounded-none bg-green-500/10">
                   <div className="flex items-center gap-4">
                     <div className="flex-shrink-0">
                       <img 
@@ -552,7 +552,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               <div className="mt-1">
                 <label
                   htmlFor="licenseFrontFile"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-lg cursor-pointer bg-white/5 hover:bg-white/10 transition-colors group"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-none cursor-pointer bg-white/5 hover:bg-white/10 transition-colors group"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <svg className="w-10 h-10 mb-3 text-gray-400 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -575,7 +575,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               </div>
             ) : (
               <div className="mt-1">
-                <div className="flex items-center gap-4 p-4 border border-white/10 rounded-lg bg-white/5">
+                <div className="flex items-center gap-4 p-4 border border-white/10 rounded-none bg-white/5">
                   {licenseFrontPreview && licenseFrontFile.type.startsWith('image/') && (
                     <img src={licenseFrontPreview} alt="License front preview" className="w-20 h-20 object-cover rounded border border-white/10" />
                   )}
@@ -594,7 +594,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                     type="button"
                     onClick={handleRemoveLicenseFront}
                     disabled={loading}
-                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-none transition-colors disabled:opacity-50"
                     title="Remove file"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -623,7 +623,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
             {/* Show existing document from profile if available */}
             {user?.license_back_document_url && !licenseBackFile ? (
               <div className="mt-1">
-                <div className="p-4 border-2 border-green-500/30 rounded-lg bg-green-500/10">
+                <div className="p-4 border-2 border-green-500/30 rounded-none bg-green-500/10">
                   <div className="flex items-center gap-4">
                     <div className="flex-shrink-0">
                       <img 
@@ -662,7 +662,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               <div className="mt-1">
                 <label
                   htmlFor="licenseBackFile"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-lg cursor-pointer bg-white/5 hover:bg-white/10 transition-colors group"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-none cursor-pointer bg-white/5 hover:bg-white/10 transition-colors group"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <svg className="w-10 h-10 mb-3 text-gray-400 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -685,7 +685,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               </div>
             ) : (
               <div className="mt-1">
-                <div className="flex items-center gap-4 p-4 border border-white/10 rounded-lg bg-white/5">
+                <div className="flex items-center gap-4 p-4 border border-white/10 rounded-none bg-white/5">
                   {licenseBackPreview && licenseBackFile.type.startsWith('image/') && (
                     <img src={licenseBackPreview} alt="License back preview" className="w-20 h-20 object-cover rounded border border-white/10" />
                   )}
@@ -704,7 +704,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                     type="button"
                     onClick={handleRemoveLicenseBack}
                     disabled={loading}
-                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-none transition-colors disabled:opacity-50"
                     title="Remove file"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -743,7 +743,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
         </div>
 
         {/* Terms and Conditions */}
-        <div className={`border-t border-white/10 pt-4 ${validationErrors.terms ? 'border-yellow-500/30 bg-yellow-500/5 rounded-lg p-3 -mx-3' : ''}`}>
+        <div className={`border-t border-white/10 pt-4 ${validationErrors.terms ? 'border-yellow-500/30 bg-yellow-500/5 rounded-none p-3 -mx-3' : ''}`}>
           <label className="flex items-start gap-3 cursor-pointer group">
             <input
               type="checkbox"
@@ -781,7 +781,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
             <button
               onClick={onCancel}
               disabled={loading}
-              className="flex-1 px-6 py-3.5 border-2 border-white/10 rounded-lg text-gray-300 font-medium hover:bg-white/5 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3.5 border-2 border-white/10 rounded-none text-gray-300 font-medium hover:bg-white/5 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -792,7 +792,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
             <button
               onClick={handleConfirm}
               disabled={loading || !isAuthenticated || !agreedToTerms}
-              className="flex-1 px-6 py-3.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 disabled:shadow-none"
+              className="flex-1 px-6 py-3.5 bg-blue-600 text-white rounded-none font-semibold hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 disabled:shadow-none"
             >
               {loading ? (
                 <>
@@ -826,9 +826,9 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
       {/* Confirmation Dialog */}
       {showConfirmDialog && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E293B] border border-white/10 rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+          <div className="bg-[#1E293B] border border-white/10 rounded-none shadow-2xl max-w-md w-full p-6 animate-scale-in">
             <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-blue-500/10 rounded-full">
+              <div className="p-3 bg-blue-500/10 rounded-none">
                 <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -838,7 +838,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                 <p className="text-sm text-gray-400">{t('confirm_ready')}</p>
               </div>
             </div>
-            <div className="bg-white/5 rounded-lg p-4 mb-4 border border-white/10">
+            <div className="bg-white/5 rounded-none p-4 mb-4 border border-white/10">
               <div className="space-y-2">
                 <p className="text-sm text-gray-300">
                   {t('confirm_submitting')}
@@ -858,14 +858,14 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               <button
                 onClick={() => setShowConfirmDialog(false)}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border-2 border-white/10 rounded-lg text-gray-300 font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border-2 border-white/10 rounded-none text-gray-300 font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmBooking}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-none font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -892,9 +892,9 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
       {/* Payment Method Selection Dialog */}
       {showPaymentSelection && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E293B] border border-white/10 rounded-xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+          <div className="bg-[#1E293B] border border-white/10 rounded-none shadow-2xl max-w-md w-full p-6 animate-scale-in">
             <div className="flex items-center gap-4 mb-6">
-              <div className="p-3 bg-blue-500/10 rounded-full">
+              <div className="p-3 bg-blue-500/10 rounded-none">
                 <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
@@ -909,7 +909,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
             <div className="space-y-3 mb-6">
               {/* Online Payment Option */}
               <label
-                className={`flex items-start gap-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`flex items-start gap-4 p-4 border-2 rounded-none cursor-pointer transition-all ${
                   paymentMethod === 'online'
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-white/10 hover:border-white/20 bg-white/5'
@@ -925,7 +925,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <div className={`p-2 rounded-lg ${paymentMethod === 'online' ? 'bg-blue-500/20' : 'bg-white/10'}`}>
+                    <div className={`p-2 rounded-none ${paymentMethod === 'online' ? 'bg-blue-500/20' : 'bg-white/10'}`}>
                       <svg className={`w-5 h-5 ${paymentMethod === 'online' ? 'text-blue-400' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                       </svg>
@@ -946,7 +946,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
 
               {/* Cash Payment Option */}
               <label
-                className={`flex items-start gap-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`flex items-start gap-4 p-4 border-2 rounded-none cursor-pointer transition-all ${
                   paymentMethod === 'cash'
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-white/10 hover:border-white/20 bg-white/5'
@@ -962,7 +962,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <div className={`p-2 rounded-lg ${paymentMethod === 'cash' ? 'bg-blue-500/20' : 'bg-white/10'}`}>
+                    <div className={`p-2 rounded-none ${paymentMethod === 'cash' ? 'bg-blue-500/20' : 'bg-white/10'}`}>
                       <svg className={`w-5 h-5 ${paymentMethod === 'cash' ? 'text-blue-400' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
@@ -983,7 +983,7 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
             </div>
 
             {/* Info Note */}
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-6">
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-none p-3 mb-6">
               <p className="text-xs text-blue-200">
                 {paymentMethod === 'online' 
                   ? 'You will be redirected to a secure payment page after booking confirmation.'
@@ -996,14 +996,14 @@ export default function BookingForm({ onConfirm, onCancel, loading, error, user,
               <button
                 onClick={() => setShowPaymentSelection(false)}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border-2 border-white/10 rounded-lg text-gray-300 font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border-2 border-white/10 rounded-none text-gray-300 font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePaymentMethodSelected}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-none font-semibold hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

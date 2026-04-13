@@ -86,7 +86,7 @@ export default function HelpCategories() {
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-10 md:mb-16">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 md:mb-4">{t('title')}</h2>
-            <div className="w-16 h-1 md:w-20 bg-gradient-to-r from-orange-500 to-amber-500 mx-auto rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+            <div className="w-16 h-1 md:w-20 bg-gradient-to-r from-orange-500 to-amber-500 mx-auto rounded-none shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -96,12 +96,12 @@ export default function HelpCategories() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
-              className={`group relative bg-[#15171e]/80 backdrop-blur-xl p-6 md:p-8 rounded-2xl md:rounded-3xl border border-white/5 hover:bg-[#1a1d24] transition-all duration-300 cursor-pointer overflow-hidden hover:-translate-y-1 hover:shadow-2xl ${cat.border}`}
+              className={`group relative bg-[#15171e]/80 backdrop-blur-xl p-6 md:p-8 rounded-none md:rounded-none border border-white/5 hover:bg-[#1a1d24] transition-all duration-300 cursor-pointer overflow-hidden hover:-translate-y-1 hover:shadow-2xl ${cat.border}`}
             >
               {/* Hover Gradient Overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${cat.bg} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
 
-              <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br ${cat.bg} flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/5 shadow-inner`}>
+              <div className={`relative w-12 h-12 md:w-16 md:h-16 rounded-none md:rounded-none bg-gradient-to-br ${cat.bg} flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/5 shadow-inner`}>
                 <div className={cat.color}>{cat.icon}</div>
               </div>
               

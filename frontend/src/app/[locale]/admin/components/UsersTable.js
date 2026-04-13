@@ -34,9 +34,9 @@ export default function UsersTable({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-none shadow">
         <div className="p-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-none h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
           <p className="mt-4 text-gray-500">Loading users...</p>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default function UsersTable({
   console.log('📊 UsersTable - displayUsers sample:', displayUsers.slice(0, 2));
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white rounded-none shadow overflow-hidden">
       {/* Debug Info Banner - Always show for debugging */}
       <div className="bg-blue-50 border-b border-blue-200 px-4 py-2 text-xs">
         <strong>🔍 Debug Info:</strong> 
@@ -103,7 +103,7 @@ export default function UsersTable({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-none bg-gray-300 flex items-center justify-center">
                           <UserRound className="h-6 w-6 text-gray-600" />
                         </div>
                       </div>
@@ -123,7 +123,7 @@ export default function UsersTable({
                     <div className="text-sm text-gray-900">{user?.email || "N/A"}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-none ${
                       user?.is_active
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
@@ -189,7 +189,7 @@ export default function UsersTable({
                         : "No users match your current filters. Try adjusting your search or filters."}
                     </p>
                     {usersList.length === 0 && (
-                      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg max-w-2xl mx-auto text-left">
+                      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-none max-w-2xl mx-auto text-left">
                         <p className="text-yellow-800 font-medium mb-2">Debug Info:</p>
                         <p className="text-yellow-700 text-xs mb-1">
                           Users prop type: {typeof users}
@@ -229,7 +229,7 @@ export default function UsersTable({
                 setCurrentPage(1);
               }
             }}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-none transition-colors"
           >
             {showAll ? 'Show Paginated' : `Show All (${usersList.length})`}
           </button>
@@ -246,7 +246,7 @@ export default function UsersTable({
                 { value: '50', label: '50 per page' },
                 { value: '100', label: '100 per page' },
               ]}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-none text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           )}
         </div>
@@ -264,7 +264,7 @@ export default function UsersTable({
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                className="relative inline-flex items-center px-2 py-2 rounded-none-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >
                 Previous
               </button>
@@ -297,7 +297,7 @@ export default function UsersTable({
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, displayTotalPages))}
                 disabled={currentPage === displayTotalPages}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                className="relative inline-flex items-center px-2 py-2 rounded-none-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >
                 Next
               </button>

@@ -18,8 +18,8 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-[#0F172A] relative overflow-hidden font-sans text-gray-100">
       {/* Abstract Background Pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
-        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-none bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-none bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
       </div>
 
@@ -77,19 +77,19 @@ export default function PrivacyPage() {
                 {t('use_desc')}
               </p>
               <div className="grid md:grid-cols-2 gap-4 mt-4">
-                <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <div className="bg-gray-800/50 p-4 rounded-none border border-gray-700">
                   <h3 className="font-semibold text-white mb-2">{t('account_management')}</h3>
                   <p className="text-sm text-gray-400">{t('account_management_desc')}</p>
                 </div>
-                <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <div className="bg-gray-800/50 p-4 rounded-none border border-gray-700">
                   <h3 className="font-semibold text-white mb-2">{t('order_fulfillment')}</h3>
                   <p className="text-sm text-gray-400">{t('order_fulfillment_desc')}</p>
                 </div>
-                <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <div className="bg-gray-800/50 p-4 rounded-none border border-gray-700">
                   <h3 className="font-semibold text-white mb-2">{t('security')}</h3>
                   <p className="text-sm text-gray-400">{t('security_desc')}</p>
                 </div>
-                <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <div className="bg-gray-800/50 p-4 rounded-none border border-gray-700">
                   <h3 className="font-semibold text-white mb-2">{t('communication')}</h3>
                   <p className="text-sm text-gray-400">{t('communication_desc')}</p>
                 </div>

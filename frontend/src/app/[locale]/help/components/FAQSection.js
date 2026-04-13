@@ -46,7 +46,7 @@ export default function FAQSection() {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`rounded-2xl border transition-all duration-300 overflow-hidden ${openIndex === index ? 'bg-[#15171e] border-orange-500/30 ring-1 ring-orange-500/20 shadow-lg shadow-orange-500/5' : 'bg-[#15171e]/50 border-white/5 hover:border-white/10'}`}
+              className={`rounded-none border transition-all duration-300 overflow-hidden ${openIndex === index ? 'bg-[#15171e] border-orange-500/30 ring-1 ring-orange-500/20 shadow-lg shadow-orange-500/5' : 'bg-[#15171e]/50 border-white/5 hover:border-white/10'}`}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? -1 : index)}
@@ -56,7 +56,7 @@ export default function FAQSection() {
                   {faq.question}
                 </span>
                 <span className={`flex-shrink-0 transform transition-transform duration-300 ${openIndex === index ? 'rotate-180 text-orange-400' : 'text-gray-500'}`}>
-                    <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center border ${openIndex === index ? 'border-orange-500/30 bg-orange-500/10' : 'border-white/10 bg-white/5'}`}>
+                    <div className={`w-6 h-6 md:w-8 md:h-8 rounded-none flex items-center justify-center border ${openIndex === index ? 'border-orange-500/30 bg-orange-500/10' : 'border-white/10 bg-white/5'}`}>
                         <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>

@@ -4,7 +4,7 @@ export default function EmptyState({ filter }) {
   const router = useRouter()
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+    <div className="bg-white rounded-none shadow-sm border border-gray-200 p-12 text-center">
       <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
@@ -17,7 +17,7 @@ export default function EmptyState({ filter }) {
       </p>
       <button
         onClick={() => router.push('/search')}
-        className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+        className="bg-orange-500 text-white px-6 py-2 rounded-none hover:bg-orange-600 transition-colors"
       >
         Find a Car
       </button>

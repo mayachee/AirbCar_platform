@@ -15,7 +15,7 @@ export default function BookingDetailsModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl bg-white rounded-lg shadow-lg">
+      <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl bg-white rounded-none shadow-lg">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">Booking Details</h3>
           <button
@@ -37,10 +37,10 @@ export default function BookingDetailsModal({
                 <img
                   src={selectedBooking.listing.picture_url}
                   alt={selectedBooking.listing?.name || `${selectedBooking.listing.make} ${selectedBooking.listing.model}`}
-                  className="w-32 h-24 object-cover rounded-lg"
+                  className="w-32 h-24 object-cover rounded-none"
                 />
               ) : (
-                <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="w-32 h-24 bg-gray-200 rounded-none flex items-center justify-center">
                   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
@@ -70,7 +70,7 @@ export default function BookingDetailsModal({
               </div>
               <div>
                 <p className="font-medium text-gray-900">Status</p>
-                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedBooking.status)}`}>
+                <span className={`inline-block px-3 py-1 rounded-none text-xs font-medium ${getStatusColor(selectedBooking.status)}`}>
                   {selectedBooking.status.charAt(0).toUpperCase() + selectedBooking.status.slice(1)}
                 </span>
               </div>
@@ -97,7 +97,7 @@ export default function BookingDetailsModal({
           <div className="flex justify-end space-x-4">
             <button
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 border border-gray-300 rounded-none text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Close
             </button>
@@ -108,7 +108,7 @@ export default function BookingDetailsModal({
                   onClose()
                 }}
                 disabled={cancelLoading}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="px-6 py-2 bg-red-600 text-white rounded-none hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 {cancelLoading ? 'Cancelling...' : 'Cancel Booking'}
               </button>

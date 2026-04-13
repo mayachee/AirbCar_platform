@@ -67,7 +67,7 @@ export default function Reviews({ vehicle }) {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => setShowForm(true)}
-          className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+          className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-none font-medium transition-colors flex items-center justify-center space-x-2"
         >
           <Plus className="h-5 w-5" />
           <span>{t('write_review')}</span>

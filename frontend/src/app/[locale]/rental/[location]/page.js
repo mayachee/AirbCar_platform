@@ -175,7 +175,7 @@ export default async function LocationPage({ params }) {
           </p>
           <Link
             href="/search"
-            className="inline-block bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition"
+            className="inline-block bg-white text-blue-600 px-6 py-3 rounded-none font-semibold hover:bg-blue-50 transition"
           >
             Book Your Car Now
           </Link>
@@ -207,7 +207,7 @@ export default async function LocationPage({ params }) {
             <ul className="space-y-3">
               {data.carTypes.map((carType, idx) => (
                 <li key={idx} className="flex items-center gap-3">
-                  <span className="w-3 h-3 bg-blue-600 rounded-full"></span>
+                  <span className="w-3 h-3 bg-blue-600 rounded-none"></span>
                   <span className="text-gray-700">{carType}</span>
                 </li>
               ))}
@@ -224,28 +224,28 @@ export default async function LocationPage({ params }) {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-white p-6 rounded-none shadow-lg">
               <h3 className="font-bold text-lg mb-2">When should I book?</h3>
               <p className="text-gray-600">
                 Peak season is April-October. Book 2-3 weeks ahead for best prices during peak season.
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-white p-6 rounded-none shadow-lg">
               <h3 className="font-bold text-lg mb-2">Is airport pickup available?</h3>
               <p className="text-gray-600">
                 Yes! We offer convenient airport pickup and dropoff for all major airports in {data.name}.
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-white p-6 rounded-none shadow-lg">
               <h3 className="font-bold text-lg mb-2">What's included in the rental?</h3>
               <p className="text-gray-600">
                 Basic insurance, unlimited mileage, roadside assistance, and 24/7 customer support.
               </p>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="bg-white p-6 rounded-none shadow-lg">
               <h3 className="font-bold text-lg mb-2">Can I add an extra driver?</h3>
               <p className="text-gray-600">
                 Yes! Additional drivers can be added for a small fee. They must have a valid license.
@@ -266,7 +266,7 @@ export default async function LocationPage({ params }) {
           </p>
           <Link
             href="/search"
-            className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-blue-50 transition"
+            className="inline-block bg-white text-blue-600 px-8 py-4 rounded-none font-bold text-lg hover:bg-blue-50 transition"
           >
             Start Your Adventure
           </Link>

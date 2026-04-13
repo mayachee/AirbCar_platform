@@ -44,7 +44,7 @@ export default function TestimonialsSection({ testimonialsVisible }) {
         <div className="relative">
           {/* Navigation Buttons */}
           <button 
-            className="absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 hover:shadow-xl transition-all duration-300 group"
+            className="absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-none shadow-lg flex items-center justify-center hover:bg-gray-50 hover:shadow-xl transition-all duration-300 group"
             onClick={scrollLeft}
             aria-label="Previous testimonials"
           >
@@ -54,7 +54,7 @@ export default function TestimonialsSection({ testimonialsVisible }) {
           </button>
           
           <button 
-            className="absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 hover:shadow-xl transition-all duration-300 group"
+            className="absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-none shadow-lg flex items-center justify-center hover:bg-gray-50 hover:shadow-xl transition-all duration-300 group"
             onClick={scrollRight}
             aria-label="Next testimonials"
           >
@@ -69,7 +69,7 @@ export default function TestimonialsSection({ testimonialsVisible }) {
             className="flex overflow-x-auto scrollbar-hide space-x-6 pb-4 px-16 md:px-0 snap-x snap-mandatory"
           >
             {testimonials.map((testimonial, idx) => (
-              <div key={idx} className="bg-white p-6 md:p-8 rounded-xl shadow-lg min-w-[320px] md:min-w-[350px] flex-shrink-0 hover:shadow-xl transition-shadow duration-300 snap-start">
+              <div key={idx} className="bg-white p-6 md:p-8 rounded-none shadow-lg min-w-[320px] md:min-w-[350px] flex-shrink-0 hover:shadow-xl transition-shadow duration-300 snap-start">
                 <div className="flex items-center mb-4">
                   {[...Array(5)].map((_, i) => (
                     <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -81,7 +81,7 @@ export default function TestimonialsSection({ testimonialsVisible }) {
                   "{testimonial.text}"
                 </p>
                 <div className="flex items-center">
-                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mr-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-none flex items-center justify-center mr-4">
                     <span className="text-orange-600 font-bold">{testimonial.initial}</span>
                   </div>
                   <div>

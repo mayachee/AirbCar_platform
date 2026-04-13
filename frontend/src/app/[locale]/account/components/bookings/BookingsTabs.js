@@ -23,7 +23,7 @@ export default function BookingsTabs({ tab, onTabChange, upcomingCount, pastCoun
           >
             {item.label}
             {item.count > 0 && (
-              <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
+              <span className={`ml-2 py-0.5 px-2 rounded-none text-xs ${
                 tab === item.id ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600'
               }`}>
                 {item.count}

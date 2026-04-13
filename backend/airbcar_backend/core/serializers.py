@@ -5,7 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.utils import timezone
-from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord, ListingComment, PartnerPost, TripPost, TripPostComment, TripPostReaction
+from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord, ListingComment, PartnerPost, TripPost, TripPostComment, TripPostReaction, CommunityPost, CommunityPostComment, CommunityPostReaction
 from .utils.license_verification import verify_driving_license_images
 from .utils.license_verification_persistence import store_license_verification_result
 
@@ -899,13 +899,13 @@ class ReviewSerializer(serializers.ModelSerializer):
     def get_reactions(self, obj):
         from django.db.models import Count
         from .models import ReviewReaction
-        counts_qs = obj.reactions.values('reaction').annotate(count=Count('id'))
+        counts_qs = obj.community_reactions.values('reaction').annotate(count=Count('id'))
         reaction_counts = {r['reaction']: r['count'] for r in counts_qs}
         total = sum(reaction_counts.values())
         user_reaction = None
         request = self.context.get('request')
         if request and request.user and request.user.is_authenticated:
-            ur = obj.reactions.filter(user=request.user).first()
+            ur = obj.community_reactions.filter(user=request.user).first()
             if ur:
                 user_reaction = ur.reaction
         return {
@@ -1092,9 +1092,67 @@ class TripPostSerializer(serializers.ModelSerializer):
     def get_reaction_summary(self, obj):
         from django.db.models import Count
         return list(
-            obj.reactions.values('reaction').annotate(count=Count('id')).order_by('-count')
+            obj.community_reactions.values('reaction').annotate(count=Count('id')).order_by('-count')
         )
 
     def get_comment_count(self, obj):
-        return obj.comments.filter(is_active=True).count()
+        return obj.community_comments.filter(is_active=True).count()
+
+
+class CommunityPostCommentSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CommunityPostComment
+        fields = ['id', 'user', 'content', 'created_at', 'parent', 'replies']
+        read_only_fields = ['id', 'user', 'created_at', 'replies']
+
+    def get_user(self, obj):
+        return {
+            'id': obj.user.id,
+            'username': obj.user.username,
+            'profile_picture_url': obj.user.profile_picture_url,
+        }
+
+    def get_replies(self, obj):
+        if obj.parent_id is not None or self.context.get('_comment_depth', 0) >= 1:
+            return []
+        children = obj.replies.filter(is_active=True).order_by('created_at')
+        ctx = {**self.context, '_comment_depth': self.context.get('_comment_depth', 0) + 1}
+        return CommunityPostCommentSerializer(children, many=True, context=ctx).data
+
+
+class CommunityPostSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+    reaction_summary = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CommunityPost
+        fields = [
+            'id', 'author', 'listing', 'content', 'images',
+            'reaction_summary', 'comment_count',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'author', 'created_at', 'updated_at']
+
+    def get_author(self, obj):
+        return {
+            'id': obj.author.id,
+            'username': obj.author.username,
+            'first_name': obj.author.first_name,
+            'last_name': obj.author.last_name,
+            'profile_picture_url': obj.author.profile_picture_url,
+        }
+
+    def get_reaction_summary(self, obj):
+        from django.db.models import Count
+        return list(
+            obj.community_reactions.values('reaction_type').annotate(count=Count('id')).order_by('-count')
+        )
+
+    def get_comment_count(self, obj):
+        return obj.community_comments.filter(is_active=True).count()
+
 

@@ -46,7 +46,7 @@ export default function Restrictions({ vehicle }) {
       {/* Car Rules & Restrictions */}
       <div className="">
         <div className="flex items-center mb-5">
-          <div className="p-2 bg-red-500/10 rounded-lg mr-3">
+          <div className="p-2 bg-red-500/10 rounded-none mr-3">
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
           <h3 className="text-xl font-bold text-white">{t('car_rules_restrictions')}</h3>
@@ -63,9 +63,9 @@ export default function Restrictions({ vehicle }) {
 
       {/* Partner Information */}
       {owner && (
-        <div className="bg-gradient-to-br from-orange-500/10 to-transparent rounded-xl border border-orange-500/20 shadow-sm p-6 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-orange-500/10 to-transparent rounded-none border border-orange-500/20 shadow-sm p-6 backdrop-blur-sm">
           <div className="flex items-center mb-5">
-            <div className="p-2 bg-orange-500/20 rounded-lg mr-3">
+            <div className="p-2 bg-orange-500/20 rounded-none mr-3">
               <Shield className="w-5 h-5 text-orange-400" />
             </div>
             <h3 className="text-xl font-bold text-white">{t('owner_information')}</h3>
@@ -85,7 +85,7 @@ export default function Restrictions({ vehicle }) {
                       <img 
                         src={owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture} 
                         alt={companyName}
-                        className="w-16 h-16 rounded-xl object-cover border-2 border-orange-500/20 shadow-sm"
+                        className="w-16 h-16 rounded-none object-cover border-2 border-orange-500/20 shadow-sm"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -93,7 +93,7 @@ export default function Restrictions({ vehicle }) {
                       />
                     ) : null}
                     <div 
-                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white text-xl font-bold border-2 border-orange-500/20 shadow-sm"
+                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-none flex items-center justify-center text-white text-xl font-bold border-2 border-orange-500/20 shadow-sm"
                       style={{ display: (owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture) ? 'none' : 'flex' }}
                     >
                       {companyName[0]?.toUpperCase() || 'P'}
@@ -105,7 +105,7 @@ export default function Restrictions({ vehicle }) {
                       <img 
                         src={owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture} 
                         alt={companyName}
-                        className="w-16 h-16 rounded-xl object-cover border-2 border-orange-200 shadow-sm"
+                        className="w-16 h-16 rounded-none object-cover border-2 border-orange-200 shadow-sm"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -113,7 +113,7 @@ export default function Restrictions({ vehicle }) {
                       />
                     ) : null}
                     <div 
-                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white text-xl font-bold border-2 border-orange-200 shadow-sm"
+                      className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-none flex items-center justify-center text-white text-xl font-bold border-2 border-orange-200 shadow-sm"
                       style={{ display: (owner.logo || owner.logo_url || owner.profilePicture || owner.profile_picture) ? 'none' : 'flex' }}
                     >
                       {companyName[0]?.toUpperCase() || 'P'}
@@ -135,7 +135,7 @@ export default function Restrictions({ vehicle }) {
                     <p className="text-lg font-bold text-gray-900 truncate">{companyName}</p>
                   )}
                   {owner.businessType && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium bg-blue-100 text-blue-800 mt-2">
                       {owner.businessType}
                     </span>
                   )}

@@ -119,7 +119,7 @@ const itemVariants = {
                 <Button
                   size="lg"
                   onClick={() => router.push('/search')}
-                  className="relative h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 text-lg font-bold shadow-xl hover:bg-white/10 hover:text-orange-600 transition-all flex items-center gap-3 group overflow-hidden rounded-xl"
+                  className="relative h-14 bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 text-lg font-bold shadow-xl hover:bg-white/10 hover:text-orange-600 transition-all flex items-center gap-3 group overflow-hidden rounded-none"
                 >
                   <span className="relative z-10">{t('button')}</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform relative z-10" />

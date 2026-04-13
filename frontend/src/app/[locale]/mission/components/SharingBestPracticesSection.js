@@ -223,7 +223,7 @@ export default function SharingBestPracticesSection() {
               whileHover={{ scale: canScrollLeft ? 1.1 : 0.9 }}
               whileTap={{ scale: 0.95 }}
               disabled={!canScrollLeft}
-              className="absolute left-2 sm:left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full border-2 border-green-500 flex items-center justify-center hover:bg-green-500/20 transition-all bg-gray-900/90 backdrop-blur-sm disabled:cursor-not-allowed shadow-lg"
+              className="absolute left-2 sm:left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-none border-2 border-green-500 flex items-center justify-center hover:bg-green-500/20 transition-all bg-gray-900/90 backdrop-blur-sm disabled:cursor-not-allowed shadow-lg"
               aria-label="Scroll left"
             >
               <ChevronLeft className="w-6 h-6 text-white" />
@@ -239,14 +239,14 @@ export default function SharingBestPracticesSection() {
               whileHover={{ scale: canScrollRight ? 1.1 : 0.9 }}
               whileTap={{ scale: 0.95 }}
               disabled={!canScrollRight}
-              className="absolute right-2 sm:right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full border-2 border-green-500 flex items-center justify-center hover:bg-green-500/20 transition-all bg-gray-900/90 backdrop-blur-sm disabled:cursor-not-allowed shadow-lg"
+              className="absolute right-2 sm:right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-none border-2 border-green-500 flex items-center justify-center hover:bg-green-500/20 transition-all bg-gray-900/90 backdrop-blur-sm disabled:cursor-not-allowed shadow-lg"
               aria-label="Scroll right"
             >
               <ChevronRight className="w-6 h-6 text-white" />
             </motion.button>
 
             {/* Scroll Progress Indicator */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700/50 rounded-full overflow-hidden z-10">
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700/50 rounded-none overflow-hidden z-10">
               <motion.div
                 className="h-full bg-green-500"
                 initial={{ width: '0%' }}
@@ -329,7 +329,7 @@ export default function SharingBestPracticesSection() {
                   index === currentIndex
                     ? 'w-8 h-3'
                     : 'w-3 h-3'
-                } rounded-full ${
+                } rounded-none ${
                   index === currentIndex
                     ? 'bg-green-500'
                     : 'bg-gray-600 hover:bg-gray-500'
@@ -339,7 +339,7 @@ export default function SharingBestPracticesSection() {
                 {index === currentIndex && (
                   <motion.div
                     layoutId="activeDot"
-                    className="absolute inset-0 bg-green-500 rounded-full"
+                    className="absolute inset-0 bg-green-500 rounded-none"
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
                 )}

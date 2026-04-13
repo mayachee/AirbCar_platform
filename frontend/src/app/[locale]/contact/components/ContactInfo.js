@@ -64,8 +64,8 @@ export default function ContactInfo() {
           <div className={`absolute inset-0 bg-gradient-to-br ${method.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
           
           {/* Icon */}
-          <div className="mb-6 inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/5 border border-white/5 group-hover:scale-110 transition-transform duration-500 relative z-10 text-white">
-            <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${method.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`} />
+          <div className="mb-6 inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-none bg-white/5 border border-white/5 group-hover:scale-110 transition-transform duration-500 relative z-10 text-white">
+            <div className={`absolute inset-0 rounded-none bg-gradient-to-br ${method.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`} />
             {method.icon}
           </div>
 

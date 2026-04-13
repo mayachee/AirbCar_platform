@@ -131,9 +131,9 @@ export default function BoltHeroSection() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
-          className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15"
+          className="inline-flex items-center gap-3 px-5 py-2.5 rounded-none bg-white/10 backdrop-blur-md border border-white/15"
         >
-          <span className="block w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+          <span className="block w-1.5 h-1.5 rounded-none bg-orange-500 animate-pulse" />
           <p className="text-xs md:text-sm uppercase tracking-[0.15em] md:tracking-[0.25em] font-semibold text-orange-400">
             {t('hero_tagline')}
           </p>
@@ -184,9 +184,9 @@ function Card({ card, index, mouseX, mouseY, scrollYProgress, isMobile }) {
         zIndex: 100,
         transition: { duration: 0.3 }
       } : undefined}
-      className="w-48 h-72 md:w-[340px] md:h-[480px] p-0.5 shadow-2xl origin-center cursor-pointer rounded-3xl border-2 border-white/20 bg-white/5 backdrop-blur-sm"
+      className="w-48 h-72 md:w-[340px] md:h-[480px] p-0.5 shadow-2xl origin-center cursor-pointer rounded-none border-2 border-white/20 bg-white/5 backdrop-blur-sm"
     >
-      <div className="relative w-full h-full overflow-hidden rounded-3xl">
+      <div className="relative w-full h-full overflow-hidden rounded-none">
         <Image
           src={card.src}
           alt={card.alt}
@@ -195,7 +195,7 @@ function Card({ card, index, mouseX, mouseY, scrollYProgress, isMobile }) {
           className="object-cover scale-105 transition-transform duration-500 hover:scale-110"
           style={{ boxShadow: '0 8px 32px 0 rgba(0,0,0,0.18)' }}
         />
-        <div className="absolute inset-0 rounded-3xl border-2 border-white/20 pointer-events-none" />
+        <div className="absolute inset-0 rounded-none border-2 border-white/20 pointer-events-none" />
       </div>
     </motion.div>
   );

@@ -70,7 +70,7 @@ export default function ImpactSection() {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-orange-400/20 rounded-full blur-3xl"
+          className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-orange-400/20 rounded-none blur-3xl"
         />
       </div>
 
@@ -87,12 +87,12 @@ export default function ImpactSection() {
               transition={{ duration: 0.6 }}
             >
               <motion.div
-                className="relative rounded-3xl overflow-hidden shadow-2xl group"
+                className="relative rounded-none overflow-hidden shadow-2xl group"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
                 {/* Glass-morphism border effect */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-none blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
                 <img
                   src="https://ik.imagekit.io/szcfr7vth/Gemini_Generated_Image_jl7bnojl7bnojl7b.png"
@@ -152,7 +152,7 @@ export default function ImpactSection() {
                   onClick={() => setActiveTab(tab)}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`relative px-6 py-3 rounded-full text-sm font-medium transition-all duration-300 overflow-hidden ${
+                  className={`relative px-6 py-3 rounded-none text-sm font-medium transition-all duration-300 overflow-hidden ${
                     activeTab === tab
                       ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-lg shadow-orange-500/30'
                       : 'bg-white/5 backdrop-blur-sm text-gray-300 border border-white/10 hover:bg-white/10 hover:border-orange-500/50 hover:text-orange-400 shadow-md'
@@ -193,12 +193,12 @@ export default function ImpactSection() {
                 transition={{ duration: 0.5 }}
               >
                 <motion.div
-                  className="relative rounded-3xl overflow-hidden shadow-2xl group"
+                  className="relative rounded-none overflow-hidden shadow-2xl group"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
                 >
                   {/* Glass-morphism border effect */}
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-3xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/20 via-orange-400/10 to-transparent rounded-none blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   
                   <img
                     src={currentContent.image}
@@ -229,10 +229,10 @@ export default function ImpactSection() {
                         className="flex items-start gap-4 group"
                       >
                         <motion.div
-                          className="w-8 h-8 bg-orange-600 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow"
+                          className="w-8 h-8 bg-orange-600 rounded-none flex-shrink-0 mt-0.5 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow"
                           whileHover={{ scale: 1.1, rotate: 5 }}
                         >
-                          <div className="w-3 h-3 rounded-full bg-white" />
+                          <div className="w-3 h-3 rounded-none bg-white" />
                         </motion.div>
                         <p className="text-base text-gray-300 leading-6 tracking-[-0.176px] group-hover:text-white transition-colors">
                           {fact}

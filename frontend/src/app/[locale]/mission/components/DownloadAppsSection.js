@@ -119,7 +119,7 @@ export default function DownloadAppsSection() {
           opacity: opacity1,
           willChange: 'transform, opacity'
         }}
-        className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF6B35] rounded-full blur-3xl"
+        className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF6B35] rounded-none blur-3xl"
       />
       <motion.div 
         style={{ 
@@ -127,7 +127,7 @@ export default function DownloadAppsSection() {
           opacity: opacity2,
           willChange: 'transform, opacity'
         }}
-        className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#FF6B35] rounded-full blur-3xl"
+        className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#FF6B35] rounded-none blur-3xl"
       />
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -175,7 +175,7 @@ export default function DownloadAppsSection() {
                 {particles.map((particle, i) => (
                   <motion.div
                     key={i}
-                    className="absolute w-2 h-2 bg-[#FF6B35]/30 rounded-full"
+                    className="absolute w-2 h-2 bg-[#FF6B35]/30 rounded-none"
                     initial={particle.initial}
                     animate={particle.animate}
                     transition={particle.transition}
@@ -190,7 +190,7 @@ export default function DownloadAppsSection() {
                   >
                     {/* Outer glow ring */}
                     <motion.div
-                      className="absolute inset-0 rounded-3xl sm:rounded-[2.5rem] bg-gradient-to-r from-[#FF6B35] via-[#FF8555] to-[#FF6B35] opacity-50 blur-2xl"
+                      className="absolute inset-0 rounded-none sm:rounded-[2.5rem] bg-gradient-to-r from-[#FF6B35] via-[#FF8555] to-[#FF6B35] opacity-50 blur-2xl"
                       animate={{
                         scale: [1, 1.2, 1],
                         opacity: [0.3, 0.6, 0.3]
@@ -208,12 +208,12 @@ export default function DownloadAppsSection() {
                       whileHover={{ scale: 1.02 }}
                     >
                       {/* Dynamic Island / Notch */}
-                      <div className="absolute top-3 w-28 sm:w-32 h-6 sm:h-7 bg-black rounded-full z-30 shadow-md transform -translate-x-1/2 left-1/2" />
+                      <div className="absolute top-3 w-28 sm:w-32 h-6 sm:h-7 bg-black rounded-none z-30 shadow-md transform -translate-x-1/2 left-1/2" />
                        
                       {/* Side Buttons */}
-                      <div className="absolute -left-[8px] top-28 w-2 h-10 bg-gray-800 rounded-l-lg" />
-                      <div className="absolute -left-[8px] top-44 w-2 h-14 bg-gray-800 rounded-l-lg" />
-                      <div className="absolute -right-[8px] top-36 w-2 h-20 bg-gray-800 rounded-r-lg" />
+                      <div className="absolute -left-[8px] top-28 w-2 h-10 bg-gray-800 rounded-none-lg" />
+                      <div className="absolute -left-[8px] top-44 w-2 h-14 bg-gray-800 rounded-none-lg" />
+                      <div className="absolute -right-[8px] top-36 w-2 h-20 bg-gray-800 rounded-none-lg" />
 
                       {/* Screen Content */}
                       <div className="relative w-full h-full rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden bg-black border-[3px] border-black">
@@ -236,13 +236,13 @@ export default function DownloadAppsSection() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                     transition={{ delay: 0.5, duration: 0.6 }}
-                    className="absolute -z-10 w-64 h-64 bg-[#FF6B35]/20 rounded-full blur-3xl"
+                    className="absolute -z-10 w-64 h-64 bg-[#FF6B35]/20 rounded-none blur-3xl"
                   ></motion.div>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.6 }}
                     animate={isInView ? { opacity: 0.5, scale: 1 } : { opacity: 0, scale: 0.6 }}
                     transition={{ delay: 0.7, duration: 0.8 }}
-                    className="absolute -z-10 top-1/4 right-1/4 w-48 h-48 bg-[#FF8555]/15 rounded-full blur-2xl"
+                    className="absolute -z-10 top-1/4 right-1/4 w-48 h-48 bg-[#FF8555]/15 rounded-none blur-2xl"
                   ></motion.div>
                 </div>
               </motion.div>
@@ -366,7 +366,7 @@ export default function DownloadAppsSection() {
                       transition: { type: "spring", stiffness: 400, damping: 25 }
                     }}
                     whileTap={{ scale: 0.95 }}
-                    className="relative bg-orange-500/60 backdrop-blur-md border border-white/20 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:bg-orange-500 hover:text-white overflow-hidden group"
+                    className="relative bg-orange-500/60 backdrop-blur-md border border-white/20 text-white font-semibold px-8 py-4 rounded-none transition-all duration-300 shadow-lg hover:bg-orange-500 hover:text-white overflow-hidden group"
                     style={{ willChange: 'transform' }}
                   >
                     {/* Animated shine effect */}

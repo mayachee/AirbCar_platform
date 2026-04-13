@@ -71,7 +71,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
         transition={{ duration: 0.5, delay: 0.4 }}
       >
         <motion.div
-          className="bg-white/5 rounded-xl border border-white/10 shadow-lg p-6 backdrop-blur-sm"
+          className="bg-white/5 rounded-none border border-white/10 shadow-lg p-6 backdrop-blur-sm"
           variants={cardVariants}
           initial="hidden"
           animate="visible"
@@ -107,7 +107,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
           {/* Date Picker */}
           <motion.div
-            className="bg-white/5 rounded-lg p-4 mb-6 border border-white/10"
+            className="bg-white/5 rounded-none p-4 mb-6 border border-white/10"
             variants={itemVariants}
           >
             <div className="grid grid-cols-2 gap-4">
@@ -130,7 +130,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             </div>
             <motion.button
               onClick={onChangeDates}
-              className="w-full mt-3 py-2 text-sm text-orange-400 font-medium border border-orange-500/30 rounded-lg hover:bg-orange-500/10 transition-colors"
+              className="w-full mt-3 py-2 text-sm text-orange-400 font-medium border border-orange-500/30 rounded-none hover:bg-orange-500/10 transition-colors"
               whileHover={{ scale: 1.02, backgroundColor: 'rgba(249, 115, 22, 0.1)' }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -168,7 +168,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
           {/* Book Button */}
           <motion.button
             onClick={onBookNow}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-lg transition-colors mb-4"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-none transition-colors mb-4"
             variants={itemVariants}
             whileHover={{ 
               scale: 1.02,
@@ -183,7 +183,7 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
           {/* Insurance Info */}
           <motion.div
-            className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-4"
+            className="bg-green-500/10 border border-green-500/20 rounded-none p-4 mb-4"
             variants={itemVariants}
             whileHover={{ scale: 1.02 }}
             transition={{ type: 'spring', stiffness: 300 }}

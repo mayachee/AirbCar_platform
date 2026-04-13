@@ -138,7 +138,7 @@ export default function ImprovedBookingsTab() {
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+              <div key={i} className="h-32 bg-gray-200 rounded-none"></div>
             ))}
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function ImprovedBookingsTab() {
         <button
           onClick={() => loadBookings(true)}
           disabled={refreshing || loading}
-          className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center space-x-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           <span>{refreshing ? t('refreshing') : t('refresh')}</span>
@@ -192,7 +192,7 @@ export default function ImprovedBookingsTab() {
 
       {/* Bookings List */}
       {filteredBookings.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border p-12 text-center">
+        <div className="bg-white rounded-none shadow-sm border p-12 text-center">
           <Calendar className="h-16 w-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">{t('bookings_empty')}</h3>
           <p className="text-gray-600">

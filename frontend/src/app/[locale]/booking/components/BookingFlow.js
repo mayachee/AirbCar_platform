@@ -71,19 +71,19 @@ export default function BookingFlow({
   // Style constants for glassmorphism
   const heroBlurFieldClass =
     'bg-white/10 hover:bg-white/15 ' +
-    'dark:bg-white/10 dark:hover:bg-white/15 ' +
+    '/10 /15 ' +
     'border border-white/25 hover:border-white/35 ' +
-    'dark:border-white/25 dark:hover:border-white/35 ' +
+    '/25 /35 ' +
     'text-white ' +
     'backdrop-blur-xl backdrop-saturate-150 ' +
     'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:backdrop-saturate-150 ' +
     'focus:ring-orange-500/30 focus:border-orange-400 placeholder:text-white/50';
 
   const glassCardClass = 
-    'bg-white/5 border border-white/10 backdrop-blur-md shadow-xl rounded-xl overflow-hidden';
+    'bg-white/5 border border-white/10 backdrop-blur-md shadow-xl rounded-none overflow-hidden';
     
   const glassContentClass = 
-    'bg-white/5 border border-white/10 rounded-lg';
+    'bg-white/5 border border-white/10 rounded-none';
 
   // Helper functions for dates (adapted from SearchForm)
   const pad2 = (n) => String(n).padStart(2, '0');
@@ -159,7 +159,7 @@ export default function BookingFlow({
 
   const heroBlurContentClass =
     'border border-white/20 bg-white/10 text-white ' +
-    'dark:border-white/20 dark:bg-white/10 dark:text-white ' +
+    '/20 /10 ' +
     'backdrop-blur-2xl backdrop-saturate-150 ' +
     'supports-[backdrop-filter]:backdrop-blur-2xl supports-[backdrop-filter]:backdrop-saturate-150';
 
@@ -305,9 +305,9 @@ export default function BookingFlow({
     <div className="w-full relative">
 
       {/* Abstract Background Pattern - Only visible if parent doesn't provide it */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 rounded-3xl">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full" />
-        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 rounded-none">
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-none" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-none bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -327,7 +327,7 @@ export default function BookingFlow({
                     <div className="flex flex-col items-center flex-1">
                       <div
                         className={`
-                          relative flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full border-2 transition-all duration-300
+                          relative flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-none border-2 transition-all duration-300
                           ${status === 'completed' 
                             ? 'bg-orange-500 border-orange-500 text-white' 
                             : status === 'active'
@@ -342,7 +342,7 @@ export default function BookingFlow({
                           <StepIcon className="w-4 h-4 md:w-6 md:h-6" />
                         )}
                         {status === 'active' && (
-                          <div className="absolute inset-0 rounded-full bg-orange-500 animate-ping opacity-20" />
+                          <div className="absolute inset-0 rounded-none bg-orange-500 animate-ping opacity-20" />
                         )}
                       </div>
                       <div className="mt-2 md:mt-3 text-center">
@@ -500,7 +500,7 @@ export default function BookingFlow({
                         }
                       }}
                       placeholder={t('phone_placeholder')}
-                      className={`w-full px-4 py-3 rounded-lg ${heroBlurFieldClass} ${validationErrors.phone ? 'border-red-400 ring-1 ring-red-400' : ''}`}
+                      className={`w-full px-4 py-3 rounded-none ${heroBlurFieldClass} ${validationErrors.phone ? 'border-red-400 ring-1 ring-red-400' : ''}`}
                     />
                     {validationErrors.phone && (
                       <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
@@ -514,12 +514,12 @@ export default function BookingFlow({
                   </div>
 
                   {validationErrors.license && (
-                    <div className="bg-red-500/10 border-l-4 border-red-500 rounded-md p-4">
+                    <div className="bg-red-500/10 border-l-4 border-red-500 rounded-none p-4">
                       <p className="text-sm text-red-200">{validationErrors.license}</p>
                     </div>
                   )}
                   {validationErrors.terms && (
-                    <div className="bg-yellow-500/10 border-l-4 border-yellow-500 rounded-md p-4">
+                    <div className="bg-yellow-500/10 border-l-4 border-yellow-500 rounded-none p-4">
                       <p className="text-sm text-yellow-200">{validationErrors.terms}</p>
                     </div>
                   )}
@@ -548,10 +548,10 @@ export default function BookingFlow({
 
                   <div className="grid grid-cols-1 gap-4">
                     <div 
-                      className={`p-4 rounded-xl border transition-all opacity-50 cursor-not-allowed bg-white/5 border-white/10`}
+                      className={`p-4 rounded-none border transition-all opacity-50 cursor-not-allowed bg-white/5 border-white/10`}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-full bg-white/10 text-white/60`}>
+                        <div className={`p-3 rounded-none bg-white/10 text-white/60`}>
                           <CreditCard className="w-6 h-6" />
                         </div>
                         <div>
@@ -564,14 +564,14 @@ export default function BookingFlow({
 
                     <div 
                       onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'cash' }))}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                      className={`p-4 rounded-none border cursor-pointer transition-all ${
                         formData.paymentMethod === 'cash' 
                           ? 'bg-orange-500/20 border-orange-500' 
                           : 'bg-white/5 border-white/10 hover:bg-white/10'
                       }`}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-full ${
+                        <div className={`p-3 rounded-none ${
                           formData.paymentMethod === 'cash' ? 'bg-orange-500 text-white' : 'bg-white/10 text-white/60'
                         }`}>
                           <div className="w-6 h-6 font-bold flex items-center justify-center text-lg">$</div>
@@ -664,7 +664,7 @@ export default function BookingFlow({
                       <span className="text-sm text-white">
                         {formData.paymentMethod === 'online' ? 'Pay Online (Credit Card)' : 'Pay at Pickup (Cash)'}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-xs font-medium border border-orange-500/20">
+                      <span className="px-2 py-0.5 rounded-none bg-orange-500/20 text-orange-400 text-xs font-medium border border-orange-500/20">
                         {t('selected_label')}
                       </span>
                     </div>
@@ -680,7 +680,7 @@ export default function BookingFlow({
                       {/* Front Image */}
                       <div>
                         <p className="text-xs text-white/60 mb-2">{t('front')}</p>
-                        <div className="relative aspect-video rounded-lg overflow-hidden bg-black/20 border border-white/10">
+                        <div className="relative aspect-video rounded-none overflow-hidden bg-black/20 border border-white/10">
                           {(formData.licenseFiles?.front || user?.license_front_document_url || user?.licenseFrontDocumentUrl) ? (
                             <img 
                               src={formData.licenseFiles?.front instanceof File ? URL.createObjectURL(formData.licenseFiles.front) : (user?.license_front_document_url || user?.licenseFrontDocumentUrl)} 
@@ -697,7 +697,7 @@ export default function BookingFlow({
                       {/* Back Image */}
                       <div>
                         <p className="text-xs text-white/60 mb-2">{t('back')}</p>
-                        <div className="relative aspect-video rounded-lg overflow-hidden bg-black/20 border border-white/10">
+                        <div className="relative aspect-video rounded-none overflow-hidden bg-black/20 border border-white/10">
                           {(formData.licenseFiles?.back || user?.license_back_document_url || user?.licenseBackDocumentUrl) ? (
                             <img 
                               src={formData.licenseFiles?.back instanceof File ? URL.createObjectURL(formData.licenseFiles.back) : (user?.license_back_document_url || user?.licenseBackDocumentUrl)} 
@@ -718,7 +718,7 @@ export default function BookingFlow({
 
               {/* Error Message */}
               {error && (
-                <div className="mt-6 bg-red-500/10 border-l-4 border-red-500 rounded-md p-4">
+                <div className="mt-6 bg-red-500/10 border-l-4 border-red-500 rounded-none p-4">
                   <div className="flex items-start">
                     <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0" />
                     <div className="flex-1">
@@ -735,7 +735,7 @@ export default function BookingFlow({
               <button
                 onClick={handleBack}
                 disabled={currentStep === 1 || loading}
-                className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 text-sm md:text-base text-white/70 font-medium rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 text-sm md:text-base text-white/70 font-medium rounded-none hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                 {t('back_button')}
@@ -745,7 +745,7 @@ export default function BookingFlow({
                 {STEPS.map((_, index) => (
                   <div
                     key={index}
-                    className={`w-2 h-2 rounded-full transition-all ${
+                    className={`w-2 h-2 rounded-none transition-all ${
                       index + 1 === currentStep
                         ? 'bg-orange-500 w-8'
                         : index + 1 < currentStep
@@ -760,7 +760,7 @@ export default function BookingFlow({
                 <button
                   onClick={handleNext}
                   disabled={loading}
-                  className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2 text-sm md:text-base bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2 text-sm md:text-base bg-orange-500 text-white font-semibold rounded-none hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {t('next_button')}
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
@@ -789,7 +789,7 @@ export default function BookingFlow({
                     }
                   }}
                   disabled={loading || !formData.agreedToTerms || !formReady}
-                  className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2 text-sm md:text-base bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2 text-sm md:text-base bg-green-500 text-white font-semibold rounded-none hover:bg-green-600 transition-all shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -817,13 +817,13 @@ export default function BookingFlow({
               </h3>
               
               <div className="flex flex-wrap gap-2 mb-4">
-                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs text-white/80">
+                <span className="px-3 py-1 rounded-none bg-white/10 border border-white/10 text-xs text-white/80">
                   {vehicle.year}
                 </span>
-                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs text-white/80">
+                <span className="px-3 py-1 rounded-none bg-white/10 border border-white/10 text-xs text-white/80">
                   {vehicle.transmission}
                 </span>
-                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs text-white/80">
+                <span className="px-3 py-1 rounded-none bg-white/10 border border-white/10 text-xs text-white/80">
                   {vehicle.fuel_type}
                 </span>
               </div>

@@ -7,7 +7,7 @@ export default function BookingFilters({ filter, setFilter, bookings, getFiltere
   ]
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div className="bg-white rounded-none shadow-sm border border-gray-200 mb-6">
       <div className="flex space-x-0 overflow-x-auto">
         {tabs.map((tab) => (
           <button
@@ -20,7 +20,7 @@ export default function BookingFilters({ filter, setFilter, bookings, getFiltere
             }`}
           >
             {tab.label}
-            <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+            <span className={`ml-2 px-2 py-1 rounded-none text-xs ${
               filter === tab.key ? 'bg-orange-200' : 'bg-gray-200'
             }`}>
               {filter === tab.key ? getFilteredBookings().length : tab.count}

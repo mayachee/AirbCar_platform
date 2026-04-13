@@ -358,7 +358,7 @@ export default async function BlogPostPage({ params }) {
                 <Link
                   key={key}
                   href={`/blog/${key}`}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition"
+                  className="bg-white rounded-none shadow-lg overflow-hidden hover:shadow-xl transition"
                 >
                   <img
                     src={relatedPost.image}
@@ -390,7 +390,7 @@ export default async function BlogPostPage({ params }) {
           </p>
           <Link
             href="/search"
-            className="inline-block bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-blue-50 transition"
+            className="inline-block bg-white text-blue-600 px-8 py-4 rounded-none font-bold text-lg hover:bg-blue-50 transition"
           >
             Book Now
           </Link>

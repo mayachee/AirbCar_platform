@@ -27,19 +27,19 @@ export default function HeroSection() {
           We're building a sustainable future where mobility is accessible, affordable, and environmentally conscious.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-1">
+          <button className="bg-white text-orange-600 px-8 py-4 rounded-none font-semibold text-lg hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-1">
             Start Your Journey
           </button>
-          <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-orange-600 transition-all duration-200">
+          <button className="border-2 border-white text-white px-8 py-4 rounded-none font-semibold text-lg hover:bg-white hover:text-orange-600 transition-all duration-200">
             Learn More
           </button>
         </div>
       </div>
       
       {/* Floating elements */}
-      <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-float"></div>
-      <div className="absolute bottom-20 right-10 w-16 h-16 bg-white/10 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute top-1/2 left-1/4 w-12 h-12 bg-white/10 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-none animate-float"></div>
+      <div className="absolute bottom-20 right-10 w-16 h-16 bg-white/10 rounded-none animate-float" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-1/2 left-1/4 w-12 h-12 bg-white/10 rounded-none animate-float" style={{ animationDelay: '2s' }}></div>
     </section>
   );
 }

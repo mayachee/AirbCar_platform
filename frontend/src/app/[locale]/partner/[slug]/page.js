@@ -93,7 +93,7 @@ export default function PartnerPublicProfilePage() {
         <div className="flex items-center justify-center min-h-[80vh]">
           <div className="text-center space-y-4">
             <div className="relative inline-flex">
-              <div className="w-16 h-16 border-4 border-orange-500/30 rounded-full animate-spin border-t-orange-500"></div>
+              <div className="w-16 h-16 border-4 border-orange-500/30 rounded-none animate-spin border-t-orange-500"></div>
             </div>
             <p className="text-gray-400 font-medium animate-pulse">{t('loading')}</p>
           </div>
@@ -109,8 +109,8 @@ export default function PartnerPublicProfilePage() {
         <Header />
         <div className="flex items-center justify-center min-h-[80vh]">
           <div className="text-center max-w-md mx-auto px-4">
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-8">
-              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="bg-white/5 backdrop-blur-sm rounded-none shadow-sm border border-white/10 p-8">
+              <div className="w-16 h-16 bg-red-500/10 rounded-none flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">⚠️</span>
               </div>
               <h2 className="text-xl font-bold text-white mb-2">{t('not_found')}</h2>
@@ -142,8 +142,8 @@ export default function PartnerPublicProfilePage() {
     <div className="min-h-screen bg-[#0F172A] relative overflow-hidden">
       {/* Abstract Background Pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
-        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-none bg-gradient-to-br from-orange-500/20 to-orange-600/20 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-none bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
       </div>
 
@@ -176,13 +176,13 @@ export default function PartnerPublicProfilePage() {
                 {/* Analytics/Stats Card */}
                 <motion.div 
                   variants={itemVariants}
-                  className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
+                  className="bg-white/5 backdrop-blur-sm rounded-none shadow-sm border border-white/10 p-6"
                 >
                   <h2 className="text-xl font-bold text-white mb-4">{t('analytics')}</h2>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-none border border-white/5">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500/10 rounded-lg">
+                        <div className="p-2 bg-orange-500/10 rounded-none">
                           <Car className="h-5 w-5 text-orange-500" />
                         </div>
                         <span className="text-gray-300 font-medium">{t('total_bookings')}</span>
@@ -190,9 +190,9 @@ export default function PartnerPublicProfilePage() {
                       <span className="text-white font-bold">{totalBookings}</span>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-none border border-white/5">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-500/10 rounded-lg">
+                        <div className="p-2 bg-yellow-500/10 rounded-none">
                           <Star className="h-5 w-5 text-yellow-500" />
                         </div>
                         <span className="text-gray-300 font-medium">{t('rating')}</span>
@@ -208,7 +208,7 @@ export default function PartnerPublicProfilePage() {
                 {/* Contact Info Card */}
                 <motion.div 
                   variants={itemVariants}
-                  className="hidden sm:block bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
+                  className="hidden sm:block bg-white/5 backdrop-blur-sm rounded-none shadow-sm border border-white/10 p-6"
                 >
                   <h2 className="text-xl font-bold text-white mb-4">{t('contact_info')}</h2>
                   <div className="space-y-4">
@@ -258,7 +258,7 @@ export default function PartnerPublicProfilePage() {
                 {listings.length > 0 && (
                   <motion.div 
                     variants={itemVariants}
-                    className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-sm border border-white/10 p-6"
+                    className="bg-white/5 backdrop-blur-sm rounded-none shadow-sm border border-white/10 p-6"
                   >
                     <h2 className="text-xl font-bold text-white mb-4">{t('fleet_insights')}</h2>
                     <div className="space-y-4">

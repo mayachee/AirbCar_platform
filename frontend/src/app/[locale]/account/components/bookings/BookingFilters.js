@@ -15,7 +15,7 @@ export default function BookingFilters({ searchTerm, statusFilter, sortBy, onSea
           placeholder={t('bf_search_placeholder')}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
       </div>
       <SelectField
@@ -30,7 +30,7 @@ export default function BookingFilters({ searchTerm, statusFilter, sortBy, onSea
           { value: 'cancelled', label: t('bf_cancelled') },
           { value: 'rejected', label: t('bf_rejected') },
         ]}
-        className="px-4 py-2 rounded-lg"
+        className="px-4 py-2 rounded-none"
       />
       <SelectField
         value={sortBy}
@@ -40,7 +40,7 @@ export default function BookingFilters({ searchTerm, statusFilter, sortBy, onSea
           { value: 'price', label: t('bf_sort_price') },
           { value: 'status', label: t('bf_sort_status') },
         ]}
-        className="px-4 py-2 rounded-lg"
+        className="px-4 py-2 rounded-none"
       />
     </div>
   );

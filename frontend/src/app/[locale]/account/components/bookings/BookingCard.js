@@ -31,7 +31,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700/60 overflow-hidden hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-500/8 transition-all duration-300"
+      className="group relative bg-slate-800/80 backdrop-blur-sm rounded-none border border-slate-700/60 overflow-hidden hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-500/8 transition-all duration-300"
     >
       {/* Top accent line */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-orange-500/0 to-transparent group-hover:via-orange-500/60 transition-all duration-500" />
@@ -52,7 +52,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
 
           {/* Placeholder */}
           <div className={`w-full h-full ${imageUrl ? 'hidden' : 'flex'} flex-row items-center justify-center gap-4 bg-gradient-to-br from-slate-800 to-slate-900`}>
-            <div className="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20">
+            <div className="p-4 rounded-none bg-orange-500/10 border border-orange-500/20">
               <Car className="h-10 w-10 text-orange-400/60" />
             </div>
           </div>
@@ -61,8 +61,8 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
 
           {/* Status badge — inside image, bottom-left */}
           <div className="absolute bottom-3 left-3">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide border backdrop-blur-md ${sc.bg} ${sc.border} ${sc.text}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} animate-pulse`} />
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-none text-[11px] font-bold uppercase tracking-wide border backdrop-blur-md ${sc.bg} ${sc.border} ${sc.text}`}>
+              <span className={`w-1.5 h-1.5 rounded-none ${sc.dot} animate-pulse`} />
               {booking.status}
             </span>
           </div>
@@ -70,7 +70,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
           {/* Days until — top-left */}
           {daysUntil !== null && daysUntil >= 0 && (status === 'pending' || status === 'confirmed') && (
             <div className="absolute top-3 left-3">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-white bg-orange-500 shadow-orange-500/40 shadow-md">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-none text-[11px] font-bold text-white bg-orange-500 shadow-orange-500/40 shadow-md">
                 <Sparkles className="h-3 w-3" />
                 {daysUntil === 0 ? 'Today!' : `${daysUntil}d to go`}
               </span>
@@ -79,7 +79,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
 
           {/* Booking ID — top-right */}
           <div className="absolute top-3 right-3">
-            <span className="text-[11px] font-bold text-white/60 bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg">
+            <span className="text-[11px] font-bold text-white/60 bg-black/50 backdrop-blur-md px-2 py-1 rounded-none">
               #{booking.id}
             </span>
           </div>
@@ -123,7 +123,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
                       setCurrency(CURRENCY_CYCLE[(idx + 1) % CURRENCY_CYCLE.length]);
                     }}
                     title={`Switch currency (${currency})`}
-                    className="flex-shrink-0 p-1 rounded-md bg-slate-700/60 border border-slate-600/40 text-slate-400 hover:text-orange-400 hover:border-orange-500/30 hover:bg-orange-500/10 transition-all"
+                    className="flex-shrink-0 p-1 rounded-none bg-slate-700/60 border border-slate-600/40 text-slate-400 hover:text-orange-400 hover:border-orange-500/30 hover:bg-orange-500/10 transition-all"
                   >
                     <RefreshCw className="h-3 w-3" />
                   </button>
@@ -140,24 +140,24 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
             {/* Vehicle attribute pills — wrapping row */}
             <div className="flex flex-wrap gap-1.5 mt-2.5">
               {duration && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-600/40">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-none border border-slate-600/40">
                   <Clock className="h-3 w-3 text-orange-400" />
                   {duration}d
                 </span>
               )}
               {listing.fuel_type && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-600/40">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-none border border-slate-600/40">
                   <Fuel className="h-3 w-3 text-orange-400" />
                   {listing.fuel_type}
                 </span>
               )}
               {listing.transmission && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-600/40">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-none border border-slate-600/40">
                   {listing.transmission}
                 </span>
               )}
               {listing.seating_capacity && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-600/40">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-700/60 px-2 py-0.5 rounded-none border border-slate-600/40">
                   <Users className="h-3 w-3 text-orange-400" />
                   {listing.seating_capacity} seats
                 </span>
@@ -171,9 +171,9 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
             <div className="flex flex-col sm:flex-row sm:items-stretch gap-2">
 
               {/* Pickup */}
-              <div className="flex-1 flex items-start gap-3 px-3.5 py-3 rounded-xl bg-slate-700/25 border border-slate-600/25">
+              <div className="flex-1 flex items-start gap-3 px-3.5 py-3 rounded-none bg-slate-700/25 border border-slate-600/25">
                 <div className="w-1.5 h-full self-stretch flex flex-col items-center gap-1 flex-shrink-0 pt-1">
-                  <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />
+                  <div className="w-2 h-2 rounded-none bg-orange-500 flex-shrink-0" />
                   <div className="flex-1 w-px bg-orange-500/20 sm:hidden" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -196,9 +196,9 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
               </div>
 
               {/* Return */}
-              <div className="flex-1 flex items-start gap-3 px-3.5 py-3 rounded-xl bg-slate-700/25 border border-slate-600/25">
+              <div className="flex-1 flex items-start gap-3 px-3.5 py-3 rounded-none bg-slate-700/25 border border-slate-600/25">
                 <div className="w-1.5 flex-shrink-0 pt-1">
-                  <div className="w-2 h-2 rounded-full bg-slate-500" />
+                  <div className="w-2 h-2 rounded-none bg-slate-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Return</p>
@@ -225,7 +225,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
 
             {/* Message */}
             {booking.request_message && (
-              <div className="mt-2 p-3 bg-slate-700/20 rounded-xl border border-slate-600/25">
+              <div className="mt-2 p-3 bg-slate-700/20 rounded-none border border-slate-600/25">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Your message</p>
                 <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed line-clamp-2">{booking.request_message}</p>
               </div>
@@ -240,7 +240,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onViewDetails(booking)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-white bg-orange-600 hover:bg-orange-500 rounded-xl shadow-md shadow-orange-600/20 hover:shadow-orange-500/30 transition-all"
+              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-bold text-white bg-orange-600 hover:bg-orange-500 rounded-none shadow-md shadow-orange-600/20 hover:shadow-orange-500/30 transition-all"
             >
               <Eye className="h-4 w-4" />
               View Details
@@ -253,7 +253,7 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onPrint(booking)}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-slate-400 bg-slate-700/50 border border-slate-600/50 rounded-xl hover:bg-slate-700 hover:text-slate-200 transition-all flex-shrink-0"
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-slate-400 bg-slate-700/50 border border-slate-600/50 rounded-none hover:bg-slate-700 hover:text-slate-200 transition-all flex-shrink-0"
               >
                 <Printer className="h-3.5 w-3.5" />
                 Print
@@ -265,14 +265,14 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onCancel(booking.id)}
                   disabled={actionLoading}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/25 rounded-xl hover:bg-red-500/20 hover:border-red-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/25 rounded-none hover:bg-red-500/20 hover:border-red-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {actionLoading ? (
                     <>
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        className="h-3.5 w-3.5 border-2 border-red-400 border-t-transparent rounded-full"
+                        className="h-3.5 w-3.5 border-2 border-red-400 border-t-transparent rounded-none"
                       />
                       Cancelling…
                     </>
@@ -284,12 +284,12 @@ export default function BookingCard({ booking, onViewDetails, onPrint, onCancel,
                   )}
                 </motion.button>
               ) : status === 'completed' ? (
-                <span className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs font-bold text-emerald-400">
+                <span className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-none text-xs font-bold text-emerald-400">
                   <CheckCircle className="h-3.5 w-3.5" />
                   Completed
                 </span>
               ) : status === 'cancelled' ? (
-                <span className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs font-bold text-red-400">
+                <span className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-500/10 border border-red-500/20 rounded-none text-xs font-bold text-red-400">
                   <XCircle className="h-3.5 w-3.5" />
                   Cancelled
                 </span>

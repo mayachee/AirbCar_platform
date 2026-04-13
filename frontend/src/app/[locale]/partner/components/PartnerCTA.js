@@ -10,7 +10,7 @@ export default function PartnerCTA() {
     <section className="py-12 scroll-mt-16">
       <div className="max-w-6xl mx-auto px-4">
         <motion.div
-          className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 backdrop-blur-sm relative overflow-hidden"
+          className="bg-orange-500/5 border border-orange-500/10 rounded-none p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 backdrop-blur-sm relative overflow-hidden"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -26,7 +26,7 @@ export default function PartnerCTA() {
               transition={{ delay: 0.2 }}
               className="flex-shrink-0"
             >
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/20">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-none bg-orange-500/20 flex items-center justify-center border border-orange-500/20">
                 <Handshake className="w-12 h-12 md:w-16 md:h-16 text-orange-500" />
               </div>
             </motion.div>
@@ -69,7 +69,7 @@ export default function PartnerCTA() {
           >
             <motion.a
               href="/auth?mode=signup&role=partner"
-              className="px-6 md:px-8 py-3 md:py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg uppercase text-sm md:text-base flex items-center gap-2 shadow-lg transition-colors"
+              className="px-6 md:px-8 py-3 md:py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-none uppercase text-sm md:text-base flex items-center gap-2 shadow-lg transition-colors"
               whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4)' }}
               whileTap={{ scale: 0.95 }}
             >

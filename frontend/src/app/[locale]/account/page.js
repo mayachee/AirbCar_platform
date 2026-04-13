@@ -67,7 +67,7 @@ function AccountPageContent() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+        <div className="animate-spin rounded-none h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -87,8 +87,8 @@ function AccountPageContent() {
     <div className="min-h-screen bg-[#0F172A] relative overflow-hidden font-sans">
        {/* Abstract Background Pattern */}
        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-orange-500/10 to-orange-600/10 blur-[120px]" />
-        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
+        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-none bg-gradient-to-br from-orange-500/10 to-orange-600/10 blur-[120px]" />
+        <div className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] rounded-none bg-gradient-to-b from-[#0F172A] to-[#0B0F19] blur-[100px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
       </div>
 
@@ -111,7 +111,7 @@ function AccountPageContent() {
             
             {/* Sidebar Navigation */}
             <aside className="lg:w-72 flex-shrink-0">
-                <div className="bg-[#1E293B]/50 backdrop-blur-md border border-white/10 rounded-2xl p-4 sticky top-24">
+                <div className="bg-[#1E293B]/50 backdrop-blur-md border border-white/10 rounded-none p-4 sticky top-24">
                     <nav className="space-y-2">
                         {sidebarItems.map((item) => {
                             const Icon = item.icon;
@@ -120,7 +120,7 @@ function AccountPageContent() {
                                 <button
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-none text-sm font-medium transition-all duration-200 group ${
                                         isActive 
                                         ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' 
                                         : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -137,13 +137,13 @@ function AccountPageContent() {
 
             {/* Main Content Area */}
             <main className="flex-1 min-w-0">
-                <div className="group relative bg-[#1E293B]/50 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden min-h-[600px] border border-white/10 transition-all duration-500 hover:shadow-orange-500/10">
+                <div className="group relative bg-[#1E293B]/50 backdrop-blur-md rounded-none shadow-2xl overflow-hidden min-h-[600px] border border-white/10 transition-all duration-500 hover:shadow-orange-500/10">
                     {/* Decorative Top Gradient */}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500" />
                     
                     {/* Ambient Background Glows */}
-                    <div className="absolute -top-32 -right-32 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -top-32 -right-32 w-64 h-64 bg-orange-500/10 rounded-none blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-500/10 rounded-none blur-3xl pointer-events-none" />
 
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -206,7 +206,7 @@ export default function AccountPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          <div className="animate-spin rounded-none h-12 w-12 border-b-2 border-orange-500"></div>
         </div>
       }
     >

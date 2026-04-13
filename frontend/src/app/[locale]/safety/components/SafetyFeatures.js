@@ -31,7 +31,7 @@ export default function SafetyFeatures() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1, duration: 0.5 }}
-            className="group relative bg-[#1E293B]/40 backdrop-blur-md border border-white/5 p-8 rounded-3xl hover:bg-[#1E293B]/60 transition-all duration-300 overflow-hidden"
+            className="group relative bg-[#1E293B]/40 backdrop-blur-md border border-white/5 p-8 rounded-none hover:bg-[#1E293B]/60 transition-all duration-300 overflow-hidden"
           >
             {/* Hover Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/0 via-orange-500/0 to-orange-500/5 group-hover:from-orange-500/5 group-hover:to-orange-500/10 transition-all duration-500" />

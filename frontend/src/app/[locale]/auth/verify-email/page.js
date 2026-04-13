@@ -165,14 +165,14 @@ function VerifyEmailContent() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, type: "spring" }}
-          className="bg-white rounded-2xl shadow-xl p-8 space-y-6"
+          className="bg-white rounded-none shadow-xl p-8 space-y-6"
         >
           {status === 'verifying' && (
             <div className="text-center space-y-4">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="mx-auto w-16 h-16 border-4 border-orange-200 border-t-orange-500 rounded-full"
+                className="mx-auto w-16 h-16 border-4 border-orange-200 border-t-orange-500 rounded-none"
               />
               <h2 className="text-2xl font-bold text-gray-900">Verifying your email...</h2>
               <p className="text-gray-600">Please wait while we verify your email address.</p>
@@ -190,7 +190,7 @@ function VerifyEmailContent() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center"
+                className="mx-auto w-16 h-16 bg-green-100 rounded-none flex items-center justify-center"
               >
                 <motion.svg
                   initial={{ pathLength: 0 }}
@@ -221,7 +221,7 @@ function VerifyEmailContent() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center"
+                className="mx-auto w-16 h-16 bg-red-100 rounded-none flex items-center justify-center"
               >
                 <svg
                   fill="none"
@@ -237,7 +237,7 @@ function VerifyEmailContent() {
               <div className="pt-4 space-y-2">
                 <button
                   onClick={() => router.push('/auth?mode=signin')}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-none transition-colors"
                 >
                   Go to Sign In
                 </button>
@@ -264,7 +264,7 @@ export default function VerifyEmail() {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-none h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>

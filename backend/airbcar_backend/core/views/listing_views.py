@@ -726,6 +726,35 @@ class ListingListView(APIView):
                         # Return created listing with full details
                         response_serializer = ListingSerializer(listing, context={'request': request})
                         
+                        # Phase 1: Auto-create PartnerPost on new Listing
+                        try:
+                            from ..models import PartnerPost
+                            
+                            # Construct announcement message
+                            car_name = f"{listing.make} {listing.model}"
+                            if listing.year:
+                                car_name = f"{listing.year} {car_name}"
+                                
+                            announcement = f"We just added a stunning {car_name} to our fleet. Now available for your next journey in {listing.location}. Book yours today!"
+                            
+                            # Determine main image
+                            post_image = None
+                            if listing.images and isinstance(listing.images, list) and len(listing.images) > 0:
+                                post_image = listing.images[0]
+                                
+                            PartnerPost.objects.create(
+                                partner=partner,
+                                content=announcement,
+                                post_type="new_car",
+                                image_url=post_image,
+                                linked_listing=listing
+                            )
+                            if settings.DEBUG:
+                                print(f"📢 POST /listings/ - Auto-created PartnerPost for {car_name}")
+                        except Exception as post_error:
+                            if settings.DEBUG:
+                                print(f"⚠️ Warning: Auto-post creation failed: {post_error}")
+
                         # Create notification using a savepoint to avoid breaking the transaction
                         try:
                             from django.db import transaction as tx
@@ -890,6 +919,29 @@ class ListingListView(APIView):
                         if serializer.is_valid():
                             listing = serializer.save()
                             created_listings.append(ListingSerializer(listing).data)
+                            
+                            # Phase 1: Auto-create PartnerPost on new Listing for each bulk creation
+                            try:
+                                from ..models import PartnerPost
+                                car_name = f"{listing.make} {listing.model}"
+                                if listing.year:
+                                    car_name = f"{listing.year} {car_name}"
+                                announcement = f"We just added a stunning {car_name} to our fleet. Now available for your next journey in {listing.location}. Book yours today!"
+                                
+                                post_image = None
+                                if listing.images and isinstance(listing.images, list) and len(listing.images) > 0:
+                                    post_image = listing.images[0]
+                                    
+                                PartnerPost.objects.create(
+                                    partner=partner,
+                                    content=announcement,
+                                    post_type="new_car",
+                                    image_url=post_image,
+                                    linked_listing=listing
+                                )
+                            except Exception as post_error:
+                                pass
+                                
                         else:
                             errors.append({
                                 'index': idx,

@@ -115,7 +115,7 @@ export default function ForgotPassword() {
         </div>
 
         <div className="relative z-10 w-full max-w-md mx-4 lg:mx-0">
-          <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+          <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-none shadow-2xl overflow-hidden border border-white/20">
             <div className="py-10 px-6 sm:px-10">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -147,7 +147,7 @@ export default function ForgotPassword() {
                 </p>
                 <Link
                   href="/auth/signin"
-                  className="inline-flex justify-center w-full py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
+                  className="inline-flex justify-center w-full py-3.5 px-4 border border-transparent rounded-none shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
                 >
                   {t('back_to_signin')}
                 </Link>
@@ -174,7 +174,7 @@ export default function ForgotPassword() {
       </div>
 
       <div className="relative z-10 w-full max-w-md mx-4 lg:mx-0">
-        <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+        <div className="bg-white/10 backdrop-blur-xl backdrop-saturate-150 rounded-none shadow-2xl overflow-hidden border border-white/20">
           <div className="py-10 px-6 sm:px-10">
             {/* Logo */}
             <motion.div
@@ -210,7 +210,7 @@ export default function ForgotPassword() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm whitespace-pre-line"
+                  className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-none text-sm shadow-sm whitespace-pre-line"
                 >
                   {error}
                 </motion.div>
@@ -230,7 +230,7 @@ export default function ForgotPassword() {
                     {...register('email')}
                     type="email"
                     autoComplete="email"
-                    className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
+                    className="block w-full pl-10 pr-3 py-3 border border-white/20 rounded-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 text-sm text-white placeholder-white/50 transition-all bg-white/10 hover:border-white/30"
                     placeholder={t('enter_email')}
                   />
                 </div>
@@ -245,7 +245,7 @@ export default function ForgotPassword() {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02, y: -2 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all overflow-hidden group"
+                  className="relative w-full flex justify-center py-3.5 px-4 border border-transparent rounded-none shadow-lg text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all overflow-hidden group"
                 >
                   {/* Shine effect */}
                   {!isLoading && (
@@ -268,7 +268,7 @@ export default function ForgotPassword() {
                         <motion.div
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-none"
                         />
                         {t('sending')}
                       </>
@@ -280,7 +280,7 @@ export default function ForgotPassword() {
 
                 <Link
                   href="/auth/signin"
-                  className="w-full flex justify-center py-3.5 px-4 border border-white/20 rounded-xl shadow-lg text-sm font-semibold text-white bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
+                  className="w-full flex justify-center py-3.5 px-4 border border-white/20 rounded-none shadow-lg text-sm font-semibold text-white bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all"
                 >
                   {t('back_to_signin')}
                 </Link>

@@ -18,7 +18,7 @@ export default function CEOPage() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* CEO Header */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-white rounded-none shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-blue-800 h-40"></div>
           
           <div className="relative px-6 pb-6">
@@ -27,7 +27,7 @@ export default function CEOPage() {
               <img
                 src={ceo.image}
                 alt={ceo.name}
-                className="w-48 h-48 rounded-lg shadow-lg object-cover border-4 border-white"
+                className="w-48 h-48 rounded-none shadow-lg object-cover border-4 border-white"
               />
               
               <div className="flex-1 pt-12 sm:pt-6">
@@ -40,7 +40,7 @@ export default function CEOPage() {
                   {ceo.email && (
                     <a
                       href={`mailto:${ceo.email}`}
-                      className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                      className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-none hover:bg-blue-700 transition"
                     >
                       Email: {ceo.email}
                     </a>
@@ -50,7 +50,7 @@ export default function CEOPage() {
                       href={ceo.linkedInURL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition"
+                      className="inline-flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-none hover:bg-blue-800 transition"
                     >
                       LinkedIn Profile
                     </a>
@@ -60,7 +60,7 @@ export default function CEOPage() {
                       href={ceo.twitterURL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition"
+                      className="inline-flex items-center gap-2 bg-sky-500 text-white px-4 py-2 rounded-none hover:bg-sky-600 transition"
                     >
                       Twitter
                     </a>
@@ -73,7 +73,7 @@ export default function CEOPage() {
 
         {/* Organization Info */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white rounded-none shadow-lg p-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">About {organization.name}</h3>
             <p className="text-gray-600 leading-relaxed">{organization.description}</p>
             <div className="mt-4 space-y-2 text-sm">
@@ -83,7 +83,7 @@ export default function CEOPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white rounded-none shadow-lg p-6">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Get in Touch</h3>
             <div className="space-y-3">
               <p className="text-gray-600">

@@ -10,7 +10,7 @@ export default function PickupLocation({ vehicle }) {
   const address = vehicle.fullAddress || vehicle.address || vehicle.location || t('location_provided_after_booking')
 
   return (
-    <div className="bg-white/5 rounded-xl border border-white/10 p-6 mb-8 backdrop-blur-sm">
+    <div className="bg-white/5 rounded-none border border-white/10 p-6 mb-8 backdrop-blur-sm">
       <h3 className="text-lg font-semibold text-white mb-4">{t('pickup_return_location')}</h3>
       <div className="flex items-start space-x-3">
         <svg className="w-5 h-5 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

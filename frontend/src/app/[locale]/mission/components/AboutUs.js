@@ -35,8 +35,8 @@ export default function AboutUs() {
     <section className="py-24 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none opacity-20">
-         <div className="absolute top-[20%] left-[10%] w-64 h-64 bg-orange-500/30 rounded-full blur-[80px]" />
-         <div className="absolute bottom-[20%] right-[10%] w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]" />
+         <div className="absolute top-[20%] left-[10%] w-64 h-64 bg-orange-500/30 rounded-none blur-[80px]" />
+         <div className="absolute bottom-[20%] right-[10%] w-64 h-64 bg-blue-500/20 rounded-none blur-[80px]" />
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -66,9 +66,9 @@ export default function AboutUs() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="bg-slate-800/40 backdrop-blur-sm p-6 rounded-2xl border border-slate-700/50 hover:border-orange-500/50 hover:bg-slate-800/60 transition-all group"
+                    className="bg-slate-800/40 backdrop-blur-sm p-6 rounded-none border border-slate-700/50 hover:border-orange-500/50 hover:bg-slate-800/60 transition-all group"
                 >
-                    <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center mb-4 text-orange-500 group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-12 h-12 bg-orange-500/10 rounded-none flex items-center justify-center mb-4 text-orange-500 group-hover:scale-110 transition-transform duration-300">
                         <item.icon size={24} />
                     </div>
                     <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>

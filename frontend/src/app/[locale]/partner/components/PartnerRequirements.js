@@ -41,14 +41,14 @@ export default function PartnerRequirements() {
           {requirements.map((req, i) => (
             <motion.div
               key={i}
-              className="group p-8 bg-white/5 border border-white/10 rounded-2xl shadow-sm hover:shadow-xl hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
+              className="group p-8 bg-white/5 border border-white/10 rounded-none shadow-sm hover:shadow-xl hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
               initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               whileHover={{ y: -5 }}
             >
               <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-orange-500/10 rounded-xl group-hover:bg-orange-500/20 transition-colors border border-orange-500/20">
+                <div className="p-3 bg-orange-500/10 rounded-none group-hover:bg-orange-500/20 transition-colors border border-orange-500/20">
                   <req.icon className="w-8 h-8 text-orange-400" />
                 </div>
                 <h3 className="text-xl font-bold text-white">

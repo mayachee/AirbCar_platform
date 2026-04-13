@@ -86,7 +86,7 @@ export default function TeamContact() {
                     />
                     
                     {/* Subtle Gradient Glow at top right */}
-                    <div className="absolute -top-20 -right-20 w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -top-20 -right-20 w-[600px] h-[600px] bg-orange-500/5 rounded-none blur-3xl pointer-events-none" />
 
                     {/* Decorative Quote Icon */}
                     <div className="absolute top-6 left-6 md:top-12 md:left-12 text-[#2a2d3a] opacity-60 z-0 select-none transform group-hover:scale-110 transition-transform duration-700">
@@ -102,8 +102,8 @@ export default function TeamContact() {
                                         <svg key={i} className="w-4 h-4 md:w-5 md:h-5 text-orange-500 fill-current drop-shadow-[0_0_8px_rgba(249,115,22,0.4)]" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                                     ))}
                                  </div>
-                                 <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold border border-green-500/20 flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                                 <span className="px-3 py-1 rounded-none bg-green-500/10 text-green-400 text-[10px] md:text-xs font-bold border border-green-500/20 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-none bg-green-400 animate-pulse"></span>
                                     Verified
                                  </span>
                              </div>
@@ -115,18 +115,18 @@ export default function TeamContact() {
                                 </h3>
                                 <div className="pt-2 md:pt-4 space-y-4">
                                     <div className="group/email flex items-center gap-3 w-fit cursor-pointer">
-                                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center group-hover/email:bg-orange-500 transition-colors duration-300">
+                                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-none bg-white/5 flex items-center justify-center group-hover/email:bg-orange-500 transition-colors duration-300">
                                             <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-300 group-hover/email:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                         </div>
                                         <span className="text-gray-400 group-hover/email:text-orange-400 transition-colors text-sm md:text-lg font-medium break-all">{member.email}</span>
                                     </div>
                                     
                                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                                        <a href={`tel:${member.phone}`} className="flex items-center justify-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-white/5 to-white/10 hover:from-white/10 hover:to-white/20 text-white font-medium transition-all border border-white/5 hover:border-white/20 active:scale-95 text-sm md:text-base">
+                                        <a href={`tel:${member.phone}`} className="flex items-center justify-center gap-3 px-6 py-3 rounded-none bg-gradient-to-r from-white/5 to-white/10 hover:from-white/10 hover:to-white/20 text-white font-medium transition-all border border-white/5 hover:border-white/20 active:scale-95 text-sm md:text-base">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                                             {member.phone}
                                         </a>
-                                        <a href={member.linkedin} className="flex items-center justify-center gap-3 px-6 py-3 rounded-full bg-[#0077b5] hover:bg-[#006396] text-white font-medium transition-all shadow-lg shadow-blue-900/20 active:scale-95 text-sm md:text-base">
+                                        <a href={member.linkedin} className="flex items-center justify-center gap-3 px-6 py-3 rounded-none bg-[#0077b5] hover:bg-[#006396] text-white font-medium transition-all shadow-lg shadow-blue-900/20 active:scale-95 text-sm md:text-base">
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                                             LinkedIn
                                         </a>

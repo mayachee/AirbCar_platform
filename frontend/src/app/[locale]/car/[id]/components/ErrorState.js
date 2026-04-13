@@ -16,7 +16,7 @@ export default function ErrorState({ error, vehicleId }) {
       <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md">
+          <div className="bg-red-50 border border-red-200 rounded-none p-8 max-w-md">
             <svg
               className="mx-auto h-12 w-12 text-red-500 mb-4"
               fill="none"
@@ -39,13 +39,13 @@ export default function ErrorState({ error, vehicleId }) {
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => router.push('/search')}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                className="px-4 py-2 bg-orange-500 text-white rounded-none hover:bg-orange-600 transition-colors"
               >
                 Back to Search
               </button>
               <button
                 onClick={() => router.push('/')}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-none hover:bg-gray-300 transition-colors"
               >
                 Go Home
               </button>

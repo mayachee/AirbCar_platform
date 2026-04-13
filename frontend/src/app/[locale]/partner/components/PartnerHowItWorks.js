@@ -61,9 +61,9 @@ export default function PartnerHowItWorks() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/10 text-orange-400 text-xs font-semibold mb-6 shadow-sm backdrop-blur-sm"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-none bg-white/10 border border-white/10 text-orange-400 text-xs font-semibold mb-6 shadow-sm backdrop-blur-sm"
           >
-            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-none bg-orange-500 animate-pulse"></span>
             {t('badge')}
           </motion.div>
           <motion.h2 
@@ -98,17 +98,17 @@ export default function PartnerHowItWorks() {
             >
               <div className="flex-1 space-y-8 relative z-10">
                 <div className="flex items-center gap-4 text-orange-400 font-bold tracking-wider text-sm uppercase">
-                  <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-orange-500/20 text-orange-400 shadow-sm border border-orange-500/20">
+                  <span className="flex items-center justify-center w-12 h-12 rounded-none bg-orange-500/20 text-orange-400 shadow-sm border border-orange-500/20">
                     <step.icon className="w-6 h-6" />
                   </span>
-                  <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">{step.accent}</span>
+                  <span className="px-3 py-1 rounded-none bg-white/5 border border-white/10">{step.accent}</span>
                 </div>
                 
                 <div className="space-y-4">
                   <h3 className="text-3xl md:text-4xl font-bold text-white leading-tight">
                     {step.title}
                   </h3>
-                  <div className="w-20 h-1 bg-gradient-to-r from-orange-500 to-orange-200/50 rounded-full" />
+                  <div className="w-20 h-1 bg-gradient-to-r from-orange-500 to-orange-200/50 rounded-none" />
                 </div>
                 
                 <p className="text-lg text-gray-400 leading-relaxed">
@@ -117,7 +117,7 @@ export default function PartnerHowItWorks() {
                 
                 {index === 0 && (
                   <div className="pt-4">
-                    <a href="/auth/signup?role=partner" className="inline-flex items-center px-6 py-3 rounded-lg bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors">
+                    <a href="/auth/signup?role=partner" className="inline-flex items-center px-6 py-3 rounded-none bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors">
                       {t('step_1_cta')} <ArrowRight className="w-4 h-4 ml-2" />
                     </a>
                   </div>
@@ -126,9 +126,9 @@ export default function PartnerHowItWorks() {
               
               <div className="flex-1 w-full relative group">
                  {/* Decorative elements */}
-                <div className={`absolute top-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-orange-500/10 to-blue-500/10 rounded-full blur-3xl -z-10 ${index % 2 === 0 ? '-right-10' : '-left-10'}`} />
+                <div className={`absolute top-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-br from-orange-500/10 to-blue-500/10 rounded-none blur-3xl -z-10 ${index % 2 === 0 ? '-right-10' : '-left-10'}`} />
                 
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 bg-gray-900 transform transition-transform duration-500 hover:scale-[1.02]">
+                <div className="relative rounded-none overflow-hidden shadow-2xl shadow-black/50 border border-white/10 bg-gray-900 transform transition-transform duration-500 hover:scale-[1.02]">
                    <img 
                     src={step.image} 
                     alt={step.title}

@@ -51,13 +51,13 @@ export default function AccountTabs({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className="bg-white rounded-t-xl shadow-sm border-b">
+    <div className="bg-white rounded-none-xl shadow-sm border-b">
       <div className="flex overflow-x-auto gap-2 px-4 sm:px-6 pb-2 -mb-2 snap-x snap-mandatory scrollbar-hide">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`snap-start whitespace-nowrap rounded-lg px-4 py-3 text-sm sm:text-base font-medium transition-all duration-200 flex items-center gap-2 ${
+            className={`snap-start whitespace-nowrap rounded-none px-4 py-3 text-sm sm:text-base font-medium transition-all duration-200 flex items-center gap-2 ${
               activeTab === tab.id
                 ? 'bg-orange-500 text-white shadow-md transform scale-105'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 bg-white'

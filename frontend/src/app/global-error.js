@@ -12,7 +12,7 @@ export default function GlobalError({ error, reset }) {
     <html lang="en">
       <body>
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
+          <div className="max-w-md w-full bg-white shadow-lg rounded-none p-8">
             <div className="text-center">
               <div className="mx-auto h-12 w-12 text-red-600 mb-4">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,13 +28,13 @@ export default function GlobalError({ error, reset }) {
               <div className="space-y-3">
                 <button
                   onClick={reset}
-                  className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                  className="w-full bg-orange-500 text-white px-4 py-2 rounded-none hover:bg-orange-600 transition-colors"
                 >
                   Try again
                 </button>
                 <button
                   onClick={() => window.location.href = '/'}
-                  className="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="w-full border border-gray-300 text-gray-700 px-4 py-2 rounded-none hover:bg-gray-50 transition-colors"
                 >
                   Go to home page
                 </button>

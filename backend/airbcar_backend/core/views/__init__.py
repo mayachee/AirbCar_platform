@@ -154,6 +154,7 @@ try:
         TripPostCommentListView, TripPostCommentDetailView,
         SocialFeedView,
         CommunityImageUploadView,
+        CommunityPostViewSet,
     )
 except Exception as e:
     print(f"Error importing social_views: {e}", file=sys.stderr)
@@ -165,6 +166,7 @@ except Exception as e:
     TripPostCommentListView = TripPostCommentDetailView = None
     SocialFeedView = None
     CommunityImageUploadView = None
+    CommunityPostViewSet = None
 
 # Import admin views from existing admin_views.py
 try:
@@ -183,6 +185,7 @@ __all__ = [
     'TripPostCommentListView', 'TripPostCommentDetailView',
     'SocialFeedView',
     'CommunityImageUploadView',
+    'CommunityPostViewSet',
     # Listings
     'ListingListView', 'ListingDetailView',
     # Bookings

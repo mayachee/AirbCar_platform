@@ -10,11 +10,11 @@ export default function CarSharingSection({ challengeVisible }) {
           <div 
             style={animations.glideIn(challengeVisible, 'left', { duration: '0.8s' })}
           >
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
+            <div className="bg-white rounded-none p-8 shadow-lg">
               <img 
                 src="/public/Background.jpg" 
                 alt="People in a car" 
-                className="w-full h-64 object-cover rounded-xl mb-6"
+                className="w-full h-64 object-cover rounded-none mb-6"
               />
             </div>
           </div>
@@ -31,7 +31,7 @@ export default function CarSharingSection({ challengeVisible }) {
               way to move around cities, reducing congestion and carbon emissions.
             </p>
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-orange-100 rounded-none flex items-center justify-center">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
