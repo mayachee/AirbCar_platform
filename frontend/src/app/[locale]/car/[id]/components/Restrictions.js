@@ -14,16 +14,6 @@ export default function Restrictions({ vehicle }) {
   const companyName = owner?.companyName || owner?.business_name || owner?.businessName || owner?.name || 'Partner'
   const partnerSlug = owner?.slug || owner?.partnerId || owner?.id
 
-  // Debug: Log vehicle data to console (remove in production)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log('🔍 Restrictions Component - Vehicle Data:', {
-      hasVehicle: !!vehicle,
-      hasOwner: !!owner,
-      ownerKeys: owner ? Object.keys(owner) : [],
-      companyName,
-      partnerSlug
-    })
-  }
 
   // Safely get restrictions array
   const restrictions = Array.isArray(vehicle.restrictions) 

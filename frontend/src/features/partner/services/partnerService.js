@@ -357,5 +357,26 @@ export const partnerService = {
   // Partner Activity
   async getActivity() {
     return apiClient.get('/partners/me/activity/')
-  }
+  },
+
+  // Public partner social endpoints
+  async getPartnerPosts(partnerId) {
+    return apiClient.get(`/partners/${partnerId}/posts/`)
+  },
+
+  async getPartnerPublicReviews(partnerId, { page = 1, pageSize = 6 } = {}) {
+    return apiClient.get(`/partners/${partnerId}/reviews/?page=${page}&page_size=${pageSize}`)
+  },
+
+  async getFollowState(partnerId) {
+    return apiClient.get(`/partners/${partnerId}/follow/`)
+  },
+
+  async followPartner(partnerId) {
+    return apiClient.post(`/partners/${partnerId}/follow/`)
+  },
+
+  async unfollowPartner(partnerId) {
+    return apiClient.delete(`/partners/${partnerId}/follow/`)
+  },
 }

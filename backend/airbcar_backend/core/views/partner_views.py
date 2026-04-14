@@ -404,6 +404,49 @@ class PartnerDetailView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class PartnerPublicReviewsView(APIView):
+    """Public reviews for a partner (aggregated across their listings)."""
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        try:
+            partner = Partner.objects.get(pk=pk)
+        except Partner.DoesNotExist:
+            return Response({'error': 'Partner not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            page = int(request.query_params.get('page', 1))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            page_size = int(request.query_params.get('page_size', 6))
+        except (TypeError, ValueError):
+            page_size = 6
+        page = max(page, 1)
+        page_size = max(1, min(page_size, 50))
+
+        reviews = (
+            Review.objects
+            .filter(listing__partner=partner, is_published=True)
+            .select_related('user', 'listing')
+            .order_by('-created_at')
+        )
+        total_count = reviews.count()
+        start = (page - 1) * page_size
+        end = start + page_size
+        reviews = reviews[start:end]
+
+        serializer = ReviewSerializer(reviews, many=True, context={'request': request})
+        return Response({
+            'data': serializer.data,
+            'count': len(serializer.data),
+            'total_count': total_count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': (total_count + page_size - 1) // page_size if total_count > 0 else 0,
+        }, status=status.HTTP_200_OK)
+
+
 class PartnerEarningsView(APIView):
     """Get partner earnings."""
     permission_classes = [IsAuthenticated]

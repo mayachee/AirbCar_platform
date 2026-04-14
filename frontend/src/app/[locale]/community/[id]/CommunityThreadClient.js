@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -66,6 +66,7 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
   const params = useParams()
   const locale = params?.locale || 'en'
   const queryClient = useQueryClient()
+  const textareaRef = useRef(null)
 
   const [commentText, setCommentText] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
@@ -385,6 +386,7 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                     </div>
                   )}
                   <textarea
+                    ref={textareaRef}
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     disabled={commentMutation.isPending}
@@ -474,8 +476,10 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                             <button
                               onClick={() => {
                                 setReplyingTo({ id: comment.id, author: commenterName })
-                                window.scrollTo({ top: document.querySelector('textarea')?.offsetTop - 200, behavior: 'smooth' })
-                                setTimeout(() => document.querySelector('textarea')?.focus(), 500)
+                                if (textareaRef.current) {
+                                  window.scrollTo({ top: textareaRef.current.offsetTop - 200, behavior: 'smooth' })
+                                  setTimeout(() => textareaRef.current?.focus(), 500)
+                                }
                               }}
                               className="flex items-center gap-1.5 text-xs font-bold text-kc-primary hover:bg-kc-primary/10 px-3 py-1.5 rounded-lg transition-colors"
                             >
