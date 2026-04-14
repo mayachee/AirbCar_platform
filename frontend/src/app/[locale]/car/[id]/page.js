@@ -41,11 +41,12 @@ export async function generateMetadata({ params }) {
     vehicle.description ||
     `Rent ${name}${location ? ` in ${location}` : ''} on Airbcar. Verified hosts, transparent pricing, instant booking.`
 
-  const firstImage =
+  const rawImage =
     vehicle.images?.[0]?.image ||
     vehicle.images?.[0]?.url ||
     (typeof vehicle.images?.[0] === 'string' ? vehicle.images[0] : null) ||
     vehicle.image
+  const firstImage = rawImage ? rawImage.replace(/\?$/, '') : null
 
   return {
     title,

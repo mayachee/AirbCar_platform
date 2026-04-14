@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.airbcar.com'),
   title: "Airbcar - Morocco's Premier Car Rental Platform",
   description: "First moroccan Cars rental platform with premium vehicles and professional service",
   openGraph: {
