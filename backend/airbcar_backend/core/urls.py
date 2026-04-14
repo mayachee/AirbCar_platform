@@ -1,265 +1,116 @@
-"""
-URL configuration for core app API endpoints.
-"""
-from django.urls import path
-import sys
-import traceback
-
-# Import views with error handling
-try:
-    from . import views
-except Exception as e:
-    # If views fail to import, create minimal fallback
-    print(f"CRITICAL: Failed to import views module: {e}", file=sys.stderr)
-    traceback.print_exc(file=sys.stderr)
-    import_error_message = str(e)
-    
-    # Create emergency fallback views
-    from rest_framework.views import APIView
-    from rest_framework.response import Response
-    from rest_framework.permissions import AllowAny
-    
-    class EmergencyRootView(APIView):
-        permission_classes = [AllowAny]
-        def get(self, request):
-            return Response({
-                'status': 'error',
-                'message': 'Views module failed to import. Check server logs.',
-                'error': import_error_message or 'Unknown error'
-            }, status=500)
-    
-    # Create a minimal views object
-    class ViewsModule:
-        RootView = EmergencyRootView
-        HealthCheckView = EmergencyRootView
-        LoginView = EmergencyRootView
-        RegisterView = EmergencyRootView
-        serve_media = None
-
-        def __getattr__(self, _name):
-            # Return None for any missing optional view so URL registration doesn't crash.
-            return None
-    
-    views = ViewsModule()
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views
+from .views.telegram_views import TelegramWebhookView, TelegramLinkView
 
 app_name = 'core'
 
-# Helper function to safely add URL patterns only if view exists
-def safe_path(pattern, view, name=None):
-    """Only add URL pattern if view is not None."""
-    if view is not None:
-        return path(pattern, view.as_view(), name=name)
-    return None
+urlpatterns = [
+    # Root & Health
+    path('', views.RootView.as_view(), name='root'),
+    path('api/health/', views.HealthCheckView.as_view(), name='health'),
 
-# Build URL patterns conditionally - only include views that exist
-urlpatterns = []
+    # Auth endpoints
+    path('api/login/', views.LoginView.as_view(), name='login'),
+    path('api/register/', views.RegisterView.as_view(), name='register'),
+    path('api/token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'),
+    path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify-token'),
+    path('api/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
+    path('api/resend-verification/', views.ResendVerificationEmailView.as_view(), name='resend-verification'),
+    path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('api/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('api/auth/google/', views.GoogleAuthView.as_view(), name='google-auth'),
 
-# Root endpoint - CRITICAL, must exist
-if views.RootView is not None:
-    urlpatterns.append(path('', views.RootView.as_view(), name='root'))
-else:
-    # Emergency fallback if RootView failed
-    from rest_framework.views import APIView
-    from rest_framework.response import Response
-    from rest_framework.permissions import AllowAny
-    class EmergencyRootView(APIView):
-        permission_classes = [AllowAny]
-        def get(self, request):
-            return Response({
-                'status': 'error',
-                'message': 'RootView failed to import. Check server logs.',
-                'version': '1.0.0'
-            }, status=500)
-    urlpatterns.append(path('', EmergencyRootView.as_view(), name='root'))
+    # Listings endpoints
+    path('listings/', views.ListingListView.as_view(), name='listing-list'),
+    path('listings/<int:pk>/', views.ListingDetailView.as_view(), name='listing-detail'),
+    path('listings/<int:listing_id>/comments/', getattr(views, 'ListingCommentListView', views.RootView).as_view(), name='listing-comments'),
+    path('listings/<int:listing_id>/comments/<int:comment_id>/', getattr(views, 'ListingCommentDetailView', views.RootView).as_view(), name='listing-comment-detail'),
+    path('listings/<int:listing_id>/reactions/', getattr(views, 'ListingReactionView', views.RootView).as_view(), name='listing-reactions'),
 
-# Health check endpoint - CRITICAL
-if views.HealthCheckView is not None:
-    urlpatterns.append(path('api/health/', views.HealthCheckView.as_view(), name='health'))
+    # Partner social endpoints
+    path('partners/<int:partner_id>/follow/', getattr(views, 'PartnerFollowView', views.RootView).as_view(), name='partner-follow'),
+    path('partners/<int:partner_id>/posts/', getattr(views, 'PartnerPostListView', views.RootView).as_view(), name='partner-posts'),
+    path('partners/<int:partner_id>/posts/<int:post_id>/', getattr(views, 'PartnerPostDetailView', views.RootView).as_view(), name='partner-post-detail'),
 
-# Auth endpoints - CRITICAL
-if views.LoginView is not None:
-    urlpatterns.append(path('api/login/', views.LoginView.as_view(), name='login'))
-if views.RegisterView is not None:
-    urlpatterns.append(path('api/register/', views.RegisterView.as_view(), name='register'))
-if views.RefreshTokenView is not None:
-    urlpatterns.append(path('api/token/refresh/', views.RefreshTokenView.as_view(), name='token-refresh'))
-if views.VerifyTokenView is not None:
-    urlpatterns.append(path('api/verify-token/', views.VerifyTokenView.as_view(), name='verify-token'))
-if views.VerifyEmailView is not None:
-    urlpatterns.append(path('api/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'))
-if views.ResendVerificationEmailView is not None:
-    urlpatterns.append(path('api/resend-verification/', views.ResendVerificationEmailView.as_view(), name='resend-verification'))
-if views.PasswordResetRequestView is not None:
-    urlpatterns.append(path('api/password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset-request'))
-if views.PasswordResetConfirmView is not None:
-    urlpatterns.append(path('api/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'))
-if views.GoogleAuthView is not None:
-    urlpatterns.append(path('api/auth/google/', views.GoogleAuthView.as_view(), name='google-auth'))
+    # User follows
+    path('users/<int:user_id>/follow/', getattr(views, 'UserFollowView', views.RootView).as_view(), name='user-follow'),
 
-# Media file serving
-if views.serve_media is not None:
-    urlpatterns.append(path('media/<path:path>', views.serve_media, name='serve-media'))
+    # Trip posts
+    path('trips/', getattr(views, 'TripPostListView', views.RootView).as_view(), name='trip-post-list'),
+    path('trips/<int:trip_id>/', getattr(views, 'TripPostDetailView', views.RootView).as_view(), name='trip-post-detail'),
+    path('trips/<int:trip_id>/reactions/', getattr(views, 'TripPostReactionView', views.RootView).as_view(), name='trip-post-reactions'),
+    path('trips/<int:trip_id>/comments/', getattr(views, 'TripPostCommentListView', views.RootView).as_view(), name='trip-post-comments'),
+    path('trips/<int:trip_id>/comments/<int:comment_id>/', getattr(views, 'TripPostCommentDetailView', views.RootView).as_view(), name='trip-post-comment-detail'),
 
-# Listings endpoints
-if views.ListingListView is not None:
-    urlpatterns.append(path('listings/', views.ListingListView.as_view(), name='listing-list'))
-if views.ListingDetailView is not None:
-    urlpatterns.append(path('listings/<int:pk>/', views.ListingDetailView.as_view(), name='listing-detail'))
+    # Social feed
+    path('feed/', getattr(views, 'SocialFeedView', views.RootView).as_view(), name='social-feed'),
 
-# Listing social endpoints (comments & reactions)
-if views.ListingCommentListView is not None:
-    urlpatterns.append(path('listings/<int:listing_id>/comments/', views.ListingCommentListView.as_view(), name='listing-comments'))
-if views.ListingCommentDetailView is not None:
-    urlpatterns.append(path('listings/<int:listing_id>/comments/<int:comment_id>/', views.ListingCommentDetailView.as_view(), name='listing-comment-detail'))
-if views.ListingReactionView is not None:
-    urlpatterns.append(path('listings/<int:listing_id>/reactions/', views.ListingReactionView.as_view(), name='listing-reactions'))
+    # Favorites endpoints
+    path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'),
+    path('favorites/my-favorites/', views.MyFavoritesView.as_view(), name='my-favorites'),
+    path('favorites/by-listing/<int:listing_id>/', views.FavoriteDeleteByListingView.as_view(), name='favorite-delete-by-listing'),
+    path('favorites/<int:pk>/', views.FavoriteDetailView.as_view(), name='favorite-detail'),
 
-# Partner social endpoints (follow & posts)
-if views.PartnerFollowView is not None:
-    urlpatterns.append(path('partners/<int:partner_id>/follow/', views.PartnerFollowView.as_view(), name='partner-follow'))
-if views.PartnerPostListView is not None:
-    urlpatterns.append(path('partners/<int:partner_id>/posts/', views.PartnerPostListView.as_view(), name='partner-posts'))
-if views.PartnerPostDetailView is not None:
-    urlpatterns.append(path('partners/<int:partner_id>/posts/<int:post_id>/', views.PartnerPostDetailView.as_view(), name='partner-post-detail'))
+    # Users endpoints
+    path('users/', views.UserListView.as_view(), name='user-list'),
+    path('users/me/', views.UserMeView.as_view(), name='user-me'),
+    path('users/me/stats/', views.UserStatsView.as_view(), name='user-stats'),
+    path('users/me/change-password/', views.ChangePasswordView.as_view(), name='change-password'),
+    path('users/me/upload-document/', views.UserDocumentUploadView.as_view(), name='user-document-upload'),
+    path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
 
-# User follows
-if views.UserFollowView is not None:
-    urlpatterns.append(path('users/<int:user_id>/follow/', views.UserFollowView.as_view(), name='user-follow'))
+    # Bookings endpoints
+    path('bookings/', getattr(views, 'BookingListView', views.RootView).as_view(), name='booking-list'),
+    path('bookings/pending-requests/', getattr(views, 'BookingPendingRequestsView', views.RootView).as_view(), name='booking-pending-requests'),
+    path('bookings/upcoming/', getattr(views, 'BookingUpcomingView', views.RootView).as_view(), name='booking-upcoming'),
+    path('bookings/<int:pk>/accept/', getattr(views, 'BookingAcceptView', views.RootView).as_view(), name='booking-accept'),
+    path('bookings/<int:pk>/reject/', getattr(views, 'BookingRejectView', views.RootView).as_view(), name='booking-reject'),
+    path('bookings/<int:pk>/cancel/', getattr(views, 'BookingCancelView', views.RootView).as_view(), name='booking-cancel'),
+    path('bookings/<int:pk>/', getattr(views, 'BookingDetailView', views.RootView).as_view(), name='booking-detail'),
+    path('bookings/<int:booking_id>/customer-info/', getattr(views, 'PartnerCustomerInfoView', views.RootView).as_view(), name='booking-customer-info'),
 
-# Trip posts
-if views.TripPostListView is not None:
-    urlpatterns.append(path('trips/', views.TripPostListView.as_view(), name='trip-post-list'))
-if views.TripPostDetailView is not None:
-    urlpatterns.append(path('trips/<int:trip_id>/', views.TripPostDetailView.as_view(), name='trip-post-detail'))
-if views.TripPostReactionView is not None:
-    urlpatterns.append(path('trips/<int:trip_id>/reactions/', views.TripPostReactionView.as_view(), name='trip-post-reactions'))
-if views.TripPostCommentListView is not None:
-    urlpatterns.append(path('trips/<int:trip_id>/comments/', views.TripPostCommentListView.as_view(), name='trip-post-comments'))
-if views.TripPostCommentDetailView is not None:
-    urlpatterns.append(path('trips/<int:trip_id>/comments/<int:comment_id>/', views.TripPostCommentDetailView.as_view(), name='trip-post-comment-detail'))
+    # Partners endpoints
+    path('partners/', getattr(views, 'PartnerListView', views.RootView).as_view(), name='partner-list'),
+    path('partners/me/', getattr(views, 'PartnerMeView', views.RootView).as_view(), name='partner-me'),
+    path('partners/me/earnings/', getattr(views, 'PartnerEarningsView', views.RootView).as_view(), name='partner-earnings'),
+    path('partners/me/analytics/', getattr(views, 'PartnerAnalyticsView', views.RootView).as_view(), name='partner-analytics'),
+    path('partners/me/reviews/', getattr(views, 'PartnerReviewsView', views.RootView).as_view(), name='partner-reviews'),
+    path('partners/me/activity/', getattr(views, 'PartnerActivityView', views.RootView).as_view(), name='partner-activity'),
+    path('partners/<int:pk>/', getattr(views, 'PartnerDetailView', views.RootView).as_view(), name='partner-detail'),
 
-# Social feed
-if views.SocialFeedView is not None:
-    urlpatterns.append(path('feed/', views.SocialFeedView.as_view(), name='social-feed'))
+    # Reviews endpoints
+    path('reviews/', getattr(views, 'ReviewListView', views.RootView).as_view(), name='review-list'),
+    path('reviews/can_review/', getattr(views, 'CanReviewView', views.RootView).as_view(), name='can-review'),
+    path('reviews/analytics/', getattr(views, 'ReviewAnalyticsView', views.RootView).as_view(), name='review-analytics'),
+    path('reviews/<int:pk>/', getattr(views, 'ReviewDetailView', views.RootView).as_view(), name='review-detail'),
+    path('reviews/<int:pk>/vote/', getattr(views, 'ReviewVoteView', views.RootView).as_view(), name='review-vote'),
+    path('reviews/<int:pk>/respond/', getattr(views, 'ReviewRespondView', views.RootView).as_view(), name='review-respond'),
+    path('reviews/<int:pk>/publish/', getattr(views, 'ReviewPublishView', views.RootView).as_view(), name='review-publish'),
+    path('reviews/<int:pk>/report/', getattr(views, 'ReviewReportView', views.RootView).as_view(), name='review-report'),
+    path('reviews/<int:pk>/replies/', getattr(views, 'ReviewReplyListView', views.RootView).as_view(), name='review-replies'),
+    path('reviews/<int:pk>/replies/<int:reply_id>/', getattr(views, 'ReviewReplyDetailView', views.RootView).as_view(), name='review-reply-detail'),
+    path('reviews/<int:pk>/react/', getattr(views, 'ReviewReactionView', views.RootView).as_view(), name='review-react'),
 
-# Community image upload
-if views.CommunityImageUploadView is not None:
-    urlpatterns.append(path('api/community/upload-image/', views.CommunityImageUploadView.as_view(), name='community-image-upload'))
+    # Notification endpoints
+    path('notifications/', getattr(views, 'NotificationListView', views.RootView).as_view(), name='notification-list'),
+    path('notifications/<int:pk>/read/', getattr(views, 'MarkNotificationReadView', views.RootView).as_view(), name='notification-read'),
+    path('notifications/read-all/', getattr(views, 'MarkAllNotificationsReadView', views.RootView).as_view(), name='notification-read-all'),
 
-if views.CommunityPostViewSet is not None:
-    from rest_framework.routers import DefaultRouter
+    # Newsletter
+    path('api/newsletter/subscribe/', getattr(views, 'NewsletterSubscribeView', views.RootView).as_view(), name='newsletter-subscribe'),
+
+    # Admin endpoints
+    path('api/admin/stats/', getattr(views, 'AdminStatsView', views.RootView).as_view(), name='admin-stats'),
+    path('api/admin/analytics/', getattr(views, 'AdminAnalyticsView', views.RootView).as_view(), name='admin-analytics'),
+    path('api/admin/revenue/', getattr(views, 'AdminRevenueView', views.RootView).as_view(), name='admin-revenue'),
+
+    # Telegram bot endpoints
+    path('api/telegram/webhook/', TelegramWebhookView.as_view(), name='telegram-webhook'),
+    path('api/telegram/link/', TelegramLinkView.as_view(), name='telegram-link'),
+]
+
+if getattr(views, 'CommunityPostViewSet', None):
     router = DefaultRouter()
     router.register(r'community-posts', views.CommunityPostViewSet, basename='community-post')
     urlpatterns.extend(router.urls)
-
-# Favorites endpoints
-if views.FavoriteListView is not None:
-    urlpatterns.append(path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'))
-if views.MyFavoritesView is not None:
-    urlpatterns.append(path('favorites/my-favorites/', views.MyFavoritesView.as_view(), name='my-favorites'))
-if views.FavoriteDeleteByListingView is not None:
-    urlpatterns.append(path('favorites/by-listing/<int:listing_id>/', views.FavoriteDeleteByListingView.as_view(), name='favorite-delete-by-listing'))
-if views.FavoriteDetailView is not None:
-    urlpatterns.append(path('favorites/<int:pk>/', views.FavoriteDetailView.as_view(), name='favorite-detail'))
-
-# Users endpoints
-if views.UserListView is not None:
-    urlpatterns.append(path('users/', views.UserListView.as_view(), name='user-list'))
-if views.UserMeView is not None:
-    urlpatterns.append(path('users/me/', views.UserMeView.as_view(), name='user-me'))
-if views.UserStatsView is not None:
-    urlpatterns.append(path('users/me/stats/', views.UserStatsView.as_view(), name='user-stats'))
-if views.ChangePasswordView is not None:
-    urlpatterns.append(path('users/me/change-password/', views.ChangePasswordView.as_view(), name='change-password'))
-if views.UserDocumentUploadView is not None:
-    urlpatterns.append(path('users/me/upload-document/', views.UserDocumentUploadView.as_view(), name='user-document-upload'))
-if views.UserDetailView is not None:
-    urlpatterns.append(path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'))
-
-# Bookings endpoints
-if views.BookingListView is not None:
-    urlpatterns.append(path('bookings/', views.BookingListView.as_view(), name='booking-list'))
-if views.BookingPendingRequestsView is not None:
-    urlpatterns.append(path('bookings/pending-requests/', views.BookingPendingRequestsView.as_view(), name='booking-pending-requests'))
-if views.BookingUpcomingView is not None:
-    urlpatterns.append(path('bookings/upcoming/', views.BookingUpcomingView.as_view(), name='booking-upcoming'))
-if views.BookingAcceptView is not None:
-    urlpatterns.append(path('bookings/<int:pk>/accept/', views.BookingAcceptView.as_view(), name='booking-accept'))
-if views.BookingRejectView is not None:
-    urlpatterns.append(path('bookings/<int:pk>/reject/', views.BookingRejectView.as_view(), name='booking-reject'))
-if views.BookingCancelView is not None:
-    urlpatterns.append(path('bookings/<int:pk>/cancel/', views.BookingCancelView.as_view(), name='booking-cancel'))
-if views.BookingDetailView is not None:
-    urlpatterns.append(path('bookings/<int:pk>/', views.BookingDetailView.as_view(), name='booking-detail'))
-if views.PartnerCustomerInfoView is not None:
-    urlpatterns.append(path('bookings/<int:booking_id>/customer-info/', views.PartnerCustomerInfoView.as_view(), name='booking-customer-info'))
-
-# Partners endpoints
-if views.PartnerListView is not None:
-    urlpatterns.append(path('partners/', views.PartnerListView.as_view(), name='partner-list'))
-if views.PartnerMeView is not None:
-    urlpatterns.append(path('partners/me/', views.PartnerMeView.as_view(), name='partner-me'))
-if views.PartnerEarningsView is not None:
-    urlpatterns.append(path('partners/me/earnings/', views.PartnerEarningsView.as_view(), name='partner-earnings'))
-if views.PartnerAnalyticsView is not None:
-    urlpatterns.append(path('partners/me/analytics/', views.PartnerAnalyticsView.as_view(), name='partner-analytics'))
-if views.PartnerReviewsView is not None:
-    urlpatterns.append(path('partners/me/reviews/', views.PartnerReviewsView.as_view(), name='partner-reviews'))
-if views.PartnerActivityView is not None:
-    urlpatterns.append(path('partners/me/activity/', views.PartnerActivityView.as_view(), name='partner-activity'))
-if views.PartnerDetailView is not None:
-    urlpatterns.append(path('partners/<int:pk>/', views.PartnerDetailView.as_view(), name='partner-detail'))
-
-# Reviews endpoints
-if views.ReviewListView is not None:
-    urlpatterns.append(path('reviews/', views.ReviewListView.as_view(), name='review-list'))
-if views.CanReviewView is not None:
-    urlpatterns.append(path('reviews/can_review/', views.CanReviewView.as_view(), name='can-review'))
-if views.ReviewAnalyticsView is not None:
-    urlpatterns.append(path('reviews/analytics/', views.ReviewAnalyticsView.as_view(), name='review-analytics'))
-if views.ReviewDetailView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/', views.ReviewDetailView.as_view(), name='review-detail'))
-if views.ReviewVoteView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/vote/', views.ReviewVoteView.as_view(), name='review-vote'))
-if views.ReviewRespondView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/respond/', views.ReviewRespondView.as_view(), name='review-respond'))
-if views.ReviewPublishView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/publish/', views.ReviewPublishView.as_view(), name='review-publish'))
-if views.ReviewReportView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/report/', views.ReviewReportView.as_view(), name='review-report'))
-if views.ReviewReplyListView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/replies/', views.ReviewReplyListView.as_view(), name='review-replies'))
-if views.ReviewReplyDetailView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/replies/<int:reply_id>/', views.ReviewReplyDetailView.as_view(), name='review-reply-detail'))
-if views.ReviewReactionView is not None:
-    urlpatterns.append(path('reviews/<int:pk>/react/', views.ReviewReactionView.as_view(), name='review-react'))
-
-# Notification endpoints
-if views.NotificationListView is not None:
-    urlpatterns.append(path('notifications/', views.NotificationListView.as_view(), name='notification-list'))
-if views.MarkNotificationReadView is not None:
-    urlpatterns.append(path('notifications/<int:pk>/read/', views.MarkNotificationReadView.as_view(), name='notification-read'))
-if views.MarkAllNotificationsReadView is not None:
-    urlpatterns.append(path('notifications/read-all/', views.MarkAllNotificationsReadView.as_view(), name='notification-read-all'))
-
-# Newsletter
-if views.NewsletterSubscribeView is not None:
-    urlpatterns.append(path('api/newsletter/subscribe/', views.NewsletterSubscribeView.as_view(), name='newsletter-subscribe'))
-
-# Admin endpoints (use api/admin/ to avoid collision with Django's built-in /admin/ site)
-if views.AdminStatsView is not None:
-    urlpatterns.append(path('api/admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'))
-if views.AdminAnalyticsView is not None:
-    urlpatterns.append(path('api/admin/analytics/', views.AdminAnalyticsView.as_view(), name='admin-analytics'))
-if views.AdminRevenueView is not None:
-    urlpatterns.append(path('api/admin/revenue/', views.AdminRevenueView.as_view(), name='admin-revenue'))
-
-# Telegram bot endpoints
-try:
-    from .views.telegram_views import TelegramWebhookView, TelegramLinkView
-    urlpatterns.append(path('api/telegram/webhook/', TelegramWebhookView.as_view(), name='telegram-webhook'))
-    urlpatterns.append(path('api/telegram/link/', TelegramLinkView.as_view(), name='telegram-link'))
-except Exception as _tg_err:
-    import sys
-    print(f"WARNING: Telegram views failed to load: {_tg_err}", file=sys.stderr)
-

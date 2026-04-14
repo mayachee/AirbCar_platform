@@ -167,8 +167,8 @@ export class VehicleService {
     return apiClient.get(`/listings/${vehicleId}/comments/`);
   }
 
-  async addVehicleComment(vehicleId: number, comment: string) {
-    return apiClient.post(`/listings/${vehicleId}/comments/`, { comment });
+  async addVehicleComment(vehicleId: number, content: string) {
+    return apiClient.post(`/listings/${vehicleId}/comments/`, { content });
   }
 
   async getVehicleReactions(vehicleId: number) {
