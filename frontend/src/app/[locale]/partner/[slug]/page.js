@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Star, MapPin, TrendingUp, Sparkles, Calendar, Phone, Mail, Car, Award } from 'lucide-react'
+import { Star, MapPin, TrendingUp, Sparkles, Calendar, Phone, Mail, Car, Award, Share2, Heart, MessageCircle, Bookmark, Settings, Bolt } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'

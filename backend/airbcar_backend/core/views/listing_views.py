@@ -1000,7 +1000,12 @@ class ListingDetailView(APIView):
                 }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
             try:
-                listing = Listing.objects.select_related('partner', 'partner__user').get(pk=pk)
+                listing = (
+                    Listing.objects
+                    .select_related('partner', 'partner__user')
+                    .prefetch_related('reviews', 'favorited_by')
+                    .get(pk=pk)
+                )
             except Listing.DoesNotExist:
                 return Response({
                     'error': 'Listing not found'

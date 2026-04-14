@@ -1,18 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { Heart, MessageSquare, Share2, Send, Pin } from 'lucide-react'
+import { Heart, MessageSquare, Share2, Send, Pin, ArrowRight } from 'lucide-react'
 import { listingsService } from '@/services/api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 export default function VehicleThread({ vehicle }) {
   const t = useTranslations('car_details')
   const queryClient = useQueryClient()
+  const params = useParams()
+  const locale = params?.locale || 'en'
   const [commentText, setCommentText] = useState('')
 
   const vehicleId = vehicle?.id
   const partner = vehicle?.partner
+  const threadHref = vehicleId ? `/${locale}/community/${vehicleId}` : null
 
   // Fetch reactions
   const { data: reactionsData } = useQuery({
@@ -77,6 +82,14 @@ export default function VehicleThread({ vehicle }) {
         </div>
 
         <div className="flex items-center justify-between">
+          {threadHref && (
+            <Link
+              href={threadHref}
+              className="absolute -top-3 left-6 bg-white border border-gray-200 text-gray-700 hover:text-[#ea580c] hover:border-[#ea580c] text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-sm flex items-center gap-1 transition-colors"
+            >
+              Open thread <ArrowRight className="w-3 h-3" />
+            </Link>
+          )}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 shadow-sm border-2 border-white">
                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${hostName}`} alt={hostName} className="w-full h-full object-cover" />
@@ -163,6 +176,19 @@ export default function VehicleThread({ vehicle }) {
           )
         })}
       </div>
+
+      {/* View full thread CTA */}
+      {threadHref && (
+        <div className="flex justify-center pt-2">
+          <Link
+            href={threadHref}
+            className="group inline-flex items-center gap-2 text-sm font-bold text-[#ea580c] hover:text-[#c2410a] transition-colors"
+          >
+            <span>View full thread</span>
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+      )}
 
       {/* Input box bottom */}
       <div className="pt-8 flex justify-center">

@@ -20,8 +20,7 @@ export function useVehicleData(vehicleId) {
         setLoading(true)
         setError(null)
         
-        // Increase timeout to 90 seconds for vehicle details (backend may be slow)
-        const response = await apiClient.get(`/listings/${vehicleId}/`, undefined, { timeout: 90000 })
+        const response = await apiClient.get(`/listings/${vehicleId}/`, undefined, { timeout: 15000 })
         
         // Handle different response structures
         const vehicleData = response?.data?.data || response?.data || response
