@@ -18,6 +18,8 @@ import {
   Menu,
   MessageCircle,
   Star,
+  Reply,
+  X,
 } from 'lucide-react'
 import { listingsService } from '@/services/api'
 
@@ -66,6 +68,7 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
   const queryClient = useQueryClient()
 
   const [commentText, setCommentText] = useState('')
+  const [replyingTo, setReplyingTo] = useState(null)
 
   const { data: vehicleData } = useQuery({
     queryKey: ['listingDetail', vehicleId],
@@ -121,10 +124,11 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
   })
 
   const commentMutation = useMutation({
-    mutationFn: (text) => listingsService.addVehicleComment(vehicleId, text),
+    mutationFn: ({ text, parentId }) => listingsService.addVehicleComment(vehicleId, text, parentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicleComments', vehicleId] })
       setCommentText('')
+      setReplyingTo(null)
     },
   })
 
@@ -135,7 +139,7 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
   const handlePostComment = () => {
     const text = commentText.trim()
     if (!text) return
-    commentMutation.mutate(text)
+    commentMutation.mutate({ text, parentId: replyingTo?.id })
   }
 
   const handleShare = async () => {
@@ -368,13 +372,24 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                 <div className="hidden sm:flex h-10 w-10 rounded-full bg-kc-surface-container-high shrink-0 overflow-hidden border border-kc-outline-variant/30 items-center justify-center text-kc-on-surface-variant">
                   <MessageCircle className="w-5 h-5" />
                 </div>
-                <div className="flex-grow space-y-4">
+                <div className="flex-grow flex flex-col gap-3">
+                  {replyingTo && (
+                    <div className="flex items-center justify-between bg-kc-secondary-container text-kc-on-secondary-container px-4 py-2 rounded-xl text-sm font-bold w-max shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <Reply className="w-4 h-4 opacity-70" />
+                        <span>Replying to {replyingTo.author}</span>
+                      </div>
+                      <button onClick={() => setReplyingTo(null)} className="ml-4 p-1 hover:bg-black/10 rounded-md transition-colors" title="Cancel reply">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     disabled={commentMutation.isPending}
-                    className="w-full bg-kc-surface-container-lowest border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-kc-primary-container/40 outline-none transition-all min-h-[100px] resize-none text-kc-on-surface placeholder:text-kc-on-surface-variant/50"
-                    placeholder="Share your experience or ask about this vehicle..."
+                    className="w-full bg-kc-surface-container-lowest border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-kc-primary-container/40 outline-none transition-all min-h-[100px] resize-none text-kc-on-surface placeholder:text-kc-on-surface-variant/50 shadow-inner"
+                    placeholder={replyingTo ? "Write your reply..." : "Share your experience or ask about this vehicle..."}
                   />
                   <div className="flex justify-between items-center">
                     {commentMutation.isError && (
@@ -455,13 +470,64 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                           <p className="text-sm text-kc-on-surface-variant leading-relaxed whitespace-pre-wrap">
                             {comment.content}
                           </p>
-                          <div className="mt-4 flex items-center gap-4">
-                            <button className="flex items-center gap-1 text-[10px] font-bold text-kc-on-surface-variant opacity-60 hover:opacity-100 transition-opacity">
-                              <ThumbsUp className="w-3 h-3" />{' '}
-                              {comment.likes_count || 0}
+                          <div className="mt-4 pt-4 border-t border-kc-outline-variant/10 flex items-center justify-between">
+                            <button
+                              onClick={() => {
+                                setReplyingTo({ id: comment.id, author: commenterName })
+                                window.scrollTo({ top: document.querySelector('textarea')?.offsetTop - 200, behavior: 'smooth' })
+                                setTimeout(() => document.querySelector('textarea')?.focus(), 500)
+                              }}
+                              className="flex items-center gap-1.5 text-xs font-bold text-kc-primary hover:bg-kc-primary/10 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              <Reply className="w-4 h-4" /> Reply
                             </button>
+                            <div className="flex gap-4">
+                              <span className="text-[10px] font-bold text-kc-on-surface-variant/40 flex items-center gap-1">
+                                <ThumbsUp className="w-3 h-3" /> {comment.likes_count || 0}
+                              </span>
+                            </div>
                           </div>
                         </div>
+
+                        {/* RENDER REPLIES */}
+                        {comment.replies && comment.replies.length > 0 && (
+                          <div className="mt-4 space-y-4 pl-4 sm:pl-6 border-l-2 border-kc-outline-variant/20">
+                            {comment.replies.map((reply) => {
+                              const isReplyHost = reply.user?.id && partner?.user?.id && reply.user.id === partner.user.id
+                              const replyAuthor = getUserDisplayName(reply.user)
+                              const replyAvatar = reply.user?.profile_picture_url || reply.user?.profile_picture || null
+
+                              return (
+                                <div key={reply.id} className="flex gap-3 h-auto">
+                                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full shrink-0 overflow-hidden ring-2 ring-background flex items-center justify-center text-xs font-bold uppercase bg-kc-surface-container-highest text-kc-on-surface">
+                                    {replyAvatar ? (
+                                      <img alt={replyAuthor} src={replyAvatar} className="w-full h-full object-cover" />
+                                    ) : (
+                                      getUserInitial(reply.user)
+                                    )}
+                                  </div>
+                                  <div className="flex-grow bg-kc-surface-container-lowest p-4 sm:p-5 rounded-2xl rounded-tl-none shadow-sm">
+                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                      <span className="text-sm font-bold text-kc-on-surface">{replyAuthor}</span>
+                                      {isReplyHost && (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-kc-primary-container/10 text-kc-primary rounded flex items-center gap-1">
+                                          <BadgeCheck className="w-3 h-3" />
+                                          Host
+                                        </span>
+                                      )}
+                                      <span className="text-[10px] text-kc-on-surface-variant opacity-50 font-bold uppercase tracking-widest ml-auto">
+                                        {formatRelative(reply.created_at)}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-kc-on-surface-variant leading-relaxed whitespace-pre-wrap">
+                                      {reply.content}
+                                    </p>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )

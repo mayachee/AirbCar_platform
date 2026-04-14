@@ -167,8 +167,10 @@ export class VehicleService {
     return apiClient.get(`/listings/${vehicleId}/comments/`);
   }
 
-  async addVehicleComment(vehicleId: number, content: string) {
-    return apiClient.post(`/listings/${vehicleId}/comments/`, { content });
+async addVehicleComment(vehicleId: number, content: string, parentId?: number) {
+    const payload: any = { content };
+    if (parentId) payload.parent_id = parentId;
+    return apiClient.post(`/listings/${vehicleId}/comments/`, payload);
   }
 
   async getVehicleReactions(vehicleId: number) {

@@ -78,7 +78,7 @@ function CarDetailsContent({ initialVehicle }) {
     const { total } = calculateTotalPrice(price, searchDetails.duration, securityDeposit)
     const bookingUrl = buildBookingUrl({
       vehicleId: String(vehicleId),
-      searchDetails,
+      searchDetails: { ...searchDetails, locale: params.locale },
       totalPrice: total
     })
 
@@ -94,11 +94,11 @@ function CarDetailsContent({ initialVehicle }) {
   }
 
   const handleModifySearch = () => {
-    router.push(buildSearchUrl(searchDetails))
+    router.push(buildSearchUrl({ ...searchDetails, locale: params.locale }))
   }
 
   const handleChangeDates = () => {
-    router.push(buildSearchUrl(searchDetails))
+    router.push(buildSearchUrl({ ...searchDetails, locale: params.locale }))
   }
 
   if (loading && !initialVehicle) {

@@ -39,7 +39,8 @@ export function buildBookingUrl({ vehicleId, searchDetails, totalPrice }) {
   }
   
   const queryString = params.toString()
-  return `/booking${queryString ? `?${queryString}` : ''}`
+  const locale = searchDetails?.locale || 'en'
+  return `/${locale}/booking${queryString ? `?${queryString}` : ''}`
 }
 
 /**
@@ -47,14 +48,14 @@ export function buildBookingUrl({ vehicleId, searchDetails, totalPrice }) {
  */
 export function buildSearchUrl(searchDetails) {
   const params = new URLSearchParams()
-  
-  if (searchDetails.location) params.append('location', searchDetails.location)
+
+  if (searchDetails.location) params.append('location', searchDetails.location) 
   if (searchDetails.pickupDate) params.append('pickup_date', searchDetails.pickupDate)
   if (searchDetails.returnDate) params.append('return_date', searchDetails.returnDate)
   if (searchDetails.pickupTime) params.append('pickup_time', searchDetails.pickupTime)
   if (searchDetails.returnTime) params.append('return_time', searchDetails.returnTime)
-  
-  const queryString = params.toString()
-  return `/search${queryString ? `?${queryString}` : ''}`
-}
 
+  const queryString = params.toString()
+  const locale = searchDetails?.locale || 'en'
+  return `/${locale}/search${queryString ? `?${queryString}` : ''}`
+}

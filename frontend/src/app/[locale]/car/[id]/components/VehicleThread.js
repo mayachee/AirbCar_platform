@@ -170,7 +170,7 @@ export default function VehicleThread({ vehicle }) {
                   </div>
                   <span className="text-xs font-medium text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</span>
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed">{comment.comment}</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{comment.content || comment.comment}</p>
               </div>
             </div>
           )

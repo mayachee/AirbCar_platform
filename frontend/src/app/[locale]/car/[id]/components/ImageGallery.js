@@ -2,10 +2,13 @@
 
 import { useTranslations } from 'next-intl';
 import { Heart, Share2, MapPin, Star, Maximize } from 'lucide-react';
+import { useFavorites } from '@/features/search/hooks/useFavorites';
 
 export default function ImageGallery({ vehicle, onShowFullGallery }) {
   const t = useTranslations('car_details');
-  const mainImage = vehicle?.images?.[0] || "/api/placeholder/1200/800";
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isFav = vehicle?.id ? isFavorite(vehicle.id) : false;
+  const mainImage = vehicle?.images?.[0]?.image || vehicle?.images?.[0] || "/api/placeholder/1200/800";
   const numExtraImages = Math.max(0, (vehicle?.images?.length || 0) - 3);
 
   return (
@@ -21,8 +24,15 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
 
         {/* Floating Minimal Controls */}
         <div className="absolute top-6 right-6 flex gap-2">
-          <button className="w-12 h-12 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-white transition-all shadow-lg border border-white/40">
-            <Heart className="w-5 h-5 text-[#9d4300]" />
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (vehicle?.id) toggleFavorite(vehicle.id);
+            }}
+            className="w-12 h-12 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-white transition-all shadow-lg border border-white/40"
+          >
+            <Heart className={`w-5 h-5 transition-colors ${isFav ? 'fill-[#9d4300] text-[#9d4300]' : 'text-[#9d4300]'}`} />
           </button>
           <button className="w-12 h-12 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-white transition-all shadow-lg border border-white/40">
             <Share2 className="w-5 h-5 text-[#9d4300]" />
@@ -58,9 +68,10 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
       <div className="absolute bottom-6 right-6 flex gap-4 items-center">
         <div className="hidden md:flex gap-3 p-2 bg-black/30 backdrop-blur-xl rounded-2xl border border-white/10">
           {[0, 1, 2].map((idx) => {
-            const img = vehicle?.images?.[idx] || `/api/placeholder/200/200?text=${idx + 1}`;
+            const imgObj = vehicle?.images?.[idx];
+            const img = imgObj?.image || imgObj?.url || (typeof imgObj === 'string' ? imgObj : null) || `/api/placeholder/200/200?text=${idx + 1}`;
             return (
-              <div 
+              <div
                 key={idx}
                 className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer group/thumb transition-all ${idx === 0 ? 'outline outline-3 outline-offset-2 outline-[#9d4300]' : 'opacity-70 hover:opacity-100'}`}
                 onClick={onShowFullGallery}
@@ -72,9 +83,9 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
 
           {/* +X More Indicator */}
           <div className="relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer group/more" onClick={onShowFullGallery}>
-            <img src={vehicle?.images?.[3] || "/api/placeholder/200/200"} className="w-full h-full object-cover blur-[2px] opacity-40" />
+            <img src={vehicle?.images?.[3]?.image || vehicle?.images?.[3]?.url || (typeof vehicle?.images?.[3] === 'string' ? vehicle?.images[3] : "/api/placeholder/200/200")} className="w-full h-full object-cover blur-[2px] opacity-40 text-transparent" alt="More images" />
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover/more:bg-black/20 transition-colors">
-              <span className="text-white font-black text-xl tracking-tighter">+{numExtraImages > 0 ? numExtraImages : 12}</span>
+              <span className="text-white font-black text-xl tracking-tighter">+{numExtraImages > 0 ? numExtraImages : 0}</span>
             </div>
           </div>
         </div>
