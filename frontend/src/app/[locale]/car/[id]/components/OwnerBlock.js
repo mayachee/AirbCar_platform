@@ -11,6 +11,8 @@ export default function OwnerBlock({ partner }) {
   const avatarUrl = partner?.logo_url || partner?.user?.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ownerName}`
   const formattedFleet = fleetSize > 0 ? `${fleetSize} Vehicles` : 'Growing Fleet'
   const responseTime = partner?.response_time || null
+  const quoteText = partner?.description || partner?.bio || null
+
   return (
     <section className="bg-[#eff3ff] rounded-2xl p-8 border border-[#dee9fd]">
       <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
