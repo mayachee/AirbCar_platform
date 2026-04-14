@@ -9,7 +9,7 @@ export default function OwnerSpotlight({ partner }) {
       <div className="flex items-start gap-4">
         <div className="w-16 h-16 rounded-2xl bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100">
           <img 
-            src={partner?.image || "/api/placeholder/64/64"} 
+            src={partner?.image || partner?.logo_url || partner?.user?.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partner?.name || 'Owner'}`} 
             alt={partner?.name || "Atlas Premium Rentals"} 
             className="w-full h-full object-cover"
           />

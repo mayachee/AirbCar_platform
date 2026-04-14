@@ -11,7 +11,7 @@ export default function FleetSection({ listings }) {
       price: "15,950",
       status: "AVAILABLE",
       location: "Munich Central Flagship",
-      image: "/api/placeholder/400/250"
+      image: "https://images.unsplash.com/photo-1549317661-bc32c4314c44?w=400&q=80"
     },
     {
       id: 2,
@@ -19,7 +19,7 @@ export default function FleetSection({ listings }) {
       price: "12,500",
       status: "IN JOURNEY",
       location: "Munich Central Flagship",
-      image: "/api/placeholder/400/250"
+      image: "https://images.unsplash.com/photo-1503376712351-1970222f6723?w=400&q=80"
     }
   ];
 

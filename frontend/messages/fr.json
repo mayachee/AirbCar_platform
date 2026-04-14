@@ -533,6 +533,7 @@
   "car_details": {
     "error_vehicle_not_loaded": "Impossible de réserver : les données du véhicule ne sont pas chargées",
     "error_vehicle_id_missing": "Impossible de réserver : l'ID du véhicule est manquant",
+    "available_now": "Disponible Maintenant",
     "book_now": "Réserver Maintenant",
     "change_dates": "Modifier les Dates",
     "modify_search": "Modifier la Recherche",

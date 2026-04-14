@@ -498,6 +498,7 @@
   "car_details": {
     "error_vehicle_not_loaded": "لا يمكن الحجز: بيانات السيارة لم تحمل",
     "error_vehicle_id_missing": "لا يمكن الحجز: معرف السيارة مفقود",
+    "available_now": "متاح الآن",
     "book_now": "احجز الآن",
     "change_dates": "تغيير التواريخ",
     "modify_search": "تعديل البحث",

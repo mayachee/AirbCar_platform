@@ -498,6 +498,7 @@
   "car_details": {
     "error_vehicle_not_loaded": "Cannot book: vehicle data is not loaded",
     "error_vehicle_id_missing": "Cannot book: vehicle ID is missing",
+    "available_now": "Available Now",
     "book_now": "Book Now",
     "change_dates": "Change Dates",
     "modify_search": "Modify Search",

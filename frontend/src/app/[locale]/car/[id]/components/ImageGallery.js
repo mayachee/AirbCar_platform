@@ -8,7 +8,7 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
   const t = useTranslations('car_details');
   const { isFavorite, toggleFavorite } = useFavorites();
   const isFav = vehicle?.id ? isFavorite(vehicle.id) : false;
-  const mainImage = vehicle?.images?.[0]?.image || vehicle?.images?.[0] || "/api/placeholder/1200/800";
+  const mainImage = vehicle?.images?.[0]?.image || vehicle?.images?.[0] || vehicle?.image || null
   const numExtraImages = Math.max(0, (vehicle?.images?.length || 0) - 3);
 
   return (
@@ -69,7 +69,8 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
         <div className="hidden md:flex gap-3 p-2 bg-black/30 backdrop-blur-xl rounded-2xl border border-white/10">
           {[0, 1, 2].map((idx) => {
             const imgObj = vehicle?.images?.[idx];
-            const img = imgObj?.image || imgObj?.url || (typeof imgObj === 'string' ? imgObj : null) || `/api/placeholder/200/200?text=${idx + 1}`;
+            const img = imgObj?.image || imgObj?.url || (typeof imgObj === 'string' ? imgObj : null) || null;
+            if (!img) return null;
             return (
               <div
                 key={idx}
@@ -82,12 +83,14 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
           })}
 
           {/* +X More Indicator */}
+          {numExtraImages > 0 && (
           <div className="relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer group/more" onClick={onShowFullGallery}>
-            <img src={vehicle?.images?.[3]?.image || vehicle?.images?.[3]?.url || (typeof vehicle?.images?.[3] === 'string' ? vehicle?.images[3] : "/api/placeholder/200/200")} className="w-full h-full object-cover blur-[2px] opacity-40 text-transparent" alt="More images" />
+            <img src={vehicle?.images?.[3]?.image || vehicle?.images?.[3]?.url || (typeof vehicle?.images?.[3] === 'string' ? vehicle?.images[3] : "")} className="w-full h-full object-cover blur-[2px] opacity-40 text-transparent" alt="More images" />
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover/more:bg-black/20 transition-colors">
-              <span className="text-white font-black text-xl tracking-tighter">+{numExtraImages > 0 ? numExtraImages : 0}</span>
+              <span className="text-white font-black text-xl tracking-tighter">+{numExtraImages}</span>
             </div>
           </div>
+          )}
         </div>
 
         {/* Fullscreen Button */}
