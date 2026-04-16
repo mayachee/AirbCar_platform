@@ -157,20 +157,20 @@ export const partnerService = {
 
   // B2B Car Sharing
   async getDiscoverableCars(excludePartnerId) {
-    return apiClient.get(`/api/listings/?exclude_partner=${excludePartnerId}`, undefined, { cache: 'no-store' })
+    return apiClient.get(`/listings/?exclude_partner=${excludePartnerId}`, undefined, { cache: 'no-store' })
   },
 
   async getCarShareRequests() {
-    return apiClient.get('/api/partners/car-shares/', undefined, { cache: 'no-store' })
+    return apiClient.get('/partners/car-shares/', undefined, { cache: 'no-store' })
   },
 
   async createCarShareRequest(requestData) {
-    return apiClient.post('/api/partners/car-shares/', requestData)
+    return apiClient.post('/partners/car-shares/', requestData)
   },
 
   async updateCarShareRequestStatus(requestId, status) {
     // status should be 'accepted' or 'rejected'
-    return apiClient.patch(`/api/partners/car-shares/${requestId}/status/`, { status })
+    return apiClient.patch(`/partners/car-shares/${requestId}/status/`, { status })
   },
 
   // Dashboard & Analytics

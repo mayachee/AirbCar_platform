@@ -114,5 +114,5 @@ urlpatterns = [
 router = DefaultRouter()
 if getattr(views, 'CommunityPostViewSet', None):
     router.register(r'community-posts', views.CommunityPostViewSet, basename='community-post')
-router.register(r'api/partners/car-shares', views.CarShareRequestViewSet, basename='car-share-request')
+router.register(r'partners/car-shares', views.CarShareRequestViewSet, basename='car-share-request')
 urlpatterns.extend(router.urls)
