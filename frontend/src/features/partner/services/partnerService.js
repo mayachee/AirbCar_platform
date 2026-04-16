@@ -393,4 +393,21 @@ export const partnerService = {
   async unfollowPartner(partnerId) {
     return apiClient.delete(`/partners/${partnerId}/follow/`)
   },
+
+  // B2B Messaging & Inspections
+  async getCarShareMessages(requestId) {
+    return apiClient.get(`/partners/car-shares/${requestId}/messages/`)
+  },
+
+  async sendCarShareMessage(requestId, data) {
+    return apiClient.post(`/partners/car-shares/${requestId}/messages/`, data)
+  },
+
+  async getCarShareInspections(requestId) {
+    return apiClient.get(`/partners/car-shares/${requestId}/inspections/`)
+  },
+
+  async createCarShareInspection(requestId, data) {
+    return apiClient.post(`/partners/car-shares/${requestId}/inspections/`, data)
+  }
 }

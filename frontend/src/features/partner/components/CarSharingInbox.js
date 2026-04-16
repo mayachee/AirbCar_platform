@@ -18,7 +18,22 @@ export default function CarSharingInbox({ partnerData }) {
   // Overlay State
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [requestTab, setRequestTab] = useState('details'); // 'details', 'chat', 'handover'
-  
+
+  // Chat State
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [messagesLoading, setMessagesLoading] = useState(false);
+
+  // Handover State
+  const [inspections, setInspections] = useState([]);
+  const [inspectionLoading, setInspectionLoading] = useState(false);
+  const [inspectionForm, setInspectionForm] = useState({
+    inspection_type: 'pre_rental',
+    mileage: '',
+    fuel_level: 'full',
+    condition_notes: ''
+  });
+
   // Form State
   const [formData, setFormData] = useState({
     public_id: '',
@@ -52,6 +67,85 @@ export default function CarSharingInbox({ partnerData }) {
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  const fetchMessages = async () => {
+    if (!selectedRequest?.id) return;
+    try {
+      setMessagesLoading(true);
+      const response = await partnerService.getCarShareMessages(selectedRequest.id);
+      setMessages(response.data?.results || response.data || []);
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to load messages', 'error');
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    if (e) e.preventDefault();
+    if (!newMessage.trim() || !selectedRequest?.id) return;
+
+    try {
+      const response = await partnerService.sendCarShareMessage(selectedRequest.id, { message: newMessage });
+      const newMsgObj = response.data?.data || response.data;
+      setMessages(prev => [...prev, newMsgObj]);
+      setNewMessage('');
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to send message', 'error');
+    }
+  };
+
+  const fetchInspections = async () => {
+    if (!selectedRequest?.id) return;
+    try {
+      setInspectionLoading(true);
+      const response = await partnerService.getCarShareInspections(selectedRequest.id);
+      setInspections(response.data?.results || response.data || []);
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to load inspections', 'error');
+    } finally {
+      setInspectionLoading(false);
+    }
+  };
+
+  const handleSubmitInspection = async (e) => {
+    if (e) e.preventDefault();
+    if (!inspectionForm.mileage || !selectedRequest?.id) {
+      addToast('Please enter mileage', 'error');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      const response = await partnerService.createCarShareInspection(selectedRequest.id, inspectionForm);
+      const newInspObj = response.data?.data || response.data;
+      setInspections(prev => [...prev, newInspObj]);
+      setInspectionForm({
+        inspection_type: 'pre_rental',
+        mileage: '',
+        fuel_level: 'full',
+        condition_notes: ''
+      });
+      addToast('Inspection logged successfully', 'success');
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to log inspection', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedRequest) {
+      if (requestTab === 'chat') {
+        fetchMessages();
+      } else if (requestTab === 'handover') {
+        fetchInspections();
+      }
+    }
+  }, [selectedRequest?.id, requestTab]);
 
   const handleStatusUpdate = async (id, status) => {
     try {
@@ -264,30 +358,42 @@ export default function CarSharingInbox({ partnerData }) {
             {requestTab === 'chat' && (
               <div className="flex flex-col h-[400px] animate-in fade-in">
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 rounded-t-lg border border-gray-200">
-                  <div className="text-center text-xs text-gray-400 my-2">Today</div>
-                  <div className="flex justify-start">
-                    <div className="bg-white p-3 rounded-xl rounded-tl-none border border-gray-200 shadow-sm max-w-[80%]">
-                      <p className="text-sm text-gray-800">Hi, is the car available for these dates?</p>
-                      <span className="text-xs text-gray-400 mt-1.5 block">10:00 AM</span>
-                    </div>
+                    <div className="text-center text-xs text-gray-400 my-2">Conversation</div>
+                    {messagesLoading ? (
+                      <div className="flex justify-center flex-col items-center p-8 gap-3">
+                        <RefreshCw className="w-6 h-6 animate-spin text-[#229ED9]" />
+                        <span className="text-sm text-gray-500">Loading messages...</span>
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="text-center text-gray-400 text-sm mt-10">No messages yet.</div>
+                    ) : (
+                      messages.map((msg, idx) => {
+                        const isMe = msg.is_partner || msg.sender_role === 'partner';
+                        return (
+                          <div key={msg.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`${isMe ? 'bg-[#229ED9] text-white rounded-tr-none' : 'bg-white rounded-tl-none'} p-3 rounded-xl border ${isMe ? 'border-[#229ED9]' : 'border-gray-200'} shadow-sm max-w-[80%]`}>
+                              <p className={`text-sm ${isMe ? '' : 'text-gray-800'}`}>{msg.message}</p>
+                              <span className={`text-xs mt-1.5 block ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
+                                {msg.created_at ? format(new Date(msg.created_at), 'MMM d, hh:mm a') : 'Now'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
-                  <div className="flex justify-end">
-                    <div className="bg-[#229ED9] text-white p-3 rounded-xl rounded-tr-none shadow-sm max-w-[80%]">
-                      <p className="text-sm">Yes, we can arrange that. Please bring the required documents.</p>
-                      <span className="text-xs text-blue-100 mt-1.5 block">10:05 AM</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-3 border border-t-0 border-gray-200 rounded-b-lg flex gap-2 bg-white">
-                  <input type="text" placeholder="Type a message..." className="flex-1 p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" />
-                  <button className="px-4 py-2 bg-[#229ED9] text-white rounded-lg hover:bg-[#1a8cc3] transition-colors flex items-center justify-center">
-                    <Send className="w-4 h-4"/>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* HANDOVER TAB */}
+                  <form onSubmit={handleSendMessage} className="p-3 border border-t-0 border-gray-200 rounded-b-lg flex gap-2 bg-white">
+                    <input 
+                      type="text" 
+                      placeholder="Type a message..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      className="flex-1 p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" 
+                    />
+                    <button type="submit" disabled={!newMessage.trim()} className="px-4 py-2 bg-[#229ED9] text-white rounded-lg hover:bg-[#1a8cc3] transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                      <Send className="w-4 h-4"/>
+                    </button>
+                  </form>
             {requestTab === 'handover' && (
               <div className="space-y-6 animate-in fade-in">
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-blue-800 text-sm flex items-start gap-3">
@@ -302,36 +408,57 @@ export default function CarSharingInbox({ partnerData }) {
                   <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <PlusCircle className="w-4 h-4" /> New Inspection Record
                   </h3>
-                  <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                  <form className="space-y-4" onSubmit={handleSubmitInspection}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Inspection Type</label>
-                        <select className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm">
-                          <option>Pre-Rental (Check-out)</option>
-                          <option>Post-Rental (Check-in)</option>
+                        <select 
+                          value={inspectionForm.inspection_type}
+                          onChange={(e) => setInspectionForm({ ...inspectionForm, inspection_type: e.target.value })}
+                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm"
+                        >
+                          <option value="pre_rental">Pre-Rental (Check-out)</option>
+                          <option value="post_rental">Post-Rental (Check-in)</option>
                         </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Mileage</label>
-                        <input type="number" placeholder="e.g. 45000" className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" />
+                        <input 
+                          type="number" 
+                          placeholder="e.g. 45000" 
+                          value={inspectionForm.mileage}
+                          onChange={(e) => setInspectionForm({ ...inspectionForm, mileage: e.target.value })}
+                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" 
+                        />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Fuel Level</label>
-                        <select className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm">
-                          <option>Full (100%)</option>
-                          <option>3/4 (75%)</option>
-                          <option>1/2 (50%)</option>
-                          <option>1/4 (25%)</option>
-                          <option>Empty (0%)</option>
+                        <select 
+                          value={inspectionForm.fuel_level}
+                          onChange={(e) => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value })}
+                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm"
+                        >
+                          <option value="full">Full (100%)</option>
+                          <option value="three_quarters">3/4 (75%)</option>
+                          <option value="half">1/2 (50%)</option>
+                          <option value="quarter">1/4 (25%)</option>
+                          <option value="empty">Empty (0%)</option>
                         </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Condition Notes</label>
-                        <input type="text" placeholder="Any scratches or damages?" className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" />
+                        <input 
+                          type="text" 
+                          placeholder="Any scratches or damages?"
+                          value={inspectionForm.condition_notes}
+                          onChange={(e) => setInspectionForm({ ...inspectionForm, condition_notes: e.target.value })}
+                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" 
+                        />
                       </div>
                     </div>
                     <div className="pt-3 flex justify-end">
-                      <button type="button" className="px-5 py-2 mt-2 bg-[#229ED9] text-white text-sm font-medium rounded-lg hover:bg-[#1a8cc3] transition-colors shadow-sm">
+                      <button type="submit" disabled={actionLoading} className="px-5 py-2 mt-2 bg-[#229ED9] disabled:opacity-50 text-white text-sm font-medium rounded-lg hover:bg-[#1a8cc3] transition-colors shadow-sm flex items-center gap-2">
+                        {actionLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
                         Submit Record
                       </button>
                     </div>
@@ -340,10 +467,34 @@ export default function CarSharingInbox({ partnerData }) {
                 
                 <div className="mt-8">
                    <h3 className="font-semibold text-gray-800 mb-3 border-b pb-2">Past Inspections</h3>
-                   <div className="text-gray-400 text-sm text-center py-8 bg-gray-50 border border-gray-200 rounded-lg border-dashed">
-                      <ClipboardCheck className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      No inspections recorded for this request yet.
-                   </div>
+                   {inspectionLoading ? (
+                      <div className="flex justify-center p-8 border border-gray-200 rounded-lg border-dashed">
+                        <RefreshCw className="w-8 h-8 animate-spin text-[#229ED9]" />
+                      </div>
+                   ) : inspections.length === 0 ? (
+                      <div className="text-gray-400 text-sm text-center py-8 bg-gray-50 border border-gray-200 rounded-lg border-dashed">
+                        <ClipboardCheck className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        No inspections recorded for this request yet.
+                      </div>
+                   ) : (
+                      <div className="space-y-4">
+                        {inspections.map((insp, idx) => (
+                          <div key={insp.id || idx} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm flex flex-col gap-2">
+                            <div className="flex justify-between items-start">
+                              <span className={`text-xs font-semibold px-2 py-1 rounded ${insp.inspection_type === 'pre_rental' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                {insp.inspection_type === 'pre_rental' ? 'Pre-Rental' : 'Post-Rental'}
+                              </span>
+                              <span className="text-xs text-gray-400">{insp.created_at ? format(new Date(insp.created_at), 'MMM d, yyyy hh:mm a') : 'Now'}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mt-2 text-sm text-gray-700">
+                              <div><span className="text-gray-500">Mileage:</span> {insp.mileage}</div>
+                              <div><span className="text-gray-500">Fuel:</span> {insp.fuel_level?.replace('_', ' ')}</div>
+                              <div className="col-span-2"><span className="text-gray-500">Notes:</span> {insp.condition_notes || 'None'}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                   )}
                 </div>
               </div>
             )}
