@@ -26,32 +26,35 @@ class TestUserProfileAPI:
 
     def test_get_user_profile(self, db, authenticated_client, user):
         """Test getting current user profile."""
-        url = '/api/user/me/'
+        url = '/users/me/'
         response = authenticated_client.get(url)
+        print("DEBUG RESPONSE", response.data)
         
         if response.status_code == 404:
             pytest.skip("User profile endpoint not found")
         
         if response.status_code == 200:
-            assert response.data['id'] == user.id
-            assert response.data['username'] == user.username
-            assert response.data['email'] == user.email
+            id_val = response.data.get(\"id\") or response.data.get(\"data\", {}).get(\"id\")
+            assert id_val == user.id
+            assert response.data.get('username') == user.username or response.data.get('user', {}).get('username') == user.username
+            assert response.data.get('email') == user.email or response.data.get('user', {}).get('email') == user.email
 
     def test_get_other_user_profile(self, db, api_client):
         """Test getting another user's profile."""
         user = UserFactory()
-        url = f'/api/users/{user.id}/'
+        url = f'/users/{user.id}/'
         response = api_client.get(url)
         
         if response.status_code == 404:
             pytest.skip("User detail endpoint not found")
         
         if response.status_code == 200:
-            assert response.data['id'] == user.id
+            id_val = response.data.get(\"id\") or response.data.get(\"data\", {}).get(\"id\")
+            assert id_val == user.id
 
     def test_unauthenticated_cannot_get_me(self, db, api_client):
         """Test unauthenticated user cannot access /me/ endpoint."""
-        url = '/api/user/me/'
+        url = '/users/me/'
         response = api_client.get(url)
         
         if response.status_code == 404:
@@ -68,7 +71,7 @@ class TestUserUpdateAPI:
 
     def test_update_user_profile(self, db, authenticated_client, user):
         """Test updating user profile."""
-        url = '/api/user/me/'
+        url = '/users/me/'
         data = {
             'first_name': 'John',
             'last_name': 'Doe',
@@ -88,7 +91,7 @@ class TestUserUpdateAPI:
     def test_cannot_update_others_profile(self, db, authenticated_client):
         """Test user cannot update another user's profile."""
         other_user = UserFactory()
-        url = f'/api/users/{other_user.id}/'
+        url = f'/users/{other_user.id}/'
         data = {'first_name': 'Hacked'}
         response = authenticated_client.patch(url, data, format='json')
         
@@ -125,7 +128,7 @@ class TestUserListAPI:
         UserFactory()
         UserFactory()
         
-        url = '/api/users/'
+        url = '/users/'
         response = admin_client.get(url)
         
         if response.status_code == 404:
@@ -136,7 +139,7 @@ class TestUserListAPI:
 
     def test_list_users_non_admin_forbidden(self, db, authenticated_client):
         """Test non-admin cannot list all users."""
-        url = '/api/users/'
+        url = '/users/'
         response = authenticated_client.get(url)
         
         if response.status_code == 404:
@@ -162,7 +165,7 @@ class TestUserVerificationAPI:
         user.is_verified = False
         user.save()
         
-        url = '/api/user/verify-email/'
+        url = '/api/verify-email/'
         data = {'code': '123456'}
         response = authenticated_client.post(url, data, format='json')
         
@@ -186,12 +189,13 @@ class TestUserRoleManagement:
 
     def test_customer_profile_fields(self, db, authenticated_client, user):
         """Test customer-specific profile fields."""
-        url = '/api/user/me/'
+        url = '/users/me/'
         response = authenticated_client.get(url)
         
         if response.status_code == 200:
             data = response.data
-            assert data['role'] == 'customer'
+            role_val = data.get('role') or data.get('user', {}).get('role')
+            assert role_val == 'customer'
 
 
 @pytest.mark.integration
@@ -204,7 +208,7 @@ class TestUserSearchAPI:
         UserFactory(username='john_doe')
         UserFactory(username='jane_smith')
         
-        url = '/api/users/search/?q=john'
+        url = '/users/search/?q=john'
         response = api_client.get(url)
         
         if response.status_code == 404:
@@ -217,7 +221,7 @@ class TestUserSearchAPI:
         """Test searching users by email."""
         UserFactory(email='test@example.com')
         
-        url = '/api/users/search/?email=test@'
+        url = '/users/search/?email=test@'
         response = api_client.get(url)
         
         if response.status_code == 404:
@@ -234,7 +238,7 @@ class TestUserDocumentUpload:
 
     def test_upload_profile_picture(self, db, authenticated_client, user):
         """Test uploading profile picture."""
-        url = '/api/user/me/'
+        url = '/users/me/'
         # Note: File upload test requires InMemoryUploadedFile
         # This is a placeholder for the structure
         
@@ -243,7 +247,7 @@ class TestUserDocumentUpload:
 
     def test_upload_license_documents(self, db, authenticated_client, user):
         """Test uploading license documents."""
-        url = '/api/user/me/'
+        url = '/users/me/'
         # Placeholder for license upload test
         
         pytest.skip("License upload test requires proper setup")

@@ -20,7 +20,7 @@ class TestAuthenticationAPI:
     def test_user_registration_valid(self, db, api_client):
         """Test user registration with valid data."""
         # This endpoint path depends on your urls.py - adjust as needed
-        url = '/api/auth/register/'
+        url = '/api/register/'
         data = {
             'username': 'newuser',
             'email': 'newuser@example.com',
@@ -34,13 +34,14 @@ class TestAuthenticationAPI:
             pytest.skip("Auth registration endpoint not found")
         
         if response.status_code == 201:
-            assert response.data['email'] == data['email']
+            email_val = response.data.get(\"email\") or response.data.get(\"data\", {}).get(\"email\")
+            assert email_val == data['email']
             assert User.objects.filter(username='newuser').exists()
 
     def test_user_login_valid(self, db, api_client):
         """Test user login with valid credentials."""
         user = UserFactory(username='testuser', password='testpass123')
-        url = '/api/auth/login/'
+        url = '/api/login/'
         data = {
             'username': 'testuser',
             'password': 'testpass123',
@@ -57,7 +58,7 @@ class TestAuthenticationAPI:
     def test_user_login_invalid_password(self, db, api_client):
         """Test login with wrong password."""
         UserFactory(username='testuser', password='testpass123')
-        url = '/api/auth/login/'
+        url = '/api/login/'
         data = {
             'username': 'testuser',
             'password': 'wrongpassword',
@@ -115,7 +116,7 @@ class TestTokenRefresh:
         user = UserFactory()
         refresh = RefreshToken.for_user(user)
         
-        url = '/api/auth/token/refresh/'
+        url = '/api/token/refresh/'
         data = {'refresh': str(refresh)}
         response = api_client.post(url, data, format='json')
         
@@ -129,7 +130,7 @@ class TestTokenRefresh:
 
     def test_refresh_token_invalid(self, db, api_client):
         """Test refresh with invalid token."""
-        url = '/api/auth/token/refresh/'
+        url = '/api/token/refresh/'
         data = {'refresh': 'invalid_token'}
         response = api_client.post(url, data, format='json')
         

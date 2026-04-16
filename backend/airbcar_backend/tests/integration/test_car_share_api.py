@@ -25,7 +25,7 @@ def test_inter_agency_car_share_api(api_client):
         vehicle_style="sedan", transmission="automatic", fuel_type="gas"
     )
 
-    share_url = '/api/partners/car-shares/' # Note: we mapped this in router.register
+    share_url = '/partners/car-shares/' # Note: we mapped this in router.register
 
     # 1. Test unauthenticated access (Should be 401)
     res = api_client.get(share_url)

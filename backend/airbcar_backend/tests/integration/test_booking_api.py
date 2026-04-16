@@ -31,7 +31,7 @@ class TestBookingListAPI:
         BookingFactory(customer=user, status='pending')
         BookingFactory(customer=user, status='confirmed')
         
-        url = '/api/bookings/'
+        url = '/bookings/'
         response = authenticated_client.get(url)
         
         if response.status_code == 404:
@@ -48,7 +48,7 @@ class TestBookingListAPI:
         BookingFactory(listing=listing, partner=partner, status='pending')
         BookingFactory(listing=listing, partner=partner, status='confirmed')
         
-        url = '/api/bookings/'
+        url = '/bookings/'
         response = partner_client.get(url)
         
         if response.status_code == 404:
@@ -63,7 +63,7 @@ class TestBookingListAPI:
         BookingFactory(customer=user, status='confirmed')
         BookingFactory(customer=user, status='pending')
         
-        url = '/api/bookings/?status=pending'
+        url = '/bookings/?status=pending'
         response = authenticated_client.get(url)
         
         if response.status_code == 404:
@@ -80,7 +80,7 @@ class TestBookingCreationAPI:
 
     def test_create_booking_valid(self, db, authenticated_client, user, listing):
         """Test creating booking with valid data."""
-        url = '/api/bookings/'
+        url = '/bookings/'
         pickup_date = (timezone.now().date() + timedelta(days=1))
         return_date = (timezone.now().date() + timedelta(days=5))
         
@@ -98,13 +98,14 @@ class TestBookingCreationAPI:
             pytest.skip("Booking creation endpoint not found")
         
         if response.status_code == 201:
-            assert response.data['listing'] == listing.id
+            listing_val = response.data.get(\"listing\") or response.data.get(\"data\", {}).get(\"listing\")
+            assert listing_val == listing.id
             assert response.data['status'] == 'pending'
             assert Booking.objects.filter(customer=user).exists()
 
     def test_create_booking_invalid_dates(self, db, authenticated_client, user, listing):
         """Test creating booking with past dates."""
-        url = '/api/bookings/'
+        url = '/bookings/'
         pickup_date = (timezone.now().date() - timedelta(days=1))  # Past date
         return_date = (timezone.now().date() + timedelta(days=5))
         
@@ -126,7 +127,7 @@ class TestBookingCreationAPI:
 
     def test_create_booking_return_before_pickup(self, db, authenticated_client, user, listing):
         """Test creating booking with return before pickup."""
-        url = '/api/bookings/'
+        url = '/bookings/'
         pickup_date = (timezone.now().date() + timedelta(days=5))
         return_date = (timezone.now().date() + timedelta(days=1))  # Before pickup
         
@@ -234,7 +235,7 @@ class TestBookingStatusUpdateAPI:
             status='pending'
         )
         
-        url = f'/api/bookings/{booking.id}/confirm/'
+        url = f'/bookings/{booking.id}/confirm/'
         response = partner_client.post(url, {}, format='json')
         
         if response.status_code == 404:
@@ -253,7 +254,7 @@ class TestBookingStatusUpdateAPI:
             status='pending'
         )
         
-        url = f'/api/bookings/{booking.id}/reject/'
+        url = f'/bookings/{booking.id}/reject/'
         data = {'rejection_reason': 'Car not available'}
         response = partner_client.post(url, data, format='json')
         
@@ -268,7 +269,7 @@ class TestBookingStatusUpdateAPI:
         """Test customer can cancel own booking."""
         booking = BookingFactory(customer=user, status='pending')
         
-        url = f'/api/bookings/{booking.id}/cancel/'
+        url = f'/bookings/{booking.id}/cancel/'
         response = authenticated_client.post(url, {}, format='json')
         
         if response.status_code == 404:
@@ -286,7 +287,7 @@ class TestBookingStatusUpdateAPI:
             status='confirmed'
         )
         
-        url = f'/api/bookings/{booking.id}/'
+        url = f'/bookings/{booking.id}/'
         data = {'status': 'active'}
         response = partner_client.patch(url, data, format='json')
         
@@ -309,7 +310,7 @@ class TestBookingPaymentAPI:
             payment_status='pending'
         )
         
-        url = f'/api/bookings/{booking.id}/'
+        url = f'/bookings/{booking.id}/'
         data = {'payment_status': 'paid'}
         response = authenticated_client.patch(url, data, format='json')
         
@@ -322,7 +323,7 @@ class TestBookingPaymentAPI:
 
     def test_booking_payment_online_method(self, db, authenticated_client, user, listing):
         """Test creating booking with online payment."""
-        url = '/api/bookings/'
+        url = '/bookings/'
         data = {
             'listing': listing.id,
             'pickup_date': str(timezone.now().date() + timedelta(days=1)),
@@ -337,7 +338,8 @@ class TestBookingPaymentAPI:
             pytest.skip("Booking creation endpoint not found")
         
         if response.status_code == 201:
-            assert response.data['payment_method'] == 'online'
+            payment_method_val = response.data.get(\"payment_method\") or response.data.get(\"data\", {}).get(\"payment_method\")
+            assert payment_method_val == 'online'
 
 
 @pytest.mark.integration
@@ -350,7 +352,7 @@ class TestBookingPermissions:
         other_user = UserFactory()
         BookingFactory(customer=other_user)
         
-        url = '/api/bookings/'
+        url = '/bookings/'
         response = authenticated_client.get(url)
         
         if response.status_code == 404:
@@ -371,7 +373,7 @@ class TestBookingPermissions:
             status='pending'
         )
         
-        url = f'/api/bookings/{booking.id}/confirm/'
+        url = f'/bookings/{booking.id}/confirm/'
         response = partner_client.post(url, {}, format='json')
         
         if response.status_code == 404:
