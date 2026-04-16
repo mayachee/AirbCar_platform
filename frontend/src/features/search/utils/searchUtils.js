@@ -195,4 +195,7 @@ export const sortVehicles = (vehicles, sortBy) => {
     default:
       // Keep original order for relevance
       sorted.sort(sortByRelevance);
+  }
+
+  return sorted;
 };
