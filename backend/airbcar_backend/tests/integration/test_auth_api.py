@@ -34,7 +34,7 @@ class TestAuthenticationAPI:
             pytest.skip("Auth registration endpoint not found")
         
         if response.status_code == 201:
-            email_val = response.data.get(\"email\") or response.data.get(\"data\", {}).get(\"email\")
+            email_val = response.data.get("email") or response.data.get("data", {}).get("email")
             assert email_val == data['email']
             assert User.objects.filter(username='newuser').exists()
 

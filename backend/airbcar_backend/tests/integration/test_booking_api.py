@@ -98,7 +98,7 @@ class TestBookingCreationAPI:
             pytest.skip("Booking creation endpoint not found")
         
         if response.status_code == 201:
-            listing_val = response.data.get(\"listing\") or response.data.get(\"data\", {}).get(\"listing\")
+            listing_val = response.data.get("listing") or response.data.get("data", {}).get("listing")
             assert listing_val == listing.id
             assert response.data['status'] == 'pending'
             assert Booking.objects.filter(customer=user).exists()
@@ -338,7 +338,7 @@ class TestBookingPaymentAPI:
             pytest.skip("Booking creation endpoint not found")
         
         if response.status_code == 201:
-            payment_method_val = response.data.get(\"payment_method\") or response.data.get(\"data\", {}).get(\"payment_method\")
+            payment_method_val = response.data.get("payment_method") or response.data.get("data", {}).get("payment_method")
             assert payment_method_val == 'online'
 
 

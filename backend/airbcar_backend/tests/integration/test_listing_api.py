@@ -118,7 +118,7 @@ class TestListingDetailAPI:
             pytest.skip("Listing detail endpoint not found")
         
         if response.status_code == 200:
-            id_val = response.data.get(\"id\") or response.data.get(\"data\", {}).get(\"id\")
+            id_val = response.data.get("id") or response.data.get("data", {}).get("id")
             assert id_val == listing.id
             assert response.data['make'] == listing.make
             assert response.data['model'] == listing.model
@@ -261,6 +261,6 @@ class TestListingRatings:
         response = api_client.get(url)
         
         if response.status_code == 200:
-            rating_val = response.data.get(\"rating\") or response.data.get(\"data\", {}).get(\"rating\")
+            rating_val = response.data.get("rating") or response.data.get("data", {}).get("rating")
             assert rating_val == 4.5 or rating_val == Decimal('4.5') or rating_val == '4.50'
             assert response.data['review_count'] == 10

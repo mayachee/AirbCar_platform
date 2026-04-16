@@ -34,7 +34,7 @@ class TestUserProfileAPI:
             pytest.skip("User profile endpoint not found")
         
         if response.status_code == 200:
-            id_val = response.data.get(\"id\") or response.data.get(\"data\", {}).get(\"id\")
+            id_val = response.data.get("id") or response.data.get("data", {}).get("id")
             assert id_val == user.id
             assert response.data.get('username') == user.username or response.data.get('user', {}).get('username') == user.username
             assert response.data.get('email') == user.email or response.data.get('user', {}).get('email') == user.email
@@ -49,7 +49,7 @@ class TestUserProfileAPI:
             pytest.skip("User detail endpoint not found")
         
         if response.status_code == 200:
-            id_val = response.data.get(\"id\") or response.data.get(\"data\", {}).get(\"id\")
+            id_val = response.data.get("id") or response.data.get("data", {}).get("id")
             assert id_val == user.id
 
     def test_unauthenticated_cannot_get_me(self, db, api_client):
