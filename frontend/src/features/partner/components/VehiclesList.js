@@ -510,6 +510,23 @@ export default function VehiclesList({
                       {vehicle.make} {vehicle.model}
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{vehicle.year}</p>
+                    {vehicle.public_id && (
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono rounded border border-gray-200 dark:border-gray-700">
+                          {vehicle.public_id}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(vehicle.public_id);
+                            addToast('Public ID copied to clipboard!', 'success');
+                          }}
+                          className="text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Copy Public ID to share with other agencies"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {viewMode === "list" && (
                     <div className="ml-4">
