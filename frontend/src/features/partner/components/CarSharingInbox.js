@@ -228,617 +228,604 @@ export default function CarSharingInbox({ partnerData }) {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'accepted': return <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full flex items-center w-fit gap-1"><Check className="w-3 h-3" /> Accepted</span>;
-      case 'rejected': return <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full flex items-center w-fit gap-1"><X className="w-3 h-3" /> Rejected</span>;
-      case 'pending': return <span className="px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded-full flex items-center w-fit gap-1"><Clock className="w-3 h-3" /> Pending</span>;
-      default: return <span className="px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full w-fit">{status}</span>;
+      case 'accepted': return <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-800 rounded-full flex items-center w-fit gap-1"><Check className="w-3 h-3" /> Accepted</span>;
+      case 'rejected': return <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-800 rounded-full flex items-center w-fit gap-1"><X className="w-3 h-3" /> Rejected</span>;
+      case 'pending': return <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-800 rounded-full flex items-center w-fit gap-1"><Clock className="w-3 h-3" /> Pending</span>;
+      default: return <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-800 rounded-full w-fit">{status}</span>;
     }
   };
 
   // -------------------------------------------------------------
-  // OVERLAY RENDERING
+  // 2-COLUMN LAYOUT RENDER
   // -------------------------------------------------------------
-  if (selectedRequest) {
-    const req = selectedRequest;
-    return (
-      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-        {/* Header */}
-        <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <button 
-            onClick={() => setSelectedRequest(null)} 
-            className="p-2 hover:bg-gray-100 text-gray-600 rounded-full transition-colors focus:outline-none"
-          >
-            <ChevronLeft className="w-5 h-5"/>
-          </button>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              Request Details
-              {getStatusBadge(req.status)}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {req.listing?.make} {req.listing?.model} ({req.listing?.year})
-            </p>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="flex border-b border-gray-200 bg-gray-50/50">
-            <button 
-              onClick={() => setRequestTab('details')} 
-              className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors flex items-center justify-center gap-2 ${
-                requestTab === 'details' ? 'border-[#229ED9] text-[#229ED9] bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Info className="w-4 h-4"/> Details
-            </button>
-            <button 
-              onClick={() => setRequestTab('chat')} 
-              className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors flex items-center justify-center gap-2 ${
-                requestTab === 'chat' ? 'border-[#229ED9] text-[#229ED9] bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <MessageSquare className="w-4 h-4"/> Chat 
-              <span className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0.5 rounded-full ml-1">New</span>
-            </button>
-            <button 
-              onClick={() => setRequestTab('handover')} 
-              className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors flex items-center justify-center gap-2 ${
-                requestTab === 'handover' ? 'border-[#229ED9] text-[#229ED9] bg-white' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <ClipboardCheck className="w-4 h-4"/> Handover
-            </button>
-          </div>
-
-          <div className="p-6">
-            {/* DETAILS TAB */}
-            {requestTab === 'details' && (
-              <div className="space-y-6 animate-in fade-in">
-                <div className="flex flex-col md:flex-row gap-8">
-                  <div className="flex-1 space-y-5">
-                    <h3 className="font-semibold text-lg text-gray-800 border-b pb-2 flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-gray-400" /> Booking Info
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="block text-gray-500 mb-1">Total Price</span>
-                        <span className="font-semibold text-lg text-gray-900">${req.total_price}</span>
-                      </div>
-                      <div>
-                        <span className="block text-gray-500 mb-1">Duration</span>
-                        <span className="font-medium text-gray-900">
-                          {Math.max(1, Math.ceil((new Date(req.end_date) - new Date(req.start_date)) / (1000 * 60 * 60 * 24)))} Days
-                        </span>
-                      </div>
-                      <div>
-                        <span className="block text-gray-500 mb-1">Start Date</span>
-                        <span className="font-medium text-gray-900 flex items-center gap-1.5"><CalendarIcon className="w-3.5 h-3.5 text-gray-400"/> {format(new Date(req.start_date), 'MMM d, yyyy')}</span>
-                      </div>
-                      <div>
-                        <span className="block text-gray-500 mb-1">End Date</span>
-                        <span className="font-medium text-gray-900 flex items-center gap-1.5"><CalendarIcon className="w-3.5 h-3.5 text-gray-400"/> {format(new Date(req.end_date), 'MMM d, yyyy')}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="block text-gray-500 mb-2 text-sm">Notes / Terms</span>
-                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 text-sm text-gray-700 min-h-[80px]">
-                         {req.notes || <span className="text-gray-400 italic">No notes provided...</span>}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 space-y-5">
-                    <h3 className="font-semibold text-lg text-gray-800 border-b pb-2 flex items-center gap-2">
-                      <Building className="w-5 h-5 text-gray-400" /> Parties Involved
-                    </h3>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-4 border border-gray-100">
-                       <div>
-                          <span className="block text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Owner</span>
-                          <div className="flex items-center justify-between">
-                             <span className="font-medium text-gray-900">{req.owner?.business_name}</span>
-                             {myPartnerId === req.owner?.id && <span className="text-xs bg-gray-200 px-2 py-0.5 rounded text-gray-600">You</span>}
-                          </div>
-                       </div>
-                       <div className="border-t border-gray-200"></div>
-                       <div>
-                          <span className="block text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Requester</span>
-                          <div className="flex items-center justify-between">
-                             <span className="font-medium text-gray-900">{req.requester?.business_name}</span>
-                             {myPartnerId === req.requester?.id && <span className="text-xs bg-gray-200 px-2 py-0.5 rounded text-gray-600">You</span>}
-                          </div>
-                       </div>
-                       <div className="border-t border-gray-200"></div>
-                       <div>
-                          <span className="block text-gray-500 text-xs uppercase tracking-wider font-semibold mb-1">Vehicle Details</span>
-                          <div className="flex items-center gap-2">
-                             <CarFront className="w-4 h-4 text-gray-500" />
-                             <span className="font-medium text-gray-900">{req.listing?.make} {req.listing?.model}</span>
-                          </div>
-                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions below details if pending and user is owner */}
-                {req.owner?.id === myPartnerId && req.status === 'pending' && (
-                  <div className="flex flex-wrap gap-3 pt-6 border-t mt-6">
-                    <button 
-                      onClick={() => handleStatusUpdate(req.id, 'accepted')} 
-                      disabled={actionLoading}
-                      className="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium flex items-center gap-2 shadow-sm transition-colors disabled:opacity-50"
-                    >
-                      <Check className="w-4 h-4" /> Accept Request
-                    </button>
-                    <button 
-                      onClick={() => handleStatusUpdate(req.id, 'rejected')} 
-                       disabled={actionLoading}
-                      className="px-6 py-2.5 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-                    >
-                      <X className="w-4 h-4" /> Reject Request
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* CHAT TAB */}
-            {requestTab === 'chat' && (
-              <div className="flex flex-col h-[400px] animate-in fade-in">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 rounded-t-lg border border-gray-200">
-                    <div className="text-center text-xs text-gray-400 my-2">Conversation</div>
-                    {messagesLoading ? (
-                      <div className="flex justify-center flex-col items-center p-8 gap-3">
-                        <RefreshCw className="w-6 h-6 animate-spin text-[#229ED9]" />
-                        <span className="text-sm text-gray-500">Loading messages...</span>
-                      </div>
-                    ) : messages.length === 0 ? (
-                      <div className="text-center text-gray-400 text-sm mt-10">No messages yet.</div>
-                    ) : (
-                      messages.map((msg, idx) => {
-                        const isMe = msg.is_partner || msg.sender_role === 'partner';
-                        return (
-                          <div key={msg.id || idx} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`${isMe ? 'bg-[#229ED9] text-white rounded-tr-none' : 'bg-white rounded-tl-none'} p-3 rounded-xl border ${isMe ? 'border-[#229ED9]' : 'border-gray-200'} shadow-sm max-w-[80%]`}>
-                              <p className={`text-sm ${isMe ? '' : 'text-gray-800'}`}>{msg.message}</p>
-                              <span className={`text-xs mt-1.5 block ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
-                                {msg.created_at ? format(new Date(msg.created_at), 'MMM d, hh:mm a') : 'Now'}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                  <form onSubmit={handleSendMessage} className="p-3 border border-t-0 border-gray-200 rounded-b-lg flex gap-2 bg-white">
-                    <input 
-                      type="text" 
-                      placeholder="Type a message..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      className="flex-1 p-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" 
-                    />
-                    <button type="submit" disabled={!newMessage.trim()} className="px-4 py-2 bg-[#229ED9] text-white rounded-lg hover:bg-[#1a8cc3] transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                      <Send className="w-4 h-4"/>
-                    </button>
-                  </form>
-              </div>
-            )}
-
-            {requestTab === 'handover' && (
-              <div className="space-y-6 animate-in fade-in">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-blue-800 text-sm flex items-start gap-3">
-                  <Info className="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-600" />
-                  <div>
-                    <p className="font-semibold mb-0.5">Vehicle Inspection</p>
-                    <p className="text-blue-700/80">Log a new inspection before or after the rental period. This ensures both parties agree on the vehicle's condition, fuel level, and mileage.</p>
-                  </div>
-                </div>
-                
-                <div className="border border-gray-200 rounded-xl p-5 bg-gray-50/50">
-                  <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <PlusCircle className="w-4 h-4" /> New Inspection Record
-                  </h3>
-                  <form className="space-y-4" onSubmit={handleSubmitInspection}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Inspection Type</label>
-                        <select 
-                          value={inspectionForm.stage}
-                          onChange={(e) => setInspectionForm({ ...inspectionForm, stage: e.target.value })}
-                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm"
-                        >
-                          <option value="pickup">Pre-Rental (Check-out)</option>
-                          <option value="return">Post-Rental (Check-in)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Mileage</label>
-                        <input 
-                          type="number" 
-                          placeholder="e.g. 45000" 
-                          value={inspectionForm.mileage}
-                          onChange={(e) => setInspectionForm({ ...inspectionForm, mileage: e.target.value })}
-                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Fuel Level</label>
-                        <select 
-                          value={inspectionForm.fuel_level}
-                          onChange={(e) => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value })}
-                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm"
-                        >
-                          <option value="100">Full (100%)</option>
-                          <option value="75">3/4 (75%)</option>
-                          <option value="50">1/2 (50%)</option>
-                          <option value="25">1/4 (25%)</option>
-                          <option value="0">Empty (0%)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Condition Notes</label>
-                        <input 
-                          type="text" 
-                          placeholder="Any scratches or damages?"
-                          value={inspectionForm.condition_notes}
-                          onChange={(e) => setInspectionForm({ ...inspectionForm, condition_notes: e.target.value })}
-                          className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm" 
-                        />
-                      </div>
-                    </div>
-                    <div className="pt-3 flex justify-end">
-                      <button type="submit" disabled={actionLoading} className="px-5 py-2 mt-2 bg-[#229ED9] disabled:opacity-50 text-white text-sm font-medium rounded-lg hover:bg-[#1a8cc3] transition-colors shadow-sm flex items-center gap-2">
-                        {actionLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
-                        Submit Record
-                      </button>
-                    </div>
-                  </form>
-                </div>
-                
-                <div className="mt-8">
-                   <h3 className="font-semibold text-gray-800 mb-3 border-b pb-2">Past Inspections</h3>
-                   {inspectionLoading ? (
-                      <div className="flex justify-center p-8 border border-gray-200 rounded-lg border-dashed">
-                        <RefreshCw className="w-8 h-8 animate-spin text-[#229ED9]" />
-                      </div>
-                   ) : inspections.length === 0 ? (
-                      <div className="text-gray-400 text-sm text-center py-8 bg-gray-50 border border-gray-200 rounded-lg border-dashed">
-                        <ClipboardCheck className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        No inspections recorded for this request yet.
-                      </div>
-                   ) : (
-                      <div className="space-y-4">
-                        {inspections.map((insp, idx) => (
-                          <div key={insp.id || idx} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm flex flex-col gap-2">
-                            <div className="flex justify-between items-start">
-                              <span className={`text-xs font-semibold px-2 py-1 rounded ${insp.stage === 'pickup' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                                {insp.stage === 'pickup' ? 'Pre-Rental' : 'Post-Rental'}
-                              </span>
-                              <span className="text-xs text-gray-400">{insp.created_at ? format(new Date(insp.created_at), 'MMM d, yyyy hh:mm a') : 'Now'}</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 mt-2 text-sm text-gray-700">
-                              <div><span className="text-gray-500">Mileage:</span> {insp.mileage}</div>
-                              <div><span className="text-gray-500">Fuel:</span> {insp.fuel_level?.replace('_', ' ')}</div>
-                              <div className="col-span-2"><span className="text-gray-500">Notes:</span> {insp.condition_notes || 'None'}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                   )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-  // -------------------------------------------------------------
-  // END OVERLAY RENDERING
-  // -------------------------------------------------------------
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          ?? B2B Car Sharing
-        </h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={fetchRequests} 
-            disabled={loading}
-            className="p-2 text-gray-600 hover:text-[#229ED9] bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={() => setIsFormOpen(!isFormOpen)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#229ED9] hover:bg-[#1a8cc3] text-white text-sm font-medium rounded-lg shadow-sm transition-all"
-          >
-            <PlusCircle className="w-4 h-4" />
-            {isFormOpen ? 'Cancel Request' : 'New Request'}
-          </button>
+    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] min-h-[600px] w-full max-w-7xl mx-auto">
+      
+      {/* ---------------- LEFT COLUMN: LISTS ---------------- */}
+      <div className="w-full lg:w-[400px] xl:w-[420px] flex flex-col border border-gray-200 bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] overflow-hidden shrink-0">
+        
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-white z-10 shrink-0">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            🤝 B2B Hub
+          </h2>
+          <div className="flex gap-2">
+            <button 
+              onClick={fetchRequests} 
+              disabled={loading}
+              className="p-2.5 text-gray-600 hover:text-[#229ED9] bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-100 rounded-xl transition-all focus:outline-none shadow-sm"
+              title="Refresh"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={() => { setIsFormOpen(!isFormOpen); setSelectedRequest(null); }}
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl transition-all shadow-sm focus:outline-none border ${
+                isFormOpen 
+                  ? 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200' 
+                  : 'bg-[#229ED9] text-white border-[#229ED9] hover:bg-[#1c84b8] hover:shadow-md'
+              }`}
+            >
+              {isFormOpen ? <><X className="w-4 h-4" /> Close</> : <><PlusCircle className="w-4 h-4" /> New</>}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {isFormOpen && (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-4">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Create B2B Car Share Request</h3>
-          <form onSubmit={handleCreateRequest} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 text-left mb-1">Car Public ID</label>
-                <input 
-                  type="text" 
-                  name="public_id"
-                  required
-                  value={formData.public_id} 
-                  onChange={handleFormChange}
-                  placeholder="e.g. ABC1234"
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#229ED9] focus:border-[#229ED9] outline-none text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 text-left mb-1">Agreed Total Price (USD)</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <DollarSign className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input 
-                    type="number" 
-                    name="total_price"
-                    required
-                    step="0.01"
-                    min="0"
-                    value={formData.total_price} 
-                    onChange={handleFormChange}
-                    placeholder="0.00"
-                    className="w-full pl-9 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#229ED9] focus:border-[#229ED9] outline-none text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 text-left mb-1">Start Date</label>
-                <input 
-                  type="date" 
-                  name="start_date"
-                  required
-                  value={formData.start_date} 
-                  onChange={handleFormChange}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#229ED9] focus:border-[#229ED9] outline-none text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 text-left mb-1">End Date</label>
-                <input 
-                  type="date" 
-                  name="end_date"
-                  required
-                  value={formData.end_date} 
-                  onChange={handleFormChange}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#229ED9] focus:border-[#229ED9] outline-none text-sm"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 text-left mb-1">Notes / Terms</label>
-                <textarea 
-                  name="notes"
-                  rows="3"
-                  value={formData.notes} 
-                  onChange={handleFormChange}
-                  placeholder="Optional details or terms of the loan..."
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#229ED9] focus:border-[#229ED9] outline-none text-sm"
-                ></textarea>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3 pt-2">
-              <button 
-                type="button" 
-                onClick={() => setIsFormOpen(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-                disabled={actionLoading}
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                className="px-6 py-2 bg-[#229ED9] text-white rounded-lg hover:bg-[#1a8cc3] transition-colors disabled:opacity-50 text-sm font-medium shadow-sm"
-                disabled={actionLoading}
-              >
-                {actionLoading ? 'Submitting...' : 'Submit Request'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 bg-gray-50/80 shrink-0">
           <button
-            onClick={() => setActiveTab('incoming')}
-            className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
-              activeTab === 'incoming' 
-                ? 'border-b-2 border-[#229ED9] text-[#229ED9] bg-blue-50/30' 
-                : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
+            onClick={() => { setActiveTab('incoming'); setIsFormOpen(false); }}
+            className={`flex-1 py-3.5 text-sm font-semibold text-center transition-colors border-b-[3px] flex items-center justify-center gap-1.5 ${
+              activeTab === 'incoming' && !isFormOpen
+                ? 'border-[#229ED9] text-[#229ED9] bg-white' 
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100'
             }`}
           >
-            ?? Incoming Requests {incomingRequests.length > 0 && <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{incomingRequests.length}</span>}
+            Incoming {incomingRequests.length > 0 && <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === 'incoming' && !isFormOpen ? 'bg-[#229ED9]/10 text-[#229ED9]' : 'bg-gray-200 text-gray-600'}`}>{incomingRequests.length}</span>}
           </button>
           <button
-            onClick={() => setActiveTab('outgoing')}
-            className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
-              activeTab === 'outgoing' 
-                ? 'border-b-2 border-[#229ED9] text-[#229ED9] bg-blue-50/30'
-                : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
+            onClick={() => { setActiveTab('outgoing'); setIsFormOpen(false); }}
+            className={`flex-1 py-3.5 text-sm font-semibold text-center transition-colors border-b-[3px] flex items-center justify-center gap-1.5 ${
+              activeTab === 'outgoing' && !isFormOpen
+                ? 'border-[#229ED9] text-[#229ED9] bg-white'
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100'
             }`}
           >
-            ?? Outgoing Requests {outgoingRequests.length > 0 && <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{outgoingRequests.length}</span>}
+            Outgoing {outgoingRequests.length > 0 && <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === 'outgoing' && !isFormOpen ? 'bg-[#229ED9]/10 text-[#229ED9]' : 'bg-gray-200 text-gray-600'}`}>{outgoingRequests.length}</span>}
           </button>
           <button
-            onClick={() => setActiveTab('discover')}
-            className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
-              activeTab === 'discover' 
-                ? 'border-b-2 border-[#229ED9] text-[#229ED9] bg-blue-50/30'
-                : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
+            onClick={() => { setActiveTab('discover'); setIsFormOpen(false); setSelectedRequest(null); }}
+            className={`flex-1 py-3.5 text-sm font-semibold text-center transition-colors border-b-[3px] flex items-center justify-center gap-1.5 ${
+              activeTab === 'discover' && !isFormOpen
+                ? 'border-[#229ED9] text-[#229ED9] bg-white'
+                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-100'
             }`}
           >
-            ?? Discover Cars {discoverCars.length > 0 && <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{discoverCars.length}</span>}
+            Discover {discoverCars.length > 0 && <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === 'discover' && !isFormOpen ? 'bg-[#229ED9]/10 text-[#229ED9]' : 'bg-gray-200 text-gray-600'}`}>{discoverCars.length}</span>}
           </button>
         </div>
 
-        {/* List */}
-        <div className="p-0">
+        {/* Scrollable List */}
+        <div className="flex-1 overflow-y-auto bg-gray-50/50 custom-scrollbar">
           {activeTab === 'discover' ? (
-            <div className="p-6 bg-gray-50">
-              {discoverLoading ? (
-                <div className="p-12 text-center text-gray-500 flex flex-col items-center">
-                  <RefreshCw className="w-8 h-8 animate-spin mb-3 text-[#229ED9]" />
-                  <p>Finding available cars from other agencies...</p>
-                </div>
-              ) : discoverCars.length === 0 ? (
-                <div className="p-12 text-center text-gray-500 flex flex-col items-center border border-gray-200 rounded-xl bg-white border-dashed">
-                  <CarFront className="w-12 h-12 text-gray-300 mb-3" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No cars available</h3>
-                  <p className="text-sm">There are currently no vehicles available from other agencies.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {discoverCars.map(car => (
-                    <div key={car.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col group">
-                      <div className="relative h-48 bg-gray-100">
+            discoverLoading ? (
+               <div className="p-10 text-center text-gray-500 flex flex-col items-center">
+                 <RefreshCw className="w-6 h-6 animate-spin mb-3 text-[#229ED9]" />
+                 <p className="text-sm font-medium">Finding available vehicles...</p>
+               </div>
+            ) : discoverCars.length === 0 ? (
+               <div className="p-8 m-4 text-center text-gray-500 flex flex-col items-center bg-white border border-gray-200 border-dashed rounded-xl">
+                 <div className="w-12 h-12 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mb-3">
+                   <CarFront className="w-6 h-6" />
+                 </div>
+                 <h3 className="text-sm font-bold text-gray-900 mb-1">No Cars Available</h3>
+                 <p className="text-xs text-gray-500">Other agencies haven't listed cars yet.</p>
+               </div>
+            ) : (
+               <div className="flex flex-col divide-y divide-gray-100">
+                 {discoverCars.map(car => (
+                   <div key={car.id} className="p-4 hover:bg-white transition-all bg-transparent flex gap-4 group cursor-default">
+                     <div className="relative w-24 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0 border border-gray-200 shadow-sm group-hover:shadow-md transition-all">
                         {car.images?.[0] ? (
-                          <img 
-                            src={getVehicleImageUrl(car.images[0].image || car.images[0])} 
-                            alt={`${car.make} ${car.model}`} 
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
-                          />
+                          <img src={getVehicleImageUrl(car.images[0].image || car.images[0])} className="w-full h-full object-cover" alt="Car" />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                            <CarFront className="w-8 h-8 mb-2 opacity-50" />
-                            <span className="text-xs font-medium">No Image</span>
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
+                            <CarFront className="w-8 h-8" />
                           </div>
                         )}
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-semibold text-gray-800 shadow-sm border border-gray-100">
-                          {car.year}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-1.5 flex justify-center">
+                          <span className="text-[10px] font-bold text-white shadow-sm">{car.year}</span>
                         </div>
-                        <div className="absolute top-3 right-3 bg-green-500/90 backdrop-blur px-2 py-1 text-white rounded text-xs font-semibold shadow-sm">
-                          ${parseFloat(car.price_per_day || car.price).toLocaleString()} / day
+                     </div>
+                     <div className="flex-1 flex flex-col min-w-0">
+                        <h4 className="font-bold text-gray-900 text-sm truncate group-hover:text-[#229ED9] transition-colors">{car.make} {car.model}</h4>
+                        <div className="text-xs text-gray-500 mt-1 flex gap-1.5 items-center truncate">
+                           <Building className="w-3.5 h-3.5 text-gray-400 shrink-0" /> 
+                           <span className="truncate">{car.partner_name || 'Agency'}</span>
                         </div>
-                      </div>
-                      
-                      <div className="p-4 flex-1 flex flex-col">
-                        <h4 className="font-bold text-gray-900 text-lg mb-1 truncate" title={`${car.make} ${car.model}`}>
-                          {car.make} {car.model}
-                        </h4>
-                        
-                        <div className="flex items-center text-sm text-gray-500 mb-4 gap-1.5">
-                          <Building className="w-3.5 h-3.5" />
-                          <span className="truncate">{car.partner_name || 'Agency'}</span>
-                          {car.partner_verified && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 ml-0.5" />
-                          )}
+                        <div className="mt-auto flex items-end justify-between pt-2">
+                           <span className="font-bold text-[#229ED9] text-sm">${parseFloat(car.price_per_day || car.price).toLocaleString()}/d</span>
+                           <button
+                              onClick={() => {
+                                 setFormData(prev => ({ ...prev, public_id: car.public_id || '' }));
+                                 setIsFormOpen(true);
+                                 setSelectedRequest(null);
+                              }}
+                              className="px-3.5 py-1.5 bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9] hover:text-white text-xs font-bold rounded-lg transition-colors border border-[#229ED9]/20 hover:border-[#229ED9] shadow-sm flex items-center gap-1"
+                           >
+                              <CalendarIcon className="w-3 h-3" /> Request
+                           </button>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-gray-400 font-mono scale-90">ID:</span>
-                            <span className="font-medium truncate" title={car.public_id}>{car.public_id}</span>
-                          </div>
-                          {car.location && (
-                            <div className="flex items-center gap-1.5 truncate">
-                              <span className="truncate" title={car.location}>{car.location}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-auto pt-2">
-                          <button
-                            onClick={() => {
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                              setFormData(prev => ({ ...prev, public_id: car.public_id || '' }));
-                              setIsFormOpen(true);
-                            }}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9] hover:text-white font-medium rounded-lg transition-colors border border-[#229ED9]/20"
-                          >
-                            <CalendarIcon className="w-4 h-4" />
-                            Request This Car
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            )
           ) : loading && requests.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 flex flex-col items-center">
-              <RefreshCw className="w-8 h-8 animate-spin mb-3 text-gray-400" />
-              <p>Loading requests...</p>
-            </div>
+             <div className="p-10 text-center text-gray-500 flex flex-col items-center">
+                 <RefreshCw className="w-6 h-6 animate-spin mb-3 text-gray-400" />
+                 <p className="text-sm font-medium">Loading requests...</p>
+             </div>
           ) : displayedRequests.length === 0 ? (
-            <div className="p-12 text-center text-gray-500 flex flex-col items-center">
-              <CarFront className="w-12 h-12 text-gray-300 mb-3" />
-              <h3 className="text-lg font-medium text-gray-900 mb-1">No {activeTab} requests</h3>
-              <p className="text-sm">When agencies request vehicles or you make requests, they will appear here.</p>
-            </div>
+             <div className="p-8 m-4 text-center text-gray-500 flex flex-col items-center bg-white border border-gray-200 border-dashed rounded-xl">
+                 <div className="w-12 h-12 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mb-3">
+                   <FileText className="w-6 h-6" />
+                 </div>
+                 <h3 className="text-sm font-bold text-gray-900 mb-1">No {activeTab} requests</h3>
+                 <p className="text-xs text-gray-500">They will appear here once created.</p>
+             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {displayedRequests.map(req => {
-                const partnerProfile = activeTab === 'incoming' ? req.requester : req.owner;
-                const vehicle = req.listing;
-                
-                return (
-                  <div 
-                    key={req.id} 
-                    onClick={() => setSelectedRequest(req)}
-                    className="p-5 hover:bg-gray-50/80 transition-colors flex flex-col md:flex-row gap-4 md:items-center cursor-pointer group"
-                  >
-                    {/* Vehicle Info */}
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-                        {vehicle?.images?.[0] ? (
-                          <img 
-                            src={getVehicleImageUrl(vehicle.images[0].image || vehicle.images[0])} 
-                            alt={`${vehicle.make} ${vehicle.model}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <CarFront className="w-6 h-6" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900 group-hover:text-[#229ED9] transition-colors">
-                            {vehicle?.make || 'Unknown'} {vehicle?.model || 'Car'} <span className="text-gray-500 font-normal text-sm">({vehicle?.year || 'N/A'})</span>
-                          </h4>
-                          {getStatusBadge(req.status)}
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-gray-600">
-                          <span className="flex items-center gap-1"><Building className="w-3.5 h-3.5 text-gray-400" /> {activeTab === 'incoming' ? 'From:' : 'To:'} <span className="font-medium text-gray-800">{partnerProfile?.business_name || 'Agency'}</span></span>
-                          <span className="flex items-center gap-1"><CalendarIcon className="w-3.5 h-3.5 text-gray-400" /> {format(new Date(req.start_date), 'MMM d')} - {format(new Date(req.end_date), 'MMM d, yy')}</span>
-                          <span className="flex items-center gap-1 font-medium text-[#229ED9]"><DollarSign className="w-3.5 h-3.5" />{parseFloat(req.total_price).toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 mt-2 md:mt-0 text-sm">
-                      <div className="flex flex-col gap-1 items-end">
-                        <span className="text-gray-400 text-xs flex items-center gap-1 group-hover:text-blue-500 transition-colors">View details <ChevronLeft className="w-3 h-3 rotate-180" /></span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+             <div className="flex flex-col">
+               {displayedRequests.map(req => {
+                 const partnerProfile = activeTab === 'incoming' ? req.requester : req.owner;
+                 const vehicle = req.listing;
+                 const isSelected = selectedRequest?.id === req.id && !isFormOpen;
+                 
+                 return (
+                   <div 
+                     key={req.id} 
+                     onClick={() => { setSelectedRequest(req); setIsFormOpen(false); setRequestTab('details'); }}
+                     className={`p-4 transition-all flex gap-4 cursor-pointer group border-b border-gray-100 ${
+                        isSelected 
+                          ? 'bg-blue-50/50 border-l-[4px] border-l-[#229ED9]' 
+                          : 'border-l-[4px] border-l-transparent bg-white hover:bg-gray-50'
+                     }`}
+                   >
+                     <div className="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200 shadow-sm relative">
+                       {vehicle?.images?.[0] ? (
+                         <img src={getVehicleImageUrl(vehicle.images[0].image || vehicle.images[0])} className="w-full h-full object-cover" alt="car" />
+                       ) : (
+                         <div className="w-full h-full flex items-center justify-center text-gray-300"><CarFront className="w-6 h-6" /></div>
+                       )}
+                     </div>
+                     
+                     <div className="flex-1 min-w-0 flex flex-col">
+                       <div className="flex items-start justify-between gap-2 mb-1">
+                         <h4 className={`font-bold text-sm truncate ${isSelected ? 'text-[#229ED9]' : 'text-gray-900 group-hover:text-[#229ED9]'}`}>
+                           {vehicle?.make || 'Unknown'} {vehicle?.model || 'Car'}
+                         </h4>
+                         {getStatusBadge(req.status)}
+                       </div>
+                       <div className="text-xs flex flex-col gap-1.5 mt-0.5">
+                         <span className="flex items-center gap-1.5 truncate text-gray-600 font-medium">
+                           <Building className="w-3.5 h-3.5 text-gray-400 shrink-0" /> 
+                           <span className="truncate">{partnerProfile?.business_name || 'Agency'}</span>
+                         </span>
+                         <span className="flex items-center justify-between mt-0.5">
+                            <span className="flex items-center gap-1 text-gray-500 font-medium bg-gray-100 px-1.5 py-0.5 rounded text-[10px]">
+                              <CalendarIcon className="w-3 h-3 text-gray-400" /> {format(new Date(req.start_date), 'MMM d')} - {format(new Date(req.end_date), 'MMM d')}
+                            </span>
+                            <span className="font-bold text-[#229ED9]">${parseFloat(req.total_price).toLocaleString()}</span>
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
           )}
         </div>
       </div>
+
+      {/* ---------------- RIGHT COLUMN: MAIN CONTENT ---------------- */}
+      <div className="flex-1 flex flex-col border border-gray-200 bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] overflow-hidden shrink-0 h-full relative">
+         
+         {isFormOpen ? (
+            // FORM VIEW
+            <div className="flex flex-col h-full bg-gray-50">
+               <div className="p-5 md:p-6 border-b border-gray-200 shadow-sm z-10 flex justify-between items-center bg-white shrink-0">
+                  <div>
+                     <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <div className="bg-blue-100 p-1.5 rounded-lg"><PlusCircle className="w-5 h-5 text-[#229ED9]" /></div>
+                        New B2B Car Share Request
+                     </h3>
+                     <p className="text-sm text-gray-500 mt-1">Initiate a rental request to another agency.</p>
+                  </div>
+                  <button onClick={() => setIsFormOpen(false)} className="p-2 bg-gray-100 text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-full transition-all"><X className="w-5 h-5"/></button>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                  <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                     <form onSubmit={handleCreateRequest} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <div>
+                              <label className="block text-sm font-semibold text-gray-800 mb-2">Car Public ID</label>
+                              <input 
+                                 type="text" name="public_id" required value={formData.public_id} onChange={handleFormChange}
+                                 placeholder="e.g. ABC1234"
+                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all"
+                              />
+                           </div>
+                           <div>
+                              <label className="block text-sm font-semibold text-gray-800 mb-2">Agreed Total Price (USD)</label>
+                              <div className="relative">
+                                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <DollarSign className="h-4 w-4 text-gray-400" />
+                                 </div>
+                                 <input 
+                                    type="number" name="total_price" required step="0.01" min="0" value={formData.total_price} onChange={handleFormChange}
+                                    placeholder="0.00"
+                                    className="w-full pl-9 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all"
+                                 />
+                              </div>
+                           </div>
+                           <div>
+                              <label className="block text-sm font-semibold text-gray-800 mb-2">Start Date</label>
+                              <input 
+                                 type="date" name="start_date" required value={formData.start_date} onChange={handleFormChange}
+                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all text-gray-700"
+                              />
+                           </div>
+                           <div>
+                              <label className="block text-sm font-semibold text-gray-800 mb-2">End Date</label>
+                              <input 
+                                 type="date" name="end_date" required value={formData.end_date} onChange={handleFormChange}
+                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all text-gray-700"
+                              />
+                           </div>
+                           <div className="md:col-span-2">
+                              <label className="block text-sm font-semibold text-gray-800 mb-2">Notes / Terms</label>
+                              <textarea 
+                                 name="notes" rows="4" value={formData.notes} onChange={handleFormChange}
+                                 placeholder="Add optional details, conditions, or terms for this request..."
+                                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all resize-none"
+                              ></textarea>
+                           </div>
+                        </div>
+                        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-100">
+                           <button 
+                              type="button" onClick={() => setIsFormOpen(false)} disabled={actionLoading}
+                              className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm font-bold"
+                           >
+                              Cancel
+                           </button>
+                           <button 
+                              type="submit" disabled={actionLoading}
+                              className="px-8 py-2.5 bg-[#229ED9] text-white rounded-xl hover:bg-[#1a8cc3] shadow-sm hover:shadow transition-all disabled:opacity-50 text-sm font-bold flex items-center gap-2"
+                           >
+                              {actionLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
+                              Submit Request
+                           </button>
+                        </div>
+                     </form>
+                  </div>
+               </div>
+            </div>
+
+         ) : selectedRequest ? (
+            
+            // SELECTED REQUEST DETAILS MAP
+            <div className="flex flex-col h-full bg-gray-50/20">
+               {/* 1. Header */}
+               <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-5 border-b border-gray-200 shrink-0 z-10 gap-4">
+                  <div>
+                     <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        {selectedRequest.listing?.make} {selectedRequest.listing?.model} 
+                        <span className="text-gray-500 font-medium text-lg">({selectedRequest.listing?.year})</span>
+                        {getStatusBadge(selectedRequest.status)}
+                     </h2>
+                     <div className="flex flex-wrap gap-2 md:gap-4 text-sm text-gray-500 mt-2 font-medium">
+                        <span className="bg-gray-100 px-2 py-0.5 rounded text-xs">ID: {selectedRequest.id}</span>
+                        <span className="flex items-center gap-1.5"><Building className="w-3.5 h-3.5 opacity-70"/> {activeTab === 'incoming' ? `From: ${selectedRequest.requester?.business_name}` : `To: ${selectedRequest.owner?.business_name}`}</span>
+                     </div>
+                  </div>
+                  
+                  {/* Actions for owner if pending */}
+                  {selectedRequest.owner?.id === myPartnerId && selectedRequest.status === 'pending' && (
+                     <div className="flex gap-2">
+                        <button 
+                           onClick={() => handleStatusUpdate(selectedRequest.id, 'accepted')} disabled={actionLoading}
+                           className="px-5 py-2.5 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 font-bold text-sm rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                        >
+                           <Check className="w-4 h-4" /> Accept
+                        </button>
+                        <button 
+                           onClick={() => handleStatusUpdate(selectedRequest.id, 'rejected')} disabled={actionLoading}
+                           className="px-5 py-2.5 bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold text-sm rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                        >
+                           <X className="w-4 h-4" /> Reject
+                        </button>
+                     </div>
+                  )}
+               </div>
+
+               {/* 2. Tabs inside selected request */}
+               <div className="flex border-b border-gray-200 bg-gray-50/80 shrink-0 px-2">
+                  <button onClick={() => setRequestTab('details')} className={`py-4 px-6 text-sm font-bold text-center transition-colors border-b-[3px] flex gap-2 items-center ${requestTab === 'details' ? 'border-[#229ED9] text-[#229ED9]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                     <FileText className="w-4 h-4" /> Details
+                  </button>
+                  <button onClick={() => setRequestTab('chat')} className={`py-4 px-6 text-sm font-bold text-center transition-colors border-b-[3px] flex gap-2 items-center relative ${requestTab === 'chat' ? 'border-[#229ED9] text-[#229ED9]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                     <MessageSquare className="w-4 h-4" /> Messages
+                     {/* notification dot could go here */}
+                  </button>
+                  <button onClick={() => setRequestTab('handover')} className={`py-4 px-6 text-sm font-bold text-center transition-colors border-b-[3px] flex gap-2 items-center ${requestTab === 'handover' ? 'border-[#229ED9] text-[#229ED9]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                     <ClipboardCheck className="w-4 h-4" /> Handover Log
+                  </button>
+               </div>
+
+               {/* 3. Content Area */}
+               <div className="flex-1 relative overflow-hidden bg-gray-50/30">
+                  
+                  {/* DETAILS TAB */}
+                  {requestTab === 'details' && (
+                     <div className="absolute inset-0 overflow-y-auto px-6 py-8 md:p-10 custom-scrollbar animate-in fade-in slide-in-from-bottom-2">
+                        <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-8">
+                           
+                           {/* Left Info Column */}
+                           <div className="lg:col-span-3 space-y-8">
+                              <section>
+                                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-gray-200 pb-2">
+                                    <Clock className="w-5 h-5 text-[#229ED9]" /> Booking Timeline
+                                 </h3>
+                                 <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm grid grid-cols-2 gap-6 relative overflow-hidden">
+                                    <div className="absolute left-1/2 top-4 bottom-4 w-px bg-gray-100 hidden md:block"></div>
+                                    <div>
+                                       <span className="text-sm font-medium text-gray-500 block mb-1 uppercase tracking-wider">Start Date</span>
+                                       <div className="font-bold text-lg text-gray-900">{format(new Date(selectedRequest.start_date), 'MMMM d, yyyy')}</div>
+                                    </div>
+                                    <div>
+                                       <span className="text-sm font-medium text-gray-500 block mb-1 uppercase tracking-wider">End Date</span>
+                                       <div className="font-bold text-lg text-gray-900">{format(new Date(selectedRequest.end_date), 'MMMM d, yyyy')}</div>
+                                    </div>
+                                    <div className="col-span-2 pt-4 border-t border-gray-100 flex justify-between items-center bg-blue-50/50 -m-5 mt-0 p-5">
+                                       <span className="text-sm font-bold text-gray-700">Total Duration</span>
+                                       <span className="text-sm font-bold bg-[#229ED9]/10 text-[#229ED9] px-3 py-1 rounded-lg">
+                                          {Math.max(1, Math.ceil((new Date(selectedRequest.end_date) - new Date(selectedRequest.start_date)) / (1000 * 60 * 60 * 24)))} Days
+                                       </span>
+                                    </div>
+                                 </div>
+                              </section>
+
+                              <section>
+                                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-gray-200 pb-2">
+                                    <DollarSign className="w-5 h-5 text-[#229ED9]" /> Financials
+                                 </h3>
+                                 <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex items-center justify-between">
+                                    <div>
+                                       <span className="text-sm font-medium text-gray-500 block mb-1 uppercase tracking-wider">Agreed Total Price</span>
+                                       <span className="text-xs text-gray-400">Total payment from requester</span>
+                                    </div>
+                                    <div className="text-3xl font-black text-gray-900 tracking-tight">
+                                       ${parseFloat(selectedRequest.total_price).toLocaleString()}
+                                    </div>
+                                 </div>
+                              </section>
+
+                              <section>
+                                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-gray-200 pb-2">
+                                    <Info className="w-5 h-5 text-[#229ED9]" /> Notes & Terms
+                                 </h3>
+                                 <div className="bg-yellow-50 text-yellow-800 rounded-2xl p-5 border border-yellow-100 text-sm leading-relaxed whitespace-pre-wrap">
+                                    {selectedRequest.notes ? selectedRequest.notes : <span className="text-yellow-600/70 italic block py-2">No notes or special conditions provided for this request.</span>}
+                                 </div>
+                              </section>
+                           </div>
+
+                           {/* Right Sidebar Column */}
+                           <div className="lg:col-span-2 space-y-6">
+                              <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                                 <div className="text-xs font-bold uppercase tracking-widest text-[#229ED9] mb-4 border-b border-gray-100 pb-2">Owner Profile</div>
+                                 <div className="flex gap-3 items-center">
+                                    <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                                       {selectedRequest.owner?.business_name?.charAt(0) || 'O'}
+                                    </div>
+                                    <div>
+                                       <div className="font-bold text-gray-900">{selectedRequest.owner?.business_name}</div>
+                                       {myPartnerId === selectedRequest.owner?.id && <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase mt-1 inline-block">You</span>}
+                                    </div>
+                                 </div>
+                              </div>
+
+                              <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                                 <div className="text-xs font-bold uppercase tracking-widest text-orange-500 mb-4 border-b border-gray-100 pb-2">Requester Profile</div>
+                                 <div className="flex gap-3 items-center">
+                                    <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg">
+                                       {selectedRequest.requester?.business_name?.charAt(0) || 'R'}
+                                    </div>
+                                    <div>
+                                       <div className="font-bold text-gray-900">{selectedRequest.requester?.business_name}</div>
+                                       {myPartnerId === selectedRequest.requester?.id && <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded uppercase mt-1 inline-block">You</span>}
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+
+                        </div>
+                     </div>
+                  )}
+
+                  {/* CHAT TAB */}
+                  {requestTab === 'chat' && (
+                     <div className="absolute inset-0 flex flex-col bg-[#F8FAFC]">
+                        {/* Messages Area */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 custom-scrollbar flex flex-col">
+                           <div className="text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 my-4 bg-gray-200/50 w-fit mx-auto px-4 py-1 rounded-full">Conversation Started</div>
+                           
+                           {messagesLoading ? (
+                              <div className="flex justify-center flex-col items-center p-8 gap-3 my-auto">
+                                 <RefreshCw className="w-6 h-6 animate-spin text-[#229ED9]" />
+                                 <span className="text-sm font-medium text-gray-500">Loading messages...</span>
+                              </div>
+                           ) : messages.length === 0 ? (
+                              <div className="text-center text-gray-400 text-sm mt-auto mb-auto flex flex-col items-center">
+                                 <MessageSquare className="w-10 h-10 mb-2 opacity-20" />
+                                 <p className="font-medium">No messages yet.</p>
+                                 <p className="text-xs mt-1">Send a message to start the conversation.</p>
+                              </div>
+                           ) : (
+                              messages.map((msg, idx) => {
+                                 const isMe = msg.is_partner || msg.sender_role === 'partner';
+                                 return (
+                                    <div key={msg.id || idx} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                       <div className={`max-w-[75%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                          <div className={`p-4 rounded-2xl text-sm shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] leading-relaxed ${isMe ? 'bg-[#229ED9] text-white rounded-tr-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'}`}>
+                                             {msg.message}
+                                          </div>
+                                          <span className={`text-[10px] font-medium mt-1.5 px-1 ${isMe ? 'text-gray-400' : 'text-gray-400'}`}>
+                                             {msg.created_at ? format(new Date(msg.created_at), 'MMM d, h:mm a') : 'Just now'}
+                                          </span>
+                                       </div>
+                                    </div>
+                                 );
+                              })
+                           )}
+                        </div>
+                        
+                        {/* Input Area */}
+                        <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-200 shrink-0 shadow-[0_-4px_10px_-5px_rgba(0,0,0,0.05)]">
+                           <div className="flex gap-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-200 focus-within:border-[#229ED9]/50 focus-within:ring-2 focus-within:ring-[#229ED9]/20 transition-all">
+                              <input 
+                                 type="text" 
+                                 placeholder="Type your message..."
+                                 value={newMessage}
+                                 onChange={(e) => setNewMessage(e.target.value)}
+                                 className="flex-1 bg-transparent px-4 py-2.5 outline-none text-sm text-gray-700 placeholder-gray-400" 
+                              />
+                              <button type="submit" disabled={!newMessage.trim() || actionLoading} className="px-5 py-2.5 bg-[#229ED9] text-white rounded-xl hover:bg-[#1a8cc3] transition-transform active:scale-95 flex items-center justify-center disabled:opacity-50 disabled:active:scale-100 shadow-sm disabled:cursor-not-allowed font-bold">
+                                 <Send className="w-4 h-4"/>
+                              </button>
+                           </div>
+                        </form>
+                     </div>
+                  )}
+
+                  {/* HANDOVER TAB */}
+                  {requestTab === 'handover' && (
+                     <div className="absolute inset-0 overflow-y-auto px-6 py-8 md:p-10 custom-scrollbar animate-in fade-in slide-in-from-bottom-2">
+                        <div className="max-w-3xl mx-auto space-y-8">
+                           
+                           <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex items-start gap-4">
+                              <div className="bg-blue-100 p-2 rounded-full shrink-0"><Info className="w-5 h-5 text-blue-600" /></div>
+                              <div>
+                                 <h4 className="font-bold text-gray-900 mb-1">Vehicle Inspection Protocol</h4>
+                                 <p className="text-gray-600 text-sm leading-relaxed">It is crucial to log the vehicle's condition, exact mileage, and fuel level at both check-out and check-in to avoid disputes.</p>
+                              </div>
+                           </div>
+                           
+                           <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] overflow-hidden">
+                              <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-200">
+                                 <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                                    <PlusCircle className="w-4 h-4 text-[#229ED9]" /> Record New Inspection
+                                 </h3>
+                              </div>
+                              <form className="p-6 space-y-5" onSubmit={handleSubmitInspection}>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                       <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Stage</label>
+                                       <select value={inspectionForm.stage} onChange={(e) => setInspectionForm({ ...inspectionForm, stage: e.target.value })} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all font-medium text-gray-800">
+                                          <option value="pickup">🚗 Pre-Rental (Check-out)</option>
+                                          <option value="return">🏁 Post-Rental (Check-in)</option>
+                                       </select>
+                                    </div>
+                                    <div>
+                                       <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Current Mileage</label>
+                                       <input type="number" placeholder="e.g. 45000" value={inspectionForm.mileage} onChange={(e) => setInspectionForm({ ...inspectionForm, mileage: e.target.value })} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all font-medium text-gray-800" />
+                                    </div>
+                                    <div>
+                                       <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Fuel Level</label>
+                                       <select value={inspectionForm.fuel_level} onChange={(e) => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value })} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all font-medium text-gray-800">
+                                          <option value="100">Full (100%)</option>
+                                          <option value="75">3/4 (75%)</option>
+                                          <option value="50">1/2 (50%)</option>
+                                          <option value="25">1/4 (25%)</option>
+                                          <option value="0">Empty (0%)</option>
+                                       </select>
+                                    </div>
+                                    <div>
+                                       <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Condition Notes</label>
+                                       <input type="text" placeholder="Scratches, damages, cleanliness..." value={inspectionForm.condition_notes} onChange={(e) => setInspectionForm({ ...inspectionForm, condition_notes: e.target.value })} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#229ED9]/50 focus:border-[#229ED9] focus:bg-white outline-none text-sm transition-all font-medium text-gray-800" />
+                                    </div>
+                                 </div>
+                                 <div className="pt-2 flex justify-end">
+                                    <button type="submit" disabled={actionLoading} className="px-6 py-2.5 bg-[#229ED9] disabled:opacity-50 text-white text-sm font-bold rounded-xl hover:bg-[#1a8cc3] transition-colors shadow-sm flex items-center gap-2">
+                                       {actionLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                       Save Record
+                                    </button>
+                                 </div>
+                              </form>
+                           </div>
+                           
+                           <div>
+                              <h3 className="font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">History Line</h3>
+                              {inspectionLoading ? (
+                                 <div className="flex justify-center p-12 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                                    <RefreshCw className="w-8 h-8 animate-spin text-gray-300" />
+                                 </div>
+                              ) : inspections.length === 0 ? (
+                                 <div className="text-gray-500 text-sm text-center py-10 bg-white border border-gray-200 rounded-2xl shadow-sm border-dashed">
+                                    <ClipboardCheck className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-600" />
+                                    <p className="font-medium">No inspections logged yet.</p>
+                                 </div>
+                              ) : (
+                                 <div className="space-y-4">
+                                    {inspections.map((insp, idx) => (
+                                       <div key={insp.id || idx} className="p-5 border border-gray-200 rounded-2xl bg-white shadow-sm flex flex-col gap-3 relative overflow-hidden group hover:border-[#229ED9]/30 transition-colors">
+                                          <div className={`absolute top-0 left-0 w-1.5 h-full ${insp.stage === 'pickup' ? 'bg-[#229ED9]' : 'bg-green-500'}`}></div>
+                                          <div className="flex justify-between items-center pl-2">
+                                             <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${insp.stage === 'pickup' ? 'bg-[#229ED9]/10 text-[#229ED9]' : 'bg-green-100 text-green-700'}`}>
+                                                {insp.stage === 'pickup' ? 'Pre-Rental' : 'Post-Rental'}
+                                             </span>
+                                             <span className="text-[11px] font-medium tracking-wider text-gray-400 uppercase">{insp.created_at ? format(new Date(insp.created_at), 'MMM d, yy • h:mm a') : 'Now'}</span>
+                                          </div>
+                                          <div className="grid grid-cols-2 gap-4 mt-2 text-sm text-gray-700 pl-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                             <div><span className="block text-[10px] uppercase font-bold text-gray-400 mb-0.5">Mileage</span> <span className="font-bold text-gray-900">{insp.mileage}</span></div>
+                                             <div><span className="block text-[10px] uppercase font-bold text-gray-400 mb-0.5">Fuel</span> <span className="font-bold text-gray-900 capitalize">{insp.fuel_level?.toString().replace('_', ' ')}%</span></div>
+                                             <div className="col-span-2"><span className="block text-[10px] uppercase font-bold text-gray-400 mb-0.5">Notes</span> <span>{insp.condition_notes || <span className="text-gray-400 italic font-medium">Clear</span>}</span></div>
+                                          </div>
+                                       </div>
+                                    ))}
+                                 </div>
+                              )}
+                           </div>
+
+                        </div>
+                     </div>
+                  )}
+
+               </div>
+            </div>
+
+         ) : (
+            // EMPTY STATE (NO SELECTION)
+            <div className="flex-1 flex flex-col items-center justify-center bg-gray-50/50 text-center p-8 absolute inset-0">
+               <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 mb-6 relative">
+                  <div className="absolute inset-0 bg-[#229ED9]/5 rounded-full animate-ping opacity-75"></div>
+                  <MessageSquare className="w-10 h-10 text-[#229ED9]" />
+               </div>
+               <h3 className="text-2xl font-bold text-gray-900 mb-2">B2B Workflow</h3>
+               <p className="text-gray-500 max-w-sm text-sm leading-relaxed">
+                  Select an active request from the list to view details, chat with the other agency, and manage handover inspections.
+               </p>
+               <button 
+                  onClick={() => setActiveTab('discover')}
+                  className="mt-6 px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-50 hover:text-[#229ED9] hover:border-[#229ED9]/30 transition-all shadow-sm"
+               >
+                  Browse Available Cars
+               </button>
+            </div>
+         )}
+      </div>
+
     </div>
   );
 }
