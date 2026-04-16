@@ -1,10 +1,11 @@
 """
 Partner-related views.
 """
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action
 from django.db.models import Q, F, DecimalField, Avg, Sum, Count, Min, Prefetch, Value
 from django.utils import timezone
 from django.db import transaction, OperationalError
@@ -12,10 +13,11 @@ from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, PartnerFollow, PartnerPost
+from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, PartnerFollow, PartnerPost, CarShareRequest, B2BMessage, VehicleInspection
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer, PartnerSerializer, PartnerDetailSerializer, PartnerPostSerializer,
+    CarShareRequestSerializer, B2BMessageSerializer, VehicleInspectionSerializer
 )
 
 # Notification helpers
@@ -23,6 +25,20 @@ try:
     from ..utils.notifications import notify_partner_approved, notify_partner_rejected
 except ImportError:
     notify_partner_approved = notify_partner_rejected = None
+
+
+def _create_notification_safe(user, title, message, type, related_object_type=None):
+    try:
+        from ..models import Notification
+        Notification.objects.create(
+            user=user, 
+            title=title, 
+            message=message, 
+            type=type, 
+            related_object_type=related_object_type
+        )
+    except Exception:
+        pass
 
 
 class PartnerListView(APIView):
