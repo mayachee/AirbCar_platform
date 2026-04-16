@@ -143,6 +143,7 @@ export const filterVehicles = (vehicles, filters) => {
     };
   })
   .filter(car => car._isMatch);
+};
 
 // Sort vehicles
 export const sortVehicles = (vehicles, sortBy) => {
