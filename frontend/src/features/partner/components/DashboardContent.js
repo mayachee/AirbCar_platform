@@ -25,6 +25,7 @@ const BulkOperationsPanel = lazy(() => import('@/features/partner/components/Bul
 const EarningsOverview = lazy(() => import('@/features/partner/components/EarningsOverview'));
 const VehiclePerformanceInsights = lazy(() => import('@/features/partner/components/VehiclePerformanceInsights'));
 const RecentActivityFeed = lazy(() => import('@/features/partner/components/RecentActivityFeed'));
+const CarSharingInbox = lazy(() => import('@/features/partner/components/CarSharingInbox'));
 const RentalPolicies = lazy(() => import('@/features/partner/components/RentalPolicies'));
 
 const ComponentLoader = ({ children, fallback = null }) => (
@@ -496,7 +497,13 @@ export default function DashboardContent({
         </ComponentLoader>
       )}
 
-      {currentView === 'earnings' && (
+      {currentView === 'carsharing' && (
+          <ComponentLoader>
+            <CarSharingInbox partnerData={partnerData} />
+          </ComponentLoader>
+        )}
+
+        {currentView === 'earnings' && (
         <ComponentLoader>
           <EarningsOverview earnings={earnings} stats={stats} detailed={true} />
         </ComponentLoader>

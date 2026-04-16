@@ -74,6 +74,7 @@ export function useOptimizedDashboard() {
     { id: 'dashboard', label: t('nav_dashboard'), icon: <LayoutDashboard className="h-5 w-5" />, badge: null },
     { id: 'vehicles', label: t('nav_vehicles'), icon: <Car className="h-5 w-5" />, badge: vehicles?.length || 0 },
     { id: 'bookings', label: t('nav_bookings'), icon: <Calendar className="h-5 w-5" />, badge: bookings?.length || 0 },
+    { id: 'carsharing', label: 'Car Sharing', icon: <CarFront className="h-5 w-5" />, badge: null },
     { id: 'earnings', label: t('nav_earnings'), icon: <DollarSign className="h-5 w-5" />, badge: null },
     { id: 'analytics', label: t('nav_analytics'), icon: <BarChart3 className="h-5 w-5" />, badge: null },
     { id: 'calendar', label: t('nav_calendar'), icon: <CalendarDays className="h-5 w-5" />, badge: null },
