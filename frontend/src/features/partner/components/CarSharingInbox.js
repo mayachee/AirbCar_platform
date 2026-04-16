@@ -28,9 +28,9 @@ export default function CarSharingInbox({ partnerData }) {
   const [inspections, setInspections] = useState([]);
   const [inspectionLoading, setInspectionLoading] = useState(false);
   const [inspectionForm, setInspectionForm] = useState({
-    inspection_type: 'pre_rental',
+    stage: 'pickup',
     mileage: '',
-    fuel_level: 'full',
+    fuel_level: '100',
     condition_notes: ''
   });
 
@@ -87,7 +87,7 @@ export default function CarSharingInbox({ partnerData }) {
     if (!newMessage.trim() || !selectedRequest?.id) return;
 
     try {
-      const response = await partnerService.sendCarShareMessage(selectedRequest.id, { message: newMessage });
+      const response = await partnerService.sendCarShareMessage(selectedRequest.id, { text: newMessage });
       const newMsgObj = response.data?.data || response.data;
       setMessages(prev => [...prev, newMsgObj]);
       setNewMessage('');
@@ -123,9 +123,9 @@ export default function CarSharingInbox({ partnerData }) {
       const newInspObj = response.data?.data || response.data;
       setInspections(prev => [...prev, newInspObj]);
       setInspectionForm({
-        inspection_type: 'pre_rental',
+        stage: 'pickup',
         mileage: '',
-        fuel_level: 'full',
+        fuel_level: '100',
         condition_notes: ''
       });
       addToast('Inspection logged successfully', 'success');
@@ -413,12 +413,12 @@ export default function CarSharingInbox({ partnerData }) {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Inspection Type</label>
                         <select 
-                          value={inspectionForm.inspection_type}
-                          onChange={(e) => setInspectionForm({ ...inspectionForm, inspection_type: e.target.value })}
+                          value={inspectionForm.stage}
+                          onChange={(e) => setInspectionForm({ ...inspectionForm, stage: e.target.value })}
                           className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm"
                         >
-                          <option value="pre_rental">Pre-Rental (Check-out)</option>
-                          <option value="post_rental">Post-Rental (Check-in)</option>
+                          <option value="pickup">Pre-Rental (Check-out)</option>
+                          <option value="return">Post-Rental (Check-in)</option>
                         </select>
                       </div>
                       <div>
@@ -438,11 +438,11 @@ export default function CarSharingInbox({ partnerData }) {
                           onChange={(e) => setInspectionForm({ ...inspectionForm, fuel_level: e.target.value })}
                           className="w-full p-2.5 bg-white border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#229ED9] text-sm"
                         >
-                          <option value="full">Full (100%)</option>
-                          <option value="three_quarters">3/4 (75%)</option>
-                          <option value="half">1/2 (50%)</option>
-                          <option value="quarter">1/4 (25%)</option>
-                          <option value="empty">Empty (0%)</option>
+                          <option value="100">Full (100%)</option>
+                          <option value="75">3/4 (75%)</option>
+                          <option value="50">1/2 (50%)</option>
+                          <option value="25">1/4 (25%)</option>
+                          <option value="0">Empty (0%)</option>
                         </select>
                       </div>
                       <div>
@@ -481,8 +481,8 @@ export default function CarSharingInbox({ partnerData }) {
                         {inspections.map((insp, idx) => (
                           <div key={insp.id || idx} className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm flex flex-col gap-2">
                             <div className="flex justify-between items-start">
-                              <span className={`text-xs font-semibold px-2 py-1 rounded ${insp.inspection_type === 'pre_rental' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                                {insp.inspection_type === 'pre_rental' ? 'Pre-Rental' : 'Post-Rental'}
+                              <span className={`text-xs font-semibold px-2 py-1 rounded ${insp.stage === 'pickup' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                {insp.stage === 'pickup' ? 'Pre-Rental' : 'Post-Rental'}
                               </span>
                               <span className="text-xs text-gray-400">{insp.created_at ? format(new Date(insp.created_at), 'MMM d, yyyy hh:mm a') : 'Now'}</span>
                             </div>
