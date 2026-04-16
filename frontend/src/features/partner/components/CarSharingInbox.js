@@ -394,6 +394,9 @@ export default function CarSharingInbox({ partnerData }) {
                       <Send className="w-4 h-4"/>
                     </button>
                   </form>
+              </div>
+            )}
+
             {requestTab === 'handover' && (
               <div className="space-y-6 animate-in fade-in">
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-blue-800 text-sm flex items-start gap-3">
