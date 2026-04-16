@@ -112,6 +112,7 @@ class LicenseVerificationRecord(models.Model):
 class Partner(models.Model):
     """Partner/owner information."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='partner_profile')
+    username = models.CharField(max_length=50, unique=True, null=True, blank=True, help_text="Unique agency handle")
     business_name = models.CharField(max_length=200)
     business_type = models.CharField(max_length=50, choices=[('individual', 'Individual'), ('company', 'Company')])
     business_license = models.CharField(max_length=100, blank=True, null=True)
@@ -198,6 +199,7 @@ class Listing(models.Model):
     
     # Basic Information
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='listings')
+    public_id = models.CharField(max_length=50, unique=True, db_index=True, blank=True, null=True, help_text="Public short ID for inter-agency sharing")
     make = models.CharField(max_length=100)  # brand
     model = models.CharField(max_length=100)
     year = models.IntegerField()
@@ -257,10 +259,83 @@ class Listing(models.Model):
     def __str__(self):
         return f"{self.make} {self.model} ({self.year}) - {self.location}"
     
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            import uuid
+            self.public_id = f"CAR-{str(uuid.uuid4())[:12].upper()}"
+        super().save(*args, **kwargs)
+
     @property
     def name(self):
         """Return formatted vehicle name."""
         return f"{self.make} {self.model} {self.year}"
+
+class CarShareRequest(models.Model):
+    """Inter-agency car sharing request for B2B loans/borrows."""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    requester = models.ForeignKey('Partner', on_delete=models.CASCADE, related_name='outgoing_share_requests', help_text="Agency requesting the car")
+    owner = models.ForeignKey('Partner', on_delete=models.CASCADE, related_name='incoming_share_requests', help_text="Agency owning the car")
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='share_requests')
+    
+    start_date = models.DateField()
+    end_date = models.DateField()
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], help_text="Agreed B2B rental price")
+    
+    notes = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Share: {self.listing.public_id} ({self.requester.business_name} -> {self.owner.business_name})"
+
+
+class B2BMessage(models.Model):
+    car_share_request = models.ForeignKey(CarShareRequest, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey('Partner', on_delete=models.CASCADE, related_name='b2b_messages')
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Msg on {self.car_share_request.id} by {self.sender.business_name}"
+
+
+class VehicleInspection(models.Model):
+    STAGE_CHOICES = [
+        ('pickup', 'Pickup'),
+        ('return', 'Return'),
+    ]
+    car_share_request = models.ForeignKey(CarShareRequest, on_delete=models.CASCADE, related_name='inspections')
+    stage = models.CharField(max_length=10, choices=STAGE_CHOICES)
+    recorded_by = models.ForeignKey('Partner', on_delete=models.CASCADE, related_name='inspections_recorded')
+    mileage = models.IntegerField()
+    fuel_level = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    images = models.JSONField(default=list, blank=True)
+    condition_notes = models.TextField(blank=True, null=True)
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.get_stage_display()} Inspection for Share {self.car_share_request.id}"
 
 
 class Booking(models.Model):

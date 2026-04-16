@@ -5,7 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.utils import timezone
-from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord, ListingComment, PartnerPost, TripPost, TripPostComment, TripPostReaction, CommunityPost, CommunityPostComment, CommunityPostReaction
+from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord, ListingComment, PartnerPost, TripPost, TripPostComment, TripPostReaction, CommunityPost, CommunityPostComment, CommunityPostReaction, CarShareRequest, B2BMessage, VehicleInspection
 from .utils.license_verification import verify_driving_license_images
 from .utils.license_verification_persistence import store_license_verification_result
 
@@ -332,7 +332,7 @@ class PartnerSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Partner
-        fields = ['id', 'user', 'business_name', 'business_type', 'business_license',
+        fields = ['id', 'user', 'username', 'business_name', 'business_type', 'business_license',
                   'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
                   'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
                    'phone_number', 'first_name', 'last_name', 'company_name',
@@ -513,7 +513,7 @@ class ListingCompactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Listing
         fields = [
-            'id', 'make', 'brand', 'model', 'model_name', 'year', 'color',
+            'id', 'public_id', 'make', 'brand', 'model', 'model_name', 'year', 'color',
             'transmission', 'fuel_type', 'fuelType', 'seating_capacity', 'seats',
             'vehicle_style', 'style', 'luggage_capacity', 'range_km', 'price_per_day', 'dailyRate', 'price', 'security_deposit', 'securityDeposit',
             'location', 'images', 'is_available', 'isAvailable', 'is_verified', 'verified',
@@ -521,7 +521,7 @@ class ListingCompactSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'name', 'partner_id',
             'partner_name', 'partner_logo', 'partner_verified',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'rating', 'review_count', 'is_verified']
+        read_only_fields = ['id', 'public_id', 'created_at', 'updated_at', 'rating', 'review_count', 'is_verified']
 
     def get_name(self, obj):
         return f"{obj.make} {obj.model} {obj.year}"
@@ -622,7 +622,7 @@ class ListingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Listing
         fields = [
-            'id', 'partner', 'partner_id', 'make', 'brand', 'model', 'model_name',
+            'id', 'public_id', 'partner', 'partner_id', 'make', 'brand', 'model', 'model_name',
             'year', 'color', 'transmission', 'fuel_type', 'fuelType',
             'seating_capacity', 'seats', 'vehicle_style', 'style',
             'luggage_capacity', 'range_km',
@@ -1149,13 +1149,63 @@ class CommunityPostSerializer(serializers.ModelSerializer):
             'profile_picture_url': obj.author.profile_picture_url,
         }
 
-    def get_reaction_summary(self, obj):
-        from django.db.models import Count
-        return list(
-            obj.community_reactions.values('reaction_type').annotate(count=Count('id')).order_by('-count')
-        )
-
     def get_comment_count(self, obj):
         return obj.community_comments.filter(is_active=True).count()
+
+class CarShareRequestSerializer(serializers.ModelSerializer):
+    requester = PartnerSerializer(read_only=True)
+    owner = PartnerSerializer(read_only=True)
+    listing = ListingCompactSerializer(read_only=True)
+    
+    public_id = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = CarShareRequest
+        fields = [
+            'id', 'listing_id', 'requester', 'owner', 'listing', 
+            'public_id', 'start_date', 'end_date', 'status', 'total_price', 
+            'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'status', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        public_id = validated_data.pop('public_id')
+        try:
+            listing = Listing.objects.get(public_id=public_id)
+        except Listing.DoesNotExist:
+            raise serializers.ValidationError({"public_id": "Listing not found."})
+        
+        request = self.context.get('request')
+        requester = getattr(request.user, 'partner_profile', None)
+        if not requester:
+            raise serializers.ValidationError({"requester": "Only partners can request a car share."})
+        
+        if requester == listing.partner:
+            raise serializers.ValidationError({"requester": "You cannot request your own car."})
+
+        car_share_request = CarShareRequest.objects.create(
+            requester=requester,
+            owner=listing.partner,
+            listing=listing,
+            **validated_data
+        )
+        return car_share_request
+
+class B2BMessageSerializer(serializers.ModelSerializer):
+    sender = PartnerSerializer(read_only=True)
+
+    class Meta:
+        model = B2BMessage
+        fields = ['id', 'car_share_request', 'sender', 'text', 'created_at']
+        read_only_fields = ['id', 'car_share_request', 'sender', 'created_at']
+
+class VehicleInspectionSerializer(serializers.ModelSerializer):
+    recorded_by = PartnerSerializer(read_only=True)
+
+    class Meta:
+        model = VehicleInspection
+        fields = ['id', 'car_share_request', 'stage', 'recorded_by', 'mileage', 'fuel_level', 'images', 'condition_notes', 'is_approved', 'created_at']
+        read_only_fields = ['id', 'car_share_request', 'recorded_by', 'created_at']
+
 
 

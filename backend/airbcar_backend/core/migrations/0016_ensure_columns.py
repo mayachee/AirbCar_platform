@@ -9,13 +9,13 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             """
-            DO $$
+            DO 20
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='core_booking' AND column_name='request_message') THEN
-                    ALTER TABLE core_booking ADD COLUMN request_message text;
+                    ALTER TABLE core_booking ADD COLUMN request_message text;   
                 END IF;
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='core_booking' AND column_name='rejection_reason') THEN
-                    ALTER TABLE core_booking ADD COLUMN rejection_reason text;
+                    ALTER TABLE core_booking ADD COLUMN rejection_reason text;  
                 END IF;
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='core_booking' AND column_name='license_front_document') THEN
                     ALTER TABLE core_booking ADD COLUMN license_front_document varchar(500);
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                     ALTER TABLE core_booking ADD COLUMN license_back_document varchar(500);
                 END IF;
             END
-            $$;
+            20;
             """,
             reverse_sql=""
         )

@@ -28,3 +28,5 @@ LOGGING = {}
 # Skip Supabase / email backends
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+REST_FRAMEWORK["EXCEPTION_HANDLER"] = "rest_framework.views.exception_handler"

@@ -111,7 +111,8 @@ urlpatterns = [
     path('api/telegram/link/', TelegramLinkView.as_view(), name='telegram-link'),
 ]
 
+router = DefaultRouter()
 if getattr(views, 'CommunityPostViewSet', None):
-    router = DefaultRouter()
     router.register(r'community-posts', views.CommunityPostViewSet, basename='community-post')
-    urlpatterns.extend(router.urls)
+router.register(r'api/partners/car-shares', views.CarShareRequestViewSet, basename='car-share-request')
+urlpatterns.extend(router.urls)

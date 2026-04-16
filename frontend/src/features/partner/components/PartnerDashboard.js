@@ -17,6 +17,7 @@ import AdvancedAnalytics from '@/features/partner/components/AdvancedAnalytics';
 import PartnerEarnings from '@/features/partner/components/PartnerEarnings';
 import VehicleAvailabilityCalendar from '@/features/partner/components/VehicleAvailabilityCalendar';
 import AddVehicleModal from '@/components/forms/AddVehicleModal';
+import CarSharingInbox from '@/features/partner/components/CarSharingInbox';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
@@ -306,6 +307,7 @@ export default function PartnerDashboard() {
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'vehicles', label: 'Vehicles', icon: '🚗' },
     { id: 'bookings', label: 'Bookings', icon: '📅' },
+    { id: 'carsharing', label: 'Car Sharing', icon: '🤝' },
     { id: 'calendar', label: 'Calendar', icon: '📆' },
     { id: 'analytics', label: 'Analytics', icon: '📈' },
     { id: 'earnings', label: 'Earnings', icon: '💰' },
@@ -689,6 +691,10 @@ export default function PartnerDashboard() {
             hasPartnerProfile={hasPartnerProfile}
             onAddVehicle={handleAddVehicle}
           />
+        )}
+
+        {currentView === 'carsharing' && (
+          <CarSharingInbox partnerData={partnerData} />
         )}
 
         {currentView === 'calendar' && (

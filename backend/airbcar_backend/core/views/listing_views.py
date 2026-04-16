@@ -94,8 +94,17 @@ class ListingListView(APIView):
                 queryset = Listing.objects.filter(is_available=True).select_related('partner__user').only(*base_fields, 'partner__business_name', 'partner__user__first_name', 'partner__user__last_name')
         
         # Apply filters
+        # Advanced Algorithmic Multi-term Search for Location explicitly
         if location:
-            queryset = queryset.filter(location__icontains=location)
+            search_terms = location.split()
+            for term in search_terms:
+                term_query = (
+                    Q(location__icontains=term) |
+                    Q(make__icontains=term) |
+                    Q(model__icontains=term) |
+                    Q(partner__business_name__icontains=term)
+                )
+                queryset = queryset.filter(term_query)
         
         if min_price:
             try:
@@ -121,15 +130,16 @@ class ListingListView(APIView):
         # General search (make, model, location) - Optimized for speed
         search = request.query_params.get('search', '').strip()
         if search:
-            # OPTIMIZED: Use single search term with AND logic for better performance
-            # Priority: exact/prefix matches on indexed fields (make, model, location)
-            # This is 5-10x faster than word-by-word OR search on 6 fields
-            search_query = (
-                Q(make__icontains=search) |
-                Q(model__icontains=search) |
-                Q(location__icontains=search)
-            )
-            queryset = queryset.filter(search_query)
+            # Algorithmic Multi-term matching
+            search_terms = search.split()
+            for term in search_terms:
+                term_query = (
+                    Q(make__icontains=term) |
+                    Q(model__icontains=term) |
+                    Q(location__icontains=term) |
+                    Q(partner__business_name__icontains=term)
+                )
+                queryset = queryset.filter(term_query)
         
         # Minimum rating filter
         min_rating = request.query_params.get('min_rating')

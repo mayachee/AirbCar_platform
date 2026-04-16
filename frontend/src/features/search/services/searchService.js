@@ -32,6 +32,9 @@ class SearchService {
       if (filters.verified) {
         params.append('verified', 'true');
       }
+      if (filters.partnerId) {
+        params.append('partner_id', filters.partnerId);
+      }
 
       // Request larger page size to support client-side filtering
       params.append('page_size', '1000');

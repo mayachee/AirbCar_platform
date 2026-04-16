@@ -81,7 +81,7 @@ export const useSearch = (initialFilters = {}) => {
     };
 
     fetchVehicles();
-  }, [filters.location, filters.pickupDate, filters.returnDate]); // Re-fetch when these key filters change
+  }, [filters.location, filters.pickupDate, filters.returnDate, filters.partnerId]); // Re-fetch when these key filters change
 
   // Apply filters and sorting
   useEffect(() => {

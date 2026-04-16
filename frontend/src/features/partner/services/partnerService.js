@@ -155,6 +155,20 @@ export const partnerService = {
     return apiClient.get(`/bookings/${bookingId}/customer-info/`)
   },
 
+  // B2B Car Sharing
+  async getCarShareRequests() {
+    return apiClient.get('/api/partners/car-shares/', undefined, { cache: 'no-store' })
+  },
+
+  async createCarShareRequest(requestData) {
+    return apiClient.post('/api/partners/car-shares/', requestData)
+  },
+
+  async updateCarShareRequestStatus(requestId, status) {
+    // status should be 'accepted' or 'rejected'
+    return apiClient.patch(`/api/partners/car-shares/${requestId}/status/`, { status })
+  },
+
   // Dashboard & Analytics
   async getDashboardData() {
     // Partner dashboard only makes sense if a partner profile exists.

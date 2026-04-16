@@ -39,6 +39,7 @@ function SearchContent() {
     location: searchParams.get('location') || defaultLocation,
     pickupDate: searchParams.get('pickupDate') || defaultPickupDate,
     returnDate: searchParams.get('dropoffDate') || searchParams.get('returnDate') || defaultReturnDate,
+    partnerId: searchParams.get('partner') || searchParams.get('partnerId'),
     priceRange: [0, 5000],
     transmission: [],
     fuelType: [],

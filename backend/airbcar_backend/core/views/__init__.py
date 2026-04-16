@@ -47,7 +47,7 @@ try:
     from .partner_views import (
         PartnerListView, PartnerMeView, PartnerDetailView,
         PartnerEarningsView, PartnerAnalyticsView, PartnerReviewsView, PartnerActivityView,
-        PartnerPublicReviewsView,
+        PartnerPublicReviewsView, CarShareRequestViewSet
     )
 except Exception as e:
     print(f"Error importing partner_views: {e}", file=sys.stderr)
