@@ -1,54 +1,54 @@
-/* eslint-disable @next/next/no-img-element */
-'use client';
+const fs = require('fs');
 
-import React, { useState, useEffect, useCallback } from 'react';
+const code = \'use client';
+
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { partnerService } from '@/features/partner/services/partnerService';
 import { format } from 'date-fns';
-import { Search, Bell, MessageSquare, HelpCircle, ChevronDown, Calendar, Car, DollarSign, MapPin, SlidersHorizontal, ArrowUpRight, Send, ArrowRight } from 'lucide-react';
+import { Search, Bell, MessageSquare, HelpCircle, ChevronDown, Calendar, Car, DollarSign, MapPin, SlidersHorizontal, ArrowUpRight, CheckCircle2, ChevronRight, Send, ArrowRight } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
 
 export default function CarSharingInbox({ partnerData }) {
   const { addToast } = useToast();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('discover');
+  const [activeTab, setActiveTab] = useState('discover'); // 'discover', 'incoming', 'outgoing'
   const [discoverCars, setDiscoverCars] = useState([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Chat state
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(false);
 
-  const fetchRequests = useCallback(async () => {
+  const fetchRequests = async () => {
     try {
       setLoading(true);
       const response = await partnerService.getCarShareRequests();
       const data = response.data?.results || response.data?.data || response.data || [];
-      const requestsArray = Array.isArray(data) ? data : [];
-      setRequests(requestsArray);
+      setRequests(Array.isArray(data) ? data : []);
       
-      setSelectedRequest(prev => {
-        if (!prev) return null;
-        const updated = requestsArray.find(r => r.id === prev.id);
-        return updated || prev;
-      });
+      if (selectedRequest) {
+        const updated = data.find(r => r.id === selectedRequest.id);
+        if (updated) setSelectedRequest(updated);
+      }
     } catch (error) {
       console.error(error);
       addToast('Failed to load sharing requests', 'error');
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  };
 
   useEffect(() => {
     fetchRequests();
-  }, [fetchRequests]);
+  }, []);
 
-  const fetchDiscoverableCars = useCallback(async () => {
-    if (!partnerData?.id) return;
+  const fetchDiscoverableCars = async () => {
+    if (discoverCars.length > 0 || !partnerData?.id) return;
     try {
       setDiscoverLoading(true);
       const response = await partnerService.getDiscoverableCars(partnerData.id);
@@ -60,13 +60,13 @@ export default function CarSharingInbox({ partnerData }) {
     } finally {
       setDiscoverLoading(false);
     }
-  }, [partnerData?.id, addToast]);
+  };
 
   useEffect(() => {
-    if (activeTab === 'discover' && discoverCars.length === 0) fetchDiscoverableCars();
-  }, [activeTab, fetchDiscoverableCars, discoverCars.length]);
+    if (activeTab === 'discover') fetchDiscoverableCars();
+  }, [activeTab]);
 
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = async () => {
     if (!selectedRequest?.id) return;
     try {
       setMessagesLoading(true);
@@ -77,13 +77,13 @@ export default function CarSharingInbox({ partnerData }) {
     } finally {
       setMessagesLoading(false);
     }
-  }, [selectedRequest?.id]);
+  };
 
   useEffect(() => {
     if (selectedRequest) {
       fetchMessages();
     }
-  }, [selectedRequest, fetchMessages]);
+  }, [selectedRequest?.id]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -129,11 +129,11 @@ export default function CarSharingInbox({ partnerData }) {
   return (
     <div className="flex flex-col h-[calc(100vh-100px)] min-h-[600px] w-full bg-[#F8FAFC]">
       
-      {/* Top Navigation */}
+      {/* Top Navigation / Search area strictly mimicking the screenshot */}
       <div className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-6">
           <h1 className="text-xl font-extrabold tracking-tight text-gray-900">Fleet Marketplace</h1>
-          <div className="flex items-center bg-gray-50 rounded-full px-4 py-2 w-[350px] border border-gray-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#C25E20]/20 transition-all">
+          <div className="flex items-center bg-gray-50 rounded-full px-4 py-2 w-[350px] border border-gray-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-500/20 transition-all">
             <Search className="w-4 h-4 text-gray-400 mr-2" />
             <input 
               type="text" 
@@ -156,16 +156,18 @@ export default function CarSharingInbox({ partnerData }) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-8 py-3 bg-white flex gap-6 text-[13px] font-extrabold tracking-wide uppercase border-b border-gray-100 shadow-sm shrink-0 items-center relative z-10 text-gray-500">
-         <button onClick={() => setActiveTab('discover')} className={`pb-1 border-b-[3px] transition-all ${activeTab === 'discover' ? 'border-[#C25E20] text-[#C25E20]' : 'border-transparent hover:text-gray-800'}`}>Fleet Marketplace</button>
-         <button onClick={() => setActiveTab('incoming')} className={`pb-1 border-b-[3px] transition-all ${activeTab === 'incoming' ? 'border-[#C25E20] text-[#C25E20]' : 'border-transparent hover:text-gray-800'}`}>Incoming Requests ${incomingRequests.length > 0 ? `(${incomingRequests.length})` : ''}</button>
-         <button onClick={() => setActiveTab('outgoing')} className={`pb-1 border-b-[3px] transition-all ${activeTab === 'outgoing' ? 'border-[#C25E20] text-[#C25E20]' : 'border-transparent hover:text-gray-800'}`}>Outgoing SubRents ${outgoingRequests.length > 0 ? `(${outgoingRequests.length})` : ''}</button>
+      {/* Integrated Tab Nav - Since the original screenshot had a sidebar, we'll put our tabs up here discreetly */}
+      <div className="px-8 py-3 bg-white flex gap-6 text-sm font-semibold border-b border-gray-100 shadow-sm shrink-0 items-center justify-center relative z-10">
+         <button onClick={() => setActiveTab('discover')} className={\pb-1 border-b-[3px] transition-all \\}>Discover fleet</button>
+         <button onClick={() => setActiveTab('incoming')} className={\pb-1 border-b-[3px] transition-all \\}>Incoming requests ({incomingRequests.length})</button>
+         <button onClick={() => setActiveTab('outgoing')} className={\pb-1 border-b-[3px] transition-all \\}>Outgoing rentals ({outgoingRequests.length})</button>
       </div>
 
       <div className="flex-1 flex overflow-hidden">
         
+        {/* Main Content Area (col-span-8 equivalent) */}
         <div className="flex-1 flex flex-col px-8 py-6 overflow-y-auto custom-scrollbar">
+          
           {activeTab === 'discover' ? (
             <>
               {/* Header Title Section */}
@@ -180,6 +182,7 @@ export default function CarSharingInbox({ partnerData }) {
                   </p>
                 </div>
 
+                {/* Demand Signals Widget */}
                 <div className="bg-[#EEF2FF] border border-blue-100 rounded-2xl p-5 flex items-start gap-4 shadow-sm w-[380px]">
                   <div className="bg-[#FFEDD5] text-[#EA580C] p-2.5 rounded-full shrink-0 flex items-center justify-center">
                     <ArrowUpRight className="w-5 h-5 stroke-[3px]" />
@@ -216,6 +219,7 @@ export default function CarSharingInbox({ partnerData }) {
                 </div>
               </div>
 
+              {/* Grid of Cars */}
               {discoverLoading ? (
                  <div className="py-20 text-center text-gray-500">Loading premium fleet...</div>
               ) : discoverCars.length === 0 ? (
@@ -224,29 +228,33 @@ export default function CarSharingInbox({ partnerData }) {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-12">
                   {discoverCars.map((car, idx) => (
                     <div key={car.id} className="bg-white rounded-3xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all group flex flex-col p-[6px]">
+                      {/* Image Frame */}
                       <div className="relative w-full h-[220px] rounded-t-3xl rounded-b-xl overflow-hidden bg-gray-100">
                         {car.images?.[0] ? (
                           <img src={getVehicleImageUrl(car.images[0].image || car.images[0])} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Car" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-800"><Car className="w-12 h-12" /></div>
                         )}
+                        {/* Overlay Gradient */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                        {/* Badge top left */}
                         <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                            <span className="text-[10px] font-extrabold tracking-widest text-[#1E293B] uppercase">{car.partner_name || 'AGENCY'}</span>
                         </div>
                       </div>
                       
+                      {/* Details */}
                       <div className="p-5 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-2">
                            <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">{car.make} {car.model}</h3>
                            <div className="text-right">
-                              <span className="text-2xl font-extrabold text-[#C25E20]">${parseFloat(car.price_per_day || car.price).toLocaleString()}</span>
+                              <span className="text-2xl font-extrabold text-[#C25E20]"></span>
                               <span className="block text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-[-2px] -mr-1">MAD PER DAY</span>
                            </div>
                         </div>
                         <div className="text-[13px] text-gray-500 font-semibold mb-6">
-                           {car.year} â€¢ {idx % 2 === 0 ? 'Sport Performance' : 'Luxury SUV'}
+                           {car.year} • {idx % 2 === 0 ? 'Sport Performance' : 'Luxury SUV'}
                         </div>
                         
                         <div className="mt-auto pt-5 border-t border-gray-100 flex items-center justify-between">
@@ -271,6 +279,7 @@ export default function CarSharingInbox({ partnerData }) {
               )}
             </>
           ) : (
+            // Requests View (Incoming/Outgoing)
             <div className="max-w-4xl mx-auto w-full">
                <h2 className="text-2xl font-bold mb-6 text-gray-900">{activeTab === 'incoming' ? 'Incoming Requests' : 'Outgoing Rentals'}</h2>
                {loading ? (
@@ -287,21 +296,21 @@ export default function CarSharingInbox({ partnerData }) {
                            <div 
                               key={req.id} 
                               onClick={() => setSelectedRequest(req)}
-                              className={`p-5 bg-white border rounded-2xl cursor-pointer transition-all flex items-center justify-between ${isSel ? 'border-[#C25E20] shadow-md ring-1 ring-[#C25E20]/10' : 'border-gray-200 shadow-sm hover:shadow-md'}`}
+                              className={\p-5 bg-white border rounded-2xl cursor-pointer transition-all flex items-center justify-between \\}
                            >
                               <div className="flex items-center gap-4">
                                  <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0">
-                                    {vehicle?.images?.[0] && <img src={getVehicleImageUrl(vehicle.images[0].image || vehicle.images[0])} className="w-full h-full object-cover" alt="Vehicle image" />}
+                                    {vehicle?.images?.[0] && <img src={getVehicleImageUrl(vehicle.images[0].image || vehicle.images[0])} className="w-full h-full object-cover" />}
                                  </div>
                                  <div>
                                     <h4 className="font-bold text-lg text-gray-900">{vehicle?.make} {vehicle?.model} <span className="ml-2 text-sm text-gray-500 font-medium">From {partnerProfile?.business_name || 'Agency'}</span></h4>
                                     <p className="text-sm font-semibold text-gray-500 mt-1">
-                                       {format(new Date(req.start_date), 'MMM d')} - {format(new Date(req.end_date), 'MMM d')} â€¢ <span className="text-[#C25E20]">${parseFloat(req.total_price).toLocaleString()}</span>
+                                       {format(new Date(req.start_date), 'MMM d')} - {format(new Date(req.end_date), 'MMM d')} • <span className="text-[#C25E20]"></span>
                                     </p>
                                  </div>
                               </div>
                               <div className="flex flex-col items-end gap-2">
-                                 <span className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg ${req.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : req.status === 'pending' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'}`}>
+                                 <span className={\px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-lg \\}>
                                     {req.status}
                                  </span>
                                  <span className="text-xs text-gray-400 font-semibold">Select to view chat</span>
@@ -316,7 +325,7 @@ export default function CarSharingInbox({ partnerData }) {
         </div>
 
         {/* Right Sidebar: Live Partner Chat */}
-        <div className="w-[400px] bg-white border-l border-gray-100 flex flex-col shrink-0 relative shadow-[-10px_0_30px_-15px_rgba(0,0,0,0.05)]">
+        <div className="w-[360px] bg-white border-l border-gray-100 flex flex-col shrink-0 relative shadow-[-10px_0_30px_-15px_rgba(0,0,0,0.05)]">
            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur z-10">
               <div>
                  <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">Live Partner Chat</h2>
@@ -327,7 +336,7 @@ export default function CarSharingInbox({ partnerData }) {
               </button>
            </div>
 
-           <div className="flex-1 overflow-y-auto p-6 bg-[#F8FAFC] flex flex-col gap-6 custom-scrollbar">
+           <div className="flex-1 overflow-y-auto p-6 bg-[#F8FAFC] flex flex-col gap-5 custom-scrollbar">
               {!selectedRequest ? (
                  <div className="h-full flex flex-col items-center justify-center text-center px-4">
                     <div className="w-16 h-16 bg-white border border-gray-200 rounded-full flex items-center justify-center mb-4 shadow-sm text-gray-300">
@@ -345,16 +354,16 @@ export default function CarSharingInbox({ partnerData }) {
                     {messages.map((msg, i) => {
                        const isMe = msg.sender === partnerData?.id || msg.sender?.id === partnerData?.id;
                        return (
-                          <div key={i} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                             {!isMe && <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${msg.sender?.first_name || 'A'}`} className="w-8 h-8 rounded-full shadow-sm shrink-0 border border-gray-200" alt="avatar" />}
-                             <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
+                          <div key={i} className={\lex gap-3 \\}>
+                             {!isMe && <img src="/api/placeholder/32/32" className="w-8 h-8 rounded-full shadow-sm shrink-0 border border-gray-200" alt="avatar" />}
+                             <div className={\lex flex-col \ max-w-[85%]\}>
                                 {!isMe && <span className="text-[11px] font-bold text-gray-800 mb-1 ml-1">{msg.sender?.first_name || 'Partner'} <span className="text-gray-400 font-medium ml-1">Agency</span></span>}
-                                <div className={`p-4 text-[13px] leading-relaxed shadow-sm font-medium ${isMe ? 'bg-[#E56A20] text-white rounded-2xl rounded-tr-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-2xl rounded-tl-sm'}`}>
+                                <div className={\p-4 text-[13px] leading-relaxed shadow-sm font-medium \\}>
                                    {msg.text}
                                 </div>
                                 <span className="text-[10px] text-gray-400 font-bold tracking-wide mt-1.5 mx-1">{format(new Date(msg.created_at || Date.now()), 'h:mm a')}</span>
                              </div>
-                             {isMe && <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${partnerData?.first_name || 'Me'}`} className="w-8 h-8 rounded-full shadow-sm shrink-0 border border-[#E56A20]/20" alt="avatar" />}
+                             {isMe && <img src="/api/placeholder/32/32" className="w-8 h-8 rounded-full shadow-sm shrink-0 border border-[#E56A20]/20" alt="avatar" />}
                           </div>
                        )
                     })}
@@ -362,6 +371,7 @@ export default function CarSharingInbox({ partnerData }) {
               )}
            </div>
 
+           {/* Message Input strictly like the mockup */}
            <div className="p-5 bg-white border-t border-gray-100 relative">
               <form onSubmit={handleSendMessage} className="relative flex items-center">
                  <input 
@@ -387,3 +397,7 @@ export default function CarSharingInbox({ partnerData }) {
     </div>
   );
 }
+\;
+
+fs.writeFileSync('src/features/partner/components/CarSharingInbox.js', code);
+console.log('Successfully wrote exact template translation!');
