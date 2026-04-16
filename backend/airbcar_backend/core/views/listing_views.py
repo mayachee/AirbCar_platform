@@ -55,7 +55,8 @@ class ListingListView(APIView):
         color = request.query_params.get('color')  # Color filter
         year_min = request.query_params.get('year_min')  # Minimum year
         year_max = request.query_params.get('year_max')  # Maximum year
-        
+        exclude_partner = request.query_params.get('exclude_partner') # B2B discovery exclusion
+
         # Start with all available listings
         # PERFORMANCE: Use only() to fetch minimal fields (reduces DB transfer by 50-70%)
         # NOTE: Use actual model field names, not serializer aliases
@@ -94,6 +95,15 @@ class ListingListView(APIView):
                 queryset = Listing.objects.filter(is_available=True).select_related('partner__user').only(*base_fields, 'partner__business_name', 'partner__user__first_name', 'partner__user__last_name')
         
         # Apply filters
+        
+        # B2B Exclude partner filter
+        if exclude_partner:
+            try:
+                exclude_partner_id_int = int(exclude_partner)
+                queryset = queryset.exclude(partner_id=exclude_partner_id_int)
+            except (ValueError, TypeError):
+                pass
+
         # Advanced Algorithmic Multi-term Search for Location explicitly
         if location:
             search_terms = location.split()

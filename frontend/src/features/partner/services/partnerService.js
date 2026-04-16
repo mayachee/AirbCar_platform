@@ -156,6 +156,10 @@ export const partnerService = {
   },
 
   // B2B Car Sharing
+  async getDiscoverableCars(excludePartnerId) {
+    return apiClient.get(`/api/listings/?exclude_partner=${excludePartnerId}`, undefined, { cache: 'no-store' })
+  },
+
   async getCarShareRequests() {
     return apiClient.get('/api/partners/car-shares/', undefined, { cache: 'no-store' })
   },

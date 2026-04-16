@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { partnerService } from '@/features/partner/services/partnerService';
 import { format } from 'date-fns';
-import { RefreshCw, PlusCircle, Check, X, Clock, CalendarIcon, CarFront, FileText, DollarSign, Building, MessageSquare, ClipboardCheck, Info, ChevronLeft, Send } from 'lucide-react';
+import { RefreshCw, PlusCircle, Check, X, Clock, CalendarIcon, CarFront, FileText, DollarSign, Building, MessageSquare, ClipboardCheck, Info, ChevronLeft, Send, CheckCircle2 } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
 
 export default function CarSharingInbox({ partnerData }) {
@@ -35,6 +35,7 @@ export default function CarSharingInbox({ partnerData }) {
   });
 
   // Form State
+  // Pre-fill form state
   const [formData, setFormData] = useState({
     public_id: '',
     start_date: '',
@@ -42,6 +43,10 @@ export default function CarSharingInbox({ partnerData }) {
     total_price: '',
     notes: ''
   });
+
+  // Discover Marketplace State
+  const [discoverCars, setDiscoverCars] = useState([]);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
 
   const fetchRequests = async () => {
     try {
@@ -67,6 +72,28 @@ export default function CarSharingInbox({ partnerData }) {
   useEffect(() => {
     fetchRequests();
   }, []);
+
+  const fetchDiscoverableCars = async () => {
+    if (discoverCars.length > 0 || !partnerData?.id) return;
+    try {
+      setDiscoverLoading(true);
+      // Fetch cars excluding own agency
+      const response = await partnerService.getDiscoverableCars(partnerData.id);
+      const data = response.data?.results || response.data || [];
+      setDiscoverCars(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to load eligible cars', 'error');
+    } finally {
+      setDiscoverLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'discover') {
+      fetchDiscoverableCars();
+    }
+  }, [activeTab]);
 
   const fetchMessages = async () => {
     if (!selectedRequest?.id) return;
@@ -173,6 +200,7 @@ export default function CarSharingInbox({ partnerData }) {
       await partnerService.createCarShareRequest(formData);
       addToast('Car share request submitted successfully!', 'success');
       setIsFormOpen(false);
+      setActiveTab('outgoing'); // Switch to 'outgoing' tab to see the new request
       setFormData({
         public_id: '',
         start_date: '',
@@ -643,17 +671,109 @@ export default function CarSharingInbox({ partnerData }) {
             onClick={() => setActiveTab('outgoing')}
             className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
               activeTab === 'outgoing' 
-                ? 'border-b-2 border-[#229ED9] text-[#229ED9] bg-blue-50/30' 
+                ? 'border-b-2 border-[#229ED9] text-[#229ED9] bg-blue-50/30'
                 : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
             }`}
           >
             ?? Outgoing Requests {outgoingRequests.length > 0 && <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{outgoingRequests.length}</span>}
           </button>
+          <button
+            onClick={() => setActiveTab('discover')}
+            className={`flex-1 py-4 text-sm font-medium text-center transition-colors ${
+              activeTab === 'discover' 
+                ? 'border-b-2 border-[#229ED9] text-[#229ED9] bg-blue-50/30'
+                : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 bg-white'
+            }`}
+          >
+            ?? Discover Cars {discoverCars.length > 0 && <span className="ml-1 bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs">{discoverCars.length}</span>}
+          </button>
         </div>
 
         {/* List */}
         <div className="p-0">
-          {loading && requests.length === 0 ? (
+          {activeTab === 'discover' ? (
+            <div className="p-6 bg-gray-50">
+              {discoverLoading ? (
+                <div className="p-12 text-center text-gray-500 flex flex-col items-center">
+                  <RefreshCw className="w-8 h-8 animate-spin mb-3 text-[#229ED9]" />
+                  <p>Finding available cars from other agencies...</p>
+                </div>
+              ) : discoverCars.length === 0 ? (
+                <div className="p-12 text-center text-gray-500 flex flex-col items-center border border-gray-200 rounded-xl bg-white border-dashed">
+                  <CarFront className="w-12 h-12 text-gray-300 mb-3" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No cars available</h3>
+                  <p className="text-sm">There are currently no vehicles available from other agencies.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {discoverCars.map(car => (
+                    <div key={car.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col group">
+                      <div className="relative h-48 bg-gray-100">
+                        {car.images?.[0] ? (
+                          <img 
+                            src={getVehicleImageUrl(car.images[0].image || car.images[0])} 
+                            alt={`${car.make} ${car.model}`} 
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <CarFront className="w-8 h-8 mb-2 opacity-50" />
+                            <span className="text-xs font-medium">No Image</span>
+                          </div>
+                        )}
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-semibold text-gray-800 shadow-sm border border-gray-100">
+                          {car.year}
+                        </div>
+                        <div className="absolute top-3 right-3 bg-green-500/90 backdrop-blur px-2 py-1 text-white rounded text-xs font-semibold shadow-sm">
+                          ${parseFloat(car.price_per_day || car.price).toLocaleString()} / day
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 flex-1 flex flex-col">
+                        <h4 className="font-bold text-gray-900 text-lg mb-1 truncate" title={`${car.make} ${car.model}`}>
+                          {car.make} {car.model}
+                        </h4>
+                        
+                        <div className="flex items-center text-sm text-gray-500 mb-4 gap-1.5">
+                          <Building className="w-3.5 h-3.5" />
+                          <span className="truncate">{car.partner_name || 'Agency'}</span>
+                          {car.partner_verified && (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 ml-0.5" />
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-gray-400 font-mono scale-90">ID:</span>
+                            <span className="font-medium truncate" title={car.public_id}>{car.public_id}</span>
+                          </div>
+                          {car.location && (
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="truncate" title={car.location}>{car.location}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-auto pt-2">
+                          <button
+                            onClick={() => {
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              setFormData(prev => ({ ...prev, public_id: car.public_id || '' }));
+                              setIsFormOpen(true);
+                            }}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9] hover:text-white font-medium rounded-lg transition-colors border border-[#229ED9]/20"
+                          >
+                            <CalendarIcon className="w-4 h-4" />
+                            Request This Car
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : loading && requests.length === 0 ? (
             <div className="p-12 text-center text-gray-500 flex flex-col items-center">
               <RefreshCw className="w-8 h-8 animate-spin mb-3 text-gray-400" />
               <p>Loading requests...</p>
