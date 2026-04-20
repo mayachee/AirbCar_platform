@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { partnerService } from '@/features/partner/services/partnerService';
+import { apiClient } from '@/lib/api/client';
 import { format } from 'date-fns';
 import { Search, Bell, MessageSquare, HelpCircle, ChevronDown, Calendar, Car, DollarSign, MapPin, SlidersHorizontal, ArrowUpRight, Send, ArrowRight } from 'lucide-react';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
@@ -62,9 +63,29 @@ export default function CarSharingInbox({ partnerData }) {
     if (!partnerData?.id) return;
     try {
       setDiscoverLoading(true);
-      const response = await partnerService.getDiscoverableCars(partnerData.id);
-      const data = response.data?.results || response.data || [];
-      setDiscoverCars(Array.isArray(data) ? data : []);
+      let data = [];
+
+      // Try fetching listings excluding current partner (B2B discovery)
+      try {
+        const response = await partnerService.getDiscoverableCars(partnerData.id);
+        const result = response.data?.results || response.data || [];
+        data = Array.isArray(result) ? result : [];
+      } catch {
+        // endpoint may not support exclude_partner, continue to fallback
+      }
+
+      // Fallback: if no other-partner listings, fetch all listings so the marketplace isn't empty
+      if (data.length === 0) {
+        try {
+          const fallback = await apiClient.get('/listings/', undefined, { cache: 'no-store' });
+          const fallbackData = fallback.data?.results || fallback.data || [];
+          data = Array.isArray(fallbackData) ? fallbackData : [];
+        } catch {
+          // ignore fallback failure
+        }
+      }
+
+      setDiscoverCars(data);
     } catch (err) {
       console.error(err);
       addToast('Failed to load eligible cars', 'error');
@@ -74,8 +95,8 @@ export default function CarSharingInbox({ partnerData }) {
   }, [partnerData?.id, addToast]);
 
   useEffect(() => {
-    if (activeTab === 'discover' && discoverCars.length === 0) fetchDiscoverableCars();
-  }, [activeTab, fetchDiscoverableCars, discoverCars.length]);
+    if (activeTab === 'discover' && discoverCars.length === 0 && partnerData?.id) fetchDiscoverableCars();
+  }, [activeTab, fetchDiscoverableCars, discoverCars.length, partnerData?.id]);
 
   const fetchMessages = useCallback(async () => {
     if (!selectedRequest?.id) return;
