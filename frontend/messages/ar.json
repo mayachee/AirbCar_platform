@@ -1263,6 +1263,7 @@
     "vehicle_details": "تفاصيل المركبة",
     "edit_vehicle": "تعديل المركبة",
     "delete_vehicle": "حذف المركبة",
+    "confirm_delete_vehicle": "هل أنت متأكد من حذف \"{name}\"؟ لا يمكن التراجع عن هذا الإجراء.",
     "duplicate_vehicle": "نسخ {make} {model}؟",
     "online_now": "متصل الآن",
     "offline_now": "غير متصل الآن",

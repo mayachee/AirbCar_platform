@@ -13,8 +13,6 @@ import { SelectField } from '@/components/ui/select-field';
 // Lazy load components
 const PartnerStats = lazy(() => import('@/features/partner/components/PartnerStats'));
 const VehiclesList = lazy(() => import('@/features/partner/components/VehiclesList'));
-const BookingManagement = lazy(() => import('@/features/partner/components/BookingManagement'));
-const ImprovedBookingManagement = lazy(() => import('@/features/partner/components/ImprovedBookingManagement'));
 const EnhancedBookingManagement = lazy(() => import('@/features/partner/components/EnhancedBookingManagement'));
 const AdvancedAnalytics = lazy(() => import('@/features/partner/components/AdvancedAnalytics'));
 const VehicleAvailabilityCalendar = lazy(() => import('@/features/partner/components/VehicleAvailabilityCalendar'));

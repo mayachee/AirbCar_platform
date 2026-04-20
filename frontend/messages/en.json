@@ -1263,6 +1263,7 @@
     "vehicle_details": "Vehicle Details",
     "edit_vehicle": "Edit Vehicle",
     "delete_vehicle": "Delete Vehicle",
+    "confirm_delete_vehicle": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
     "duplicate_vehicle": "Duplicate {make} {model}?",
     "online_now": "Online Now",
     "offline_now": "Offline Now",

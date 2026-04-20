@@ -1261,6 +1261,7 @@
     "vehicle_details": "Détails du Véhicule",
     "edit_vehicle": "Modifier le Véhicule",
     "delete_vehicle": "Supprimer le Véhicule",
+    "confirm_delete_vehicle": "Êtes-vous sûr de vouloir supprimer \"{name}\" ? Cette action est irréversible.",
     "duplicate_vehicle": "Dupliquer {make} {model}?",
     "online_now": "En Ligne Maintenant",
     "offline_now": "Hors Ligne Maintenant",

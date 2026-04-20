@@ -247,36 +247,48 @@ export function useOptimizedDashboard() {
     setShowEditVehicleModal(true);
   }, []);
 
-  const handleDeleteVehicle = useCallback(async (vehicle, skipConfirmation = false) => {
-    const vehicleName = `${vehicle.brand || vehicle.make || 'Vehicle'} ${vehicle.model || ''}`.trim();
-    const vehicleYear = vehicle.year ? ` (${vehicle.year})` : '';
-    const fullVehicleName = `${vehicleName}${vehicleYear}`;
-    
-    // Show confirmation only if not skipped (for cases where confirmation is handled by the caller)
-    let confirmed = true;
-    if (!skipConfirmation) {
-      confirmed = window.confirm(
-        `Are you sure you want to delete "${fullVehicleName}"?\n\n` +
-        `This will permanently remove the vehicle from your listings.\n` +
-        `This action cannot be undone.`
-      );
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+
+  const handleDeleteVehicle = useCallback((vehicle, skipConfirmation = false) => {
+    if (skipConfirmation) {
+      // Perform delete directly when confirmation is handled by the caller
+      const vehicleName = `${vehicle.brand || vehicle.make || 'Vehicle'} ${vehicle.model || ''}`.trim();
+      showToast(`Deleting "${vehicleName}"...`, 'info');
+      deleteVehicle(vehicle.id)
+        .then(() => {
+          showToast(`Vehicle "${vehicleName}" deleted successfully.`, 'success');
+          refetch();
+        })
+        .catch((error) => {
+          console.error('Error deleting vehicle:', error);
+          const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle.';
+          showToast(errorMessage, 'error');
+        });
+      return;
     }
-    
-    if (confirmed) {
-      try {
-        // Show loading state
-        showToast(`Deleting "${fullVehicleName}"...`, 'info');
-        await deleteVehicle(vehicle.id);
-        showToast(`✅ Vehicle "${fullVehicleName}" deleted successfully.`, 'success');
-        refetch();
-      } catch (error) {
-        console.error('Error deleting vehicle:', error);
-        const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle. Please try again.';
-        showToast(`❌ Error: ${errorMessage}`, 'error');
-        throw error; // Re-throw so caller can handle it
-      }
-    }
+    setDeleteConfirmation({ vehicle, visible: true });
   }, [deleteVehicle, refetch, showToast]);
+
+  const confirmDeleteVehicle = useCallback(async () => {
+    if (!deleteConfirmation?.vehicle) return;
+    const vehicle = deleteConfirmation.vehicle;
+    const vehicleName = `${vehicle.brand || vehicle.make || 'Vehicle'} ${vehicle.model || ''}`.trim();
+    setDeleteConfirmation(null);
+    try {
+      showToast(`Deleting "${vehicleName}"...`, 'info');
+      await deleteVehicle(vehicle.id);
+      showToast(`Vehicle "${vehicleName}" deleted successfully.`, 'success');
+      refetch();
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      const errorMessage = error?.data?.message || error?.message || 'Failed to delete vehicle.';
+      showToast(errorMessage, 'error');
+    }
+  }, [deleteConfirmation, deleteVehicle, refetch, showToast]);
+
+  const cancelDeleteVehicle = useCallback(() => {
+    setDeleteConfirmation(null);
+  }, []);
 
   const handleVehicleSubmit = useCallback(async (vehicleData) => {
     try {
@@ -293,7 +305,6 @@ export function useOptimizedDashboard() {
         showToast('Vehicle updated successfully!', 'success');
       } else {
         const result = await addVehicle(vehicleData);
-        console.log('Vehicle added, result:', result);
         if (result && (result.id || (Array.isArray(result) && result.length > 0))) {
           showToast('Vehicle added successfully!', 'success');
         } else {
@@ -318,7 +329,14 @@ export function useOptimizedDashboard() {
 
   const handleAcceptRequest = useCallback(async (bookingId) => {
     if (processingBooking === bookingId) return;
-    
+
+    const booking = [...pendingRequests, ...bookings].find(b => b.id === bookingId);
+    if (booking && booking.status !== 'pending') {
+      showToast('This booking has already been processed.', 'warning');
+      fetchPendingRequests();
+      return;
+    }
+
     setProcessingBooking(bookingId);
     try {
       await acceptBooking(bookingId);
@@ -339,11 +357,18 @@ export function useOptimizedDashboard() {
     } finally {
       setProcessingBooking(null);
     }
-  }, [acceptBooking, fetchPendingRequests, fetchUpcomingBookings, refetch, processingBooking, showToast]);
+  }, [acceptBooking, fetchPendingRequests, fetchUpcomingBookings, refetch, processingBooking, showToast, pendingRequests, bookings]);
 
   const handleRejectRequest = useCallback(async (bookingId, reason = '') => {
     if (processingBooking === bookingId) return;
-    
+
+    const booking = [...pendingRequests, ...bookings].find(b => b.id === bookingId);
+    if (booking && booking.status !== 'pending') {
+      showToast('This booking has already been processed.', 'warning');
+      fetchPendingRequests();
+      return;
+    }
+
     setProcessingBooking(bookingId);
     try {
       await rejectBooking(bookingId, reason);
@@ -356,7 +381,7 @@ export function useOptimizedDashboard() {
     } finally {
       setProcessingBooking(null);
     }
-  }, [rejectBooking, fetchPendingRequests, refetch, processingBooking, showToast]);
+  }, [rejectBooking, fetchPendingRequests, refetch, processingBooking, showToast, pendingRequests, bookings]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => !prev);
@@ -406,6 +431,16 @@ export function useOptimizedDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPartner, dataLoading, initialLoadComplete]);
+
+  // Auto-refresh pending requests and upcoming bookings every 60s
+  useEffect(() => {
+    if (!isPartner || !initialLoadComplete) return;
+    const interval = setInterval(() => {
+      fetchPendingRequests();
+      fetchUpcomingBookings();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [isPartner, initialLoadComplete, fetchPendingRequests, fetchUpcomingBookings]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -484,6 +519,11 @@ export function useOptimizedDashboard() {
     cancelBooking,
     refetch,
     
+    // Delete confirmation
+    deleteConfirmation,
+    confirmDeleteVehicle,
+    cancelDeleteVehicle,
+
     // Handlers
     handleAddVehicle,
     handleEditVehicle,

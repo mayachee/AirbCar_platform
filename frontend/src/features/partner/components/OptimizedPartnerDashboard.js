@@ -68,6 +68,11 @@ export default function OptimizedPartnerDashboard() {
     rejectBooking,
     cancelBooking,
     
+    // Delete confirmation
+    deleteConfirmation,
+    confirmDeleteVehicle,
+    cancelDeleteVehicle,
+
     // Handlers
     handleAddVehicle,
     handleEditVehicle,
@@ -263,6 +268,34 @@ export default function OptimizedPartnerDashboard() {
           onSubmit={handleVehicleSubmit}
         />
       </ComponentLoader>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation?.visible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('delete_vehicle')}</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {t('confirm_delete_vehicle', {
+                name: `${deleteConfirmation.vehicle?.make || ''} ${deleteConfirmation.vehicle?.model || ''}`.trim() || 'this vehicle'
+              })}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelDeleteVehicle}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={confirmDeleteVehicle}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+              >
+                {t('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       <ToastNotification

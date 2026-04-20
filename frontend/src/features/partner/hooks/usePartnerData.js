@@ -66,13 +66,8 @@ export function usePartnerData() {
       // Use the new dashboard data method
       const dashboardData = await partnerService.getDashboardData();
       
-      console.log('usePartnerData - Full dashboardData:', dashboardData);
-      console.log('usePartnerData - dashboardData.partner:', dashboardData.partner);
-      console.log('usePartnerData - has_partner_profile:', dashboardData.has_partner_profile);
-      
       // Check if partner profile exists
       if (dashboardData.has_partner_profile === false) {
-        console.log('usePartnerData - Partner profile not found');
         setHasPartnerProfile(false);
         setPartnerError(dashboardData.error || 'Partner profile not found');
         setPartnerData(null);
@@ -118,30 +113,13 @@ export function usePartnerData() {
         averageRating: dashboardData.partner?.average_rating || 0
       };
       
-      console.log('usePartnerData - Partner dashboard data:', {
-        partner: dashboardData.partner,
-        partnerType: typeof dashboardData.partner,
-        partnerKeys: dashboardData.partner ? Object.keys(dashboardData.partner) : 'null',
-        phone_number: dashboardData.partner?.phone_number,
-        business_type: dashboardData.partner?.business_type,
-        business_name: dashboardData.partner?.business_name,
-        tax_id: dashboardData.partner?.tax_id,
-        phone: dashboardData.partner?.phone, // Check if phone field exists
-        vehiclesCount: dashboardData.vehicles?.length || 0,
-        vehicles: dashboardData.vehicles,
-        bookingsCount: dashboardData.bookings?.length || 0
-      });
-      
-      // Ensure we're setting the partner data correctly
       if (!dashboardData.partner) {
-        console.warn('usePartnerData - WARNING: dashboardData.partner is null/undefined!');
-        console.warn('usePartnerData - dashboardData keys:', Object.keys(dashboardData));
+        console.warn('usePartnerData: dashboardData.partner is null/undefined');
       }
-      
+
       setPartnerData(dashboardData.partner);
       // Ensure vehicles is always an array
       const vehiclesList = Array.isArray(dashboardData.vehicles) ? dashboardData.vehicles : [];
-      console.log('usePartnerData - Setting vehicles from dashboardData:', vehiclesList.length, vehiclesList);
       
       // Merge with existing vehicles to avoid losing locally added ones
       setVehicles(prev => {
@@ -164,7 +142,6 @@ export function usePartnerData() {
               merged.push(normalizeVehicleImages(newVehicle));
             }
           });
-          console.log('usePartnerData - Merged vehicles:', merged.length, merged);
           return merged;
         }
         // If API returned empty, trust the server
@@ -189,6 +166,19 @@ export function usePartnerData() {
           partnerService.getReviews(),
           partnerService.getActivity()
         ]);
+
+        if (earningsData.status === 'rejected') {
+          console.warn('Failed to load earnings:', earningsData.reason?.message || earningsData.reason);
+        }
+        if (analyticsData.status === 'rejected') {
+          console.warn('Failed to load analytics:', analyticsData.reason?.message || analyticsData.reason);
+        }
+        if (reviewsData.status === 'rejected') {
+          console.warn('Failed to load reviews:', reviewsData.reason?.message || reviewsData.reason);
+        }
+        if (activityData.status === 'rejected') {
+          console.warn('Failed to load activity:', activityData.reason?.message || activityData.reason);
+        }
 
         if (earningsData.status === 'fulfilled') {
           setEarnings(earningsData.value?.data?.data || earningsData.value?.data || null);
@@ -239,8 +229,6 @@ export function usePartnerData() {
         // Backend returns: { data: [...], created_count: N, ... }
         // So we need: response.data.data
         const newVehicles = response.data?.data || response.data || [];
-        console.log('Bulk create response:', response);
-        console.log('New vehicles:', newVehicles);
         if (Array.isArray(newVehicles) && newVehicles.length > 0) {
           // Filter out any response objects and ensure we only have valid vehicles
           const validVehicles = newVehicles
@@ -252,7 +240,6 @@ export function usePartnerData() {
               .filter(v => v && v.id && !(v.message && v.success && !v.make))
               .map(normalizeVehicleImages);
             const updated = [...cleanPrev, ...validVehicles];
-            console.log('Updated vehicles list (bulk):', updated.length, updated);
             return updated;
           });
           return validVehicles;
@@ -260,12 +247,10 @@ export function usePartnerData() {
         return newVehicles;
       } else {
         const response = await partnerService.addVehicle(vehicleData);
-        console.log('Add vehicle response:', response);
         // API client wraps: { data: backendResponse, success: true }
         // Backend returns: { data: {...}, message: '...' }
         // So we need: response.data.data
         const newVehicle = response.data?.data || response.data;
-        console.log('New vehicle extracted:', newVehicle);
         if (newVehicle && newVehicle.id) {
           // Normalize images before adding
           const normalizedVehicle = normalizeVehicleImages({ ...newVehicle });
@@ -273,12 +258,9 @@ export function usePartnerData() {
             // Check if vehicle already exists (avoid duplicates)
             const exists = prev.some(v => v.id === normalizedVehicle.id);
             if (exists) {
-              console.log('Vehicle already in list, updating:', normalizedVehicle.id);
               return prev.map(v => v.id === normalizedVehicle.id ? normalizedVehicle : normalizeVehicleImages(v));
             } else {
-              const updated = [...prev.map(normalizeVehicleImages), normalizedVehicle];
-              console.log('Updated vehicles list (single):', updated.length, updated);
-              return updated;
+              return [...prev.map(normalizeVehicleImages), normalizedVehicle];
             }
           });
           return normalizedVehicle;
