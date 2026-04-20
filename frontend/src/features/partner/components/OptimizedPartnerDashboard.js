@@ -56,7 +56,6 @@ export default function OptimizedPartnerDashboard() {
     earnings,
     analytics,
     reviews,
-    activity,
     dataLoading,
     
     // Computed
@@ -108,7 +107,14 @@ export default function OptimizedPartnerDashboard() {
   }
 
   if (!isPartner) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center p-8">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{t('not_a_partner')}</p>
+          <a href="/" className="text-blue-600 hover:underline">{t('go_home')}</a>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -183,40 +189,27 @@ export default function OptimizedPartnerDashboard() {
           {!backendAvailable && (
             <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 px-4 py-3">
               <div className="max-w-7xl mx-auto">
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">
-                      {t('backend_server_not_running')}
-                    </h3>
-                    <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-                      {t('unable_to_connect')} <code className="px-1 py-0.5 bg-red-100 dark:bg-red-900/40 rounded text-xs">http://127.0.0.1:8000</code>
+                    <p className="text-sm text-red-700 dark:text-red-400">
+                      {t('connection_trouble')}
                     </p>
-                    <div className="mt-2 text-sm text-red-700 dark:text-red-400">
-                      <p className="font-medium mb-1">{t('to_start_backend')}:</p>
-                      <div className="bg-red-100 dark:bg-red-900/40 rounded p-2 font-mono text-xs space-y-1">
-                        <div><strong>{t('option_docker')}</strong></div>
-                        <div className="pl-2">docker-compose up</div>
-                        <div className="mt-2"><strong>{t('option_manual_django')}</strong></div>
-                        <div className="pl-2">cd backend/airbcar_backend</div>
-                        <div className="pl-2">python manage.py runserver</div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          refetch();
-                          fetchPendingRequests();
-                          fetchUpcomingBookings();
-                        }}
-                        className="mt-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
-                      >
-                        {t('retry_connection')}
-                      </button>
-                    </div>
                   </div>
+                  <button
+                    onClick={() => {
+                      refetch();
+                      fetchPendingRequests();
+                      fetchUpcomingBookings();
+                    }}
+                    className="flex-shrink-0 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
+                  >
+                    {t('retry_connection')}
+                  </button>
                 </div>
               </div>
             </div>
@@ -228,7 +221,7 @@ export default function OptimizedPartnerDashboard() {
               quickStats={quickStats}
               pendingRequests={pendingRequests}
               upcomingBookings={upcomingBookings}
-              recentActivity={activity || []}
+              recentActivity={recentActivity || []}
               vehicles={vehicles}
               bookings={bookings}
               partnerData={partnerData}

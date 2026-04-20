@@ -835,7 +835,24 @@
     "bulk_operations": "Bulk Vehicle Operations",
     "total_vehicles": "Total Vehicles",
     "active_bookings": "Active Bookings",
-    "reviews": "Reviews"
+    "reviews": "Reviews",
+    "nav_carsharing": "Car Sharing",
+    "nav_messages": "Messages",
+    "chat_title": "Partner Messages",
+    "chat_search_placeholder": "Search conversations...",
+    "chat_no_conversations": "No conversations yet. Start sharing vehicles to begin chatting.",
+    "chat_no_messages": "No messages yet. Send the first message!",
+    "chat_select_conversation": "Select a conversation to start chatting",
+    "chat_type_message": "Type a message...",
+    "chat_send": "Send",
+    "chat_today": "Today",
+    "chat_yesterday": "Yesterday",
+    "chat_online": "Online",
+    "chat_vehicle_context": "Regarding",
+    "not_a_partner": "You do not have access to the partner dashboard.",
+    "go_home": "Go to homepage",
+    "connection_trouble": "We are having trouble connecting to our servers. Please try again in a few moments.",
+    "stat_growth_rate": "{rate} vs last month"
   },
   "bookings": {
     "page_title": "My Bookings",
@@ -1426,7 +1443,10 @@
     "per_day": "per day",
     "day": "/day",
     "pickup": "Pickup",
-    "return": "Return"
+    "return": "Return",
+    "not_a_partner": "You do not have access to the partner dashboard.",
+    "go_home": "Go to homepage",
+    "connection_trouble": "We are having trouble connecting to our servers. Please try again in a few moments."
   },
   "owner_spotlight": {
     "verified": "Verified",

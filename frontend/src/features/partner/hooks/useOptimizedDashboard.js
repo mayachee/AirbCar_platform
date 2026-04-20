@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { usePartnerData } from '@/features/partner/hooks/usePartnerData';
 import { useTranslations } from 'next-intl';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { 
-  LayoutDashboard, Car, Calendar, DollarSign, BarChart3, 
+import {
+  LayoutDashboard, Car, Calendar, DollarSign, BarChart3,
   CalendarDays, Star, FileText, User, Settings,
-  CarFront, BookOpen, ClipboardList, Wallet
+  CarFront, BookOpen, ClipboardList, Wallet, MessageSquare
 } from 'lucide-react';
 
 export function useOptimizedDashboard() {
@@ -73,8 +73,9 @@ export function useOptimizedDashboard() {
   const navigationItems = useMemo(() => [
     { id: 'dashboard', label: t('nav_dashboard'), icon: <LayoutDashboard className="h-5 w-5" />, badge: null },
     { id: 'vehicles', label: t('nav_vehicles'), icon: <Car className="h-5 w-5" />, badge: vehicles?.length || 0 },
-    { id: 'bookings', label: t('nav_bookings'), icon: <Calendar className="h-5 w-5" />, badge: bookings?.length || 0 },
-    { id: 'carsharing', label: 'Car Sharing', icon: <CarFront className="h-5 w-5" />, badge: null },
+    { id: 'bookings', label: t('nav_bookings'), icon: <Calendar className="h-5 w-5" />, badge: pendingRequests?.length || null },
+    { id: 'carsharing', label: t('nav_carsharing'), icon: <CarFront className="h-5 w-5" />, badge: null },
+    { id: 'messages', label: t('nav_messages'), icon: <MessageSquare className="h-5 w-5" />, badge: null },
     { id: 'earnings', label: t('nav_earnings'), icon: <DollarSign className="h-5 w-5" />, badge: null },
     { id: 'analytics', label: t('nav_analytics'), icon: <BarChart3 className="h-5 w-5" />, badge: null },
     { id: 'calendar', label: t('nav_calendar'), icon: <CalendarDays className="h-5 w-5" />, badge: null },
@@ -82,7 +83,7 @@ export function useOptimizedDashboard() {
     { id: 'rental-policies', label: t('nav_rental_policies'), icon: <FileText className="h-5 w-5" />, badge: null },
     { id: 'profile', label: t('nav_profile'), icon: <User className="h-5 w-5" />, badge: null },
     { id: 'settings', label: t('nav_settings'), icon: <Settings className="h-5 w-5" />, badge: null }
-  ], [vehicles?.length, bookings?.length, t]);
+  ], [vehicles?.length, pendingRequests?.length, t]);
 
   // Memoized quick stats
   const quickStats = useMemo(() => {
@@ -122,11 +123,11 @@ export function useOptimizedDashboard() {
         value: formatPrice(Number(monthlyEarningsVal)),
         icon: Wallet,
         color: 'purple',
-        change: growthRate !== 0 ? `${growthRate > 0 ? '+' : ''}${growthRate}% vs last month` : t('stat_this_month'),
+        change: growthRate !== 0 ? t('stat_growth_rate', { rate: `${growthRate > 0 ? '+' : ''}${growthRate}%` }) : t('stat_this_month'),
         changeType: growthRate > 0 ? 'positive' : growthRate < 0 ? 'negative' : 'neutral'
       }
     ];
-  }, [stats, pendingRequests.length, earnings, t]);
+  }, [stats, pendingRequests.length, earnings, t, formatPrice]);
 
   // Partner status check
   const checkPartnerStatus = useCallback(async () => {
@@ -135,6 +136,7 @@ export function useOptimizedDashboard() {
       const token = localStorage.getItem("access_token");
 
       if (!token) {
+        setInitialLoadComplete(true);
         router.push("/auth/signin");
         return;
       }
@@ -142,6 +144,7 @@ export function useOptimizedDashboard() {
       const cachedStatus = sessionStorage.getItem('partner_status');
       if (cachedStatus) {
         setIsPartner(JSON.parse(cachedStatus));
+        setInitialLoadComplete(true);
         return;
       }
 
@@ -155,31 +158,33 @@ export function useOptimizedDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        const userObj = data.user || {}; // Safer extraction
-        const isUserPartner = userObj.is_partner === true || 
-                             userObj.role === 'partner' || 
-                             userObj.email?.includes('partner');
-        
+        const userObj = data.user || {};
+        const isUserPartner = userObj.is_partner === true ||
+                             userObj.role === 'partner';
+
         setIsPartner(isUserPartner);
         setBackendAvailable(true);
         sessionStorage.setItem('partner_status', JSON.stringify(isUserPartner));
-        
+
         if (!isUserPartner) {
           router.push('/');
         }
-      } else if (response.status === 0 || !response.ok) {
-        console.warn('Backend not available, using mock mode');
-        setBackendAvailable(false);
-        setIsPartner(true);
-        sessionStorage.setItem('partner_status', JSON.stringify(true));
-      } else {
+        setInitialLoadComplete(true);
+      } else if (response.status === 401 || response.status === 403) {
+        setInitialLoadComplete(true);
         router.push("/auth/signin");
+      } else {
+        // Server error or unexpected status — treat as backend unavailable
+        console.warn('Backend returned status', response.status);
+        setBackendAvailable(false);
+        setIsPartner(false);
+        setInitialLoadComplete(true);
       }
     } catch (error) {
-      console.warn('Backend not available, using mock mode:', error);
+      console.warn('Backend not available:', error);
       setBackendAvailable(false);
-      setIsPartner(true);
-      sessionStorage.setItem('partner_status', JSON.stringify(true));
+      setIsPartner(false);
+      setInitialLoadComplete(true);
     }
   }, [router]);
 
@@ -217,9 +222,14 @@ export function useOptimizedDashboard() {
   }, [getUpcomingBookings, hasPartnerProfile]);
 
   // Toast notification system
+  const toastTimeoutRef = useRef(null);
+
   const showToast = useCallback((message, type = 'info') => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
     setToastMessage({ message, type });
-    setTimeout(() => setToastMessage(null), 5000);
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 5000);
   }, []);
 
   // Event handlers
@@ -372,18 +382,6 @@ export function useOptimizedDashboard() {
 
   // Effects
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handleResponsiveSidebar = () => {
-      if (window.innerWidth < 1024) {
-        setSidebarCollapsed(true);
-      }
-    };
-    handleResponsiveSidebar();
-    window.addEventListener('resize', handleResponsiveSidebar);
-    return () => window.removeEventListener('resize', handleResponsiveSidebar);
-  }, []);
-
-  useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/signin');
       return;
@@ -391,7 +389,6 @@ export function useOptimizedDashboard() {
 
     if (user && !initialLoadComplete) {
       checkPartnerStatus();
-      setInitialLoadComplete(true);
     }
   }, [user, loading, router, checkPartnerStatus, initialLoadComplete]);
 
@@ -413,13 +410,21 @@ export function useOptimizedDashboard() {
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
     };
   }, []);
 

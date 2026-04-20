@@ -34,10 +34,12 @@ class TestUserProfileAPI:
             pytest.skip("User profile endpoint not found")
         
         if response.status_code == 200:
-            id_val = response.data.get("id") or response.data.get("data", {}).get("id")
+            id_val = response.data.get("id") or response.data.get("user", {}).get("id") or response.data.get("data", {}).get("id")
             assert id_val == user.id
-            assert response.data.get('username') == user.username or response.data.get('user', {}).get('username') == user.username
-            assert response.data.get('email') == user.email or response.data.get('user', {}).get('email') == user.email
+            username_val = response.data.get("username") or response.data.get("user", {}).get("username") or response.data.get("data", {}).get("username")
+            assert username_val == user.username
+            email_val = response.data.get("email") or response.data.get("user", {}).get("email") or response.data.get("data", {}).get("email")
+            assert email_val == user.email
 
     def test_get_other_user_profile(self, db, api_client):
         """Test getting another user's profile."""
@@ -194,7 +196,7 @@ class TestUserRoleManagement:
         
         if response.status_code == 200:
             data = response.data
-            role_val = data.get('role') or data.get('user', {}).get('role')
+            role_val = data.get('role') or data.get('user', {}).get('role') or data.get('data', {}).get('role')
             assert role_val == 'customer'
 
 

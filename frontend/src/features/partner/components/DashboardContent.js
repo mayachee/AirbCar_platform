@@ -26,6 +26,7 @@ const EarningsOverview = lazy(() => import('@/features/partner/components/Earnin
 const VehiclePerformanceInsights = lazy(() => import('@/features/partner/components/VehiclePerformanceInsights'));
 const RecentActivityFeed = lazy(() => import('@/features/partner/components/RecentActivityFeed'));
 const CarSharingInbox = lazy(() => import('@/features/partner/components/CarSharingInbox'));
+const PartnerChat = lazy(() => import('@/features/partner/components/PartnerChat'));
 const RentalPolicies = lazy(() => import('@/features/partner/components/RentalPolicies'));
 
 const ComponentLoader = ({ children, fallback = null }) => (
@@ -503,6 +504,12 @@ export default function DashboardContent({
           </ComponentLoader>
         )}
 
+      {currentView === 'messages' && (
+        <ComponentLoader>
+          <PartnerChat partnerData={partnerData} />
+        </ComponentLoader>
+      )}
+
         {currentView === 'earnings' && (
         <ComponentLoader>
           <EarningsOverview earnings={earnings} stats={stats} detailed={true} />
@@ -551,14 +558,7 @@ export default function DashboardContent({
           <RentalPolicies
             partnerData={partnerData}
             onUpdate={async (policyData) => {
-              try {
-                // TODO: Implement API call to save policies
-                console.log('Saving rental policies:', policyData);
-                refetch();
-              } catch (error) {
-                console.error('Error saving rental policies:', error);
-                throw error;
-              }
+              throw new Error('Rental policy saving is not yet available. This feature is coming soon.');
             }}
           />
         </ComponentLoader>
@@ -595,7 +595,7 @@ export default function DashboardContent({
           {/* Settings Header */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">{t('settings')}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings_subtitle', { fallback: 'Manage your preferences and account settings' })}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('settings_subtitle')}</p>
           </div>
 
           {/* Language & Currency */}
@@ -612,8 +612,8 @@ export default function DashboardContent({
                   <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_language', { fallback: 'Language' })}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_language_desc', { fallback: 'Choose your preferred language' })}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_language')}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_language_desc')}</p>
                 </div>
               </div>
               <LanguageSwitcher />
@@ -631,8 +631,8 @@ export default function DashboardContent({
                   <Coins className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_currency', { fallback: 'Currency' })}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_currency_desc', { fallback: 'Set your preferred currency for prices' })}</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_currency')}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_currency_desc')}</p>
                 </div>
               </div>
               <SelectField
@@ -662,8 +662,8 @@ export default function DashboardContent({
                       <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="text-left">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_public_profile', { fallback: 'View Public Profile' })}</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_public_profile_desc', { fallback: 'See how your partner profile looks to customers' })}</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_public_profile')}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_public_profile_desc')}</p>
                     </div>
                   </div>
                   <ExternalLink className="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
@@ -686,8 +686,8 @@ export default function DashboardContent({
                     <User className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div className="text-left">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_profile', { fallback: 'Account Settings' })}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_profile_desc', { fallback: 'Manage your account settings on the platform' })}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{t('settings_view_profile')}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{t('settings_view_profile_desc')}</p>
                   </div>
                 </div>
                 <ExternalLink className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
@@ -697,7 +697,7 @@ export default function DashboardContent({
 
           {/* Bulk Operations */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('bulk_operations', { fallback: 'Bulk Vehicle Operations' })}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('bulk_operations')}</h3>
             <ComponentLoader>
               <BulkOperationsPanel vehicles={vehicles} onRefresh={refetch} />
             </ComponentLoader>

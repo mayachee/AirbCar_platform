@@ -90,7 +90,33 @@ export function usePartnerData() {
       }
       
       setHasPartnerProfile(true);
-      const statsData = await partnerService.getStats();
+
+      // Compute stats from dashboard data instead of making a separate API call
+      const vehiclesCount = (dashboardData.vehicles || []).length;
+      const bookingsList = dashboardData.bookings || [];
+      const pendingList = dashboardData.pendingRequests || [];
+      const activeBookings = bookingsList.filter(b => b.status === 'accepted').length;
+      const completedRentals = bookingsList.filter(b => b.status === 'completed').length;
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthlyEarnings = bookingsList
+        .filter(b => {
+          if (!b.start_time && !b.start_date && !b.pickup_date) return false;
+          const bookingDate = new Date(b.start_time || b.start_date || b.pickup_date);
+          return bookingDate.getMonth() === currentMonth &&
+                 bookingDate.getFullYear() === currentYear &&
+                 b.status === 'completed';
+        })
+        .reduce((sum, b) => sum + (parseFloat(b.total_price) || parseFloat(b.total_amount) || 0), 0);
+
+      const statsData = {
+        totalVehicles: vehiclesCount,
+        activeBookings,
+        pendingRequests: pendingList.length,
+        completedRentals,
+        monthlyEarnings,
+        averageRating: dashboardData.partner?.average_rating || 0
+      };
       
       console.log('usePartnerData - Partner dashboard data:', {
         partner: dashboardData.partner,
@@ -141,10 +167,9 @@ export function usePartnerData() {
           console.log('usePartnerData - Merged vehicles:', merged.length, merged);
           return merged;
         }
-        // If we have existing vehicles but no new ones, keep existing (might be a fetch issue)
-        if (cleanPrev.length > 0 && vehiclesList.length === 0) {
-          console.log('usePartnerData - Keeping existing vehicles (no new data from API):', cleanPrev.length);
-          return cleanPrev;
+        // If API returned empty, trust the server
+        if (vehiclesList.length === 0) {
+          return [];
         }
         // Otherwise use the new list (also filter it to ensure it's clean)
         const cleanVehiclesList = vehiclesList

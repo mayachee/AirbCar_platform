@@ -833,7 +833,24 @@
     "bulk_operations": "Opérations en masse sur les véhicules",
     "total_vehicles": "Total des véhicules",
     "active_bookings": "Réservations actives",
-    "reviews": "Avis"
+    "reviews": "Avis",
+    "nav_carsharing": "Partage de voitures",
+    "nav_messages": "Messages",
+    "chat_title": "Messages partenaires",
+    "chat_search_placeholder": "Rechercher des conversations...",
+    "chat_no_conversations": "Aucune conversation. Commencez a partager des vehicules pour discuter.",
+    "chat_no_messages": "Aucun message. Envoyez le premier message!",
+    "chat_select_conversation": "Selectionnez une conversation pour discuter",
+    "chat_type_message": "Ecrivez un message...",
+    "chat_send": "Envoyer",
+    "chat_today": "Aujourd'hui",
+    "chat_yesterday": "Hier",
+    "chat_online": "En ligne",
+    "chat_vehicle_context": "Concernant",
+    "not_a_partner": "Vous n avez pas acces au tableau de bord partenaire.",
+    "go_home": "Aller a la page d accueil",
+    "connection_trouble": "Nous avons des difficultes a nous connecter a nos serveurs. Veuillez reessayer dans quelques instants.",
+    "stat_growth_rate": "{rate} par rapport au mois dernier"
   },
   "bookings": {
     "page_title": "Mes réservations",
@@ -1204,7 +1221,7 @@
     "created_on": "Créé le {date}",
     "duration_days": "{days} jour(s)",
     "currency_mad": "MAD",
-    "booking": "Réservation",
+    "booking": "réservation",
     "accept": "Accepter",
     "reject": "Rejeter",
     "not_available": "N/A",
@@ -1348,7 +1365,6 @@
     "required_field": "Ce champ est obligatoire",
     "edit_profile_success": "Les paramètres du profil ont été sauvegardés avec succès",
     "top_earning_vehicles": "Véhicules les Plus Rentables",
-    "booking": "réservation",
     "no_vehicle_earnings_data_yet": "Pas de données de revenus de véhicules pour le moment",
     "recent_completed_bookings": "Réservations Récemment Complétées",
     "no_completed_bookings_yet": "Aucune réservation complétée pour le moment",
@@ -1425,7 +1441,10 @@
     "per_day": "par jour",
     "day": "/jour",
     "pickup": "Prise en charge",
-    "return": "Retour"
+    "return": "Retour",
+    "not_a_partner": "Vous n avez pas acces au tableau de bord partenaire.",
+    "go_home": "Aller a la page d accueil",
+    "connection_trouble": "Nous avons des difficultes a nous connecter a nos serveurs. Veuillez reessayer dans quelques instants."
   },
   "owner_spotlight": {
     "verified": "Vérifié",
@@ -1998,8 +2017,8 @@
     "bf_sort_date": "Trier par date",
     "bf_sort_price": "Trier par prix",
     "bf_sort_status": "Trier par statut",
-    "bt_upcoming": "\u00c0 venir",
-    "bt_past": "Pass\u00e9es",
+    "bt_upcoming": "À venir",
+    "bt_past": "Passées",
     "bt_all": "Toutes"
   },
   "partner_public": {

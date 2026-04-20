@@ -119,9 +119,10 @@ class TestListingDetailAPI:
         
         if response.status_code == 200:
             id_val = response.data.get("id") or response.data.get("data", {}).get("id")
+            data_dict = response.data.get("data", response.data)
             assert id_val == listing.id
-            assert response.data['make'] == listing.make
-            assert response.data['model'] == listing.model
+            assert data_dict.get('make') == listing.make
+            assert data_dict.get('model') == listing.model
 
     def test_get_nonexistent_listing(self, db, api_client):
         """Test getting listing that doesn't exist."""
@@ -242,7 +243,7 @@ class TestListingAvailability:
         response = api_client.get(url)
         
         if response.status_code == 200:
-            avail_val = response.data.get('is_available') if 'is_available' in response.data else response.data.get('listing', {}).get('is_available')
+            avail_val = response.data.get('is_available') if 'is_available' in response.data else response.data.get('data', {}).get('is_available')
             assert avail_val is False
 
 
@@ -263,4 +264,4 @@ class TestListingRatings:
         if response.status_code == 200:
             rating_val = response.data.get("rating") or response.data.get("data", {}).get("rating")
             assert rating_val == 4.5 or rating_val == Decimal('4.5') or rating_val == '4.50'
-            assert response.data['review_count'] == 10
+            assert response.data.get("data", response.data).get("review_count") == 10

@@ -99,8 +99,10 @@ class TestBookingCreationAPI:
         
         if response.status_code == 201:
             listing_val = response.data.get("listing") or response.data.get("data", {}).get("listing")
-            assert listing_val == listing.id
-            assert response.data['status'] == 'pending'
+            listing_id = listing_val.get('id') if isinstance(listing_val, dict) else listing_val
+            assert listing_id == listing.id
+            status_val = response.data.get("status") or response.data.get("data", {}).get("status")
+            assert status_val == 'pending'
             assert Booking.objects.filter(customer=user).exists()
 
     def test_create_booking_invalid_dates(self, db, authenticated_client, user, listing):
