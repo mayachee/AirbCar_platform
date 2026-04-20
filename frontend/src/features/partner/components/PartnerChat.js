@@ -275,13 +275,22 @@ export default function PartnerChat({ partnerData }) {
 
   // --- Data fetching ---
 
+  const endpointAvailable = useRef(true);
+
   const fetchRequests = useCallback(async () => {
+    if (!endpointAvailable.current) return;
     try {
       const response = await partnerService.getCarShareRequests();
       const data = response.data?.results || response.data?.data || response.data || [];
       setRequests(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Failed to fetch car share requests:', err);
+      if (err?.response?.status === 404 || err?.status === 404) {
+        console.warn('Car share endpoint not available yet — disabling polling.');
+        endpointAvailable.current = false;
+        clearInterval(pollConversationsRef.current);
+      } else {
+        console.error('Failed to fetch car share requests:', err);
+      }
     } finally {
       setLoadingRequests(false);
     }

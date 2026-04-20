@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import { partnerService } from '@/features/partner/services/partnerService';
 import { format } from 'date-fns';
@@ -22,22 +22,33 @@ export default function CarSharingInbox({ partnerData }) {
   const [newMessage, setNewMessage] = useState('');
   const [messagesLoading, setMessagesLoading] = useState(false);
 
+  const endpointAvailable = useRef(true);
+
   const fetchRequests = useCallback(async () => {
+    if (!endpointAvailable.current) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const response = await partnerService.getCarShareRequests();
       const data = response.data?.results || response.data?.data || response.data || [];
       const requestsArray = Array.isArray(data) ? data : [];
       setRequests(requestsArray);
-      
+
       setSelectedRequest(prev => {
         if (!prev) return null;
         const updated = requestsArray.find(r => r.id === prev.id);
         return updated || prev;
       });
     } catch (error) {
-      console.error(error);
-      addToast('Failed to load sharing requests', 'error');
+      if (error?.response?.status === 404 || error?.status === 404) {
+        console.warn('Car share endpoint not available yet.');
+        endpointAvailable.current = false;
+      } else {
+        console.error(error);
+        addToast('Failed to load sharing requests', 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -150,7 +161,7 @@ export default function CarSharingInbox({ partnerData }) {
            <button className="text-gray-500 hover:text-gray-900 transition-colors"><MessageSquare className="w-5 h-5" /></button>
            <button className="text-gray-500 hover:text-gray-900 transition-colors"><HelpCircle className="w-5 h-5" /></button>
            <div className="flex items-center gap-2 pl-3 border-l border-gray-200 cursor-pointer">
-              <img src="/api/placeholder/40/40" className="w-8 h-8 rounded-full border border-gray-300" alt="profile" />
+              <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${partnerData?.business_name || 'P'}`} className="w-8 h-8 rounded-full border border-gray-300" alt="profile" />
               <ChevronDown className="w-4 h-4 text-gray-500" />
            </div>
         </div>
