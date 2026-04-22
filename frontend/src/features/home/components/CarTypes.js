@@ -86,7 +86,7 @@ export default function CarTypes() {
                       loading="lazy"
                       sizes="(min-width: 768px) 60vw, 100vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#121c2a] via-[#121c2a]/30 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--text-primary)] via-[var(--text-primary)]/30 to-transparent" />
                   </div>
 
                   <div className={`absolute inset-x-0 bottom-0 text-white ${isHeroTile(index) ? 'p-6 md:p-8' : 'p-4 md:p-5'}`}>

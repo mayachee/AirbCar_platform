@@ -78,7 +78,7 @@
   border-radius: 999px;
   color: #fff;
   padding: 0.58rem 0.95rem;
-  background: linear-gradient(135deg, #9d4300 0%, #f97316 100%);
+  background: linear-gradient(135deg, var(--color-kc-primary) 0%, #f97316 100%);
 }
 
 .heroSection {
@@ -177,7 +177,7 @@
   align-items: center;
   gap: 0.45rem;
   color: #fff;
-  background: linear-gradient(135deg, #9d4300 0%, #f97316 100%);
+  background: linear-gradient(135deg, var(--color-kc-primary) 0%, #f97316 100%);
 }
 
 .ctaSecondary {
@@ -394,7 +394,7 @@
 }
 
 .tagPrimary {
-  background: linear-gradient(135deg, #9d4300, #f97316);
+  background: linear-gradient(135deg, var(--color-kc-primary), #f97316);
   color: #fff;
 }
 
@@ -404,7 +404,7 @@
 }
 
 .bentoAccent {
-  background: linear-gradient(135deg, #9d4300, #f97316);
+  background: linear-gradient(135deg, var(--color-kc-primary), #f97316);
 }
 
 .bentoAccent p {

@@ -14,7 +14,7 @@ export default function OwnerBlock({ partner }) {
   const quoteText = partner?.description || partner?.bio || null
 
   return (
-    <section className="bg-[#eff3ff] rounded-2xl p-8 border border-[#dee9fd]">
+    <section className="bg-[var(--surface-1)] rounded-2xl p-8 border border-[var(--surface-3)]">
       <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
         <div className="relative flex-shrink-0">
           <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-xl ring-4 ring-white bg-white">
@@ -25,42 +25,42 @@ export default function OwnerBlock({ partner }) {
             />
           </div>
           {partner?.is_verified && (
-            <div className="absolute -bottom-2 -right-2 bg-[#9d4300] text-white p-1.5 rounded-lg shadow-lg">
+            <div className="absolute -bottom-2 -right-2 bg-[var(--color-kc-primary)] text-white p-1.5 rounded-lg shadow-lg">
               <BadgeCheck className="w-4 h-4 block" />
             </div>
           )}
         </div>
         <div className="flex-grow text-center md:text-left">
-          <h3 className="text-2xl font-bold mb-1 text-[#121c2a]">{ownerName}</h3>
-          <p className="text-[#9d4300] font-bold text-sm uppercase tracking-widest mb-4">Founder, {eliteStatus}</p>
+          <h3 className="text-2xl font-bold mb-1 text-[var(--text-primary)]">{ownerName}</h3>
+          <p className="text-[var(--color-kc-primary)] font-bold text-sm uppercase tracking-widest mb-4">Founder, {eliteStatus}</p>
           {quoteText && (
             <div className="relative">
-              <Quote className="absolute -top-4 -left-6 text-[#d9e3f7] w-12 h-12 opacity-50 -z-10" />
-              <p className="text-[#584237] italic leading-relaxed text-lg line-clamp-4">
+              <Quote className="absolute -top-4 -left-6 text-[var(--surface-hover)] w-12 h-12 opacity-50 -z-10" />
+              <p className="text-[var(--text-secondary)] italic leading-relaxed text-lg line-clamp-4">
                 &quot;{quoteText}&quot;
               </p>
             </div>
           )}
           
-          <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-4 text-[#121c2a]">
+          <div className="mt-6 flex flex-wrap justify-center md:justify-start gap-4 text-[var(--text-primary)]">
             {partner?.experience_years && (
               <>
                 <div className="flex flex-col items-center md:items-start">
-                  <span className="text-[10px] font-bold text-[#545f73] uppercase tracking-widest">Experience</span>
+                  <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Experience</span>
                   <span className="font-bold">{expYears}</span>
                 </div>
-                <div className="w-px h-8 bg-[#dee9fd] hidden md:block"></div>
+                <div className="w-px h-8 bg-[var(--surface-3)] hidden md:block"></div>
               </>
             )}
             <div className="flex flex-col items-center md:items-start">
-              <span className="text-[10px] font-bold text-[#545f73] uppercase tracking-widest">Fleet Size</span>
+              <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Fleet Size</span>
               <span className="font-bold">{formattedFleet}</span>
             </div>
             {responseTime && (
               <>
-                <div className="w-px h-8 bg-[#dee9fd] hidden md:block"></div>       
+                <div className="w-px h-8 bg-[var(--surface-3)] hidden md:block"></div>       
                 <div className="flex flex-col items-center md:items-start">
-                  <span className="text-[10px] font-bold text-[#545f73] uppercase tracking-widest">Response Time</span>
+                  <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Response Time</span>
                   <span className="font-bold">{responseTime}</span>
                 </div>
               </>

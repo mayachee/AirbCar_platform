@@ -32,10 +32,10 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
             }}
             className="w-12 h-12 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-white transition-all shadow-lg border border-white/40"
           >
-            <Heart className={`w-5 h-5 transition-colors ${isFav ? 'fill-[#9d4300] text-[#9d4300]' : 'text-[#9d4300]'}`} />
+            <Heart className={`w-5 h-5 transition-colors ${isFav ? 'fill-[var(--color-kc-primary)] text-[var(--color-kc-primary)]' : 'text-[var(--color-kc-primary)]'}`} />
           </button>
           <button className="w-12 h-12 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-white transition-all shadow-lg border border-white/40">
-            <Share2 className="w-5 h-5 text-[#9d4300]" />
+            <Share2 className="w-5 h-5 text-[var(--color-kc-primary)]" />
           </button>
         </div>
 
@@ -74,7 +74,7 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
             return (
               <div
                 key={idx}
-                className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer group/thumb transition-all ${idx === 0 ? 'outline outline-3 outline-offset-2 outline-[#9d4300]' : 'opacity-70 hover:opacity-100'}`}
+                className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer group/thumb transition-all ${idx === 0 ? 'outline outline-3 outline-offset-2 outline-[var(--color-kc-primary)]' : 'opacity-70 hover:opacity-100'}`}
                 onClick={onShowFullGallery}
               >
                 <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover transition-opacity duration-300" />
@@ -98,7 +98,7 @@ export default function ImageGallery({ vehicle, onShowFullGallery }) {
           onClick={onShowFullGallery}
           className="w-14 h-14 rounded-2xl bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-white transition-all shadow-xl border border-white/40"
         >
-          <Maximize className="w-6 h-6 text-[#121c2a]" />
+          <Maximize className="w-6 h-6 text-[var(--text-primary)]" />
         </button>
       </div>
     </section>

@@ -207,7 +207,7 @@ export default function PopularDestinations() {
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
                     style={{ backgroundImage: `url(${d.image})` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#121c2a] via-[#121c2a]/30 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--text-primary)] via-[var(--text-primary)]/30 to-transparent" />
 
                   {/* Content overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-1">

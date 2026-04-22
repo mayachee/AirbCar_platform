@@ -81,7 +81,7 @@ export default function HowItWorks() {
                       loading="lazy"
                       onError={(e) => { e.target.src = '/carsymbol.jpg'; }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#121c2a]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--text-primary)]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </div>
                 </div>
 

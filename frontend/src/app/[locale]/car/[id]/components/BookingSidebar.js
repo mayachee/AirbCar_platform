@@ -69,10 +69,10 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             className="flex items-baseline gap-1 mb-8"
             variants={itemVariants}
           >
-            <span className="text-4xl font-black text-[#121c2a]">
+            <span className="text-4xl font-black text-[var(--text-primary)]">
               {formatPrice(price).replace(/\sMAD|MAD/, '').trim()}
             </span>
-            <span className="text-lg font-bold text-[#545f73]">
+            <span className="text-lg font-bold text-[var(--text-secondary)]">
               MAD / {t('day')}
             </span>
           </motion.div>
@@ -83,32 +83,32 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
             variants={itemVariants}
             onClick={onChangeDates}
           >
-            <div className="grid grid-cols-2 bg-[#f9f9ff] rounded-2xl border border-[#dee9fd] overflow-hidden cursor-pointer hover:bg-white transition-colors">
-              <div className="p-4 border-r border-[#dee9fd]">
-                <p className="text-[10px] font-bold text-[#545f73] uppercase tracking-widest mb-1">Check-In</p>
-                <p className="font-bold text-[#121c2a] text-sm">{selectedDates.pickup || "Select Date"}</p>
+            <div className="grid grid-cols-2 bg-[var(--surface-base)] rounded-2xl border border-[var(--surface-3)] overflow-hidden cursor-pointer hover:bg-white transition-colors">
+              <div className="p-4 border-r border-[var(--surface-3)]">
+                <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Check-In</p>
+                <p className="font-bold text-[var(--text-primary)] text-sm">{selectedDates.pickup || "Select Date"}</p>
               </div>
               <div className="p-4">
-                <p className="text-[10px] font-bold text-[#545f73] uppercase tracking-widest mb-1">Check-Out</p>
-                <p className="font-bold text-[#121c2a] text-sm">{selectedDates.return || "Select Date"}</p>
+                <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mb-1">Check-Out</p>
+                <p className="font-bold text-[var(--text-primary)] text-sm">{selectedDates.return || "Select Date"}</p>
               </div>
             </div>
           </motion.div>
 
           {/* Price Breakdown */}
-          <motion.div className="space-y-3 mb-8 border-t border-[#dee9fd] pt-6" variants={itemVariants}>
+          <motion.div className="space-y-3 mb-8 border-t border-[var(--surface-3)] pt-6" variants={itemVariants}>
             <div className="flex justify-between text-sm">
-              <span className="text-[#545f73]">{formatPrice(price)} x {duration} {duration === 1 ? t('day') : t('days')}</span>
-              <span className="font-bold text-[#121c2a]">{formatPrice(basePrice)}</span>
+              <span className="text-[var(--text-secondary)]">{formatPrice(price)} x {duration} {duration === 1 ? t('day') : t('days')}</span>
+              <span className="font-bold text-[var(--text-primary)]">{formatPrice(basePrice)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-[#545f73]">{t('service_fee')}</span>
+              <span className="text-[var(--text-secondary)]">{t('service_fee')}</span>
               <span className="font-bold text-green-600">{serviceFee === 0 ? 'FREE' : formatPrice(serviceFee)}</span>
             </div>
             
-            <div className="flex justify-between pt-3 border-t border-[#dee9fd]">
-              <span className="text-xl font-bold text-[#121c2a]">Total</span>
-              <span className="text-xl font-black text-[#9d4300]">{formatPrice(total)}</span>
+            <div className="flex justify-between pt-3 border-t border-[var(--surface-3)]">
+              <span className="text-xl font-bold text-[var(--text-primary)]">Total</span>
+              <span className="text-xl font-black text-[var(--color-kc-primary)]">{formatPrice(total)}</span>
             </div>
           </motion.div>
 
@@ -133,11 +133,11 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
           <motion.div variants={itemVariants}>
             <button
               onClick={onBookNow}
-              className="w-full bg-[#f97316] text-[#582200] py-5 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="w-full bg-[#f97316] text-[#ffffff] py-5 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               Confirm Booking
             </button>
-            <p className="text-center text-[10px] text-[#545f73] mt-4 font-medium uppercase tracking-widest">
+            <p className="text-center text-[10px] text-[var(--text-secondary)] mt-4 font-medium uppercase tracking-widest">
               You won&apos;t be charged yet
             </p>
           </motion.div>
@@ -145,20 +145,20 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
         {/* Contact Agency Small Card */}
         <motion.div
-          className="bg-[#eff3ff] p-6 rounded-2xl flex items-center justify-between border border-[#dee9fd] hover:border-[#9d4300]/30 transition-colors group cursor-pointer"
+          className="bg-[var(--surface-1)] p-6 rounded-2xl flex items-center justify-between border border-[var(--surface-3)] hover:border-[var(--color-kc-primary)]/30 transition-colors group cursor-pointer"
           variants={cardVariants}
         >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <Headset className="w-5 h-5 text-[#9d4300] group-hover:scale-110 transition-transform" />
+              <Headset className="w-5 h-5 text-[var(--color-kc-primary)] group-hover:scale-110 transition-transform" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-[#545f73] uppercase tracking-widest">Need Help?</p>
-              <p className="font-bold text-[#121c2a] text-sm">Chat with Owner</p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">Need Help?</p>
+              <p className="font-bold text-[var(--text-primary)] text-sm">Chat with Owner</p>
             </div>
           </div>
-          <button className="w-10 h-10 rounded-full border border-[#dee9fd] flex items-center justify-center hover:bg-white transition-colors group-hover:bg-[#9d4300] group-hover:text-white group-hover:border-[#9d4300]">
-            <ChevronRight className="w-5 h-5 text-[#545f73] group-hover:text-white" />
+          <button className="w-10 h-10 rounded-full border border-[var(--surface-3)] flex items-center justify-center hover:bg-white transition-colors group-hover:bg-[var(--color-kc-primary)] group-hover:text-white group-hover:border-[var(--color-kc-primary)]">
+            <ChevronRight className="w-5 h-5 text-[var(--text-secondary)] group-hover:text-white" />
           </button>
         </motion.div>
       </motion.div>

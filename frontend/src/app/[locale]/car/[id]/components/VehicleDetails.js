@@ -21,59 +21,59 @@ export default function VehicleDetails({ vehicle }) {
   
   return (
     <section>
-      <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-[#121c2a]">
-        <span className="w-1.5 h-8 bg-[#9d4300] rounded-full"></span>
+      <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-[var(--text-primary)]">
+        <span className="w-1.5 h-8 bg-[var(--color-kc-primary)] rounded-full"></span>
         Technical Specifications
       </h2>
       
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-[#121c2a]">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-[var(--text-primary)]">
         {/* Drive */}
-        <div className="bg-[#eff3ff] p-4 rounded-xl text-center border border-[#dee9fd]">
-          <Settings className="w-6 h-6 text-[#9d4300] mx-auto mb-2" />
-          <p className="text-[10px] font-bold text-[#545f73] tracking-widest uppercase mb-1">Drive</p>
+        <div className="bg-[var(--surface-1)] p-4 rounded-xl text-center border border-[var(--surface-3)]">
+          <Settings className="w-6 h-6 text-[var(--color-kc-primary)] mx-auto mb-2" />
+          <p className="text-[10px] font-bold text-[var(--text-secondary)] tracking-widest uppercase mb-1">Drive</p>
           <p className="font-bold text-sm capitalize">{transmission}</p>
         </div>
 
         {/* Capacity */}
-        <div className="bg-[#eff3ff] p-4 rounded-xl text-center border border-[#dee9fd]">
-          <Users className="w-6 h-6 text-[#9d4300] mx-auto mb-2" />
-          <p className="text-[10px] font-bold text-[#545f73] tracking-widest uppercase mb-1">Capacity</p>
+        <div className="bg-[var(--surface-1)] p-4 rounded-xl text-center border border-[var(--surface-3)]">
+          <Users className="w-6 h-6 text-[var(--color-kc-primary)] mx-auto mb-2" />
+          <p className="text-[10px] font-bold text-[var(--text-secondary)] tracking-widest uppercase mb-1">Capacity</p>
           <p className="font-bold text-sm capitalize">{seats.toString().includes('Seat') ? seats : `${seats} Seats`}</p>
         </div>
 
         {/* Fuel */}
-        <div className="bg-[#eff3ff] p-4 rounded-xl text-center border border-[#dee9fd]">
-          <Fuel className="w-6 h-6 text-[#9d4300] mx-auto mb-2" />
-          <p className="text-[10px] font-bold text-[#545f73] tracking-widest uppercase mb-1">Fuel</p>
+        <div className="bg-[var(--surface-1)] p-4 rounded-xl text-center border border-[var(--surface-3)]">
+          <Fuel className="w-6 h-6 text-[var(--color-kc-primary)] mx-auto mb-2" />
+          <p className="text-[10px] font-bold text-[var(--text-secondary)] tracking-widest uppercase mb-1">Fuel</p>
           <p className="font-bold text-sm capitalize">{fuelType}</p>
         </div>
 
         {/* Storage */}
-        <div className="bg-[#eff3ff] p-4 rounded-xl text-center border border-[#dee9fd]">
-          <Briefcase className="w-6 h-6 text-[#9d4300] mx-auto mb-2" />
-          <p className="text-[10px] font-bold text-[#545f73] tracking-widest uppercase mb-1">Storage</p>
+        <div className="bg-[var(--surface-1)] p-4 rounded-xl text-center border border-[var(--surface-3)]">
+          <Briefcase className="w-6 h-6 text-[var(--color-kc-primary)] mx-auto mb-2" />
+          <p className="text-[10px] font-bold text-[var(--text-secondary)] tracking-widest uppercase mb-1">Storage</p>
           <p className="font-bold text-sm capitalize">{vehicle.luggage_capacity || vehicle.luggageCapacity || '2 Large Bags'}</p>
         </div>
 
         {/* Range */}
-        <div className="bg-[#eff3ff] p-4 rounded-xl text-center border border-[#dee9fd]">
-          <MapPin className="w-6 h-6 text-[#9d4300] mx-auto mb-2" />
-          <p className="text-[10px] font-bold text-[#545f73] tracking-widest uppercase mb-1">Range</p>
+        <div className="bg-[var(--surface-1)] p-4 rounded-xl text-center border border-[var(--surface-3)]">
+          <MapPin className="w-6 h-6 text-[var(--color-kc-primary)] mx-auto mb-2" />
+          <p className="text-[10px] font-bold text-[var(--text-secondary)] tracking-widest uppercase mb-1">Range</p>
           <p className="font-bold text-sm capitalize">{vehicle.range_km ? `${vehicle.range_km} km` : 'Unlimited'}</p>
         </div>
       </div>
 
       {features.length > 0 && (
         <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-[#121c2a]">
-            <span className="w-1.5 h-8 bg-[#9d4300] rounded-full"></span>
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-[var(--text-primary)]">
+            <span className="w-1.5 h-8 bg-[var(--color-kc-primary)] rounded-full"></span>
             {t('features')}
           </h2>
           <div className="flex flex-wrap gap-2">
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className="text-[10px] font-bold uppercase tracking-wider text-[#9d4300] bg-[#fff] border border-[#dee9fd] px-4 py-2 rounded-full"
+                className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-kc-primary)] bg-[#fff] border border-[var(--surface-3)] px-4 py-2 rounded-full"
               >
                 {feature}
               </div>

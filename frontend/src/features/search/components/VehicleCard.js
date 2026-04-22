@@ -35,7 +35,7 @@ export default function VehicleCard({ car, onViewDetails, onToggleFavorite, isFa
           loading="lazy"
           onError={(e) => { if (e.target.src !== '/carsymbol.jpg') e.target.src = '/carsymbol.jpg'; }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#121c2a]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--text-primary)]/60 to-transparent" />
 
         {/* Verified badge */}
         {car.verified && (
