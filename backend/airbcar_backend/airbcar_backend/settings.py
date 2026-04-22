@@ -355,9 +355,16 @@ CORS_ALLOWED_ORIGINS = [
     # Production domains
     "https://www.airbcar.com",
     "https://airbcar.com",
+    "https://airb-car-platform.vercel.app",
     # Docker network IPs (common Docker bridge network IPs)
     "http://172.18.240.1:3001",
     "http://172.18.240.1:3000",
+]
+
+# Match Vercel preview deploys (airb-car-platform-<hash>-<team>.vercel.app,
+# airb-car-platform-git-<branch>-<team>.vercel.app, etc.)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://airb-car-platform[a-z0-9-]*\.vercel\.app$",
 ]
 
 if DEBUG:
@@ -476,7 +483,9 @@ def _url_to_origin(url: str) -> str:
     except ValueError:
         return ''
 
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = [
+    "https://airb-car-platform.vercel.app",
+]
 for _candidate in [FRONTEND_URL, BACKEND_URL, os.environ.get('CSRF_TRUSTED_ORIGIN', '')]:
     origin = _url_to_origin(_candidate)
     if origin and origin not in CSRF_TRUSTED_ORIGINS:
