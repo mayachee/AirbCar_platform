@@ -4,6 +4,7 @@ import { Suspense, useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Search,
   SlidersHorizontal,
@@ -21,9 +22,6 @@ import {
   Users,
   Fuel,
   Settings2,
-  Plus,
-  Minus,
-  Navigation,
 } from 'lucide-react';
 import { SearchFilters, useSearch, useFavorites } from '@/features/search';
 import { SelectField } from '@/components/ui/select-field';
@@ -31,6 +29,16 @@ import { APP_NAME, MOROCCAN_CITIES } from '@/constants';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { getVehicleImageUrl } from '@/utils/imageUtils';
 import SearchPageSkeleton from './SearchPageSkeleton';
+
+// Leaflet reads `window` on import, so the map must be client-only
+const VehicleMap = dynamic(() => import('./VehicleMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 bg-[var(--surface-1)] flex items-center justify-center">
+      <div className="text-xs text-[var(--text-muted)]">Loading map…</div>
+    </div>
+  ),
+});
 
 /* ----------------------------------------------------------------
    Compact search pill — fits inside the top bar (h-16)
@@ -454,16 +462,6 @@ function SearchContent() {
     [t]
   );
 
-  // Deterministic pseudo-position for mock pins (stable across renders for same id)
-  const pinPosition = (car, i) => {
-    const id = String(car.id ?? i);
-    let h = 0;
-    for (let k = 0; k < id.length; k++) h = (h * 31 + id.charCodeAt(k)) >>> 0;
-    const left = 10 + (h % 76);
-    const top = 8 + ((h >> 8) % 78);
-    return { left: `${left}%`, top: `${top}%` };
-  };
-
   const selectedCar = useMemo(
     () => visibleCars.find((c) => c.id === selectedCarId) || null,
     [visibleCars, selectedCarId]
@@ -788,115 +786,23 @@ function SearchContent() {
           className={`${mobileView === 'map' ? 'flex' : 'hidden'} md:flex flex-col flex-1 relative`}
           style={{ borderLeft: '1px solid var(--border-subtle)' }}
         >
-          {/* Map canvas */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-[var(--surface-base)] to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20 overflow-hidden">
-            {/* Grid */}
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  'linear-gradient(rgba(18,28,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(18,28,42,0.04) 1px, transparent 1px)',
-                backgroundSize: '48px 48px',
-              }}
+          {!loading && (
+            <VehicleMap
+              cars={visibleCars}
+              locationFilter={filters.location}
+              hoveredCarId={hoveredCarId}
+              selectedCarId={selectedCarId}
+              onMarkerHover={setHoveredCarId}
+              onMarkerLeave={(id) =>
+                setHoveredCarId((current) => (current === id ? null : current))
+              }
+              onMarkerClick={setSelectedCarId}
+              formatPrice={formatPrice}
             />
+          )}
 
-            {/* Road curves */}
-            <svg
-              className="absolute inset-0 w-full h-full opacity-[0.08]"
-              xmlns="http://www.w3.org/2000/svg"
-              preserveAspectRatio="none"
-              viewBox="0 0 100 100"
-            >
-              <path
-                d="M 0 25 Q 25 20 50 30 T 100 35"
-                stroke="currentColor"
-                strokeWidth="0.4"
-                fill="none"
-              />
-              <path
-                d="M 0 65 Q 35 55 60 70 T 100 60"
-                stroke="currentColor"
-                strokeWidth="0.3"
-                fill="none"
-              />
-              <path
-                d="M 30 0 Q 35 35 45 60 T 50 100"
-                stroke="currentColor"
-                strokeWidth="0.3"
-                fill="none"
-              />
-              <path
-                d="M 70 0 Q 65 30 75 55 T 80 100"
-                stroke="currentColor"
-                strokeWidth="0.4"
-                fill="none"
-              />
-            </svg>
-
-            {/* Water-like blob */}
-            <div
-              className="absolute rounded-full opacity-30"
-              style={{
-                left: '55%',
-                top: '15%',
-                width: '38%',
-                height: '30%',
-                background:
-                  'radial-gradient(circle at 30% 30%, rgba(55,171,158,0.35), transparent 70%)',
-              }}
-            />
-            <div
-              className="absolute rounded-full opacity-25"
-              style={{
-                left: '5%',
-                top: '55%',
-                width: '28%',
-                height: '24%',
-                background:
-                  'radial-gradient(circle at 40% 40%, rgba(55,171,158,0.35), transparent 70%)',
-              }}
-            />
-          </div>
-
-          {/* Price pins */}
-          {!loading &&
-            visibleCars.map((car, i) => {
-              const pos = pinPosition(car, i);
-              const isActive = hoveredCarId === car.id || selectedCarId === car.id;
-              return (
-                <button
-                  key={car.id}
-                  type="button"
-                  onClick={() => setSelectedCarId(car.id)}
-                  onMouseEnter={() => setHoveredCarId(car.id)}
-                  onMouseLeave={() =>
-                    setHoveredCarId((current) => (current === car.id ? null : current))
-                  }
-                  className="absolute group -translate-x-1/2 -translate-y-full focus:outline-none"
-                  style={{ left: pos.left, top: pos.top, zIndex: isActive ? 20 : 10 }}
-                >
-                  <div
-                    className={`relative flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold shadow-ambient whitespace-nowrap transition-all duration-200 ${
-                      isActive
-                        ? 'bg-[var(--text-primary)] text-white scale-110 shadow-ambient-lg'
-                        : 'bg-[var(--surface-container-lowest)] text-[var(--text-primary)] hover:bg-[var(--color-orange-500)] hover:text-white'
-                    }`}
-                  >
-                    {formatPrice(car.price_per_day)}
-                    <span
-                      className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 transition-colors ${
-                        isActive
-                          ? 'bg-[var(--text-primary)]'
-                          : 'bg-[var(--surface-container-lowest)] group-hover:bg-[var(--color-orange-500)]'
-                      }`}
-                    />
-                  </div>
-                </button>
-              );
-            })}
-
-          {/* Top-left overlay — summary chip */}
-          <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
+          {/* Top-right overlay — summary chip (kept out of top-left so Leaflet zoom stays visible) */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-[1000] pointer-events-none">
             <div
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-container-lowest)]/95 backdrop-blur-sm shadow-ambient-sm text-xs font-semibold text-[var(--text-primary)]"
               style={{ border: '1px solid var(--border-subtle)' }}
@@ -908,47 +814,9 @@ function SearchContent() {
             </div>
           </div>
 
-          {/* Top-right controls */}
-          <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
-            <div
-              className="flex flex-col rounded-xl overflow-hidden bg-[var(--surface-container-lowest)]/95 backdrop-blur-sm shadow-ambient-sm"
-              style={{ border: '1px solid var(--border-subtle)' }}
-            >
-              <button
-                className="w-9 h-9 flex items-center justify-center text-[var(--text-primary)] hover:bg-[var(--surface-1)] transition-colors"
-                aria-label="Zoom in"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              <div className="h-px bg-[var(--border-subtle)]" />
-              <button
-                className="w-9 h-9 flex items-center justify-center text-[var(--text-primary)] hover:bg-[var(--surface-1)] transition-colors"
-                aria-label="Zoom out"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-            </div>
-            <button
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-[var(--surface-container-lowest)]/95 backdrop-blur-sm shadow-ambient-sm text-[var(--text-primary)] hover:bg-[var(--surface-1)] transition-colors"
-              style={{ border: '1px solid var(--border-subtle)' }}
-              aria-label="Recenter"
-            >
-              <Navigation className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Bottom-left hint */}
-          <div
-            className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-[var(--surface-container-lowest)]/80 backdrop-blur-sm text-[11px] text-[var(--text-muted)] shadow-ambient-sm z-10"
-            style={{ border: '1px solid var(--border-subtle)' }}
-          >
-            <MapIcon className="w-3 h-3" />
-            Interactive map coming soon
-          </div>
-
           {/* Selected pin preview */}
           {selectedCar && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[min(92%,360px)] z-30">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[min(92%,360px)] z-[1000]">
               <div
                 className="relative bg-[var(--surface-container-lowest)] rounded-2xl shadow-ambient-lg overflow-hidden"
                 style={{ border: '1px solid var(--border-subtle)' }}

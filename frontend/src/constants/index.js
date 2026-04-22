@@ -162,6 +162,60 @@ export const MOROCCAN_CITIES = [
   'Zagora'
 ].sort() // Sort alphabetically for better UX
 
+// Moroccan city coordinates [lat, lng] — used by the search map
+export const MOROCCAN_CITY_COORDS = {
+  Agadir: [30.4278, -9.5981],
+  'Al Hoceima': [35.2517, -3.9372],
+  Azemmour: [33.2877, -8.3417],
+  Azrou: [33.4344, -5.2212],
+  'Beni Mellal': [32.3373, -6.3498],
+  Berkane: [34.9214, -2.3198],
+  Berrechid: [33.2653, -7.5877],
+  Boujdour: [26.1253, -14.4844],
+  Casablanca: [33.5731, -7.5898],
+  Chefchaouen: [35.1715, -5.2696],
+  Dakhla: [23.6848, -15.9579],
+  'El Jadida': [33.2316, -8.5007],
+  Errachidia: [31.9314, -4.4247],
+  Essaouira: [31.5085, -9.7595],
+  Fes: [34.0181, -5.0078],
+  Figuig: [32.1093, -1.2266],
+  Guelmim: [28.9870, -10.0574],
+  Ifrane: [33.5228, -5.1106],
+  Imzouren: [35.1503, -3.8519],
+  Kenitra: [34.2610, -6.5802],
+  Khemisset: [33.8244, -6.0661],
+  Khenifra: [32.9350, -5.6681],
+  Khouribga: [32.8811, -6.9063],
+  Laayoune: [27.1536, -13.2033],
+  Larache: [35.1933, -6.1562],
+  Marrakech: [31.6295, -7.9811],
+  Meknes: [33.8935, -5.5473],
+  Mohammedia: [33.6866, -7.3830],
+  Nador: [35.1681, -2.9287],
+  Ouarzazate: [30.9335, -6.9370],
+  Oujda: [34.6814, -1.9086],
+  Rabat: [34.0209, -6.8416],
+  Safi: [32.2994, -9.2372],
+  Sale: [34.0531, -6.7985],
+  Sefrou: [33.8311, -4.8339],
+  Settat: [33.0000, -7.6167],
+  'Sidi Ifni': [29.3797, -10.1725],
+  'Sidi Kacem': [34.2214, -5.7086],
+  Tangier: [35.7595, -5.8340],
+  Taroudant: [30.4703, -8.8770],
+  Taza: [34.2139, -4.0100],
+  Tetouan: [35.5785, -5.3684],
+  Tiznit: [29.6974, -9.7322],
+  Touima: [34.8794, -2.3167],
+  Touissit: [34.4833, -1.7333],
+  Zagora: [30.3325, -5.8380],
+}
+
+// Default map view when no location is selected — Morocco centroid
+export const MOROCCO_CENTER = [31.7917, -7.0926]
+export const MOROCCO_DEFAULT_ZOOM = 6
+
 // Pagination
 export const ITEMS_PER_PAGE = 12
 export const MAX_PAGINATION_PAGES = 5
