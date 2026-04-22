@@ -1,97 +1,88 @@
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-
 export default function SearchPageSkeleton() {
   return (
-    <div className="min-h-screen bg-[var(--surface-base)]">
-      <Header />
-
-      {/* Search Header Skeleton */}
-      <section className="pt-28 pb-6 md:pt-32 md:pb-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            {/* Title skeleton */}
-            <div className="mb-6">
-              <div className="h-10 w-56 bg-[var(--surface-2)] rounded-none animate-pulse" />
-              <div className="h-5 w-72 bg-[var(--surface-1)] rounded-none animate-pulse mt-3" />
-            </div>
-
-            {/* Search form skeleton */}
-            <div className="bg-[var(--surface-container-lowest)] rounded-none p-5 shadow-ambient">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-12 bg-[var(--surface-1)] rounded-none animate-pulse" />
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="h-screen flex flex-col overflow-hidden bg-[var(--surface-base)]">
+      {/* Top bar */}
+      <header
+        className="flex-shrink-0 bg-[var(--surface-container-lowest)] shadow-ambient-sm"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        <div className="px-4 sm:px-6 h-16 flex items-center gap-4">
+          <div className="w-8 h-8 bg-[var(--surface-2)] rounded-lg animate-pulse" />
+          <div className="hidden sm:block h-5 w-20 bg-[var(--surface-2)] rounded animate-pulse" />
+          <div className="flex-1 max-w-3xl h-12 bg-[var(--surface-1)] rounded-xl animate-pulse" />
         </div>
-      </section>
+      </header>
 
-      {/* Chip bar skeleton */}
-      <div className="bg-[var(--surface-base)] shadow-ambient-sm">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto py-3 flex items-center gap-2">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-9 w-20 bg-[var(--surface-1)] rounded-none animate-pulse" />
-            ))}
-          </div>
+      {/* Filter rail */}
+      <div
+        className="flex-shrink-0 bg-[var(--surface-base)] shadow-ambient-sm"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        <div className="px-4 sm:px-6 py-2.5 flex items-center gap-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-7 w-16 bg-[var(--surface-1)] rounded-full animate-pulse" />
+          ))}
+          <div className="ml-auto h-7 w-28 bg-[var(--surface-1)] rounded-full animate-pulse" />
         </div>
       </div>
 
-      {/* Main Content Skeleton */}
-      <main className="py-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar Skeleton */}
-            <aside className="hidden lg:block lg:w-72 flex-shrink-0">
-              <div className="sticky top-36">
-                <div className="bg-[var(--surface-container-lowest)] rounded-none p-5 shadow-ambient">
-                  <div className="flex items-center justify-between mb-5 pb-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                    <div className="h-6 w-24 bg-[var(--surface-2)] rounded-none animate-pulse" />
-                  </div>
-                  <div className="space-y-6">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="space-y-3">
-                        <div className="h-4 w-20 bg-[var(--surface-2)] rounded animate-pulse" />
-                        <div className="h-10 w-full bg-[var(--surface-1)] rounded-none animate-pulse" />
-                      </div>
-                    ))}
-                  </div>
+      {/* Split main */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left — horizontal card skeletons */}
+        <div className="w-full md:w-1/2 lg:w-[46%] xl:w-[42%] overflow-hidden p-4 space-y-3">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="flex bg-[var(--surface-container-lowest)] rounded-2xl overflow-hidden shadow-ambient animate-pulse"
+            >
+              <div className="w-[42%] aspect-[4/3] bg-[var(--surface-2)]" />
+              <div className="flex-1 p-4 space-y-2.5">
+                <div className="h-4 bg-[var(--surface-2)] rounded w-3/4" />
+                <div className="h-3 bg-[var(--surface-1)] rounded w-1/2" />
+                <div className="flex gap-2 pt-1">
+                  <div className="h-3 w-10 bg-[var(--surface-1)] rounded-full" />
+                  <div className="h-3 w-10 bg-[var(--surface-1)] rounded-full" />
+                  <div className="h-3 w-10 bg-[var(--surface-1)] rounded-full" />
+                </div>
+                <div className="flex justify-between items-end pt-3">
+                  <div className="h-5 w-20 bg-[var(--surface-2)] rounded" />
+                  <div className="h-4 w-16 bg-[var(--color-orange-500)]/20 rounded" />
                 </div>
               </div>
-            </aside>
-
-            {/* Results Grid Skeleton */}
-            <div className="flex-1 min-w-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="bg-[var(--surface-container-lowest)] rounded-none overflow-hidden shadow-ambient">
-                    <div className="animate-pulse">
-                      <div className="w-full h-52 bg-[var(--surface-2)]" />
-                      <div className="p-5">
-                        <div className="h-5 bg-[var(--surface-2)] rounded w-3/4 mb-2" />
-                        <div className="h-4 bg-[var(--surface-1)] rounded w-1/2 mb-4" />
-                        <div className="flex gap-2 mb-4">
-                          {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-6 w-16 bg-[var(--surface-1)] rounded-none" />
-                          ))}
-                        </div>
-                        <div className="flex justify-between items-end pt-4 bg-[var(--surface-1)] -mx-5 -mb-5 px-5 pb-5 rounded-none-xl">
-                          <div className="h-8 w-24 bg-[var(--surface-2)] rounded" />
-                          <div className="h-10 w-28 bg-[var(--color-orange-500)]/20 rounded-none" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-          </div>
+          ))}
         </div>
-      </main>
 
-      <Footer />
+        {/* Right — map */}
+        <div
+          className="hidden md:block flex-1 bg-gradient-to-br from-emerald-50 via-[var(--surface-base)] to-blue-50 dark:from-emerald-950/20 dark:to-blue-950/20 relative"
+          style={{ borderLeft: '1px solid var(--border-subtle)' }}
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                'linear-gradient(rgba(18,28,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(18,28,42,0.04) 1px, transparent 1px)',
+              backgroundSize: '48px 48px',
+            }}
+          />
+          {[
+            { left: '25%', top: '20%' },
+            { left: '55%', top: '35%' },
+            { left: '40%', top: '60%' },
+            { left: '70%', top: '45%' },
+            { left: '20%', top: '70%' },
+          ].map((pos, i) => (
+            <div
+              key={i}
+              className="absolute animate-pulse -translate-x-1/2 -translate-y-full"
+              style={pos}
+            >
+              <div className="h-6 w-14 bg-[var(--surface-container-lowest)] rounded-full shadow-ambient" />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
