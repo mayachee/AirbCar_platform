@@ -309,9 +309,9 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
               <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text-primary)] tracking-tight">
                 {vehicleName}
               </h1>
-              <div className="mt-2 flex items-center gap-x-2 gap-y-1 text-sm flex-wrap">
-                {partnerRating > 0 && (
-                  <>
+              {(partnerRating > 0 || vehicleLocation) && (
+                <div className="mt-2 flex items-center gap-x-2 gap-y-1 text-sm flex-wrap">
+                  {partnerRating > 0 && (
                     <span className="flex items-center gap-1 text-[var(--text-primary)]">
                       <Star className="w-4 h-4 fill-[var(--text-primary)] text-[var(--text-primary)]" />
                       <span className="font-medium">{partnerRating.toFixed(1)}</span>
@@ -319,16 +319,18 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                         <span className="text-[var(--text-secondary)]">({partnerReviews} reviews)</span>
                       )}
                     </span>
+                  )}
+                  {partnerRating > 0 && vehicleLocation && (
                     <span className="text-[var(--text-secondary)]">·</span>
-                  </>
-                )}
-                {vehicleLocation && (
-                  <span className="flex items-center gap-1 text-[var(--text-secondary)]">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{vehicleLocation}</span>
-                  </span>
-                )}
-              </div>
+                  )}
+                  {vehicleLocation && (
+                    <span className="flex items-center gap-1 text-[var(--text-secondary)]">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>{vehicleLocation}</span>
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <button
