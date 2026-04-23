@@ -1,117 +1,126 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import * as Tooltip from '@radix-ui/react-tooltip'
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: 'easeOut',
-    },
-  },
-}
-
+import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Star, MapPin, Heart, Share } from 'lucide-react'
+import { useFavoritesContext } from '@/contexts/FavoritesContext'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function VehicleHeader({ vehicle }) {
   const t = useTranslations('car_details')
+  const { isFavorite, toggleFavorite } = useFavoritesContext()
+  const { showToast } = useToast()
+
+  const vehicleId = vehicle?.id || vehicle?.listing_id
+  const saved = vehicleId ? isFavorite(vehicleId) : false
+
+  const title = useMemo(
+    () => vehicle?.name || [vehicle?.brand, vehicle?.model].filter(Boolean).join(' '),
+    [vehicle]
+  )
+
+  const rating = Number(vehicle?.rating) || 0
+  const reviewCount = Number(vehicle?.reviewCount ?? vehicle?.review_count) || 0
+  const totalTrips = Number(vehicle?.totalTrips ?? vehicle?.total_trips) || 0
+  const location = vehicle?.location || vehicle?.city || ''
+
+  const [sharing, setSharing] = useState(false)
+
+  const handleShare = async () => {
+    if (sharing) return
+    setSharing(true)
+    try {
+      const url = typeof window !== 'undefined' ? window.location.href : ''
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title, url })
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url)
+        showToast(t('link_copied'), 'success')
+      }
+    } catch {
+      // user cancelled or API unavailable
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  const handleSave = () => {
+    if (!vehicleId) return
+    toggleFavorite(vehicleId)
+  }
+
   return (
-    <motion.div
-      className="mb-6"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        visible: {
-          transition: {
-            staggerChildren: 0.1,
-          },
-        },
-      }}
-    >
-      <motion.h1
-        className="text-4xl font-extrabold text-gray-900 tracking-tight mb-3"
-        variants={itemVariants}
-      >
-        {vehicle.name}
-      </motion.h1>
-      <motion.div
-        className="flex items-center gap-4 text-sm text-gray-500 flex-wrap font-medium"
-        variants={itemVariants}
-      >
-        <Tooltip.Provider>
-          <Tooltip.Root>
-            <Tooltip.Trigger asChild>
-              <motion.div
-                className="flex items-center cursor-help text-gray-900"
-                whileHover={{ scale: 1.05 }}
-              >
-                <motion.svg
-                  className="w-4 h-4 text-orange-500 mr-1.5"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  whileHover={{ rotate: 15, scale: 1.1 }}
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </motion.svg>
-                <span className="font-bold">{vehicle.rating}</span>
-                <span className="ml-1 text-gray-500">({vehicle.reviewCount} reviews)</span>
-              </motion.div>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                className="bg-white text-gray-900 px-3 py-2 rounded-xl text-xs font-medium z-50 shadow-md shadow-gray-200/50 border border-gray-100"
-                sideOffset={5}
-              >
-                Average rating from {vehicle.reviewCount} reviews
-                <Tooltip.Arrow className="fill-white" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </Tooltip.Provider>
+    <header className="mb-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-semibold text-[var(--text-primary)] tracking-tight truncate">
+            {title}
+          </h1>
 
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          •
-        </motion.span>
+          <div className="mt-2 flex items-center gap-1.5 text-sm text-[var(--text-primary)] flex-wrap">
+            {rating > 0 && (
+              <>
+                <Star className="w-4 h-4 fill-[var(--text-primary)] text-[var(--text-primary)]" />
+                <span className="font-medium">{rating.toFixed(1)}</span>
+                {reviewCount > 0 && (
+                  <>
+                    <span className="text-[var(--text-secondary)]">·</span>
+                    <span className="text-[var(--text-secondary)] underline">
+                      {reviewCount} {t('reviews').toLowerCase()}
+                    </span>
+                  </>
+                )}
+                <span className="text-[var(--text-secondary)]">·</span>
+              </>
+            )}
 
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-        >
-          {vehicle.totalTrips} trips
-        </motion.span>
+            {totalTrips > 0 && (
+              <>
+                <span className="text-[var(--text-secondary)]">{totalTrips} {t('trips')}</span>
+                <span className="text-[var(--text-secondary)]">·</span>
+              </>
+            )}
 
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          •
-        </motion.span>
+            {location && (
+              <span className="flex items-center gap-1 text-[var(--text-secondary)]">
+                <MapPin className="w-3.5 h-3.5" />
+                <span className="underline">{location}</span>
+              </span>
+            )}
+          </div>
+        </div>
 
-        <motion.span
-          className="flex items-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.35 }}
-          whileHover={{ scale: 1.05 }}
-        >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          {vehicle.location}
-        </motion.span>
-      </motion.div>
-    </motion.div>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors"
+            aria-label={t('share')}
+          >
+            <Share className="w-4 h-4" />
+            <span className="hidden sm:inline underline">{t('share')}</span>
+          </button>
+
+          {vehicleId && (
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors"
+              aria-pressed={saved}
+              aria-label={saved ? t('saved') : t('save')}
+            >
+              <Heart
+                className={`w-4 h-4 transition-colors ${
+                  saved ? 'fill-[var(--color-kc-primary)] text-[var(--color-kc-primary)]' : ''
+                }`}
+              />
+              <span className="hidden sm:inline underline">
+                {saved ? t('saved') : t('save')}
+              </span>
+            </button>
+          )}
+        </div>
+      </div>
+    </header>
   )
 }
-
