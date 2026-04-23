@@ -106,18 +106,20 @@ function CarDetailsContent({ initialVehicle }) {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mt-10">
-            <div className="lg:col-span-8 space-y-10 divide-y divide-[var(--surface-3)]">
-              <OwnerBlock partner={vehicle.partner} />
+            <div className="lg:col-span-8 divide-y divide-[var(--surface-3)]">
+              <div className="pb-10">
+                <OwnerBlock partner={vehicle.partner} />
+              </div>
 
-              <section className="pt-10">
+              <div className="py-10">
                 <VehicleDetails vehicle={vehicle} />
-              </section>
+              </div>
 
-              <section className="pt-10">
+              <div className="py-10">
                 <VehicleThread vehicle={vehicle} />
-              </section>
+              </div>
 
-              <div className="lg:hidden pt-10">
+              <div className="lg:hidden py-10">
                 <BookingSidebar
                   vehicle={vehicle}
                   searchDetails={searchDetails}
@@ -127,17 +129,17 @@ function CarDetailsContent({ initialVehicle }) {
                 />
               </div>
 
-              <section className="pt-10">
+              <div className="py-10">
                 <Restrictions vehicle={vehicle} />
-              </section>
+              </div>
 
-              <section className="pt-10">
+              <div className="py-10">
                 <PickupLocation vehicle={vehicle} />
-              </section>
+              </div>
 
-              <section className="pt-10">
+              <div className="py-10">
                 <Reviews vehicle={vehicle} />
-              </section>
+              </div>
             </div>
 
             <div className="hidden lg:block lg:col-span-4">
