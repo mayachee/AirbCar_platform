@@ -23,7 +23,8 @@ export default function VehicleDetails({ vehicle }) {
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
+      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-3">
+        <span className="w-1.5 h-8 bg-[var(--color-kc-primary)] rounded-full" />
         {t('vehicle_specifications')}
       </h2>
 
@@ -31,22 +32,23 @@ export default function VehicleDetails({ vehicle }) {
         {specs.map(({ icon: Icon, label, value }) => (
           <div
             key={label}
-            className="flex flex-col gap-2 p-4 rounded-xl border border-[var(--surface-3)] bg-white"
+            className="flex flex-col items-center text-center gap-2 p-4 rounded-xl border border-[var(--surface-3)] bg-[var(--surface-1)]"
           >
-            <Icon className="w-5 h-5 text-[var(--text-secondary)]" strokeWidth={1.75} />
-            <div>
-              <p className="text-xs text-[var(--text-secondary)]">{label}</p>
-              <p className="text-sm font-medium text-[var(--text-primary)] capitalize truncate">
-                {value}
-              </p>
-            </div>
+            <Icon className="w-5 h-5 text-[var(--color-kc-primary)]" strokeWidth={1.75} />
+            <p className="text-[10px] font-bold text-[var(--text-secondary)] tracking-widest uppercase">
+              {label}
+            </p>
+            <p className="text-sm font-bold text-[var(--text-primary)] capitalize truncate w-full">
+              {value}
+            </p>
           </div>
         ))}
       </div>
 
       {features.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-3">
+            <span className="w-1.5 h-8 bg-[var(--color-kc-primary)] rounded-full" />
             {t('features')}
           </h2>
           <div className="flex flex-wrap gap-2">

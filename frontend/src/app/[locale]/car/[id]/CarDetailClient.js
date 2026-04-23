@@ -13,7 +13,6 @@ import { trackEvent } from '@/lib/analytics/tracking'
 import { useToast } from '@/contexts/ToastContext'
 import PageTransition from './components/PageTransition'
 import AnimatedBreadcrumb from './components/AnimatedBreadcrumb'
-import VehicleHeader from './components/VehicleHeader'
 import ImageGallery from './components/ImageGallery'
 import OwnerBlock from './components/OwnerBlock'
 import VehicleDetails from './components/VehicleDetails'
@@ -97,8 +96,6 @@ function CarDetailsContent({ initialVehicle }) {
         </div>
 
         <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-4 pb-16">
-          <VehicleHeader vehicle={vehicle} />
-
           <ImageGallery
             vehicle={vehicle}
             onSelectImage={selectImage}
