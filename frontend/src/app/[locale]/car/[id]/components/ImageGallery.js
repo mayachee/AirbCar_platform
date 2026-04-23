@@ -19,7 +19,7 @@ export default function ImageGallery({ vehicle, onShowFullGallery, onSelectImage
 
   return (
     <section className="relative">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 rounded-2xl overflow-hidden h-[360px] md:h-[480px] lg:h-[540px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 rounded-2xl overflow-hidden h-[320px] md:h-[420px] lg:h-[460px]">
         <button
           type="button"
           onClick={() => openAt(0)}

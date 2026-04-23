@@ -582,6 +582,9 @@
     "fleet_size": "الأسطول",
     "response_time": "زمن الاستجابة",
     "years": "سنوات",
+    "of_experience": "من الخبرة",
+    "vehicle_in_fleet": "مركبة في الأسطول",
+    "vehicles_in_fleet": "مركبات في الأسطول",
     "home": "الرئيسية",
     "search": "البحث"
   },

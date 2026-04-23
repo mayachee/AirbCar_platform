@@ -88,19 +88,19 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
 
         <div className="mt-6 pt-6 border-t border-[var(--surface-3)] space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)] underline">
+            <span className="text-[var(--text-secondary)]">
               {formatPrice(price)} × {duration} {duration === 1 ? t('day') : t('days')}
             </span>
             <span className="text-[var(--text-primary)]">{formatPrice(basePrice)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)] underline">{t('service_fee')}</span>
+            <span className="text-[var(--text-secondary)]">{t('service_fee')}</span>
             <span className="text-[var(--text-primary)]">
               {serviceFee === 0 ? t('free') : formatPrice(serviceFee)}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--text-secondary)] underline">{t('security_deposit')}</span>
+            <span className="text-[var(--text-secondary)]">{t('security_deposit')}</span>
             <span className="text-[var(--text-primary)]">{formatPrice(securityDeposit)}</span>
           </div>
           <div className="flex justify-between pt-3 border-t border-[var(--surface-3)]">

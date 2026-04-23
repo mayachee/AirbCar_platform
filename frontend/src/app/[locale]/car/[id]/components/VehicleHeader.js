@@ -49,6 +49,33 @@ export default function VehicleHeader({ vehicle }) {
     toggleFavorite(vehicleId)
   }
 
+  const ratingNode = rating > 0 ? (
+    <span className="flex items-center gap-1 text-[var(--text-primary)]">
+      <Star className="w-4 h-4 fill-[var(--text-primary)] text-[var(--text-primary)]" />
+      <span className="font-medium">{rating.toFixed(1)}</span>
+      {reviewCount > 0 && (
+        <span className="text-[var(--text-secondary)]">
+          ({reviewCount} {t('reviews').toLowerCase()})
+        </span>
+      )}
+    </span>
+  ) : null
+
+  const tripsNode = totalTrips > 0 ? (
+    <span className="text-[var(--text-secondary)]">
+      {totalTrips} {t('trips')}
+    </span>
+  ) : null
+
+  const locationNode = location ? (
+    <span className="flex items-center gap-1 text-[var(--text-secondary)]">
+      <MapPin className="w-3.5 h-3.5" />
+      <span>{location}</span>
+    </span>
+  ) : null
+
+  const metaItems = [ratingNode, tripsNode, locationNode].filter(Boolean)
+
   return (
     <header className="mb-4">
       <div className="flex items-start justify-between gap-4">
@@ -57,37 +84,16 @@ export default function VehicleHeader({ vehicle }) {
             {title}
           </h1>
 
-          <div className="mt-2 flex items-center gap-1.5 text-sm text-[var(--text-primary)] flex-wrap">
-            {rating > 0 && (
-              <>
-                <Star className="w-4 h-4 fill-[var(--text-primary)] text-[var(--text-primary)]" />
-                <span className="font-medium">{rating.toFixed(1)}</span>
-                {reviewCount > 0 && (
-                  <>
-                    <span className="text-[var(--text-secondary)]">·</span>
-                    <span className="text-[var(--text-secondary)] underline">
-                      {reviewCount} {t('reviews').toLowerCase()}
-                    </span>
-                  </>
-                )}
-                <span className="text-[var(--text-secondary)]">·</span>
-              </>
-            )}
-
-            {totalTrips > 0 && (
-              <>
-                <span className="text-[var(--text-secondary)]">{totalTrips} {t('trips')}</span>
-                <span className="text-[var(--text-secondary)]">·</span>
-              </>
-            )}
-
-            {location && (
-              <span className="flex items-center gap-1 text-[var(--text-secondary)]">
-                <MapPin className="w-3.5 h-3.5" />
-                <span className="underline">{location}</span>
-              </span>
-            )}
-          </div>
+          {metaItems.length > 0 && (
+            <div className="mt-2 flex items-center gap-x-2 gap-y-1 text-sm flex-wrap">
+              {metaItems.map((node, i) => (
+                <span key={i} className="flex items-center gap-2">
+                  {i > 0 && <span className="text-[var(--text-secondary)]">·</span>}
+                  {node}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
@@ -98,7 +104,7 @@ export default function VehicleHeader({ vehicle }) {
             aria-label={t('share')}
           >
             <Share className="w-4 h-4" />
-            <span className="hidden sm:inline underline">{t('share')}</span>
+            <span className="hidden sm:inline">{t('share')}</span>
           </button>
 
           {vehicleId && (
@@ -114,7 +120,7 @@ export default function VehicleHeader({ vehicle }) {
                   saved ? 'fill-[var(--color-kc-primary)] text-[var(--color-kc-primary)]' : ''
                 }`}
               />
-              <span className="hidden sm:inline underline">
+              <span className="hidden sm:inline">
                 {saved ? t('saved') : t('save')}
               </span>
             </button>

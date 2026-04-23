@@ -581,6 +581,9 @@
     "fleet_size": "Flotte",
     "response_time": "Temps de réponse",
     "years": "ans",
+    "of_experience": "d'expérience",
+    "vehicle_in_fleet": "véhicule dans la flotte",
+    "vehicles_in_fleet": "véhicules dans la flotte",
     "home": "Accueil",
     "search": "Recherche"
   },

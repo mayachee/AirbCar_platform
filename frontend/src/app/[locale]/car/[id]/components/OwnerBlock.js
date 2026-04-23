@@ -21,9 +21,9 @@ export default function OwnerBlock({ partner }) {
   const description = partner?.description || partner?.bio || null
 
   const stats = [
-    expYears && { label: t('experience'), value: `${expYears} ${t('years')}` },
-    fleetSize > 0 && { label: t('fleet_size'), value: fleetSize },
-    responseTime && { label: t('response_time'), value: responseTime },
+    expYears && { value: `${expYears} ${t('years')}`, label: t('of_experience') },
+    fleetSize > 0 && { value: fleetSize, label: fleetSize === 1 ? t('vehicle_in_fleet') : t('vehicles_in_fleet') },
+    responseTime && { value: responseTime, label: t('response_time').toLowerCase() },
   ].filter(Boolean)
 
   return (
@@ -53,7 +53,7 @@ export default function OwnerBlock({ partner }) {
               {stats.map((s, i) => (
                 <span key={i}>
                   <span className="text-[var(--text-primary)] font-medium">{s.value}</span>{' '}
-                  {s.label.toLowerCase()}
+                  {s.label}
                 </span>
               ))}
             </div>

@@ -582,6 +582,9 @@
     "fleet_size": "Fleet",
     "response_time": "Response time",
     "years": "years",
+    "of_experience": "of experience",
+    "vehicle_in_fleet": "vehicle in fleet",
+    "vehicles_in_fleet": "vehicles in fleet",
     "home": "Home",
     "search": "Search"
   },
