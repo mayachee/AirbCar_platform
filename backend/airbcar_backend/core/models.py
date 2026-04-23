@@ -689,6 +689,7 @@ class ListingComment(models.Model):
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies'
     )
     content = models.TextField()
+    images = models.JSONField(default=list, blank=True, help_text='List of Supabase image URLs (max 4)')
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -801,6 +802,7 @@ class TripPostComment(models.Model):
         'self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies'
     )
     content = models.TextField()
+    images = models.JSONField(default=list, blank=True, help_text='List of Supabase image URLs (max 4)')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

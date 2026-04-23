@@ -958,19 +958,44 @@ class NotificationSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+def _validate_comment_images(value):
+    """Shared validator for comment image lists: string URLs, max 4."""
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise serializers.ValidationError('Images must be a list of URLs.')
+    cleaned = []
+    for item in value:
+        if not isinstance(item, str):
+            raise serializers.ValidationError('Each image must be a URL string.')
+        url = item.strip()
+        if not url:
+            continue
+        if not (url.startswith('http://') or url.startswith('https://') or url.startswith('/')):
+            raise serializers.ValidationError('Image URLs must be http(s) or absolute paths.')
+        cleaned.append(url)
+    if len(cleaned) > 4:
+        raise serializers.ValidationError('A comment can include at most 4 images.')
+    return cleaned
+
+
 class ListingCommentSerializer(serializers.ModelSerializer):
     """Serializer for social comments on listings."""
     user = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
+    images = serializers.JSONField(required=False)
 
     class Meta:
         model = ListingComment
-        fields = ['id', 'listing', 'parent', 'user', 'content', 'replies', 'created_at']
+        fields = ['id', 'listing', 'parent', 'user', 'content', 'images', 'replies', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
         extra_kwargs = {
             'listing': {'write_only': True},
             'parent': {'write_only': True},
         }
+
+    def validate_images(self, value):
+        return _validate_comment_images(value)
 
     def get_user(self, obj):
         return {
@@ -1022,15 +1047,19 @@ class TripPostCommentSerializer(serializers.ModelSerializer):
     """Serializer for comments on trip posts."""
     user = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
+    images = serializers.JSONField(required=False)
 
     class Meta:
         model = TripPostComment
-        fields = ['id', 'trip_post', 'parent', 'user', 'content', 'replies', 'created_at']
+        fields = ['id', 'trip_post', 'parent', 'user', 'content', 'images', 'replies', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
         extra_kwargs = {
             'trip_post': {'write_only': True},
             'parent': {'write_only': True},
         }
+
+    def validate_images(self, value):
+        return _validate_comment_images(value)
 
     def get_user(self, obj):
         return {

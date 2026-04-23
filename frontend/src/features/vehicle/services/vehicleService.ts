@@ -167,9 +167,15 @@ export class VehicleService {
     return apiClient.get(`/listings/${vehicleId}/comments/`);
   }
 
-async addVehicleComment(vehicleId: number, content: string, parentId?: number) {
+async addVehicleComment(
+    vehicleId: number,
+    content: string,
+    parentId?: number,
+    images: string[] = []
+  ) {
     const payload: any = { content };
     if (parentId) payload.parent_id = parentId;
+    if (images.length) payload.images = images;
     return apiClient.post(`/listings/${vehicleId}/comments/`, payload);
   }
 
@@ -183,6 +189,12 @@ async addVehicleComment(vehicleId: number, content: string, parentId?: number) {
 
   async removeVehicleReaction(vehicleId: number) {
     return apiClient.delete(`/listings/${vehicleId}/reactions/`);
+  }
+
+  async uploadCommunityImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    return apiClient.post(`/community/upload-image/`, formData);
   }
 }
 

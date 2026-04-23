@@ -46,6 +46,9 @@ urlpatterns = [
     # Social feed
     path('feed/', getattr(views, 'SocialFeedView', views.RootView).as_view(), name='social-feed'),
 
+    # Community image upload (used by comments + trip-post stories)
+    path('community/upload-image/', getattr(views, 'CommunityImageUploadView', views.RootView).as_view(), name='community-upload-image'),
+
     # Favorites endpoints
     path('favorites/', views.FavoriteListView.as_view(), name='favorite-list'),
     path('favorites/my-favorites/', views.MyFavoritesView.as_view(), name='my-favorites'),

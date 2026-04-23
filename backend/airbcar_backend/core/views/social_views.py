@@ -68,10 +68,18 @@ class ListingCommentListView(APIView):
         listing = get_object_or_404(Listing, pk=listing_id)
 
         content = request.data.get('content', '').strip()
-        if not content:
+        raw_images = request.data.get('images') or []
+        if not content and not raw_images:
             return Response({'error': 'Content cannot be empty.'}, status=status.HTTP_400_BAD_REQUEST)
         if len(content) > 1000:
             return Response({'error': 'Comment cannot exceed 1000 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from ..serializers import _validate_comment_images
+            images = _validate_comment_images(raw_images)
+        except Exception as exc:  # DRF ValidationError or ValueError
+            detail = getattr(exc, 'detail', None) or str(exc)
+            return Response({'error': detail}, status=status.HTTP_400_BAD_REQUEST)
 
         parent = None
         parent_id = request.data.get('parent_id')
@@ -87,6 +95,7 @@ class ListingCommentListView(APIView):
             user=request.user,
             parent=parent,
             content=content,
+            images=images,
         )
         serializer = ListingCommentSerializer(comment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -651,10 +660,18 @@ class TripPostCommentListView(APIView):
     def post(self, request, trip_id):
         trip_post = get_object_or_404(TripPost, pk=trip_id, is_active=True)
         content = request.data.get('content', '').strip()
-        if not content:
+        raw_images = request.data.get('images') or []
+        if not content and not raw_images:
             return Response({'error': 'Content cannot be empty.'}, status=status.HTTP_400_BAD_REQUEST)
         if len(content) > 1000:
             return Response({'error': 'Comment cannot exceed 1000 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from ..serializers import _validate_comment_images
+            images = _validate_comment_images(raw_images)
+        except Exception as exc:
+            detail = getattr(exc, 'detail', None) or str(exc)
+            return Response({'error': detail}, status=status.HTTP_400_BAD_REQUEST)
 
         parent = None
         parent_id = request.data.get('parent_id')
@@ -666,7 +683,7 @@ class TripPostCommentListView(APIView):
                 return Response({'error': 'Replies to replies are not allowed.'}, status=status.HTTP_400_BAD_REQUEST)
 
         comment = TripPostComment.objects.create(
-            trip_post=trip_post, user=request.user, parent=parent, content=content
+            trip_post=trip_post, user=request.user, parent=parent, content=content, images=images,
         )
         return Response(TripPostCommentSerializer(comment).data, status=status.HTTP_201_CREATED)
 

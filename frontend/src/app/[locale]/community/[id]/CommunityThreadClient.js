@@ -6,7 +6,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
-  Heart,
   Share2,
   ThumbsUp,
   BadgeCheck,
@@ -20,7 +19,18 @@ import {
   Star,
   Reply,
   X,
+  ImagePlus,
+  Loader2,
 } from 'lucide-react'
+
+const REACTION_OPTIONS = [
+  { key: 'like', emoji: '👍' },
+  { key: 'love', emoji: '❤️' },
+  { key: 'fire', emoji: '🔥' },
+  { key: 'wow', emoji: '😮' },
+]
+
+const MAX_COMMENT_IMAGES = 4
 import { listingsService } from '@/services/api'
 
 function getVehicleImages(vehicle) {
@@ -67,9 +77,14 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
   const locale = params?.locale || 'en'
   const queryClient = useQueryClient()
   const textareaRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   const [commentText, setCommentText] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
+  const [commentImages, setCommentImages] = useState([])
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
+  const [lightboxImage, setLightboxImage] = useState(null)
 
   const { data: vehicleData } = useQuery({
     queryKey: ['listingDetail', vehicleId],
@@ -113,34 +128,108 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
     0
   )
 
+  const reactionsQueryKey = ['vehicleReactions', vehicleId]
+
   const reactMutation = useMutation({
-    mutationFn: (action) => {
-      if (action === 'add')
-        return listingsService.addVehicleReaction(vehicleId, 'like')
-      return listingsService.removeVehicleReaction(vehicleId)
+    mutationFn: ({ action, reaction }) => {
+      if (action === 'remove') return listingsService.removeVehicleReaction(vehicleId)
+      return listingsService.addVehicleReaction(vehicleId, reaction)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicleReactions', vehicleId] })
+    onMutate: async ({ action, reaction }) => {
+      await queryClient.cancelQueries({ queryKey: reactionsQueryKey })
+      const snapshot = queryClient.getQueryData(reactionsQueryKey)
+
+      queryClient.setQueryData(reactionsQueryKey, (old) => {
+        const payload = old?.data || old || { summary: [], user_reaction: null }
+        const prevUser = payload.user_reaction
+        const nextUser = action === 'remove' ? null : reaction
+        const summary = [...(payload.summary || [])]
+
+        const bump = (key, delta) => {
+          if (!key) return
+          const i = summary.findIndex((s) => s.reaction === key)
+          if (i === -1) {
+            if (delta > 0) summary.push({ reaction: key, count: delta })
+          } else {
+            const c = (summary[i].count || 0) + delta
+            if (c <= 0) summary.splice(i, 1)
+            else summary[i] = { ...summary[i], count: c }
+          }
+        }
+        if (prevUser && prevUser !== nextUser) bump(prevUser, -1)
+        if (nextUser && nextUser !== prevUser) bump(nextUser, 1)
+
+        const nextPayload = { summary, user_reaction: nextUser }
+        return old?.data ? { ...old, data: nextPayload } : nextPayload
+      })
+      return { snapshot }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.snapshot !== undefined) queryClient.setQueryData(reactionsQueryKey, ctx.snapshot)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: reactionsQueryKey })
     },
   })
 
   const commentMutation = useMutation({
-    mutationFn: ({ text, parentId }) => listingsService.addVehicleComment(vehicleId, text, parentId),
+    mutationFn: ({ text, parentId, images }) =>
+      listingsService.addVehicleComment(vehicleId, text, parentId, images),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicleComments', vehicleId] })
       setCommentText('')
+      setCommentImages([])
       setReplyingTo(null)
+      setUploadError(null)
     },
   })
 
-  const handleReact = () => {
-    reactMutation.mutate(userReaction ? 'remove' : 'add')
+  const handleReact = (reactionKey) => {
+    if (reactMutation.isPending) return
+    if (userReaction === reactionKey) {
+      reactMutation.mutate({ action: 'remove' })
+    } else {
+      reactMutation.mutate({ action: 'add', reaction: reactionKey })
+    }
+  }
+
+  const handleFilesChosen = async (event) => {
+    const files = Array.from(event.target.files || [])
+    if (event.target) event.target.value = ''
+    if (!files.length) return
+
+    const room = MAX_COMMENT_IMAGES - commentImages.length
+    const toUpload = files.slice(0, Math.max(0, room))
+    if (!toUpload.length) {
+      setUploadError(`You can attach up to ${MAX_COMMENT_IMAGES} images.`)
+      return
+    }
+
+    setUploadingImages(true)
+    setUploadError(null)
+    try {
+      const uploaded = []
+      for (const file of toUpload) {
+        const res = await listingsService.uploadCommunityImage(file)
+        const url = res?.data?.url || res?.url
+        if (url) uploaded.push(url)
+      }
+      setCommentImages((prev) => [...prev, ...uploaded].slice(0, MAX_COMMENT_IMAGES))
+    } catch (err) {
+      setUploadError(err?.message || 'Image upload failed.')
+    } finally {
+      setUploadingImages(false)
+    }
+  }
+
+  const handleRemoveImage = (url) => {
+    setCommentImages((prev) => prev.filter((u) => u !== url))
   }
 
   const handlePostComment = () => {
     const text = commentText.trim()
-    if (!text) return
-    commentMutation.mutate({ text, parentId: replyingTo?.id })
+    if (!text && commentImages.length === 0) return
+    commentMutation.mutate({ text, parentId: replyingTo?.id, images: commentImages })
   }
 
   const handleShare = async () => {
@@ -327,20 +416,36 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
               )}
 
               <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={handleReact}
-                  disabled={reactMutation.isPending}
-                  className={`px-4 py-2 rounded-full flex items-center gap-2 transition-colors disabled:opacity-60 ${
-                    userReaction
-                      ? 'bg-kc-primary-container text-white'
-                      : 'bg-kc-secondary-container text-kc-on-secondary-container hover:bg-kc-primary-container hover:text-white'
-                  }`}
-                >
-                  <Heart
-                    className={`w-5 h-5 ${userReaction ? 'fill-current' : ''}`}
-                  />
-                  <span className="text-sm font-bold">{reactCount}</span>
-                </button>
+                <div className="flex items-center gap-1.5 bg-kc-surface-container rounded-full p-1 border border-kc-outline-variant/20">
+                  {REACTION_OPTIONS.map((opt) => {
+                    const count = reactionSummary.find((s) => s.reaction === opt.key)?.count || 0
+                    const active = userReaction === opt.key
+                    return (
+                      <button
+                        key={opt.key}
+                        onClick={() => handleReact(opt.key)}
+                        disabled={reactMutation.isPending}
+                        aria-label={`React ${opt.key}`}
+                        aria-pressed={active}
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm transition-all ${
+                          active
+                            ? 'bg-kc-primary-container text-white scale-105 shadow-sm'
+                            : 'hover:bg-kc-primary-container/10'
+                        }`}
+                      >
+                        <span className="text-base leading-none">{opt.emoji}</span>
+                        {count > 0 && (
+                          <span className="text-xs font-bold">{count}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                {reactCount > 0 && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-kc-on-surface-variant opacity-60">
+                    {reactCount} reactions
+                  </span>
+                )}
                 <button
                   onClick={handleShare}
                   className="bg-kc-surface-container text-kc-on-secondary-container px-4 py-2 rounded-full flex items-center gap-2 hover:opacity-80 transition-colors"
@@ -393,7 +498,60 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                     className="w-full bg-kc-surface-container-lowest border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-kc-primary-container/40 outline-none transition-all min-h-[100px] resize-none text-kc-on-surface placeholder:text-kc-on-surface-variant/50 shadow-inner"
                     placeholder={replyingTo ? "Write your reply..." : "Share your experience or ask about this vehicle..."}
                   />
-                  <div className="flex justify-between items-center">
+
+                  {commentImages.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {commentImages.map((url) => (
+                        <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden border border-kc-outline-variant/30">
+                          <img src={url} alt="attachment" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(url)}
+                            className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                            aria-label="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {uploadError && (
+                    <span className="text-xs text-red-500">{uploadError}</span>
+                  )}
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
+                      hidden
+                      onChange={handleFilesChosen}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={
+                        uploadingImages ||
+                        commentMutation.isPending ||
+                        commentImages.length >= MAX_COMMENT_IMAGES
+                      }
+                      className="flex items-center gap-1.5 text-xs font-bold text-kc-on-surface-variant hover:text-kc-primary px-3 py-1.5 rounded-lg border border-kc-outline-variant/30 hover:border-kc-primary/40 transition-colors disabled:opacity-50"
+                      aria-label="Attach image"
+                    >
+                      {uploadingImages ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="w-4 h-4" />
+                      )}
+                      <span>
+                        {commentImages.length
+                          ? `${commentImages.length}/${MAX_COMMENT_IMAGES}`
+                          : 'Add photos'}
+                      </span>
+                    </button>
                     {commentMutation.isError && (
                       <span className="text-xs text-red-500">
                         Sign in to post a comment.
@@ -403,7 +561,9 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                     <button
                       onClick={handlePostComment}
                       disabled={
-                        !commentText.trim() || commentMutation.isPending
+                        (!commentText.trim() && commentImages.length === 0) ||
+                        uploadingImages ||
+                        commentMutation.isPending
                       }
                       className="bg-gradient-to-br from-kc-primary to-kc-primary-container text-white px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:opacity-90 disabled:opacity-50 transition-opacity"
                     >
@@ -472,6 +632,21 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                           <p className="text-sm text-kc-on-surface-variant leading-relaxed whitespace-pre-wrap">
                             {comment.content}
                           </p>
+                          {Array.isArray(comment.images) && comment.images.length > 0 && (
+                            <div className={`mt-3 grid gap-2 ${comment.images.length === 1 ? 'grid-cols-1 max-w-xs' : 'grid-cols-2 max-w-md'}`}>
+                              {comment.images.map((url) => (
+                                <button
+                                  key={url}
+                                  type="button"
+                                  onClick={() => setLightboxImage(url)}
+                                  className="rounded-xl overflow-hidden aspect-square bg-kc-surface-container-high hover:opacity-90 transition-opacity"
+                                  aria-label="View image"
+                                >
+                                  <img src={url} alt="comment attachment" className="w-full h-full object-cover" />
+                                </button>
+                              ))}
+                            </div>
+                          )}
                           <div className="mt-4 pt-4 border-t border-kc-outline-variant/10 flex items-center justify-between">
                             <button
                               onClick={() => {
@@ -526,6 +701,21 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
                                     <p className="text-sm text-kc-on-surface-variant leading-relaxed whitespace-pre-wrap">
                                       {reply.content}
                                     </p>
+                                    {Array.isArray(reply.images) && reply.images.length > 0 && (
+                                      <div className={`mt-3 grid gap-2 ${reply.images.length === 1 ? 'grid-cols-1 max-w-[180px]' : 'grid-cols-2 max-w-xs'}`}>
+                                        {reply.images.map((url) => (
+                                          <button
+                                            key={url}
+                                            type="button"
+                                            onClick={() => setLightboxImage(url)}
+                                            className="rounded-lg overflow-hidden aspect-square bg-kc-surface-container-high hover:opacity-90 transition-opacity"
+                                            aria-label="View image"
+                                          >
+                                            <img src={url} alt="reply attachment" className="w-full h-full object-cover" />
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               )
@@ -685,6 +875,34 @@ export default function CommunityThreadClient({ vehicleId, initialVehicle, initi
           </aside>
         </div>
       </main>
+
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image preview"
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setLightboxImage(null)
+            }}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="preview"
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[90vh] max-w-[95vw] object-contain rounded-xl shadow-2xl"
+          />
+        </div>
+      )}
 
       <div className="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-6 pb-8 pt-4 bg-background/90 backdrop-blur-lg rounded-t-3xl shadow-[0_-8px_30px_rgb(0,0,0,0.04)] z-50 border-t border-kc-outline-variant/10">
         <Link
