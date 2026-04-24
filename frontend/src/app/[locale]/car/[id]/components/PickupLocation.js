@@ -13,7 +13,8 @@ export default function PickupLocation({ vehicle }) {
 
   return (
     <section>
-      <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
+      <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-3">
+        <span className="w-1.5 h-8 bg-[var(--color-kc-primary)] rounded-full" />
         {t('pickup_return_location')}
       </h2>
       <div className="flex items-start gap-3">

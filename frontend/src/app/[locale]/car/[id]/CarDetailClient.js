@@ -103,20 +103,12 @@ function CarDetailsContent({ initialVehicle }) {
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mt-10">
-            <div className="lg:col-span-8 divide-y divide-[var(--surface-3)]">
-              <div className="pb-10">
-                <OwnerBlock partner={vehicle.partner} />
-              </div>
+            <div className="lg:col-span-8 space-y-12">
+              <OwnerBlock partner={vehicle.partner} />
+              <VehicleDetails vehicle={vehicle} />
+              <VehicleThread vehicle={vehicle} />
 
-              <div className="py-10">
-                <VehicleDetails vehicle={vehicle} />
-              </div>
-
-              <div className="py-10">
-                <VehicleThread vehicle={vehicle} />
-              </div>
-
-              <div className="lg:hidden py-10">
+              <div className="lg:hidden">
                 <BookingSidebar
                   vehicle={vehicle}
                   searchDetails={searchDetails}
@@ -126,17 +118,9 @@ function CarDetailsContent({ initialVehicle }) {
                 />
               </div>
 
-              <div className="py-10">
-                <Restrictions vehicle={vehicle} />
-              </div>
-
-              <div className="py-10">
-                <PickupLocation vehicle={vehicle} />
-              </div>
-
-              <div className="py-10">
-                <Reviews vehicle={vehicle} />
-              </div>
+              <Restrictions vehicle={vehicle} />
+              <PickupLocation vehicle={vehicle} />
+              <Reviews vehicle={vehicle} />
             </div>
 
             <div className="hidden lg:block lg:col-span-4">
