@@ -280,7 +280,7 @@ export default function CustomerReviewsManagement({ vehicles, reviews: reviewsDa
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredReviews.map((review, index) => (
+            {(Array.isArray(filteredReviews) ? filteredReviews : []).map((review, index) => (
               <motion.div
                 key={review.id}
                 initial={{ opacity: 0, y: 10 }}

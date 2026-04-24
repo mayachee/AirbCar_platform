@@ -432,7 +432,7 @@ export default function PartnerChat({ partnerData }) {
                 subtitle={searchQuery ? 'Try a different search' : t('chat_no_conversations')}
               />
             ) : (
-              filteredRequests.map((request) => (
+              (Array.isArray(filteredRequests) ? filteredRequests : []).map((request) => (
                 <ConversationItem
                   key={request.id}
                   request={request}
@@ -480,7 +480,7 @@ export default function PartnerChat({ partnerData }) {
                   />
                 ) : (
                   <>
-                    {messages.map((msg) => (
+                    {(Array.isArray(messages) ? messages : []).map((msg) => (
                       <MessageBubble
                         key={msg.id}
                         message={msg}

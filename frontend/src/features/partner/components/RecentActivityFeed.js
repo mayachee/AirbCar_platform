@@ -43,7 +43,9 @@ export default function RecentActivityFeed({ activities }) {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
-  if (!activities || activities.length === 0) {
+  const safeActivities = Array.isArray(activities) ? activities : [];
+
+  if (safeActivities.length === 0) {
     return (
       <div className="text-center py-4">
         <p className="text-gray-500 dark:text-gray-400">{t('no_activity')}</p>
@@ -53,7 +55,7 @@ export default function RecentActivityFeed({ activities }) {
 
   return (
     <div className="space-y-3">
-      {activities.map((activity) => (
+      {safeActivities.map((activity) => (
         <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
           <div className={`flex-shrink-0 ${getActivityColor(activity.type)}`}>
             {getActivityIcon(activity.type)}

@@ -155,7 +155,8 @@ export function usePartnerData() {
         return cleanVehiclesList;
       });
       
-      setBookings(dashboardData.bookings || []);
+      const newBookings = dashboardData.bookings || [];
+      setBookings(Array.isArray(newBookings) ? newBookings : []);
       setStats(statsData);
 
       // Fetch additional data in parallel

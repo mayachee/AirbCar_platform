@@ -39,8 +39,10 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
   }), [earnings]);
 
   const chartData = useMemo(() => {
-    if (!earningsData.dailyEarnings.length) return [];
-    return earningsData.dailyEarnings.map(d => ({
+    let daily = earningsData.dailyEarnings || [];
+    daily = Array.isArray(daily) ? daily : [];
+    if (!daily.length) return [];
+    return daily.map(d => ({
       date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       revenue: Number(d.revenue) || 0,
     }));
@@ -200,11 +202,11 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('top_earning_vehicles')}</h3>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{earningsData.vehicleEarnings.length} vehicles</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{(earningsData.vehicleEarnings || []).length} vehicles</span>
             </div>
-            {earningsData.vehicleEarnings.length > 0 ? (
+            {(earningsData.vehicleEarnings || []).length > 0 ? (
               <div className="space-y-3">
-                {earningsData.vehicleEarnings.map((vehicle, index) => {
+                {(Array.isArray(earningsData.vehicleEarnings) ? earningsData.vehicleEarnings : []).map((vehicle, index) => {
                   const maxRevenue = earningsData.vehicleEarnings[0]?.revenue || 1;
                   const pct = Math.round((vehicle.revenue / maxRevenue) * 100);
                   return (
@@ -254,9 +256,9 @@ export default function EarningsOverview({ earnings, stats, detailed = false }) 
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('recent_completed_bookings')}</h3>
               <CheckCircle className="h-5 w-5 text-green-500" />
             </div>
-            {earningsData.payoutHistory.length > 0 ? (
+            {(earningsData.payoutHistory || []).length > 0 ? (
               <div className="space-y-3">
-                {earningsData.payoutHistory.map((payout, index) => (
+                {(Array.isArray(earningsData.payoutHistory) ? earningsData.payoutHistory : []).map((payout, index) => (
                   <motion.div
                     key={payout.id || index}
                     initial={{ opacity: 0, y: 10 }}

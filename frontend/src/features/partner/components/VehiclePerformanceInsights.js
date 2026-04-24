@@ -10,20 +10,20 @@ export default function VehiclePerformanceInsights({ vehicles, earnings }) {
   const t = useTranslations('partner_dashboard');
   const { formatPrice } = useCurrency();
   const insights = useMemo(() => {
-    // Use vehicle_earnings from earnings API if available
-    const vehicleEarnings = earnings?.vehicle_earnings || [];
+    let vehicleEarnings = earnings?.vehicle_earnings || earnings?.vehicleEarnings || [];
+    vehicleEarnings = Array.isArray(vehicleEarnings) ? vehicleEarnings : [];
 
     // Build revenue data from real backend data or from vehicles
     let revenueByVehicle = [];
     if (vehicleEarnings.length > 0) {
       revenueByVehicle = vehicleEarnings.map(v => ({
         id: v.id,
-        name: v.name,
+        name: v.name || `${v.make} ${v.model}`,
         revenue: Number(v.revenue) || 0,
         bookings: v.bookings || 0,
         dailyRate: Number(v.daily_rate) || 0,
       }));
-    } else if (vehicles?.length > 0) {
+    } else if (Array.isArray(vehicles) && vehicles.length > 0) {
       revenueByVehicle = vehicles.map(v => ({
         id: v.id,
         name: `${v.make || ''} ${v.model || ''}`.trim(),

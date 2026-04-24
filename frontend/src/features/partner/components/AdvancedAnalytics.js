@@ -66,7 +66,8 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
   const trends = useMemo(() => analytics?.trends || {}, [analytics]);
 
   const dailyData = useMemo(() => {
-    const raw = analytics?.daily_data || [];
+    let raw = analytics?.daily_data || [];
+    raw = Array.isArray(raw) ? raw : [];
     return raw.map(d => ({
       date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       revenue: Number(d.revenue) || 0,
@@ -75,7 +76,8 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
   }, [analytics]);
 
   const statusDistribution = useMemo(() => {
-    const raw = analytics?.status_distribution || [];
+    let raw = analytics?.status_distribution || [];
+    raw = Array.isArray(raw) ? raw : [];
     return raw.map(s => ({
       name: s.status?.charAt(0).toUpperCase() + s.status?.slice(1),
       value: s.count || 0,
@@ -86,7 +88,8 @@ export default function AdvancedAnalytics({ analytics: initialAnalytics, stats, 
   }, [analytics]);
 
   const vehiclePerformance = useMemo(() => {
-    return analytics?.vehicle_performance || [];
+    let raw = analytics?.vehicle_performance || [];
+    return Array.isArray(raw) ? raw : [];
   }, [analytics]);
 
   const reviewStats = useMemo(() => analytics?.reviews || {}, [analytics]);
