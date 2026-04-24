@@ -196,8 +196,8 @@ export function useOptimizedDashboard() {
     }
     try {
       const requests = await getPendingRequests();
-      // Ensure requests is always an array
-      const requestsArray = Array.isArray(requests) ? requests : (requests?.data || requests?.results || []);
+      const extractedRequests = requests?.data?.results || requests?.data?.data || requests?.data || requests?.results || requests;
+      const requestsArray = Array.isArray(extractedRequests) ? extractedRequests : [];
       setPendingRequests(requestsArray);
     } catch (error) {
       console.warn('Could not fetch pending requests, using mock data:', error);
@@ -212,8 +212,8 @@ export function useOptimizedDashboard() {
     }
     try {
       const upcoming = await getUpcomingBookings();
-      // Ensure upcoming is always an array
-      const upcomingArray = Array.isArray(upcoming) ? upcoming : (upcoming?.data || upcoming?.results || []);
+      const extractedUpcoming = upcoming?.data?.results || upcoming?.data?.data || upcoming?.data || upcoming?.results || upcoming;
+      const upcomingArray = Array.isArray(extractedUpcoming) ? extractedUpcoming : [];
       setUpcomingBookings(upcomingArray);
     } catch (error) {
       console.warn('Could not fetch upcoming bookings, using mock data:', error);
