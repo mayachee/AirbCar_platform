@@ -67,10 +67,15 @@ services:
       - key: SUPABASE_ANON_KEY
         sync: false  # Set this manually in Render dashboard for security
         # Value: your-anon-key-here (get from Supabase Dashboard → Settings → API)
-      # Optional: Use service role key for admin operations (more permissions)
-      # - key: SUPABASE_SERVICE_ROLE_KEY
-      #   sync: false
-      #   # Value: your-service-role-key-here
+      # PREFERRED for server-side uploads (has full storage permissions).
+      # get_supabase_client() uses this first and falls back to SUPABASE_ANON_KEY.
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false  # Set this manually in Render dashboard for security
+        # Value: your-service-role-key-here (Supabase Dashboard → Settings → API → service_role)
+      # Bucket name for image uploads (listings, community, trip posts, profiles).
+      # Must exist and be PUBLIC in Supabase Storage. Defaults to "Pics" if unset.
+      - key: SUPABASE_STORAGE_BUCKET_PICS
+        value: Pics
       
       # Optional Performance Settings
       - key: GUNICORN_WORKERS

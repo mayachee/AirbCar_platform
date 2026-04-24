@@ -707,12 +707,18 @@ class TripPostCommentDetailView(APIView):
 
 class CommunityImageUploadView(APIView):
     """
-    POST /api/community/upload-image/
+    POST /community/upload-image/
     Accepts a single image file, uploads it to Supabase Storage,
     and returns the public URL.
 
     Body: multipart/form-data with field name 'image'
-    Response: { "url": "https://...supabase.co/.../image.jpg" }
+    Response (201): { "url": "https://...supabase.co/.../image.jpg" }
+
+    Status codes:
+      400 — missing/invalid file (bad content-type, too large)
+      401 — not authenticated
+      503 — Supabase Storage is not configured on the server (env vars missing)
+      500 — unexpected upload failure
     """
     permission_classes = [IsAuthenticated]
 
@@ -746,7 +752,15 @@ class CommunityImageUploadView(APIView):
 
             return Response({'url': supabase_url}, status=status.HTTP_201_CREATED)
         except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # ValueError from the helper signals either a config gap or an
+            # upload-time failure. The "not configured" message is raised
+            # before any network call — distinguish it and return 503 so the
+            # frontend can surface "feature temporarily unavailable" rather
+            # than treating this as a crash.
+            msg = str(e)
+            if 'not configured' in msg.lower():
+                return Response({'error': msg}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({'error': msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             return Response(
                 {'error': f'Image upload failed: {str(e)}'},
