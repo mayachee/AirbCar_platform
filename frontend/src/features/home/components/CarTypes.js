@@ -76,36 +76,34 @@ export default function CarTypes() {
                 <Link
                   href={`/search?type=${encodeURIComponent(car.name)}`}
                   aria-label={`Browse ${displayName} cars`}
-                  className="group relative block h-full rounded-xl overflow-hidden shadow-ambient hover:shadow-ambient-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-orange-500)]/40"
+                  className="group relative block h-full rounded-2xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] transform hover:-translate-y-1.5 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-orange-500)]/40"
                 >
                   <div className="relative h-[320px] sm:h-[380px] md:h-full overflow-hidden">
                     <img
                       src={car.image}
                       alt={displayName}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
                       loading="lazy"
                       sizes="(min-width: 768px) 60vw, 100vw"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--text-primary)] via-[var(--text-primary)]/30 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/40 to-transparent opacity-90 transition-opacity duration-700 group-hover:opacity-75" />
+                    {/* High-end grain overlay */}
+                    <div className="absolute inset-0 opacity-[0.15] mix-blend-overlay pointer-events-none transition-opacity duration-700 group-hover:opacity-[0.25]" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')" }} />
                   </div>
 
-                  <div className={`absolute inset-x-0 bottom-0 text-white ${isHeroTile(index) ? 'p-6 md:p-8' : 'p-4 md:p-5'}`}>
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                      <p className="label-xs text-white/40">
-                        {car.doors} &middot; {car.people} people &middot; {car.bags} bags
-                      </p>
-                      <span className="label-xs text-[var(--color-orange-500)]/70 whitespace-nowrap shrink-0">
+                  <div className={`absolute inset-x-0 bottom-0 text-white flex flex-col justify-end transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:-translate-y-2 ${isHeroTile(index) ? 'p-6 md:p-10' : 'p-5 md:p-7'}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
+                      <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-white/80 drop-shadow-md">
+                        {car.doors} &middot; {car.people} pass &middot; {car.bags} bags
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider backdrop-blur-md bg-white/10 border border-white/10 px-2.5 py-1.5 rounded-sm text-[var(--color-orange-500)] shadow-sm">
                         {formatPrice(car.price)} / day
                       </span>
                     </div>
 
-                    <h3 className={`${isHeroTile(index) ? 'text-3xl sm:text-4xl md:text-6xl' : 'text-2xl sm:text-3xl md:text-4xl'} mt-2 font-black leading-[0.92] tracking-tight`}>
+                    <h3 className={`${isHeroTile(index) ? 'text-4xl sm:text-5xl md:text-7xl' : 'text-3xl sm:text-4xl md:text-5xl'} mt-1 font-black leading-[0.92] tracking-tighter drop-shadow-xl text-white group-hover:text-white transition-colors duration-300`}>
                       {displayName}
                     </h3>
-
-                    <span className="mt-3 inline-flex text-xs font-semibold text-white/60 group-hover:text-[var(--color-orange-500)] transition-colors duration-300 py-1" aria-hidden="true">
-                      Browse &rarr;
-                    </span>
                   </div>
                 </Link>
               </motion.div>

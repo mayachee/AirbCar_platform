@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { MOROCCAN_CITIES } from '@/constants';
 import { motion, useInView } from 'framer-motion';
 import { SelectField } from '@/components/ui/select-field';
+import { MagneticButton } from '@/components/ui/MagneticButton';
 import { useTranslations } from 'next-intl';
 
 export default function Hero() {
@@ -109,92 +110,137 @@ export default function Hero() {
       {/* Ambient glow */}
       <div className="glow-orange absolute -bottom-40 -left-40 w-[600px] h-[600px] opacity-30" />
 
-      <div className="relative max-w-7xl mx-auto h-full flex md:items-end px-4 sm:px-6 lg:px-8 pt-36 md:pt-0 pb-14 md:pb-20">
+      <div className="relative max-w-7xl mx-auto h-full flex flex-col justify-center md:justify-end px-4 sm:px-6 lg:px-8 pt-36 md:pt-0 pb-14 md:pb-24">
         {/* Intentional asymmetry — wider left margin on desktop */}
         <div className="w-full max-w-5xl md:ml-4 lg:ml-8">
-          {/* Editorial headline */}
+          {/* Editorial headline with staggered reveal */}
           <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            initial="hidden"
+            animate={isInView ? "show" : "hidden"}
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.15 }
+              }
+            }}
           >
-            <h1 className="display-lg sm:text-5xl md:text-7xl text-[var(--text-primary)] leading-[0.95]">
-              {t('hero_heading')}
-            </h1>
-            <p className="text-[var(--text-secondary)] text-base sm:text-lg mt-4 max-w-lg leading-relaxed font-light">
+            <motion.h1 
+              variants={{
+                hidden: { opacity: 0, y: 40 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+              }}
+              className="display-lg sm:text-5xl md:text-7xl lg:text-[80px] text-[var(--text-primary)] leading-[1.05] tracking-tighter font-medium"
+            >
+              <span className="block overflow-hidden">
+                <motion.span 
+                  initial={{ y: "100%" }} 
+                  animate={isInView ? { y: 0 } : { y: "100%" }} 
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  className="block pb-2"
+                >
+                  {t('hero_heading')}
+                </motion.span>
+              </span>
+            </motion.h1>
+            <motion.p 
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+              }}
+              className="text-[var(--text-secondary)] text-base sm:text-lg md:text-xl mt-4 md:mt-6 max-w-lg leading-relaxed font-light"
+            >
               {t('hero_subheading')}
-            </p>
+            </motion.p>
           </motion.div>
 
-          {/* Search Form — glass card with surface-container-lowest */}
+          {/* Search Form — sleek, floating pill-shaped search bar */}
           <motion.form
             onSubmit={handleSearch}
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.12, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-8 md:mt-10 rounded-xl p-5 md:p-7 max-w-4xl bg-[var(--surface-container-lowest)]/90 backdrop-blur-xl shadow-ambient-lg"
+            initial={{ opacity: 0, y: 30, scale: 0.98 }}
+            animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
+            transition={{ delay: 0.3, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-8 md:mt-12 w-full max-w-[900px] bg-[var(--surface-base)]/80 hover:bg-[var(--surface-base)]/95 backdrop-blur-2xl border border-[var(--surface-border)]/50 rounded-[2rem] md:rounded-full p-2 md:p-3 shadow-[0_8px_32px_rgb(0,0,0,0.12)] transition-all duration-300 relative z-10"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col md:flex-row w-full divide-y md:divide-y-0 md:divide-x divide-[var(--surface-border)]/40 relative">
+              
               {/* Pickup Location */}
-              <div>
-                <label htmlFor="hero-location" className="label-xs text-[var(--text-muted)] mb-2 block">
-                  {t('hero_pickup_location')}
-                </label>
-                <SelectField
-                  id="hero-location"
-                  value={searchForm.location}
-                  placeholder={t('hero_select_city')}
-                  onChange={(e) =>
-                    setSearchForm((prev) => ({ ...prev, location: e.target.value }))
-                  }
-                  options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
-                  triggerProps={{ 'aria-label': 'Pickup location' }}
-                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] rounded-2xl transition-all duration-200 focus:ring-2 focus:ring-[var(--color-orange-500)]/30"
-                />
+              <div className="flex-[1.2] relative group md:rounded-l-full">
+                <div className="absolute inset-0 bg-[var(--surface-hover)] opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl md:rounded-l-full md:rounded-r-none pointer-events-none" />
+                <div className="relative px-5 py-3 md:py-2 h-full flex flex-col justify-center">
+                  <label htmlFor="hero-location" className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-primary)] mb-0.5 cursor-pointer">
+                    {t('hero_pickup_location')}
+                  </label>
+                  <SelectField
+                    id="hero-location"
+                    value={searchForm.location}
+                    placeholder={t('hero_select_city')}
+                    onChange={(e) =>
+                      setSearchForm((prev) => ({ ...prev, location: e.target.value }))
+                    }
+                    options={MOROCCAN_CITIES.map((city) => ({ value: city, label: city }))}
+                    triggerProps={{ 'aria-label': 'Pickup location' }}
+                    className="bg-transparent hover:bg-transparent border-none p-0 h-auto text-[var(--text-secondary)] placeholder:text-[var(--text-muted)] focus:ring-0 text-sm md:text-base font-medium shadow-none truncate"
+                  />
+                </div>
               </div>
 
               {/* Pickup Date */}
-              <div>
-                <label htmlFor="hero-pickup-date" className="label-xs text-[var(--text-muted)] mb-2 block">
-                  {t('hero_pickup_date')}
-                </label>
-                <SelectField
-                  id="hero-pickup-date"
-                  value={searchForm.pickupDate}
-                  onChange={handlePickupDateChange}
-                  options={buildDateOptions(todayStr, 180)}
-                  triggerProps={{ 'aria-label': 'Pickup date' }}
-                  required
-                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-2xl transition-all duration-200 focus:ring-2 focus:ring-[var(--color-orange-500)]/30"
-                />
+              <div className="flex-1 relative group">
+                <div className="absolute inset-0 bg-[var(--surface-hover)] opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl md:rounded-none pointer-events-none" />
+                <div className="relative px-5 py-3 md:py-2 h-full flex flex-col justify-center">
+                  <label htmlFor="hero-pickup-date" className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-primary)] mb-0.5 cursor-pointer">
+                    {t('hero_pickup_date')}
+                  </label>
+                  <SelectField
+                    id="hero-pickup-date"
+                    value={searchForm.pickupDate}
+                    onChange={handlePickupDateChange}
+                    options={buildDateOptions(todayStr, 180)}
+                    triggerProps={{ 'aria-label': 'Pickup date' }}
+                    required
+                    className="bg-transparent hover:bg-transparent border-none p-0 h-auto text-[var(--text-secondary)] focus:ring-0 text-sm md:text-base font-medium shadow-none"
+                  />
+                </div>
               </div>
 
               {/* Drop-off Date */}
-              <div>
-                <label htmlFor="hero-dropoff-date" className="label-xs text-[var(--text-muted)] mb-2 block">
-                  {t('hero_dropoff_date')}
-                </label>
-                <SelectField
-                  id="hero-dropoff-date"
-                  value={searchForm.dropoffDate}
-                  onChange={handleDropoffDateChange}
-                  options={buildDateOptions(searchForm.pickupDate || todayStr, 180)}
-                  triggerProps={{ 'aria-label': 'Drop-off date' }}
-                  required
-                  className="bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] rounded-2xl transition-all duration-200 focus:ring-2 focus:ring-[var(--color-orange-500)]/30"
-                />
+              <div className="flex-1 relative group">
+                <div className="absolute inset-0 bg-[var(--surface-hover)] opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl md:rounded-none pointer-events-none" />
+                <div className="relative px-5 py-3 md:py-2 h-full flex flex-col justify-center">
+                  <label htmlFor="hero-dropoff-date" className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-primary)] mb-0.5 cursor-pointer">
+                    {t('hero_dropoff_date')}
+                  </label>
+                  <SelectField
+                    id="hero-dropoff-date"
+                    value={searchForm.dropoffDate}
+                    onChange={handleDropoffDateChange}
+                    options={buildDateOptions(searchForm.pickupDate || todayStr, 180)}
+                    triggerProps={{ 'aria-label': 'Drop-off date' }}
+                    required
+                    className="bg-transparent hover:bg-transparent border-none p-0 h-auto text-[var(--text-secondary)] focus:ring-0 text-sm md:text-base font-medium shadow-none"
+                  />
+                </div>
               </div>
 
               {/* Search Button */}
-              <div className="flex items-end">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  type="submit"
-                  className="btn-brand w-full py-4 px-6 text-base tracking-wide"
+              <div className="p-2 md:pl-3 shrink-0 flex items-center justify-center md:justify-end">
+                <MagneticButton
+                  intensity={0.2}
+                  className="w-full md:w-auto"
                 >
-                  {t('hero_search_button')}
-                </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    type="submit"
+                    className="w-full md:w-[64px] h-[52px] md:h-[64px] rounded-xl md:rounded-full bg-gradient-to-br from-[var(--color-orange-500)] to-[var(--color-orange-600)] text-white flex items-center justify-center shadow-lg shadow-[var(--color-orange-500)]/20 hover:shadow-[var(--color-orange-500)]/40 transition-all font-bold tracking-wide"
+                  >
+                    <span className="md:hidden mr-2">{t('hero_search_button')}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 hidden md:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </motion.button>
+                </MagneticButton>
               </div>
             </div>
           </motion.form>

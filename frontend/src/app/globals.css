@@ -382,19 +382,19 @@ html {
   font-size: 3.5rem;
   line-height: 0.95;
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.05em;
 }
 .headline-lg {
   font-size: 2.5rem;
   line-height: 1;
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
 }
 .headline-md {
   font-size: 1.75rem;
   line-height: 1.1;
   font-weight: 800;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.03em;
 }
 .title-lg {
   font-size: 1.375rem;

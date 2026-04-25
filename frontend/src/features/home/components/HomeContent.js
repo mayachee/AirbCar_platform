@@ -7,6 +7,7 @@ import Header from "@/components/layout/Header";
 import Hero from "@/features/home/components/Hero";
 import HowItWorks from "@/features/home/components/HowItWorks";
 import PopularDestinations from "@/features/home/components/PopularDestinations";
+import CommunityHighlights from "@/features/home/components/CommunityHighlights";
 import Footer from "@/components/layout/Footer";
 import RentalProviders from "@/features/home/components/RentalProviders";
 import InfoSection from "@/features/home/components/InfoSection";
@@ -123,6 +124,7 @@ export default function HomeContent() {
       <Hero />
       <StatsBar />
       <PopularDestinations />
+      <CommunityHighlights />
       <CarTypes />
       <InfoSection />
       <GlobeSection />

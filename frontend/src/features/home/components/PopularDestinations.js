@@ -167,12 +167,27 @@ export default function PopularDestinations() {
           <div className="mt-6 h-px bg-gradient-to-r from-[var(--border-medium)] to-transparent" />
         </motion.div>
 
-        {/* City Cards */}
-        <div className="relative">
+        {/* City Cards container with arrows */}
+        <div className="relative group/carousel mt-10 md:mt-14">
+          {/* Left Arrow */}
+          <div className={`absolute top-1/2 -left-4 -translate-y-1/2 z-10 transition-all duration-300 ${showLeftArrow ? 'opacity-0 md:group-hover/carousel:opacity-100 translate-x-4 md:group-hover/carousel:translate-x-0' : 'opacity-0 pointer-events-none'}`}>
+            <button
+              onClick={() => {
+                if (scrollContainerRef.current) {
+                  scrollContainerRef.current.scrollBy({ left: -320, behavior: 'smooth' });
+                }
+              }}
+              className="bg-black/40 hover:bg-black/60 backdrop-blur-md text-white p-3 md:p-4 rounded-full shadow-xl transition-all duration-300 border border-white/10 flex items-center justify-center group/btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-orange-500)]"
+              aria-label="Scroll left"
+            >
+              <svg className="w-5 h-5 md:w-6 md:h-6 transform transition-transform group-hover/btn:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+          </div>
+
           <div
             ref={scrollContainerRef}
-            className="flex gap-5 md:gap-6 overflow-x-auto scrollbar-hide cursor-grab select-none pb-4 snap-x snap-mandatory scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex gap-5 md:gap-8 overflow-x-auto scrollbar-hide cursor-grab select-none pb-8 pt-4 px-2 snap-x snap-mandatory scroll-smooth"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', maskImage: 'linear-gradient(to right, transparent, black 15px, black calc(100% - 15px), transparent)' }}
             onScroll={() => { checkScrollPosition(); scheduleWrapIfNeeded(); }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -190,13 +205,13 @@ export default function PopularDestinations() {
                   initial={{ opacity: 0, scale: 0.92 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true, margin: '-10%' }}
-                  transition={{ duration: 0.5 }}
-                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ y: -6, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
                   className={[
-                    'flex-shrink-0 relative rounded-xl overflow-hidden aspect-[3/4] group cursor-pointer',
-                    'shadow-ambient hover:shadow-ambient-lg',
-                    'snap-start transition-all duration-300',
-                    'h-[400px] w-[250px] sm:h-[460px] sm:w-[280px] lg:h-[540px] lg:w-[320px]',
+                    'flex-shrink-0 relative rounded-2xl overflow-hidden aspect-[3/4] group cursor-pointer',
+                    'shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)]',
+                    'snap-center md:snap-start transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]',
+                    'h-[400px] w-[260px] sm:h-[460px] sm:w-[300px] lg:h-[540px] lg:w-[340px]',
                   ].join(' ')}
                   role="button"
                   tabIndex={0}
@@ -204,10 +219,10 @@ export default function PopularDestinations() {
                   aria-label={`Explore cars in ${d.destination}`}
                 >
                   <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-110 transition-transform duration-700"
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat group-hover:scale-105 transition-transform duration-[1.5s] ease-[cubic-bezier(0.25,1,0.5,1)]"
                     style={{ backgroundImage: `url(${d.image})` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--text-primary)] via-[var(--text-primary)]/30 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/30 to-transparent opacity-90 transition-opacity duration-700 group-hover:opacity-75" />
 
                   {/* Content overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-1">
@@ -233,6 +248,21 @@ export default function PopularDestinations() {
                 </motion.div>
               );
             })}
+          </div>
+
+          {/* Right Arrow */}
+          <div className={`absolute top-1/2 -right-4 -translate-y-1/2 z-10 transition-all duration-300 ${showRightArrow ? 'opacity-0 md:group-hover/carousel:opacity-100 -translate-x-4 md:group-hover/carousel:translate-x-0' : 'opacity-0 pointer-events-none'}`}>
+            <button
+              onClick={() => {
+                if (scrollContainerRef.current) {
+                  scrollContainerRef.current.scrollBy({ left: 320, behavior: 'smooth' });
+                }
+              }}
+              className="bg-black/40 hover:bg-black/60 backdrop-blur-md text-white p-3 md:p-4 rounded-full shadow-xl transition-all duration-300 border border-white/10 flex items-center justify-center group/btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-orange-500)]"
+              aria-label="Scroll right"
+            >
+              <svg className="w-5 h-5 md:w-6 md:h-6 transform transition-transform group-hover/btn:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+            </button>
           </div>
         </div>
       </div>
