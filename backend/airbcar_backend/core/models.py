@@ -311,9 +311,38 @@ class B2BMessage(models.Model):
 
     class Meta:
         ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['car_share_request', '-created_at']),
+        ]
 
     def __str__(self):
         return f"Msg on {self.car_share_request.id} by {self.sender.business_name}"
+
+
+class CarShareRequestRead(models.Model):
+    """Per-partner read cursor on a B2B chat thread.
+
+    One row per (CarShareRequest, Partner). last_read_message_id stores the
+    highest B2BMessage.id the partner has confirmed seeing in this thread.
+    Unread count = messages.filter(id__gt=last_read_message_id, ~sender=partner).count().
+    """
+    car_share_request = models.ForeignKey(
+        CarShareRequest, on_delete=models.CASCADE, related_name='read_cursors',
+    )
+    partner = models.ForeignKey(
+        'Partner', on_delete=models.CASCADE, related_name='b2b_read_cursors',
+    )
+    last_read_message_id = models.BigIntegerField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [('car_share_request', 'partner')]
+        indexes = [
+            models.Index(fields=['partner', 'car_share_request']),
+        ]
+
+    def __str__(self):
+        return f"Read cursor: {self.partner.business_name} on share {self.car_share_request_id}"
 
 
 class VehicleInspection(models.Model):
@@ -691,6 +720,11 @@ class ListingComment(models.Model):
     content = models.TextField()
     images = models.JSONField(default=list, blank=True, help_text='List of Supabase image URLs (max 4)')
     is_active = models.BooleanField(default=True)
+    is_pinned = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text='Owner-pinned welcome post — at most one per listing.',
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -701,6 +735,13 @@ class ListingComment(models.Model):
             models.Index(fields=['listing', 'is_active', 'created_at']),
             models.Index(fields=['parent']),
             models.Index(fields=['user']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['listing'],
+                condition=models.Q(is_pinned=True),
+                name='unique_pinned_comment_per_listing',
+            ),
         ]
 
     def __str__(self):

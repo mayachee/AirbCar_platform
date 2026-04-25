@@ -13,12 +13,13 @@ from datetime import datetime, timedelta
 from django.conf import settings
 import traceback
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, PartnerFollow, PartnerPost, CarShareRequest, B2BMessage, VehicleInspection
+from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, PartnerFollow, PartnerPost, CarShareRequest, CarShareRequestRead, B2BMessage, VehicleInspection
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer, PartnerSerializer, PartnerDetailSerializer, PartnerPostSerializer,
     CarShareRequestSerializer, B2BMessageSerializer, VehicleInspectionSerializer
 )
+from ..views.social_views import _paginate
 
 # Notification helpers
 try:
@@ -1019,24 +1020,167 @@ class CarShareRequestViewSet(viewsets.ModelViewSet):
             serializer = B2BMessageSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(car_share_request=car_share, sender=partner)
-            
+
             other_partner = car_share.owner if partner == car_share.requester else car_share.requester
-            try:
-                _create_notification_safe(
-                    user=other_partner.user,
-                    title="New B2B Message",
-                    message=f"You have a new message from {partner.business_name} regarding {car_share.listing.make}.",
-                    type="info",
-                    related_object_type="car_share"
-                )
-            except NameError:
-                pass
+            self._notify_new_b2b_message(
+                recipient_user=other_partner.user,
+                sender_partner=partner,
+                car_share=car_share,
+            )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        messages = car_share.messages.all().order_by('created_at')
-        serializer = B2BMessageSerializer(messages, many=True)
-        return Response(serializer.data)
+        qs = car_share.messages.select_related('sender').order_by('created_at')
+        # Delta polling: ?after=<id> returns only newer messages, capped to keep
+        # a single poll bounded even on a chatty thread / malicious cursor.
+        after = request.query_params.get('after')
+        if after is not None:
+            try:
+                after_id = int(after)
+            except (TypeError, ValueError):
+                return Response({"error": "after must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+            qs = qs.filter(id__gt=after_id)[:200]
+            return Response({'results': B2BMessageSerializer(qs, many=True).data})
+
+        page_qs, meta = _paginate(qs, request)
+        return Response({'results': B2BMessageSerializer(page_qs, many=True).data, **meta})
+
+    def _notify_new_b2b_message(self, *, recipient_user, sender_partner, car_share):
+        """Create one Notification per chat burst (1-hour coalesce window).
+
+        If the recipient already has an unread b2b_message notification for this
+        same thread within the last hour, skip — the existing dot still applies.
+        Per-status notifications (approved/rejected/etc) keep their own
+        related_object_type='car_share' so they don't collide.
+        """
+        try:
+            from ..models import Notification
+            recent_unread = Notification.objects.filter(
+                user=recipient_user,
+                related_object_type='b2b_message',
+                related_object_id=car_share.id,
+                is_read=False,
+                created_at__gte=timezone.now() - timedelta(hours=1),
+            ).exists()
+            if recent_unread:
+                return
+            Notification.objects.create(
+                user=recipient_user,
+                title="New B2B Message",
+                message=f"You have a new message from {sender_partner.business_name} regarding {car_share.listing.make}.",
+                type="info",
+                related_object_type='b2b_message',
+                related_object_id=car_share.id,
+            )
+        except Exception:
+            # Notification fan-out must never break the message POST.
+            pass
+
+    @action(detail=True, methods=['post'], url_path='messages/read')
+    def messages_read(self, request, pk=None):
+        """Advance the calling partner's read cursor on this thread.
+
+        Body: { "message_id": <int> }
+        Cursor is monotonic — older message_ids are ignored, never regress.
+        """
+        car_share = self.get_object()
+        partner = getattr(request.user, 'partner_profile', None)
+        if not partner or (car_share.requester != partner and car_share.owner != partner):
+            return Response({"error": "Only participants can mark messages read."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            message_id = int(request.data.get('message_id'))
+        except (TypeError, ValueError):
+            return Response({"error": "message_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Confirm the message belongs to this thread (cheap guard against ID stuffing)
+        if not car_share.messages.filter(pk=message_id).exists():
+            return Response({"error": "message_id is not part of this thread."}, status=status.HTTP_404_NOT_FOUND)
+
+        # select_for_update prevents a lost-update race when two clients
+        # mark-read concurrently with different message_ids — the row is
+        # locked from read to write.
+        with transaction.atomic():
+            cursor, created = (
+                CarShareRequestRead.objects
+                .select_for_update()
+                .get_or_create(
+                    car_share_request=car_share,
+                    partner=partner,
+                    defaults={'last_read_message_id': message_id},
+                )
+            )
+            if not created and (
+                cursor.last_read_message_id is None
+                or message_id > cursor.last_read_message_id
+            ):
+                cursor.last_read_message_id = message_id
+                cursor.save(update_fields=['last_read_message_id', 'updated_at'])
+
+        return Response({
+            'car_share_request': car_share.id,
+            'last_read_message_id': cursor.last_read_message_id,
+        })
+
+    @action(detail=False, methods=['get'])
+    def inbox(self, request):
+        """List threads the calling partner participates in, with last message
+        and unread count. Sorted by most-recent activity. Used by the chat
+        sidebar's inbox list."""
+        partner = getattr(request.user, 'partner_profile', None)
+        if not partner:
+            return Response({"error": "Partner profile required."}, status=status.HTTP_403_FORBIDDEN)
+
+        threads = (
+            CarShareRequest.objects
+            .filter(Q(requester=partner) | Q(owner=partner))
+            .select_related('requester', 'owner', 'listing')
+            .prefetch_related('messages')
+        )
+
+        cursors = {
+            c.car_share_request_id: c.last_read_message_id
+            for c in CarShareRequestRead.objects.filter(partner=partner)
+        }
+
+        items = []
+        for thread in threads:
+            last_msg = thread.messages.order_by('-id').first()
+            cursor_id = cursors.get(thread.id) or 0
+            unread = thread.messages.exclude(sender=partner).filter(id__gt=cursor_id).count()
+            other = thread.owner if thread.requester_id == partner.id else thread.requester
+            items.append({
+                'request_id': thread.id,
+                'status': thread.status,
+                'updated_at': thread.updated_at,
+                'last_message': {
+                    'id': last_msg.id,
+                    'text': last_msg.text,
+                    'sender_id': last_msg.sender_id,
+                    'created_at': last_msg.created_at,
+                } if last_msg else None,
+                'unread_count': unread,
+                'other_partner': {
+                    'id': other.id,
+                    'business_name': other.business_name,
+                    'logo_url': getattr(other, 'logo_url', None),
+                    'is_verified': getattr(other, 'is_verified', False),
+                },
+                'listing': {
+                    'id': thread.listing_id,
+                    'make': thread.listing.make,
+                    'model': thread.listing.model,
+                    'year': thread.listing.year,
+                },
+            })
+
+        # Sort: threads with a message use last_message.created_at; empty threads fall back to updated_at
+        items.sort(
+            key=lambda i: (i['last_message']['created_at'] if i['last_message'] else i['updated_at']),
+            reverse=True,
+        )
+
+        return Response({'results': items, 'total_count': len(items)})
 
     @action(detail=True, methods=['get', 'post'])
     def inspections(self, request, pk=None):

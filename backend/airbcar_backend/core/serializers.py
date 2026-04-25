@@ -987,8 +987,8 @@ class ListingCommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ListingComment
-        fields = ['id', 'listing', 'parent', 'user', 'content', 'images', 'replies', 'created_at']
-        read_only_fields = ['id', 'user', 'created_at']
+        fields = ['id', 'listing', 'parent', 'user', 'content', 'images', 'is_pinned', 'replies', 'created_at']
+        read_only_fields = ['id', 'user', 'is_pinned', 'created_at']
         extra_kwargs = {
             'listing': {'write_only': True},
             'parent': {'write_only': True},

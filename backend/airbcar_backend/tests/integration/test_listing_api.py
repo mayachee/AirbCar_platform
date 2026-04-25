@@ -6,7 +6,7 @@ import pytest
 from rest_framework import status
 from decimal import Decimal
 
-from core.models import Listing
+from core.models import Listing, ListingComment
 from tests.factories import UserFactory, PartnerFactory, ListingFactory
 
 
@@ -265,3 +265,126 @@ class TestListingRatings:
             rating_val = response.data.get("rating") or response.data.get("data", {}).get("rating")
             assert rating_val == 4.5 or rating_val == Decimal('4.5') or rating_val == '4.50'
             assert response.data.get("data", response.data).get("review_count") == 10
+
+
+@pytest.mark.integration
+@pytest.mark.django_db
+class TestListingAutoPin:
+    """When a partner creates a listing, the server auto-pins a welcome
+    ListingComment so the community thread has a real root post (instead
+    of synthesizing one client-side from vehicle.description)."""
+
+    def _payload(self, **overrides):
+        data = {
+            'make': 'Tesla',
+            'model': 'Model 3',
+            'year': 2024,
+            'color': 'White',
+            'transmission': 'automatic',
+            'fuel_type': 'electric',
+            'seating_capacity': 5,
+            'vehicle_style': 'sedan',
+            'price_per_day': '150.00',
+            'location': 'San Francisco',
+            # The view sets images=[] before validation (real uploads run post-save),
+            # so an active listing trips the "≥3 real images" gate. Mark inactive
+            # to keep these tests focused on the auto-pin behaviour, which fires
+            # regardless of availability.
+            'is_available': False,
+            'images': [f'https://example.com/test{i}.jpg' for i in range(3)],
+        }
+        data.update(overrides)
+        return data
+
+    def test_creating_listing_creates_one_pinned_comment(self, db, partner_client, partner_user):
+        response = partner_client.post(
+            '/listings/',
+            self._payload(vehicle_description='Hi from the dealer.'),
+            format='json',
+        )
+        if response.status_code == 404:
+            pytest.skip("Listing creation endpoint not found")
+        assert response.status_code == 201, response.data
+
+        listing = Listing.objects.latest('id')
+        pinned = ListingComment.objects.filter(listing=listing, is_pinned=True)
+        assert pinned.count() == 1
+        assert pinned[0].content == 'Hi from the dealer.'
+        assert pinned[0].user_id == partner_user.id
+
+    def test_pinned_fallback_when_description_empty(self, db, partner_client):
+        response = partner_client.post('/listings/', self._payload(), format='json')
+        if response.status_code == 404:
+            pytest.skip("Listing creation endpoint not found")
+        assert response.status_code == 201, response.data
+
+        listing = Listing.objects.latest('id')
+        pinned = ListingComment.objects.get(listing=listing, is_pinned=True)
+        assert 'Tesla' in pinned.content
+        assert 'Model 3' in pinned.content
+        assert 'San Francisco' in pinned.content
+
+    def test_pinned_comment_capped_at_4_images(self, db, partner_client):
+        urls = [f'https://example.com/img{i}.jpg' for i in range(6)]
+        response = partner_client.post(
+            '/listings/',
+            self._payload(images=urls, vehicle_description='Lots of pics'),
+            format='json',
+        )
+        if response.status_code == 404:
+            pytest.skip("Listing creation endpoint not found")
+        if response.status_code != 201:
+            pytest.skip(f"Listing create returned {response.status_code} (image upload path may differ)")
+
+        listing = Listing.objects.latest('id')
+        pinned = ListingComment.objects.get(listing=listing, is_pinned=True)
+        assert len(pinned.images) <= 4
+
+    def test_pinned_unique_constraint_blocks_duplicate(self, db, partner, partner_user):
+        from django.db import IntegrityError, transaction as tx
+        listing = ListingFactory(partner=partner, is_available=True)
+        ListingComment.objects.create(
+            listing=listing, user=partner_user, content='Welcome',
+            images=[], is_pinned=True,
+        )
+        with pytest.raises(IntegrityError):
+            with tx.atomic():
+                ListingComment.objects.create(
+                    listing=listing, user=partner_user, content='Second',
+                    images=[], is_pinned=True,
+                )
+
+    def test_pinned_body_clipped_to_endpoint_limit(self, db, partner_client):
+        """Long descriptions are trimmed to match the comment endpoint's 1000-char cap."""
+        long_desc = 'x' * 5000
+        response = partner_client.post(
+            '/listings/',
+            self._payload(vehicle_description=long_desc),
+            format='json',
+        )
+        if response.status_code == 404:
+            pytest.skip("Listing creation endpoint not found")
+        assert response.status_code == 201, response.data
+
+        listing = Listing.objects.latest('id')
+        pinned = ListingComment.objects.get(listing=listing, is_pinned=True)
+        assert len(pinned.content) <= 1000
+        assert pinned.content.endswith('…')
+
+    def test_listing_create_succeeds_even_if_pin_fails(self, db, partner_client, monkeypatch):
+        original_create = ListingComment.objects.create
+
+        def boom(*args, **kwargs):
+            if kwargs.get('is_pinned'):
+                raise RuntimeError('simulated pin failure')
+            return original_create(*args, **kwargs)
+
+        monkeypatch.setattr(ListingComment.objects, 'create', boom)
+
+        response = partner_client.post('/listings/', self._payload(), format='json')
+        if response.status_code == 404:
+            pytest.skip("Listing creation endpoint not found")
+        assert response.status_code == 201, response.data
+
+        listing = Listing.objects.latest('id')
+        assert ListingComment.objects.filter(listing=listing, is_pinned=True).count() == 0

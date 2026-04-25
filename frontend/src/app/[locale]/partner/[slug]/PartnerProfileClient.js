@@ -72,6 +72,27 @@ export default function PartnerProfileClient({ initialPartner = null, initialLis
 
   const partnerId = partner?.id
 
+  // Fetch follow state if user is authenticated to override SSR guest data
+  useEffect(() => {
+    if (!isAuthenticated || !partnerId) return
+    let cancelled = false
+    partnerService.getFollowState(partnerId)
+      .then((res) => {
+        if (cancelled) return
+        const data = res?.data || res
+        if (data && typeof data.is_following !== 'undefined') {
+          setIsFollowing(data.is_following)
+          setFollowerCount(data.follower_count)
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to load partner follow state:', err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [partnerId, isAuthenticated])
+
   useEffect(() => {
     if (initialPartner) return
 

@@ -123,14 +123,16 @@ function CarDetailsContent({ initialVehicle }) {
               <Reviews vehicle={vehicle} />
             </div>
 
-            <div className="hidden lg:block lg:col-span-4">
-              <BookingSidebar
-                vehicle={vehicle}
-                searchDetails={searchDetails}
-                selectedDates={selectedDates}
-                onBookNow={handleBooking}
-                onChangeDates={handleChangeDates}
-              />
+            <div className="hidden lg:block lg:col-span-4 relative">
+              <div className="sticky top-28 bottom-28 pt-4 pb-8">
+                <BookingSidebar
+                  vehicle={vehicle}
+                  searchDetails={searchDetails}
+                  selectedDates={selectedDates}
+                  onBookNow={handleBooking}
+                  onChangeDates={handleChangeDates}
+                />
+              </div>
             </div>
           </div>
         </div>

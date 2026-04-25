@@ -102,6 +102,19 @@ class TestListingComments:
         assert len(top_level) == 1
         assert len(top_level[0]['replies']) == 1
 
+    def test_comments_list_orders_pinned_first(self):
+        """Older non-pinned comments yield to the pinned welcome comment."""
+        ListingCommentFactory(listing=self.listing, user=self.user, content='older')
+        pinned = ListingCommentFactory(
+            listing=self.listing, user=self.user, content='welcome', is_pinned=True,
+        )
+        r = self.anon.get(self.url)
+        assert r.status_code == 200
+        results = r.data['results']
+        assert results[0]['id'] == pinned.id
+        assert results[0]['is_pinned'] is True
+        assert results[1]['is_pinned'] is False
+
     def test_soft_delete_own_comment(self):
         comment = ListingCommentFactory(listing=self.listing, user=self.user)
         r = self.client.delete(f'/listings/{self.listing.id}/comments/{comment.id}/')

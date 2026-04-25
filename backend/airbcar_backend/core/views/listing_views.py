@@ -31,6 +31,31 @@ from ..utils.image_utils import (
 )
 
 
+_MAX_THREAD_BODY_LEN = 1000  # mirrors ListingCommentListView.post hard cap
+
+
+def _build_default_thread_body(listing):
+    """Stock welcome-post body when the partner didn't write a description."""
+    parts = []
+    if listing.year:
+        parts.append(str(listing.year))
+    if listing.make:
+        parts.append(listing.make)
+    if listing.model:
+        parts.append(listing.model)
+    car_name = ' '.join(parts) or 'this car'
+    location_clause = f" in {listing.location}" if listing.location else ''
+    return f"Just listed our {car_name}{location_clause} — say hi and ask anything."
+
+
+def _build_pinned_thread_body(listing):
+    """Resolve and cap the body for the auto-pinned welcome comment."""
+    body = (listing.vehicle_description or '').strip() or _build_default_thread_body(listing)
+    if len(body) > _MAX_THREAD_BODY_LEN:
+        body = body[: _MAX_THREAD_BODY_LEN - 1].rstrip() + '…'
+    return body
+
+
 class ListingListView(APIView):
     """List all listings or search listings with filters. Create new listings (POST requires authentication)."""
     permission_classes = [AllowAny]  # Default for GET
@@ -775,6 +800,31 @@ class ListingListView(APIView):
                             if settings.DEBUG:
                                 print(f"⚠️ Warning: Auto-post creation failed: {post_error}")
 
+                        # Phase 1: Auto-pin a welcome ListingComment so the thread has a real root post
+                        try:
+                            from ..models import ListingComment
+                            from django.db import IntegrityError, transaction as tx
+                            pinned_body = _build_pinned_thread_body(listing)
+                            pinned_images = []
+                            if isinstance(listing.images, list):
+                                pinned_images = [img for img in listing.images if isinstance(img, str)][:4]
+                            with tx.atomic():
+                                ListingComment.objects.create(
+                                    listing=listing,
+                                    user=request.user,
+                                    content=pinned_body,
+                                    images=pinned_images,
+                                    is_pinned=True,
+                                )
+                            if settings.DEBUG:
+                                print(f"📌 POST /listings/ - Auto-pinned welcome comment for listing {listing.id}")
+                        except IntegrityError:
+                            # Retry of the same listing-create — pinned comment already exists
+                            pass
+                        except Exception as pin_error:
+                            if settings.DEBUG:
+                                print(f"⚠️ Warning: Auto-pin comment creation failed: {pin_error}")
+
                         # Create notification using a savepoint to avoid breaking the transaction
                         try:
                             from django.db import transaction as tx
@@ -961,7 +1011,28 @@ class ListingListView(APIView):
                                 )
                             except Exception as post_error:
                                 pass
-                                
+
+                            # Phase 1: Auto-pin a welcome ListingComment per bulk-created listing
+                            try:
+                                from ..models import ListingComment
+                                from django.db import IntegrityError, transaction as tx
+                                pinned_body = _build_pinned_thread_body(listing)
+                                pinned_images = []
+                                if isinstance(listing.images, list):
+                                    pinned_images = [img for img in listing.images if isinstance(img, str)][:4]
+                                with tx.atomic():
+                                    ListingComment.objects.create(
+                                        listing=listing,
+                                        user=request.user,
+                                        content=pinned_body,
+                                        images=pinned_images,
+                                        is_pinned=True,
+                                    )
+                            except IntegrityError:
+                                pass
+                            except Exception:
+                                pass
+
                         else:
                             errors.append({
                                 'index': idx,

@@ -58,7 +58,7 @@ class ListingCommentListView(APIView):
             .filter(listing=listing, is_active=True, parent__isnull=True)
             .select_related('user')
             .prefetch_related('replies__user')
-            .order_by('created_at')
+            .order_by('-is_pinned', 'created_at')
         )
         page_qs, meta = _paginate(qs, request)
         serializer = ListingCommentSerializer(page_qs, many=True)
