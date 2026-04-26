@@ -249,12 +249,17 @@ export function usePartnerData() {
       } else {
         const response = await partnerService.addVehicle(vehicleData);
         // API client wraps: { data: backendResponse, success: true }
-        // Backend returns: { data: {...}, message: '...' }
-        // So we need: response.data.data
-        const newVehicle = response.data?.data || response.data;
+        // Backend returns: { data: {...}, message: '...', draft?: true }
+        // So we need: response.data.data for the listing.
+        const backendBody = response.data || {};
+        const newVehicle = backendBody.data || backendBody;
         if (newVehicle && newVehicle.id) {
           // Normalize images before adding
           const normalizedVehicle = normalizeVehicleImages({ ...newVehicle });
+          // Attach the server's draft flag and message so the caller can show
+          // the correct toast (e.g. "saved as draft").
+          normalizedVehicle._draft = backendBody.draft === true;
+          normalizedVehicle._serverMessage = backendBody.message || null;
           setVehicles(prev => {
             // Check if vehicle already exists (avoid duplicates)
             const exists = prev.some(v => v.id === normalizedVehicle.id);

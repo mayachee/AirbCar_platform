@@ -155,13 +155,16 @@ class TestListingCreateUpdateAPI:
             'location': 'San Francisco',
         }
         response = partner_client.post(url, data, format='json')
-        
+
         if response.status_code == 404:
             pytest.skip("Listing creation endpoint not found")
-        
+
         if response.status_code == 201:
-            assert response.data['make'] == 'Tesla'
-            assert Listing.objects.filter(make='Tesla').exists()
+            # The view wraps the listing inside an envelope: {data, message, id, ...}.
+            # With no images supplied, the listing is auto-saved as a draft.
+            assert response.data['data']['make'] == 'Tesla'
+            assert response.data.get('draft') is True
+            assert Listing.objects.filter(make='Tesla', is_available=False).exists()
 
     def test_customer_cannot_create_listing(self, db, authenticated_client, user):
         """Test customer cannot create listing."""

@@ -306,7 +306,15 @@ export function useOptimizedDashboard() {
       } else {
         const result = await addVehicle(vehicleData);
         if (result && (result.id || (Array.isArray(result) && result.length > 0))) {
-          showToast('Vehicle added successfully!', 'success');
+          if (result._draft) {
+            showToast(
+              result._serverMessage ||
+                'Vehicle saved as draft. Add at least 3 photos and publish it to make it bookable.',
+              'warning'
+            );
+          } else {
+            showToast('Vehicle added successfully!', 'success');
+          }
         } else {
           console.warn('Vehicle added but result is invalid:', result);
           showToast('Vehicle may have been added, refreshing list...', 'warning');
