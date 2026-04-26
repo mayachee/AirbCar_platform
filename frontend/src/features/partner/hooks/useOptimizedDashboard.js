@@ -322,7 +322,26 @@ export function useOptimizedDashboard() {
       }, 500);
     } catch (error) {
       console.error('Error saving vehicle:', error);
-      const errorMessage = error?.data?.message || error?.message || 'Failed to save vehicle. Please try again.';
+      // Surface the backend's field-level validation errors so the user knows
+      // exactly what to fix (e.g. "images: At least 3 real images are required").
+      const fieldErrors = error?.data?.errors;
+      if (fieldErrors && typeof fieldErrors === 'object') {
+        console.error('Validation errors:', JSON.stringify(fieldErrors, null, 2));
+      }
+      const formatFieldErrors = (errs) => {
+        if (!errs || typeof errs !== 'object') return null;
+        const parts = [];
+        for (const [field, msgs] of Object.entries(errs)) {
+          const text = Array.isArray(msgs) ? msgs.join(' ') : String(msgs);
+          parts.push(`${field}: ${text}`);
+        }
+        return parts.length ? parts.join(' | ') : null;
+      };
+      const errorMessage =
+        formatFieldErrors(fieldErrors) ||
+        error?.data?.message ||
+        error?.message ||
+        'Failed to save vehicle. Please try again.';
       showToast(errorMessage, 'error');
     }
   }, [hasPartnerProfile, selectedVehicle, updateVehicle, addVehicle, refetch, setCurrentView, showToast]);
