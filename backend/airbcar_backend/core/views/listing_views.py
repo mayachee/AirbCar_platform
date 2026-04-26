@@ -715,23 +715,6 @@ class ListingListView(APIView):
                 if cleaned and cleaned != '/carsymbol.jpg':
                     valid_existing_count += 1
             expected_image_count = len(pending_files) + valid_existing_count
-
-            # The serializer enforces ">=3 real images for an active listing". On creation
-            # the partner may legitimately want to start with fewer images and add more
-            # later, so auto-save as a draft (is_available=False) instead of rejecting
-            # the request. The same gate still applies on update, so the listing can only
-            # be published once it has enough images.
-            auto_drafted_due_to_images = False
-            if expected_image_count < 3:
-                # Default to active when the field is omitted (matches the model default).
-                requested_available = listing_data.get('is_available', True)
-                # Only auto-draft when the partner did not explicitly opt to keep the
-                # listing inactive — bool() handles both bools and JSON/FormData truthy
-                # values that survived the upstream string→bool conversion.
-                if bool(requested_available):
-                    listing_data['is_available'] = False
-                    auto_drafted_due_to_images = True
-
             serializer = ListingSerializer(
                 data=listing_data,
                 context={'request': request, 'expected_image_count': expected_image_count},
@@ -888,13 +871,6 @@ class ListingListView(APIView):
                             'message': 'Listing created successfully',
                             'id': listing.id
                         }
-
-                        if auto_drafted_due_to_images:
-                            response_data['message'] = (
-                                'Listing saved as draft. Add at least 3 photos and publish '
-                                'it from the dashboard to make it available for booking.'
-                            )
-                            response_data['draft'] = True
                         
                         # Include image upload status in response
                         if image_errors:
