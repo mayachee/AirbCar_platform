@@ -683,7 +683,11 @@ class ListingSerializer(serializers.ModelSerializer):
             incoming_images is not None or
             ('is_available' in data and is_available)
         )
-        if should_enforce_image_quality and is_available and valid_image_count < 3:
+        # The view may upload files post-save and pass the expected count via context
+        # so file-based image submissions aren't rejected before upload completes.
+        expected_image_count = int(self.context.get('expected_image_count') or 0)
+        effective_image_count = max(valid_image_count, expected_image_count)
+        if should_enforce_image_quality and is_available and effective_image_count < 3:
             raise serializers.ValidationError({'images': 'At least 3 real images are required for an active listing.'})
 
         return data

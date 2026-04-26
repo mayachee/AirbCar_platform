@@ -699,8 +699,26 @@ class ListingListView(APIView):
                 print(f"   Fields: {list(listing_data.keys())}")
                 print(f"   Files to upload: {len(pending_files)}")
             
-            # Validate and create listing with transaction for data consistency
-            serializer = ListingSerializer(data=listing_data, context={'request': request})
+            # Validate and create listing with transaction for data consistency.
+            # `expected_image_count` lets the serializer's image-quality rule account for
+            # files that will be uploaded after the listing is saved (so we have an id
+            # to scope the storage path). Mirror the serializer's valid-counting logic
+            # so empty/placeholder URLs can't be used to bypass the >=3 image gate.
+            valid_existing_count = 0
+            for img in existing_images:
+                if isinstance(img, str):
+                    cleaned = img.strip()
+                elif isinstance(img, dict):
+                    cleaned = str(img.get('url', '')).strip()
+                else:
+                    cleaned = ''
+                if cleaned and cleaned != '/carsymbol.jpg':
+                    valid_existing_count += 1
+            expected_image_count = len(pending_files) + valid_existing_count
+            serializer = ListingSerializer(
+                data=listing_data,
+                context={'request': request, 'expected_image_count': expected_image_count},
+            )
             
             if serializer.is_valid():
                 if settings.DEBUG:
@@ -758,7 +776,12 @@ class ListingListView(APIView):
                                 if settings.DEBUG:
                                     print(f"✅ Updated listing {listing.id} with {len(all_images)} image(s)")
                         else:
-                            all_images = existing_images
+                            # No new uploads — still persist any existing image URLs the
+                            # client provided in the request body.
+                            all_images = combine_images([], existing_images)
+                            if all_images:
+                                listing.images = all_images
+                                listing.save(update_fields=['images'])
                         
                         # Skip updating partner.total_bookings here - it's not critical and causes delay
                         # This can be calculated on-demand or via a background task if needed
