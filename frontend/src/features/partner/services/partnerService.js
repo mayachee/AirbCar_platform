@@ -156,6 +156,21 @@ export const partnerService = {
   },
 
   // B2B Car Sharing
+  async getB2BListings(params = {}) {
+    // Expected params: search, location, make.
+    const query = new URLSearchParams()
+    if (params.search) query.append('search', params.search)
+    if (params.location) query.append('location', params.location)
+    if (params.make) query.append('make', params.make)
+    const qs = query.toString()
+    const url = qs ? `/partners/b2b/listings/?${qs}` : '/partners/b2b/listings/'
+    return apiClient.get(url, undefined, { cache: 'no-store' })
+  },
+
+  async createB2BBooking(bookingData) {
+    return apiClient.post('/partners/b2b/bookings/', bookingData)
+  },
+
   async getDiscoverableCars(excludePartnerId) {
     return apiClient.get(`/listings/?exclude_partner=${excludePartnerId}`, undefined, { cache: 'no-store' })
   },
