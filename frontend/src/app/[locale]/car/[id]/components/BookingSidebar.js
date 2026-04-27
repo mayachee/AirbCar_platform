@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { calculateTotalPrice } from '../utils/pricing'
 import { useCurrency } from '@/contexts/CurrencyContext'
-import { Headphones, ChevronRight, Info } from 'lucide-react'
+import { Headphones, ChevronRight, Info, MessageCircle } from 'lucide-react'
 import { format, parseISO, isValid } from 'date-fns'
 
 function formatDateDisplay(value) {
@@ -19,7 +19,7 @@ function formatDateDisplay(value) {
   }
 }
 
-export default function BookingSidebar({ vehicle, searchDetails, selectedDates, onBookNow, onChangeDates }) {
+export default function BookingSidebar({ vehicle, searchDetails, selectedDates, onBookNow, onBookViaWhatsApp, onChangeDates }) {
   const { formatPrice } = useCurrency()
   const t = useTranslations('car_details')
   const params = useParams()
@@ -136,6 +136,16 @@ export default function BookingSidebar({ vehicle, searchDetails, selectedDates, 
         >
           {t('book_now')}
         </button>
+
+        {partner?.whatsapp_phone_number && onBookViaWhatsApp && (
+          <button
+            onClick={onBookViaWhatsApp}
+            className="mt-3 w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-base shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-transform focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 flex items-center justify-center gap-2"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Book via WhatsApp
+          </button>
+        )}
 
         <p className="text-center text-[10px] text-[var(--text-secondary)] mt-3 font-medium uppercase tracking-widest">
           {t('not_charged_yet')}

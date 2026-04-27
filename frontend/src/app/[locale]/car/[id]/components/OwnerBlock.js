@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { BadgeCheck, Quote, ArrowRight } from 'lucide-react'
+import VerifiedBadge from '@/components/partner/VerifiedBadge'
 
 export default function OwnerBlock({ partner }) {
   const t = useTranslations('car_details')
@@ -61,9 +62,12 @@ export default function OwnerBlock({ partner }) {
               <p className="text-[10px] font-bold text-[var(--color-kc-primary)] uppercase tracking-widest mb-1">
                 {t('hosted_by')}
               </p>
-              <h3 className="text-2xl font-bold text-[var(--text-primary)] truncate">
-                {ownerName}
-              </h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-2xl font-bold text-[var(--text-primary)] truncate">
+                  {ownerName}
+                </h3>
+                <VerifiedBadge verified={partner?.is_verified} />
+              </div>
             </div>
 
             {profileHref && (

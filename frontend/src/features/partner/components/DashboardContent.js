@@ -16,6 +16,7 @@ const VehiclesList = lazy(() => import('@/features/partner/components/VehiclesLi
 const EnhancedBookingManagement = lazy(() => import('@/features/partner/components/EnhancedBookingManagement'));
 const AdvancedAnalytics = lazy(() => import('@/features/partner/components/AdvancedAnalytics'));
 const VehicleAvailabilityCalendar = lazy(() => import('@/features/partner/components/VehicleAvailabilityCalendar'));
+const BlackoutDateManager = lazy(() => import('@/features/partner/components/BlackoutDateManager'));
 const CustomerReviewsManagement = lazy(() => import('@/features/partner/components/CustomerReviewsManagement'));
 const ReviewAnalytics = lazy(() => import('@/features/partner/components/ReviewAnalytics'));
 const PartnerProfileSettings = lazy(() => import('@/features/partner/components/PartnerProfileSettings'));
@@ -527,10 +528,13 @@ export default function DashboardContent({
 
       {currentView === 'calendar' && (
         <ComponentLoader>
-          <VehicleAvailabilityCalendar
-            vehicles={vehicles}
-            bookings={bookings}
-          />
+          <div className="space-y-6">
+            <VehicleAvailabilityCalendar
+              vehicles={vehicles}
+              bookings={bookings}
+            />
+            <BlackoutDateManager vehicles={vehicles} />
+          </div>
         </ComponentLoader>
       )}
 

@@ -11,6 +11,7 @@ import { buildBookingUrl, buildSearchUrl } from './utils/navigation'
 import { calculateTotalPrice } from './utils/pricing'
 import { trackEvent } from '@/lib/analytics/tracking'
 import { useToast } from '@/contexts/ToastContext'
+import { apiClient } from '@/lib/api/client'
 import PageTransition from './components/PageTransition'
 import AnimatedBreadcrumb from './components/AnimatedBreadcrumb'
 import ImageGallery from './components/ImageGallery'
@@ -78,6 +79,43 @@ function CarDetailsContent({ initialVehicle }) {
     router.push(buildSearchUrl({ ...searchDetails, locale: params.locale }))
   }
 
+  const handleBookViaWhatsApp = async () => {
+    if (!vehicle) {
+      showToast(t('error_vehicle_not_loaded'), 'error')
+      return
+    }
+    const vehicleId = vehicle.id || vehicle.listing_id || params.id
+    const pickup = selectedDates?.pickup
+    const ret = selectedDates?.return
+    if (!pickup || !ret) {
+      showToast('Please pick your dates first.', 'error')
+      return
+    }
+    try {
+      const response = await apiClient.post('/bookings/whatsapp/', {
+        listing_id: vehicleId,
+        pickup_date: pickup,
+        return_date: ret,
+      })
+      const url = response?.data?.data?.whatsapp_url
+      if (!url) {
+        showToast('Could not start the WhatsApp booking.', 'error')
+        return
+      }
+      trackEvent('booking_whatsapp_initiated', {
+        listing_id: String(vehicleId),
+        location: vehicle.location || '',
+      })
+      // Open in a new tab so the renter keeps the listing page open and can
+      // come back if WhatsApp doesn't launch (e.g. desktop without WA).
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      console.error('WhatsApp booking failed:', error)
+      const message = error?.data?.error || error?.message || 'WhatsApp booking failed.'
+      showToast(message, 'error')
+    }
+  }
+
   if (loading && !initialVehicle) {
     return <LoadingState />
   }
@@ -114,6 +152,7 @@ function CarDetailsContent({ initialVehicle }) {
                   searchDetails={searchDetails}
                   selectedDates={selectedDates}
                   onBookNow={handleBooking}
+                  onBookViaWhatsApp={handleBookViaWhatsApp}
                   onChangeDates={handleChangeDates}
                 />
               </div>
@@ -130,6 +169,7 @@ function CarDetailsContent({ initialVehicle }) {
                   searchDetails={searchDetails}
                   selectedDates={selectedDates}
                   onBookNow={handleBooking}
+                  onBookViaWhatsApp={handleBookViaWhatsApp}
                   onChangeDates={handleChangeDates}
                 />
               </div>
