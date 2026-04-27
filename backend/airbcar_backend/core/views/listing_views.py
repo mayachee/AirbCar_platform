@@ -20,10 +20,10 @@ import time
 import signal
 from pathlib import Path
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, Notification
+from ..models import Listing, Booking, BlackoutDate, Favorite, Review, Partner, User, PasswordReset, Notification
 from ..serializers import (
     ListingSerializer, ListingCompactSerializer, BookingSerializer, FavoriteSerializer,
-    ReviewSerializer, UserSerializer,
+    ReviewSerializer, UserSerializer, BlackoutDateSerializer,
 )
 from ..utils.image_utils import (
     validate_image_file, process_and_save_image,
@@ -1532,4 +1532,89 @@ class ListingDetailView(APIView):
                 'error': 'An error occurred while deleting the listing',
                 'message': error_msg if settings.DEBUG else 'Please try again later'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ListingBlackoutListView(APIView):
+    """List or create blackout dates for a listing.
+
+    GET is public (so renters can see unavailable windows on the calendar).
+    POST/DELETE require the listing's owning partner.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, listing_id):
+        try:
+            listing = Listing.objects.get(pk=listing_id)
+        except Listing.DoesNotExist:
+            return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
+        blackouts = listing.blackouts.all().order_by('start_date')
+        return Response({
+            'data': BlackoutDateSerializer(blackouts, many=True).data,
+            'count': blackouts.count(),
+        }, status=status.HTTP_200_OK)
+
+    def post(self, request, listing_id):
+        if not request.user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            listing = Listing.objects.select_related('partner').get(pk=listing_id)
+        except Listing.DoesNotExist:
+            return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            partner = Partner.objects.get(user=request.user)
+        except Partner.DoesNotExist:
+            return Response({'error': 'Partner profile not found'}, status=status.HTTP_403_FORBIDDEN)
+        if listing.partner_id != partner.id:
+            return Response({'error': 'You can only block dates on your own listings'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        data = dict(request.data)
+        data['listing'] = listing.id
+        serializer = BlackoutDateSerializer(data=data)
+        if not serializer.is_valid():
+            return Response({'error': 'Validation failed', 'errors': serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Refuse a blackout that would conflict with an active booking — the
+        # partner shouldn't be able to silently invalidate a confirmed reservation.
+        start = serializer.validated_data['start_date']
+        end = serializer.validated_data['end_date']
+        active_overlap = Booking.objects.filter(
+            listing=listing,
+            status__in=['pending', 'pending_whatsapp', 'confirmed', 'active'],
+            pickup_date__lte=end,
+            return_date__gte=start,
+        ).exists()
+        if active_overlap:
+            return Response(
+                {'error': 'Cannot block dates that overlap an active booking. Cancel the booking first.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        blackout = serializer.save()
+        return Response({'data': BlackoutDateSerializer(blackout).data}, status=status.HTTP_201_CREATED)
+
+
+class ListingBlackoutDetailView(APIView):
+    """Delete a single blackout (the partner ends a vacation early, etc.)."""
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, listing_id, blackout_id):
+        try:
+            listing = Listing.objects.select_related('partner').get(pk=listing_id)
+        except Listing.DoesNotExist:
+            return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            partner = Partner.objects.get(user=request.user)
+        except Partner.DoesNotExist:
+            return Response({'error': 'Partner profile not found'}, status=status.HTTP_403_FORBIDDEN)
+        if listing.partner_id != partner.id:
+            return Response({'error': 'You can only modify your own listings'},
+                            status=status.HTTP_403_FORBIDDEN)
+        try:
+            blackout = BlackoutDate.objects.get(pk=blackout_id, listing=listing)
+        except BlackoutDate.DoesNotExist:
+            return Response({'error': 'Blackout not found'}, status=status.HTTP_404_NOT_FOUND)
+        blackout.delete()
+        return Response({'message': 'Blackout removed'}, status=status.HTTP_200_OK)
 

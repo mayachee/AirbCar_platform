@@ -27,8 +27,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Listing, Partner, User
-from ..utils.telegram import send_telegram_message
+from django.utils import timezone
+
+from ..models import Booking, Listing, Notification, Partner, User
+from ..utils.telegram import answer_callback_query, edit_message_text, send_telegram_message
 
 logger = logging.getLogger(__name__)
 
@@ -342,8 +344,118 @@ def _create_listing(chat_id: str, user_id: int, data: dict) -> None:
 
 # ── main dispatcher ────────────────────────────────────────────────────────────
 
+def handle_whatsapp_callback(callback: dict) -> None:
+    """Handle inline-button taps on a WhatsApp booking notification.
+
+    callback_data format: `wa_accept:<booking_id>:<token>` or `wa_reject:...`
+    """
+    cb_id = callback.get('id')
+    chat_id = str(callback.get('message', {}).get('chat', {}).get('id', ''))
+    message_id = callback.get('message', {}).get('message_id')
+    raw_data = (callback.get('data') or '').strip()
+
+    if not chat_id or not raw_data:
+        if cb_id:
+            answer_callback_query(cb_id, text='Bad request', show_alert=True)
+        return
+
+    parts = raw_data.split(':', 2)
+    if len(parts) != 3 or parts[0] not in ('wa_accept', 'wa_reject'):
+        answer_callback_query(cb_id, text='Unknown action', show_alert=True)
+        return
+
+    action, booking_id_str, token = parts
+    try:
+        booking_id = int(booking_id_str)
+    except ValueError:
+        answer_callback_query(cb_id, text='Invalid booking', show_alert=True)
+        return
+
+    # Resolve partner from the chat_id so we can authorize the action even
+    # if the bot lost state — the chat owner must be the listing's partner.
+    try:
+        user = User.objects.get(telegram_chat_id=chat_id)
+        partner = Partner.objects.get(user=user)
+    except (User.DoesNotExist, Partner.DoesNotExist):
+        answer_callback_query(cb_id, text='Account not linked. Use /start to link.', show_alert=True)
+        return
+
+    try:
+        booking = Booking.objects.select_related('listing', 'customer').get(pk=booking_id)
+    except Booking.DoesNotExist:
+        answer_callback_query(cb_id, text='Booking no longer exists.', show_alert=True)
+        return
+
+    if booking.partner_id != partner.id:
+        answer_callback_query(cb_id, text='Not your booking.', show_alert=True)
+        return
+
+    if booking.whatsapp_signed_token != token:
+        answer_callback_query(cb_id, text='This action has expired.', show_alert=True)
+        return
+
+    if booking.status != 'pending_whatsapp':
+        answer_callback_query(cb_id, text=f'Already {booking.get_status_display()}.', show_alert=True)
+        if message_id:
+            edit_message_text(
+                chat_id, message_id,
+                f'Booking #{booking.id} — already {booking.get_status_display()}.',
+            )
+        return
+
+    if action == 'wa_accept':
+        booking.status = 'confirmed'
+        booking.confirmation_channel = 'telegram'
+        booking.whatsapp_signed_token = None
+        booking.save(update_fields=['status', 'confirmation_channel', 'whatsapp_signed_token', 'updated_at'])
+        try:
+            Notification.objects.create(
+                user=booking.customer,
+                title='Booking confirmed',
+                message=f'Your booking #{booking.id} was accepted by the partner.',
+                type='success',
+                related_object_type='booking',
+                related_object_id=booking.id,
+            )
+        except Exception as exc:
+            logger.warning('Notification on WhatsApp accept failed: %s', exc)
+        answer_callback_query(cb_id, text='Accepted ✅')
+        if message_id:
+            edit_message_text(
+                chat_id, message_id,
+                f'✅ Booking #{booking.id} accepted. Continue logistics on WhatsApp.',
+            )
+    else:  # wa_reject
+        booking.status = 'cancelled'
+        booking.rejection_reason = 'Rejected by partner via Telegram'
+        booking.whatsapp_signed_token = None
+        booking.save(update_fields=['status', 'rejection_reason', 'whatsapp_signed_token', 'updated_at'])
+        try:
+            Notification.objects.create(
+                user=booking.customer,
+                title='Booking declined',
+                message=f'Your booking #{booking.id} was declined by the partner.',
+                type='warning',
+                related_object_type='booking',
+                related_object_id=booking.id,
+            )
+        except Exception as exc:
+            logger.warning('Notification on WhatsApp reject failed: %s', exc)
+        answer_callback_query(cb_id, text='Rejected.')
+        if message_id:
+            edit_message_text(
+                chat_id, message_id,
+                f'❌ Booking #{booking.id} declined.',
+            )
+
+
 def dispatch_update(update: dict) -> None:
     """Route a Telegram update to the right handler."""
+    callback = update.get('callback_query')
+    if callback:
+        handle_whatsapp_callback(callback)
+        return
+
     message = update.get('message') or update.get('edited_message')
     if not message:
         return

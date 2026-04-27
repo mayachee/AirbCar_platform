@@ -125,6 +125,11 @@ class Partner(models.Model):
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(blank=True, null=True, help_text='When the agency was verified')
+    whatsapp_phone_number = models.CharField(
+        max_length=20, blank=True, null=True,
+        help_text='E.164-formatted phone for the "Book via WhatsApp" CTA (e.g. +212600000000)',
+    )
     rating = models.FloatField(default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(5.0)])
     review_count = models.IntegerField(default=0)
     total_bookings = models.IntegerField(default=0)
@@ -371,10 +376,19 @@ class Booking(models.Model):
     """Booking model."""
     STATUS_CHOICES = [
         ('pending', 'Pending'),
+        ('pending_whatsapp', 'Pending (WhatsApp)'),
         ('confirmed', 'Confirmed'),
         ('active', 'Active'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
+        ('cancelled_no_response', 'Cancelled (no partner response)'),
+    ]
+
+    CONFIRMATION_CHANNEL_CHOICES = [
+        ('online', 'Online'),
+        ('telegram', 'Telegram'),
+        ('whatsapp', 'WhatsApp'),
+        ('manual_admin', 'Manual (admin)'),
     ]
     
     PAYMENT_STATUS_CHOICES = [
@@ -406,7 +420,7 @@ class Booking(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     
     # Status
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=32, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='online', help_text='Payment method: online or cash')
     
@@ -417,6 +431,15 @@ class Booking(models.Model):
     # License documents for this specific booking
     license_front_document = models.URLField(max_length=500, blank=True, null=True)
     license_back_document = models.URLField(max_length=500, blank=True, null=True)
+
+    # WhatsApp booking flow — populated when the renter starts a booking via the
+    # "Book via WhatsApp" CTA. The signed_token is a short HMAC the Telegram
+    # bot uses to authenticate inline-button accept/reject actions.
+    whatsapp_initiated_at = models.DateTimeField(blank=True, null=True)
+    whatsapp_signed_token = models.CharField(max_length=128, blank=True, null=True, db_index=True)
+    confirmation_channel = models.CharField(
+        max_length=20, choices=CONFIRMATION_CHANNEL_CHOICES, default='online',
+    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -436,6 +459,36 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"Booking {self.id} - {self.listing} by {self.customer.username}"
+
+
+class BlackoutDate(models.Model):
+    """Per-listing date range during which the vehicle is unavailable.
+
+    Set by partners (e.g. self-use, maintenance, off-season). The booking
+    creation flow rejects pickup/return ranges that overlap any blackout
+    on the same listing.
+    """
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='blackouts')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    reason = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-start_date']
+        indexes = [
+            models.Index(fields=['listing', 'start_date', 'end_date']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(end_date__gte=models.F('start_date')),
+                name='blackout_end_after_start',
+            ),
+        ]
+
+    def __str__(self):
+        return f'Blackout {self.start_date} → {self.end_date} on listing {self.listing_id}'
 
 
 class Favorite(models.Model):

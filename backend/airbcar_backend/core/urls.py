@@ -24,6 +24,8 @@ urlpatterns = [
     # Listings endpoints
     path('listings/', views.ListingListView.as_view(), name='listing-list'),
     path('listings/<int:pk>/', views.ListingDetailView.as_view(), name='listing-detail'),
+    path('listings/<int:listing_id>/blackouts/', getattr(views, 'ListingBlackoutListView', views.RootView).as_view(), name='listing-blackouts'),
+    path('listings/<int:listing_id>/blackouts/<int:blackout_id>/', getattr(views, 'ListingBlackoutDetailView', views.RootView).as_view(), name='listing-blackout-detail'),
     path('listings/<int:listing_id>/comments/', getattr(views, 'ListingCommentListView', views.RootView).as_view(), name='listing-comments'),
     path('listings/<int:listing_id>/comments/<int:comment_id>/', getattr(views, 'ListingCommentDetailView', views.RootView).as_view(), name='listing-comment-detail'),
     path('listings/<int:listing_id>/reactions/', getattr(views, 'ListingReactionView', views.RootView).as_view(), name='listing-reactions'),
@@ -64,6 +66,7 @@ urlpatterns = [
     path('users/<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
 
     # Bookings endpoints
+    path('bookings/whatsapp/', getattr(views, 'WhatsAppBookingView', views.RootView).as_view(), name='booking-whatsapp'),
     path('bookings/', getattr(views, 'BookingListView', views.RootView).as_view(), name='booking-list'),
     path('bookings/pending-requests/', getattr(views, 'BookingPendingRequestsView', views.RootView).as_view(), name='booking-pending-requests'),
     path('bookings/upcoming/', getattr(views, 'BookingUpcomingView', views.RootView).as_view(), name='booking-upcoming'),
@@ -108,6 +111,7 @@ urlpatterns = [
     path('api/admin/stats/', getattr(views, 'AdminStatsView', views.RootView).as_view(), name='admin-stats'),
     path('api/admin/analytics/', getattr(views, 'AdminAnalyticsView', views.RootView).as_view(), name='admin-analytics'),
     path('api/admin/revenue/', getattr(views, 'AdminRevenueView', views.RootView).as_view(), name='admin-revenue'),
+    path('api/admin/partners/<int:partner_id>/verify/', getattr(views, 'AdminPartnerVerifyView', views.RootView).as_view(), name='admin-partner-verify'),
 
     # Telegram bot endpoints
     path('api/telegram/webhook/', TelegramWebhookView.as_view(), name='telegram-webhook'),

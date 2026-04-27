@@ -17,7 +17,7 @@ import traceback
 import json
 import os
 
-from ..models import Listing, Booking, Favorite, Review, Partner, User, PasswordReset, Notification
+from ..models import Listing, Booking, BlackoutDate, Favorite, Review, Partner, User, PasswordReset, Notification
 from ..serializers import (
     ListingSerializer, BookingSerializer, FavoriteSerializer,
     ReviewSerializer, UserSerializer,
@@ -25,7 +25,8 @@ from ..serializers import (
 from ..supabase_storage import upload_file_to_supabase
 from ..utils.license_verification import verify_driving_license_images
 from ..utils.license_verification_persistence import store_license_verification_result
-from ..utils.telegram import notify_user_telegram
+from ..utils.telegram import notify_user_telegram, send_telegram_message
+from ..utils.whatsapp import generate_booking_token, build_wa_me_url, build_prefilled_message
 
 
 DEFAULT_SAFE_DEPOSIT_AMOUNT = Decimal('5000.00')
@@ -243,17 +244,27 @@ class BookingListView(APIView):
                     'error': 'Invalid payment_method. Use online or cash'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Check for date conflicts
+            # Check for date conflicts (existing bookings or partner blackouts)
             conflicting_bookings = Booking.objects.filter(
                 listing=listing,
-                status__in=['pending', 'confirmed', 'active'],
+                status__in=['pending', 'pending_whatsapp', 'confirmed', 'active'],
                 pickup_date__lt=return_date,
                 return_date__gt=pickup_date
             ).exists()
-            
+
             if conflicting_bookings:
                 return Response({
                     'error': 'Listing is not available for the selected dates'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            blackout_conflict = BlackoutDate.objects.filter(
+                listing=listing,
+                start_date__lt=return_date,
+                end_date__gte=pickup_date,
+            ).exists()
+            if blackout_conflict:
+                return Response({
+                    'error': 'Listing is unavailable on the selected dates (partner blackout)'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Calculate total amount
@@ -364,10 +375,16 @@ class BookingListView(APIView):
                             )
                         double_check_conflict = Booking.objects.filter(
                             listing=listing_locked,
-                            status__in=['pending', 'confirmed', 'active'],
+                            status__in=['pending', 'pending_whatsapp', 'confirmed', 'active'],
                             pickup_date__lt=return_date,
                             return_date__gt=pickup_date,
                         ).exists()
+                        if not double_check_conflict:
+                            double_check_conflict = BlackoutDate.objects.filter(
+                                listing=listing_locked,
+                                start_date__lt=return_date,
+                                end_date__gte=pickup_date,
+                            ).exists()
                         if double_check_conflict:
                             return Response(
                                 {'error': 'Listing is not available for the selected dates'},
@@ -832,3 +849,155 @@ class PartnerCustomerInfoView(APIView):
                 'error': 'An error occurred',
                 'message': error_msg if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class WhatsAppBookingView(APIView):
+    """Create a Booking in `pending_whatsapp` state and return a wa.me deep
+    link. The renter is redirected into WhatsApp; the partner accepts or
+    rejects from their existing Telegram bot via inline buttons.
+
+    Money does not move here — confirmation is "I'll meet you at pickup."
+    Online payment is a Horizon-2 follow-up.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        listing_id = request.data.get('listing_id') or request.data.get('listing')
+        pickup_date_str = request.data.get('pickup_date')
+        return_date_str = request.data.get('return_date')
+
+        if not listing_id or not pickup_date_str or not return_date_str:
+            return Response(
+                {'error': 'listing_id, pickup_date, and return_date are required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            listing_id = int(listing_id)
+        except (TypeError, ValueError):
+            return Response({'error': 'Invalid listing_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            listing = Listing.objects.select_related('partner').get(pk=listing_id)
+        except Listing.DoesNotExist:
+            return Response({'error': 'Listing not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not listing.is_available:
+            return Response({'error': 'Listing is not available'}, status=status.HTTP_400_BAD_REQUEST)
+
+        partner = listing.partner
+        if not partner or not partner.whatsapp_phone_number:
+            return Response(
+                {'error': 'This partner has not enabled WhatsApp booking yet.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            pickup_date = datetime.strptime(pickup_date_str, '%Y-%m-%d').date()
+            return_date = datetime.strptime(return_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid date format. Use YYYY-MM-DD'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        today = timezone.now().date()
+        if pickup_date < today:
+            return Response({'error': 'Pickup date cannot be in the past'}, status=status.HTTP_400_BAD_REQUEST)
+        if return_date <= pickup_date:
+            return Response({'error': 'Return date must be after pickup date'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Refuse if any active booking or blackout overlaps these dates.
+        if Booking.objects.filter(
+            listing=listing,
+            status__in=['pending', 'pending_whatsapp', 'confirmed', 'active'],
+            pickup_date__lt=return_date,
+            return_date__gt=pickup_date,
+        ).exists():
+            return Response(
+                {'error': 'Listing is not available for the selected dates'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if BlackoutDate.objects.filter(
+            listing=listing,
+            start_date__lt=return_date,
+            end_date__gte=pickup_date,
+        ).exists():
+            return Response(
+                {'error': 'Listing is unavailable on the selected dates (partner blackout)'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        days = (return_date - pickup_date).days
+        security_deposit = listing.security_deposit if listing.security_deposit is not None else DEFAULT_SAFE_DEPOSIT_AMOUNT
+        total_amount = (listing.price_per_day * days) + security_deposit + SERVICE_FEE_AMOUNT
+
+        # Reserve token before save so we can pass it to the serializer.
+        # The booking_id-bound digest is generated after save (we need the id).
+        with transaction.atomic():
+            booking = Booking.objects.create(
+                listing=listing,
+                customer=request.user,
+                partner=partner,
+                pickup_date=pickup_date,
+                return_date=return_date,
+                pickup_location=listing.location,
+                return_location=listing.location,
+                total_amount=total_amount,
+                status='pending_whatsapp',
+                payment_status='pending',
+                payment_method='cash',
+                whatsapp_initiated_at=timezone.now(),
+                confirmation_channel='whatsapp',
+            )
+            token = generate_booking_token(booking.id, partner.id)
+            booking.whatsapp_signed_token = token
+            booking.save(update_fields=['whatsapp_signed_token'])
+
+        vehicle_label = f'{listing.year} {listing.make} {listing.model}'.strip()
+        prefilled = build_prefilled_message(
+            booking.id, vehicle_label, pickup_date, return_date, token,
+        )
+        wa_url = build_wa_me_url(partner.whatsapp_phone_number, prefilled)
+
+        # Notify the partner on Telegram with inline accept/reject buttons.
+        # Best-effort — failures don't block the renter.
+        try:
+            partner_chat_id = getattr(partner.user, 'telegram_chat_id', None)
+            if partner_chat_id:
+                customer_label = (
+                    request.user.first_name or request.user.username or 'A renter'
+                )
+                lines = [
+                    '<b>New WhatsApp booking request</b>',
+                    f'#{booking.id} — {vehicle_label}',
+                    f'From: {customer_label}',
+                    f'Dates: {pickup_date} → {return_date}',
+                    f'Total: {total_amount} MAD',
+                ]
+                reply_markup = {
+                    'inline_keyboard': [[
+                        {'text': '✅ Accept', 'callback_data': f'wa_accept:{booking.id}:{token}'},
+                        {'text': '❌ Reject', 'callback_data': f'wa_reject:{booking.id}:{token}'},
+                    ]],
+                }
+                send_telegram_message(
+                    str(partner_chat_id),
+                    '\n'.join(lines),
+                    parse_mode='HTML',
+                    reply_markup=reply_markup,
+                )
+        except Exception as exc:
+            if settings.DEBUG:
+                print(f'Telegram notify failed for WhatsApp booking {booking.id}: {exc}')
+
+        return Response({
+            'data': {
+                'booking_id': booking.id,
+                'status': booking.status,
+                'whatsapp_url': wa_url,
+                'partner_phone': partner.whatsapp_phone_number,
+                'total_amount': str(total_amount),
+            },
+            'message': 'Booking initiated. Continue the conversation on WhatsApp.',
+        }, status=status.HTTP_201_CREATED)

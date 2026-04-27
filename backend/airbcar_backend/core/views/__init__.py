@@ -7,25 +7,29 @@ import traceback
 
 # Import views with error handling to prevent import-time failures
 try:
-    from .listing_views import ListingListView, ListingDetailView
+    from .listing_views import (
+        ListingListView, ListingDetailView,
+        ListingBlackoutListView, ListingBlackoutDetailView,
+    )
 except Exception as e:
     print(f"Error importing listing_views: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
     ListingListView = None
     ListingDetailView = None
+    ListingBlackoutListView = ListingBlackoutDetailView = None
 
 try:
     from .booking_views import (
         BookingListView, BookingPendingRequestsView, BookingUpcomingView,
         BookingCancelView, BookingAcceptView, BookingRejectView,
-        BookingDetailView, PartnerCustomerInfoView
+        BookingDetailView, PartnerCustomerInfoView, WhatsAppBookingView,
     )
 except Exception as e:
     print(f"Error importing booking_views: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
     BookingListView = BookingPendingRequestsView = BookingUpcomingView = None
     BookingCancelView = BookingAcceptView = BookingRejectView = None
-    BookingDetailView = PartnerCustomerInfoView = None
+    BookingDetailView = PartnerCustomerInfoView = WhatsAppBookingView = None
 
 try:
     from .user_views import (
@@ -172,11 +176,13 @@ except Exception as e:
 
 # Import admin views from existing admin_views.py
 try:
-    from ..admin_views import AdminStatsView, AdminAnalyticsView, AdminRevenueView
+    from ..admin_views import (
+        AdminStatsView, AdminAnalyticsView, AdminRevenueView, AdminPartnerVerifyView,
+    )
 except Exception as e:
     print(f"Error importing admin_views: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
-    AdminStatsView = AdminAnalyticsView = AdminRevenueView = None
+    AdminStatsView = AdminAnalyticsView = AdminRevenueView = AdminPartnerVerifyView = None
 
 __all__ = [
     # Social
@@ -190,10 +196,11 @@ __all__ = [
     'CommunityPostViewSet',
     # Listings
     'ListingListView', 'ListingDetailView',
+    'ListingBlackoutListView', 'ListingBlackoutDetailView',
     # Bookings
     'BookingListView', 'BookingPendingRequestsView', 'BookingUpcomingView',
     'BookingCancelView', 'BookingAcceptView', 'BookingRejectView',
-    'BookingDetailView', 'PartnerCustomerInfoView',
+    'BookingDetailView', 'PartnerCustomerInfoView', 'WhatsAppBookingView',
     # Users
     'UserListView', 'UserMeView', 'UserStatsView', 'ChangePasswordView', 'UserDetailView',
     # Favorites
@@ -215,6 +222,6 @@ __all__ = [
     # Newsletter
     'NewsletterSubscribeView',
     # Admin
-    'AdminStatsView', 'AdminAnalyticsView', 'AdminRevenueView',
+    'AdminStatsView', 'AdminAnalyticsView', 'AdminRevenueView', 'AdminPartnerVerifyView',
 ]
 

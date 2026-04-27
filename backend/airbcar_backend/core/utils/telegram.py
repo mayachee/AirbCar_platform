@@ -21,8 +21,16 @@ def _is_enabled() -> bool:
     )
 
 
-def send_telegram_message(chat_id: str, text: str, parse_mode: str | None = None) -> bool:
+def send_telegram_message(
+    chat_id: str,
+    text: str,
+    parse_mode: str | None = None,
+    reply_markup: dict | None = None,
+) -> bool:
     """Send a Telegram message using the Bot API.
+
+    `reply_markup` may be any Telegram reply_markup object (inline_keyboard,
+    keyboard, etc.). It will be JSON-encoded for the form post.
 
     Returns True on success, False otherwise.
     """
@@ -39,6 +47,8 @@ def send_telegram_message(chat_id: str, text: str, parse_mode: str | None = None
     }
     if parse_mode:
         payload['parse_mode'] = parse_mode
+    if reply_markup is not None:
+        payload['reply_markup'] = json.dumps(reply_markup)
 
     body = urllib.parse.urlencode(payload).encode('utf-8')
     request = urllib.request.Request(api_url, data=body, method='POST')
@@ -55,6 +65,63 @@ def send_telegram_message(chat_id: str, text: str, parse_mode: str | None = None
     except Exception as exc:
         logger.warning('Telegram send failed: %s', exc)
 
+    return False
+
+
+def answer_callback_query(callback_query_id: str, text: str = '', show_alert: bool = False) -> bool:
+    """Acknowledge an inline-button press. Required by Telegram so the
+    spinning loader on the user's button stops."""
+    if not callback_query_id or not _is_enabled():
+        return False
+
+    token = settings.TELEGRAM_BOT_TOKEN
+    api_url = f"https://api.telegram.org/bot{token}/answerCallbackQuery"
+
+    payload = {'callback_query_id': str(callback_query_id)}
+    if text:
+        payload['text'] = text
+    if show_alert:
+        payload['show_alert'] = 'true'
+
+    body = urllib.parse.urlencode(payload).encode('utf-8')
+    request = urllib.request.Request(api_url, data=body, method='POST')
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            raw = response.read().decode('utf-8', errors='ignore')
+            data = json.loads(raw) if raw else {}
+            return bool(data.get('ok'))
+    except Exception as exc:
+        logger.warning('Telegram callback ack failed: %s', exc)
+    return False
+
+
+def edit_message_text(chat_id: str, message_id: int, text: str, parse_mode: str | None = None) -> bool:
+    """Edit a previously-sent message (used after accept/reject to remove
+    the inline buttons and show the resolved state)."""
+    if not chat_id or not message_id or not _is_enabled():
+        return False
+
+    token = settings.TELEGRAM_BOT_TOKEN
+    api_url = f"https://api.telegram.org/bot{token}/editMessageText"
+
+    payload = {
+        'chat_id': str(chat_id),
+        'message_id': str(message_id),
+        'text': text,
+        'disable_web_page_preview': True,
+    }
+    if parse_mode:
+        payload['parse_mode'] = parse_mode
+
+    body = urllib.parse.urlencode(payload).encode('utf-8')
+    request = urllib.request.Request(api_url, data=body, method='POST')
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            raw = response.read().decode('utf-8', errors='ignore')
+            data = json.loads(raw) if raw else {}
+            return bool(data.get('ok'))
+    except Exception as exc:
+        logger.warning('Telegram edit failed: %s', exc)
     return False
 
 

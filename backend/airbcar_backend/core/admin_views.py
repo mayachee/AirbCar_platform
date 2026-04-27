@@ -470,3 +470,39 @@ class AdminRevenueView(APIView):
                 'error': 'An error occurred while fetching revenue analytics.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class AdminPartnerVerifyView(APIView):
+    """Toggle a partner's verified-agency status. Admin/staff only."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, partner_id):
+        user = request.user
+        if user.role != 'admin' and not user.is_superuser and not user.is_staff:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            partner = Partner.objects.get(pk=partner_id)
+        except Partner.DoesNotExist:
+            return Response({'error': 'Partner not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Accept either an explicit value or treat the call as a toggle.
+        raw = request.data.get('is_verified', None)
+        if raw is None:
+            new_value = not partner.is_verified
+        elif isinstance(raw, str):
+            new_value = raw.lower() in ('true', '1', 'yes')
+        else:
+            new_value = bool(raw)
+
+        partner.is_verified = new_value
+        partner.verified_at = timezone.now() if new_value else None
+        partner.save(update_fields=['is_verified', 'verified_at', 'updated_at'])
+
+        return Response({
+            'data': {
+                'id': partner.id,
+                'is_verified': partner.is_verified,
+                'verified_at': partner.verified_at.isoformat() if partner.verified_at else None,
+            },
+            'message': 'Partner verification updated.',
+        }, status=status.HTTP_200_OK)
+

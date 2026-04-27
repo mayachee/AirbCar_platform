@@ -5,7 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.utils import timezone
-from .models import User, Partner, Listing, Booking, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord, ListingComment, PartnerPost, TripPost, TripPostComment, TripPostReaction, CommunityPost, CommunityPostComment, CommunityPostReaction, CarShareRequest, B2BMessage, VehicleInspection
+from .models import User, Partner, Listing, Booking, BlackoutDate, Favorite, Review, ReviewReport, ReviewVote, Notification, LicenseVerificationRecord, ListingComment, PartnerPost, TripPost, TripPostComment, TripPostReaction, CommunityPost, CommunityPostComment, CommunityPostReaction, CarShareRequest, B2BMessage, VehicleInspection
 from .utils.license_verification import verify_driving_license_images
 from .utils.license_verification_persistence import store_license_verification_result
 
@@ -333,11 +333,12 @@ class PartnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Partner
         fields = ['id', 'user', 'username', 'business_name', 'business_type', 'business_license',
-                  'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'rating', 'review_count',
+                  'tax_id', 'bank_account', 'description', 'logo', 'logo_url', 'is_verified', 'verified_at',
+                  'whatsapp_phone_number', 'rating', 'review_count',
                   'total_bookings', 'total_earnings', 'created_at', 'min_price_per_day', 'companyName', 'businessName',
                    'phone_number', 'first_name', 'last_name', 'company_name',
                    'address', 'city', 'state', 'elite_status', 'response_time', 'experience_years']
-        read_only_fields = ['id', 'created_at', 'logo_url']
+        read_only_fields = ['id', 'created_at', 'logo_url', 'verified_at']
         extra_kwargs = {
             'logo': {'write_only': True},
             'business_name': {'required': False},
@@ -1239,6 +1240,22 @@ class VehicleInspectionSerializer(serializers.ModelSerializer):
         model = VehicleInspection
         fields = ['id', 'car_share_request', 'stage', 'recorded_by', 'mileage', 'fuel_level', 'images', 'condition_notes', 'is_approved', 'created_at']
         read_only_fields = ['id', 'car_share_request', 'recorded_by', 'created_at']
+
+
+class BlackoutDateSerializer(serializers.ModelSerializer):
+    """Partner-set unavailability windows on a listing."""
+
+    class Meta:
+        model = BlackoutDate
+        fields = ['id', 'listing', 'start_date', 'end_date', 'reason', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate(self, data):
+        start = data.get('start_date') or getattr(self.instance, 'start_date', None)
+        end = data.get('end_date') or getattr(self.instance, 'end_date', None)
+        if start and end and end < start:
+            raise serializers.ValidationError({'end_date': 'end_date must be on or after start_date.'})
+        return data
 
 
 
