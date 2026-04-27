@@ -4,6 +4,7 @@ import { Suspense, lazy } from 'react';
 import { ChevronLeft, ChevronRight, Wifi, WifiOff, Server, ServerOff, Building2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 
 const QuickActionsPanel = lazy(() => import('@/features/partner/components/QuickActionsPanel'));
 
@@ -26,6 +27,7 @@ export default function DashboardSidebar({
   isMobile = false
 }) {
   const t = useTranslations('partner');
+  const router = useRouter();
   const mobileVariants = {
     open: { x: 0 },
     closed: { x: '-100%' }
@@ -122,7 +124,15 @@ export default function DashboardSidebar({
               transition={{ delay: index * 0.05 }}
               whileHover={{ x: sidebarCollapsed ? 0 : 4 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setCurrentView(item.id)}
+              onClick={() => {
+                // Items with `href` navigate to a separate route (e.g. the
+                // dedicated B2B section). Plain items just switch the in-page view.
+                if (item.href) {
+                  router.push(item.href);
+                  return;
+                }
+                setCurrentView(item.id);
+              }}
               className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-all duration-200 group ${
                 currentView === item.id
                   ? 'bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white shadow-md'
