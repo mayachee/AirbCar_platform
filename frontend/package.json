@@ -13,7 +13,11 @@
     "build:clean": "node clear-build.js && next build --webpack",
     "build:no-cache": "DISABLE_WEBPACK_CACHE=true next build --webpack",
     "start": "next start -p 3001",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

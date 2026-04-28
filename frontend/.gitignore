@@ -52,6 +52,7 @@ Thumbs.db
 /test-results
 /playwright-report
 /playwright/.cache
+/playwright/.auth/
 
 # Cache
 node_modules/.cache/
