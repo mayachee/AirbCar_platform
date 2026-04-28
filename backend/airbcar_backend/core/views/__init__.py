@@ -51,12 +51,12 @@ try:
     from .partner_views import (
         PartnerListView, PartnerMeView, PartnerDetailView,
         PartnerEarningsView, PartnerAnalyticsView, PartnerReviewsView, PartnerActivityView,
-        PartnerPublicReviewsView, CarShareRequestViewSet
+        PartnerPublicReviewsView, CarShareRequestViewSet, B2BListingSearchView
     )
 except Exception as e:
     print(f"Error importing partner_views: {e}", file=sys.stderr)
     traceback.print_exc(file=sys.stderr)
-    PartnerListView = PartnerMeView = PartnerDetailView = None
+    PartnerListView = PartnerMeView = PartnerDetailView = B2BListingSearchView = None
     PartnerEarningsView = PartnerAnalyticsView = PartnerReviewsView = PartnerActivityView = None
     PartnerPublicReviewsView = None
 
@@ -208,7 +208,7 @@ __all__ = [
     # Partners
     'PartnerListView', 'PartnerMeView', 'PartnerDetailView',
     'PartnerEarningsView', 'PartnerAnalyticsView', 'PartnerReviewsView', 'PartnerActivityView',
-    'PartnerPublicReviewsView',
+    'PartnerPublicReviewsView', 'B2BListingSearchView',
     # Reviews
     'ReviewListView', 'CanReviewView', 'ReviewDetailView',
     'ReviewVoteView', 'ReviewRespondView', 'ReviewPublishView',

@@ -78,6 +78,7 @@ urlpatterns = [
 
     # Partners endpoints
     path('partners/', getattr(views, 'PartnerListView', views.RootView).as_view(), name='partner-list'),
+    path('partners/b2b/listings/', getattr(views, 'B2BListingSearchView', views.RootView).as_view(), name='partner-b2b-listings'),
     path('partners/me/', getattr(views, 'PartnerMeView', views.RootView).as_view(), name='partner-me'),
     path('partners/me/earnings/', getattr(views, 'PartnerEarningsView', views.RootView).as_view(), name='partner-earnings'),
     path('partners/me/analytics/', getattr(views, 'PartnerAnalyticsView', views.RootView).as_view(), name='partner-analytics'),

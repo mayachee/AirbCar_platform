@@ -205,6 +205,8 @@ class Listing(models.Model):
     # Basic Information
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='listings')
     public_id = models.CharField(max_length=50, unique=True, db_index=True, blank=True, null=True, help_text="Public short ID for inter-agency sharing")
+    is_b2b_enabled = models.BooleanField(default=False, help_text="Available for B2B sharing")
+    b2b_price_per_day = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="B2B daily rate")
     make = models.CharField(max_length=100)  # brand
     model = models.CharField(max_length=100)
     year = models.IntegerField()
@@ -405,6 +407,7 @@ class Booking(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE, related_name='bookings')
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='bookings')
+    is_b2b = models.BooleanField(default=False, help_text="Indicates if this is a B2B booking")
     
     # Dates
     pickup_date = models.DateField()

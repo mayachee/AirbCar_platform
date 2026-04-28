@@ -619,6 +619,8 @@ class ListingSerializer(serializers.ModelSerializer):
     images = serializers.JSONField(required=False)
     is_available = serializers.BooleanField(required=False)
     instant_booking = serializers.BooleanField(required=False)
+    is_b2b_enabled = serializers.BooleanField(required=False)
+    b2b_price_per_day = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
     
     class Meta:
         model = Listing
@@ -631,6 +633,7 @@ class ListingSerializer(serializers.ModelSerializer):
             'vehicle_description', 'description', 'available_features', 'features',
             'images', 'is_available', 'isAvailable', 'is_verified', 'verified',
             'instant_booking', 'instantBooking', 'rating', 'review_count', 'reviewCount',
+            'is_b2b_enabled', 'b2b_price_per_day',
             'created_at', 'updated_at', 'name'
         ]
         # Only include actual model fields, aliases are handled in to_representation
@@ -810,6 +813,7 @@ class BookingSerializer(serializers.ModelSerializer):
     end_time = serializers.DateField(source='return_date', read_only=True)
     price = serializers.DecimalField(source='total_amount', max_digits=10, decimal_places=2, read_only=True)
     requested_at = serializers.DateTimeField(source='created_at', read_only=True)
+    is_b2b = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = Booking
@@ -820,6 +824,7 @@ class BookingSerializer(serializers.ModelSerializer):
             'total_amount', 'price', 'status', 'payment_status', 'payment_method', 
             'request_message', 'rejection_reason',
             'license_front_document', 'license_back_document',
+            'is_b2b',
             'created_at', 'updated_at', 'requested_at',
             'start_date', 'end_date', 'start_time', 'end_time',
         ]

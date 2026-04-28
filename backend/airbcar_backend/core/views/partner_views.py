@@ -1245,3 +1245,59 @@ class CarShareRequestViewSet(viewsets.ModelViewSet):
             
         serializer = VehicleInspectionSerializer(inspection)
         return Response(serializer.data, status=status.HTTP_200_OK)
+class B2BListingSearchView(APIView):
+    """B2B inventory search — listings flagged ``is_b2b_enabled`` from
+    *other* partners. Powers the V1 Marketplace, V3 Browse, and V5 Map.
+
+    Permissive on cold DBs: if the column or row hasn't been populated yet
+    we return an empty list rather than a 500, so the V1-V5 pages stay
+    interactive while supply is still being onboarded.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.db.utils import ProgrammingError, OperationalError
+
+        user = request.user
+        try:
+            partner = user.partner_profile
+        except Partner.DoesNotExist:
+            partner = None
+        is_admin = user.is_staff or user.is_superuser or user.role == 'admin'
+        if not partner and not is_admin:
+            return Response(
+                {"error": "Only partners can access B2B listings."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        queryset = Listing.objects.filter(
+            is_b2b_enabled=True,
+            is_available=True,
+        ).select_related('partner', 'partner__user')
+        if partner:
+            queryset = queryset.exclude(partner=partner)
+
+        make = request.query_params.get('make')
+        if make:
+            queryset = queryset.filter(make__iexact=make)
+
+        location = request.query_params.get('location')
+        if location:
+            queryset = queryset.filter(location__icontains=location)
+
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(make__icontains=search)
+                | Q(model__icontains=search)
+                | Q(partner__business_name__icontains=search)
+            )
+
+        try:
+            data = ListingSerializer(queryset, many=True, context={'request': request}).data
+        except (ProgrammingError, OperationalError):
+            # Migration 0043 hasn't run yet on this environment.
+            data = []
+        return Response({'data': data, 'count': len(data)}, status=status.HTTP_200_OK)
+
+
