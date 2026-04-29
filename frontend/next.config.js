@@ -43,6 +43,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'airbcar-backend.onrender.com',
         pathname: '/media/**',
       },

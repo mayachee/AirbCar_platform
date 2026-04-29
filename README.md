@@ -85,6 +85,11 @@ The project includes GitHub Actions workflows for automatic deployment:
 - **Deploy**: Automated deployment pipeline
 
 
+cd frontend
+npx playwright test tests-e2e/partner-dashboard.spec.ts tests-e2e/marketplace.spec.ts
+
+cd frontend
+npx playwright test --ui
 
 
 

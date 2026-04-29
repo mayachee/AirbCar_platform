@@ -16,11 +16,17 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
+  // Run tests serially: the local Next.js dev server thrashes under
+  // concurrent page loads (each page hit triggers fresh module compilation),
+  // which causes ERR_CONNECTION_REFUSED in parallel runs. Serial keeps it
+  // under 2 minutes for the current suite. Bump when we point baseURL at a
+  // pre-built Vercel preview.
+  workers: 1,
   reporter: isCI ? [['github'], ['html', { open: 'never' }]] : [['list'], ['html', { open: 'never' }]],
 
+  timeout: 60_000,
   expect: {
-    timeout: 5_000,
+    timeout: 10_000,
   },
 
   use: {
@@ -28,8 +34,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 10_000,
-    navigationTimeout: 15_000,
+    actionTimeout: 30_000,
+    navigationTimeout: 60_000,
   },
 
   projects: [

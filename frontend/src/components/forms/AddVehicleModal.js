@@ -83,7 +83,9 @@ export default function AddVehicleModal({
         color: vehicleData.color || 'White',
         pictures: existingImages,
         is_available: vehicleData.is_available !== undefined ? vehicleData.is_available : true,
-        instant_booking: vehicleData.instant_booking !== undefined ? vehicleData.instant_booking : false
+        instant_booking: vehicleData.instant_booking !== undefined ? vehicleData.instant_booking : false,
+        is_b2b_enabled: vehicleData.is_b2b_enabled !== undefined ? vehicleData.is_b2b_enabled : false,
+        b2b_price_per_day: vehicleData.b2b_price_per_day || ''
       });
     } else {
       // Add Mode: Reset form to defaults
@@ -103,17 +105,20 @@ export default function AddVehicleModal({
         color: 'White',
         pictures: [],
         is_available: true,
-        instant_booking: false
+        instant_booking: false,
+        is_b2b_enabled: false,
+        b2b_price_per_day: ''
       });
     }
   }, [vehicleData?.id, showModal]); // Only re-run if ID changes or modal visibility changes
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    const actualValue = type === 'checkbox' ? checked : value;
     console.log(`📝 Field Changed: ${name} =`, value);
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: actualValue
     }));
     
     // Clear error when user starts typing
@@ -278,6 +283,8 @@ export default function AddVehicleModal({
         location: formData.location,
         vehicle_description: formData.description || '',
         available_features: formData.features || [],
+        is_b2b_enabled: formData.is_b2b_enabled,
+        b2b_price_per_day: formData.is_b2b_enabled ? b2bPriceValue : null,
         fuel_type: formData.fuel_type,
         transmission: formData.transmission,
         seating_capacity: formData.seating_capacity || 5,
@@ -285,6 +292,8 @@ export default function AddVehicleModal({
         color: formData.color || 'White',
         is_available: true,
         instant_booking: false,
+        is_b2b_enabled: formData.is_b2b_enabled,
+        b2b_price_per_day: formData.is_b2b_enabled ? formData.b2b_price_per_day : null,
         images: imagesArray // Include existing image URLs (new file uploads not supported in bulk)
       };
 
@@ -329,7 +338,9 @@ export default function AddVehicleModal({
         color: 'White',
         pictures: [],
         is_available: true,
-        instant_booking: false
+        instant_booking: false,
+        is_b2b_enabled: false,
+        b2b_price_per_day: ''
       });
       setErrors({});
       setBulkMode(false);
@@ -489,6 +500,7 @@ export default function AddVehicleModal({
       const priceValue = formData.price_per_day ? parseFloat(formData.price_per_day) : null;
       const securityDepositValue = formData.security_deposit ? parseFloat(formData.security_deposit) : null;
       const seatingValue = formData.seating_capacity ? parseInt(formData.seating_capacity, 10) : null;
+      const b2bPriceValue = (formData.is_b2b_enabled && formData.b2b_price_per_day) ? parseFloat(formData.b2b_price_per_day) : null;
       
       // Validate parsed values
       if (isNaN(yearValue) || yearValue < 1900 || yearValue > new Date().getFullYear() + 1) {
@@ -514,6 +526,11 @@ export default function AddVehicleModal({
         setLoading(false);
         return;
       }
+      if (formData.is_b2b_enabled && (isNaN(b2bPriceValue) || b2bPriceValue <= 0)) {
+        setErrors({ b2b_price_per_day: 'Please enter a valid B2B daily rate' });
+        setLoading(false);
+        return;
+      }
       
       // Prepare data in the format expected by backend
       const vehicleData = {
@@ -529,7 +546,9 @@ export default function AddVehicleModal({
         vehicle_style: formData.vehicle_style || 'sedan',
         color: formData.color || 'White',
         vehicle_description: formData.description?.trim() || '',
-        available_features: formData.features || [], // Use available_features for backend
+        available_features: formData.features || [],
+        is_b2b_enabled: formData.is_b2b_enabled,
+        b2b_price_per_day: formData.is_b2b_enabled ? b2bPriceValue : null, // Use available_features for backend
       };
 
       // Validate all required fields are present
@@ -667,7 +686,9 @@ export default function AddVehicleModal({
         color: 'White',
         pictures: [],
         is_available: true,
-        instant_booking: false
+        instant_booking: false,
+        is_b2b_enabled: false,
+        b2b_price_per_day: ''
       });
       setErrors({});
     } catch (error) {
