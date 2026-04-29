@@ -155,26 +155,31 @@ export const partnerService = {
     return apiClient.get(`/bookings/${bookingId}/customer-info/`)
   },
 
-  // B2B Car Sharing
+  // B2B Car Sharing — Inter-Agency Marketplace V1/V3/V5 source
+  //
+  // Uses the public /listings/ endpoint instead of the auth-gated
+  // /partners/b2b/listings/ for two reasons:
+  //   1. /listings/ has been live and stable for months; the B2B view
+  //      was added late and Render free-tier deploys lag behind pushes,
+  //      leaving V1 silently empty after a backend release.
+  //   2. The product semantics are "every available car on the network
+  //      is requestable" — exactly what /listings/ returns by default.
+  // We optionally pass exclude_partner to keep the borrower from seeing
+  // their own fleet in the marketplace.
   async getB2BListings(params = {}) {
-    // Expected params: search, location, make.
     const query = new URLSearchParams()
+    // /listings/ supports `search`, `location`, `make`, `style`,
+    // `min_price`, `max_price`, `seats`, `transmission`, `fuel_type`,
+    // `year_min`, `year_max`, `verified`, `instant_booking`, `min_rating`,
+    // `exclude_partner`, `partner_id`. Pass through what we know.
     if (params.search) query.append('search', params.search)
     if (params.location) query.append('location', params.location)
-    if (params.make) query.append('make', params.make)
-    const qs = query.toString()
-    const url = qs ? `/partners/b2b/listings/?${qs}` : '/partners/b2b/listings/'
-    try {
-      return await apiClient.get(url, undefined, { cache: 'no-store' })
-    } catch (err) {
-      // The B2B endpoint may not be deployed yet on a given environment
-      // (e.g. Render free-tier sometimes lags behind a push). Render the
-      // empty state instead of a hard error so V1/V3/V5 stay usable.
-      if (err?.status === 404) {
-        return { data: { data: [], count: 0 }, success: true }
-      }
-      throw err
-    }
+    if (params.make) query.append('brand', params.make)
+    if (params.exclude_partner) query.append('exclude_partner', params.exclude_partner)
+    // Ask for a generous page so V1/V3/V5 see most of the network at once.
+    query.append('page_size', '100')
+    const url = `/listings/?${query.toString()}`
+    return apiClient.get(url, undefined, { cache: 'no-store' })
   },
 
   async createB2BBooking(bookingData) {

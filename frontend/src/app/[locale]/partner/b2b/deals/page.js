@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import {
   Loader2, AlertCircle, Calendar, Car, FileText, ArrowRight, ArrowLeft, Send,
+  MessageCircle, Clock,
 } from 'lucide-react'
 
 import { partnerService } from '@/features/partner/services/partnerService'
@@ -14,12 +16,13 @@ import { useToast } from '@/contexts/ToastContext'
 /**
  * V2 · Negotiation Flow.
  *
- * Active deal pipeline. Each card shows the price-history thread (parsed
- * from the chat messages exchanged on this CarShareRequest), an inline
- * counter-offer input, and Accept/Reject actions for the lender side.
+ * The deals page is a quiet room of conversations between agencies. Each
+ * card is a paragraph of dialogue: who asked, who answered, at what price,
+ * with the back-and-forth surfaced as a price exchange you can read in
+ * one glance. Calmer than a CRM, more useful than a chat log.
  */
 export default function B2BNegotiationFlow() {
-  const [tab, setTab] = useState('incoming') // incoming | outgoing | closed
+  const [tab, setTab] = useState('incoming')
   const queryClient = useQueryClient()
   const { showToast } = useToast()
 
@@ -40,14 +43,21 @@ export default function B2BNegotiationFlow() {
     return Array.isArray(raw) ? raw : []
   }, [shares.data])
 
-  const incoming = rows.filter((r) => r.owner?.id === myPartnerId && ['pending', 'accepted'].includes(r.status))
-  const outgoing = rows.filter((r) => r.requester?.id === myPartnerId && ['pending', 'accepted'].includes(r.status))
-  const closed = rows.filter((r) => ['rejected', 'completed', 'cancelled', 'active'].includes(r.status))
+  const incoming = rows.filter(
+    (r) => r.owner?.id === myPartnerId && ['pending', 'accepted'].includes(r.status),
+  )
+  const outgoing = rows.filter(
+    (r) => r.requester?.id === myPartnerId && ['pending', 'accepted'].includes(r.status),
+  )
+  const closed = rows.filter((r) =>
+    ['rejected', 'completed', 'cancelled', 'active'].includes(r.status),
+  )
 
   const visible = tab === 'incoming' ? incoming : tab === 'outgoing' ? outgoing : closed
 
   const updateStatus = useMutation({
-    mutationFn: ({ requestId, status }) => partnerService.updateCarShareRequestStatus(requestId, status),
+    mutationFn: ({ requestId, status }) =>
+      partnerService.updateCarShareRequestStatus(requestId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['b2b', 'car-shares'] })
       showToast('Deal updated.', 'success')
@@ -58,61 +68,76 @@ export default function B2BNegotiationFlow() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       <B2BSubNav />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Active Deals</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Counter-offer, accept, or decline B2B share requests. Acceptance auto-issues a contract.
+      {/* Hero */}
+      <section className="border-b border-stone-200 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-12">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-orange-600">
+            Conversations in progress
           </p>
-        </div>
+          <h1 className="mt-3 text-4xl lg:text-5xl font-black tracking-tight text-stone-900 leading-[1.05]">
+            Active deals,{' '}
+            <span className="italic font-light text-stone-500">priced and pending.</span>
+          </h1>
+          <p className="mt-4 text-base text-stone-600 leading-relaxed max-w-2xl">
+            Counter, accept, or step away. Every accepted deal auto-issues a contract; every
+            counter is sent as a message your counterpart sees on their dashboard.
+          </p>
 
-        {/* Tabs */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-          <div className="flex gap-1 px-2 py-2">
+          {/* Tabs */}
+          <div className="mt-8 flex gap-1 bg-stone-100 rounded-full p-1 w-max">
             {[
-              { id: 'incoming', label: `Incoming (${incoming.length})` },
-              { id: 'outgoing', label: `Outgoing (${outgoing.length})` },
-              { id: 'closed', label: `Closed (${closed.length})` },
+              { id: 'incoming', label: 'Incoming', count: incoming.length },
+              { id: 'outgoing', label: 'Outgoing', count: outgoing.length },
+              { id: 'closed', label: 'Closed', count: closed.length },
             ].map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
-                  tab === t.id ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'
+                className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${
+                  tab === t.id
+                    ? 'bg-stone-900 text-white shadow-sm'
+                    : 'text-stone-500 hover:text-stone-900'
                 }`}
               >
                 {t.label}
+                <span className={`ml-2 ${tab === t.id ? 'text-white/70' : 'text-stone-400'}`}>
+                  {t.count}
+                </span>
               </button>
             ))}
           </div>
         </div>
+      </section>
 
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-5">
         {shares.isLoading && (
-          <div className="flex flex-col items-center py-12 text-gray-500">
+          <div className="flex flex-col items-center py-16 text-stone-400">
             <Loader2 className="w-8 h-8 animate-spin text-orange-500 mb-3" />
-            <p>Loading deals…</p>
+            <p className="text-sm">Reading the room…</p>
           </div>
         )}
         {shares.isError && (
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700">
+          <div className="flex items-start gap-3 p-5 rounded-2xl bg-red-50 border border-red-200 text-red-700">
             <AlertCircle className="w-5 h-5 mt-0.5" />
             <p className="text-sm">Could not load your deals. Try again in a moment.</p>
           </div>
         )}
         {!shares.isLoading && !shares.isError && visible.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-gray-200">
-            <Car className="w-10 h-10 mb-3 text-gray-300" />
-            <p className="text-lg font-semibold text-gray-900">Nothing here yet.</p>
-            <p className="text-sm text-gray-500 mt-1">
-              {tab === 'incoming'
-                ? 'No agencies have requested your fleet yet.'
-                : tab === 'outgoing'
-                ? 'You have not requested any cars from other agencies.'
-                : 'Closed deals will appear here once any are settled.'}
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-stone-300 text-center px-6">
+            <MessageCircle className="w-10 h-10 mb-3 text-stone-300" />
+            <p className="text-lg font-semibold text-stone-900">
+              {tab === 'incoming' && 'No agencies are asking for your fleet yet.'}
+              {tab === 'outgoing' && 'You haven\'t pitched an agency for a car.'}
+              {tab === 'closed' && 'Closed deals will land here once they settle.'}
+            </p>
+            <p className="text-sm text-stone-500 mt-1 max-w-md">
+              {tab === 'outgoing'
+                ? 'When you find a car on the marketplace, send an offer — it appears here while you negotiate.'
+                : 'The network is quiet. Activity shows up as soon as a request lands.'}
             </p>
           </div>
         )}
@@ -123,12 +148,8 @@ export default function B2BNegotiationFlow() {
               key={request.id}
               request={request}
               myPartnerId={myPartnerId}
-              onAccept={(price) =>
-                updateStatus.mutate({ requestId: request.id, status: 'accepted' })
-              }
-              onReject={() =>
-                updateStatus.mutate({ requestId: request.id, status: 'rejected' })
-              }
+              onAccept={(price) => updateStatus.mutate({ requestId: request.id, status: 'accepted' })}
+              onReject={() => updateStatus.mutate({ requestId: request.id, status: 'rejected' })}
             />
           ))}
         </div>
@@ -136,6 +157,8 @@ export default function B2BNegotiationFlow() {
     </div>
   )
 }
+
+/* ───────────────────── Deal card ───────────────────── */
 
 function DealCard({ request, myPartnerId, onAccept, onReject }) {
   const requester = request.requester || {}
@@ -145,7 +168,6 @@ function DealCard({ request, myPartnerId, onAccept, onReject }) {
   const otherParty = isOwner ? requester : owner
   const vehicleLabel = `${listing.make || ''} ${listing.model || ''} ${listing.year || ''}`.trim()
 
-  // Negotiation thread (price history) is loaded lazily on expand.
   const [expanded, setExpanded] = useState(true)
   const thread = useQuery({
     queryKey: ['b2b', 'car-shares', request.id, 'messages'],
@@ -153,16 +175,14 @@ function DealCard({ request, myPartnerId, onAccept, onReject }) {
     enabled: expanded,
     staleTime: 30_000,
   })
-
   const messages = useMemo(() => {
     const raw = thread.data?.data || thread.data?.results || thread.data || []
     return Array.isArray(raw) ? raw : []
   }, [thread.data])
 
-  // Extract price proposals from message text. We accept the first MAD-looking
-  // number on each line; messages without a number are kept as plain notes.
+  // Parse MAD numbers out of the chat thread to render a price exchange.
   const priceHistory = useMemo(() => {
-    return messages
+    const out = messages
       .map((m) => {
         const match = (m.text || '').match(/(\d[\d\s,.]*)/)
         if (!match) return null
@@ -173,134 +193,164 @@ function DealCard({ request, myPartnerId, onAccept, onReject }) {
           from: m.sender?.business_name || m.sender?.businessName || 'Agency',
           fromIsRequester: m.sender?.id === requester.id,
           price: cleaned,
-          createdAt: m.created_at,
+          when: m.created_at,
         }
       })
       .filter(Boolean)
-  }, [messages, requester.id])
-
-  const initialOffer = Number(request.total_price)
-  if (Number.isFinite(initialOffer) && initialOffer > 0) {
-    const head = {
-      id: 'initial',
-      from: requester.business_name || requester.businessName || 'Requester',
-      fromIsRequester: true,
-      price: initialOffer,
-      createdAt: request.created_at,
+    const initialOffer = Number(request.total_price)
+    if (Number.isFinite(initialOffer) && initialOffer > 0) {
+      const head = {
+        id: 'initial',
+        from: requester.business_name || requester.businessName || 'Requester',
+        fromIsRequester: true,
+        price: initialOffer,
+        when: request.created_at,
+      }
+      if (!out.some((p) => p.price === initialOffer && p.fromIsRequester)) out.unshift(head)
     }
-    if (!priceHistory.some((p) => p.price === initialOffer && p.fromIsRequester)) {
-      priceHistory.unshift(head)
-    }
-  }
+    return out
+  }, [messages, requester, request])
 
-  const lastPrice = priceHistory[priceHistory.length - 1]?.price ?? initialOffer
+  const lastPrice = priceHistory[priceHistory.length - 1]?.price ?? Number(request.total_price)
   const [counter, setCounter] = useState('')
 
-  return (
-    <article className="bg-white border-2 border-gray-200 rounded-xl shadow-sm overflow-hidden">
-      <header className={`px-4 py-3 border-b flex items-center justify-between ${
-        request.status === 'accepted' ? 'bg-green-50 border-green-200'
-          : request.status === 'rejected' ? 'bg-red-50 border-red-200'
-          : 'bg-amber-50 border-amber-200'
-      }`}>
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-bold text-gray-900 truncate">
-            {requester.business_name || 'Requester'}
-            <ArrowRight className="inline w-4 h-4 mx-1 text-gray-400" />
-            {owner.business_name || 'Owner'}
-          </span>
-        </div>
-        <StatusBadge status={request.status} />
-      </header>
+  const accentEdge =
+    request.status === 'accepted'
+      ? 'before:bg-emerald-500'
+      : request.status === 'rejected' || request.status === 'cancelled'
+      ? 'before:bg-stone-300'
+      : request.status === 'active'
+      ? 'before:bg-blue-500'
+      : 'before:bg-orange-500'
 
-      <div className="p-4 flex flex-col sm:flex-row gap-4">
-        <div className="flex items-center gap-3 sm:flex-1 min-w-0">
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className={`relative bg-white border border-stone-200 rounded-3xl overflow-hidden before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 ${accentEdge}`}
+    >
+      <header className="px-6 pt-6 pb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <AgencyAvatar
             name={otherParty.business_name || otherParty.businessName}
             logoUrl={otherParty.logo_url}
             size={40}
           />
           <div className="min-w-0">
-            <p className="font-bold text-gray-900 truncate">{vehicleLabel || 'Vehicle'}</p>
-            <p className="text-xs text-gray-500 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
+            <h3 className="font-bold text-stone-900 text-base leading-tight">
+              {requester.business_name || 'Requester'}
+              <ArrowRight className="inline w-3.5 h-3.5 mx-1.5 text-stone-300" />
+              {owner.business_name || 'Owner'}
+            </h3>
+            <p className="text-[11px] text-stone-400 mt-0.5 inline-flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Started {timeAgo(request.created_at)}
+              <span className="mx-1">·</span>
+              <Calendar className="w-3 h-3" />
               {request.start_date} → {request.end_date}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">
+          </div>
+        </div>
+        <StatusBadge status={request.status} />
+      </header>
+
+      <div className="px-6 pb-4 flex flex-wrap items-end justify-between gap-3 border-b border-stone-100">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-stone-100 flex items-center justify-center shrink-0">
+            <Car className="w-5 h-5 text-stone-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-bold text-stone-900 text-sm truncate">
+              {vehicleLabel || 'Vehicle'}
+            </p>
+            <p className="text-[11px] text-stone-500 truncate">
               {isOwner ? 'Requested by ' : 'You requested from '}
-              <span className="font-semibold text-gray-700">
+              <span className="font-semibold text-stone-700">
                 {(isOwner ? requester : owner).business_name || 'Partner'}
               </span>
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-start sm:items-end justify-center">
-          <p className="text-[10px] uppercase tracking-wider text-gray-500">Latest offer</p>
-          <p className="text-2xl font-black text-orange-600">{formatMad(lastPrice, '')}</p>
+        <div className="text-right">
+          <p className="text-[10px] uppercase tracking-wider text-stone-500">Latest offer</p>
+          <p className="text-2xl font-black text-stone-900">{formatMad(lastPrice, '')}</p>
         </div>
       </div>
 
-      {/* Price history */}
-      <div className="px-4 pb-4">
+      {/* Price exchange */}
+      <div className="px-6 py-4">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-700"
+          className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.15em] text-stone-500 hover:text-stone-700 transition-colors"
         >
-          Price history
-          <span className="text-gray-400">{expanded ? '−' : '+'}</span>
+          The exchange
+          <span className="text-stone-400">{expanded ? '−' : '+'}</span>
         </button>
+
         {expanded && (
-          <div className="mt-3 space-y-1.5 bg-gray-50 rounded-lg p-3 border border-gray-100">
+          <div className="mt-3">
             {thread.isLoading ? (
-              <p className="text-sm text-gray-500">Loading thread…</p>
+              <p className="text-sm text-stone-500">Loading thread…</p>
             ) : priceHistory.length === 0 ? (
-              <p className="text-sm text-gray-500">No counter-offers yet.</p>
+              <p className="text-sm text-stone-500 italic">No counter-offers yet.</p>
             ) : (
-              priceHistory.map((h) => (
-                <div key={h.id} className="flex items-center gap-2 text-sm">
-                  {h.fromIsRequester ? (
-                    <ArrowRight className="w-3.5 h-3.5 text-blue-500" />
-                  ) : (
-                    <ArrowLeft className="w-3.5 h-3.5 text-orange-500" />
-                  )}
-                  <span className="font-semibold text-gray-700 w-32 truncate">{h.from}</span>
-                  <span className="font-bold text-orange-600">{formatMad(h.price, '')}</span>
-                </div>
-              ))
+              <ol className="space-y-2.5">
+                {priceHistory.map((h) => (
+                  <li
+                    key={h.id}
+                    className={`flex items-center ${
+                      h.fromIsRequester ? 'justify-start' : 'justify-end'
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                        h.fromIsRequester
+                          ? 'bg-blue-50 border border-blue-100 rounded-bl-sm'
+                          : 'bg-orange-50 border border-orange-100 rounded-br-sm'
+                      }`}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                        {h.from}
+                      </p>
+                      <p className="text-base font-black text-stone-900">
+                        {formatMad(h.price, '')}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             )}
           </div>
         )}
       </div>
 
-      {/* Inline counter / accept (only when the deal is still open and we are the receiving side) */}
+      {/* Inline counter / accept */}
       {request.status === 'pending' && (
-        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-          <CounterOfferRow
-            request={request}
-            otherParty={otherParty}
-            counter={counter}
-            setCounter={setCounter}
-            onAccept={() => onAccept(lastPrice)}
-            onReject={onReject}
-            canAcceptReject={isOwner}
-          />
-        </div>
+        <CounterOfferRow
+          request={request}
+          counter={counter}
+          setCounter={setCounter}
+          onAccept={() => onAccept(lastPrice)}
+          onReject={onReject}
+          canAcceptReject={isOwner}
+        />
       )}
 
       {request.status === 'accepted' && (
-        <div className="px-4 py-3 border-t border-green-100 bg-green-50 flex items-center justify-between text-sm">
-          <span className="font-semibold text-green-700 inline-flex items-center gap-2">
+        <div className="px-6 py-4 border-t border-emerald-100 bg-emerald-50/60 flex items-center justify-between text-sm">
+          <span className="font-semibold text-emerald-700 inline-flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Contract issued at {formatMad(request.total_price, '/day')}
           </span>
         </div>
       )}
-    </article>
+    </motion.article>
   )
 }
 
-function CounterOfferRow({ request, otherParty, counter, setCounter, onAccept, onReject, canAcceptReject }) {
+function CounterOfferRow({ request, counter, setCounter, onAccept, onReject, canAcceptReject }) {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
 
@@ -326,8 +376,11 @@ function CounterOfferRow({ request, otherParty, counter, setCounter, onAccept, o
   }
 
   return (
-    <form onSubmit={submitCounter} className="flex flex-wrap items-center gap-2">
-      <span className="text-sm text-gray-500 hidden sm:inline">Counter with</span>
+    <form
+      onSubmit={submitCounter}
+      className="px-6 py-4 border-t border-stone-100 bg-stone-50 flex flex-wrap items-center gap-2"
+    >
+      <span className="text-sm text-stone-500 hidden sm:inline">Counter with</span>
       <input
         type="number"
         min="1"
@@ -335,13 +388,13 @@ function CounterOfferRow({ request, otherParty, counter, setCounter, onAccept, o
         value={counter}
         onChange={(e) => setCounter(e.target.value)}
         placeholder="0"
-        className="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+        className="w-28 px-3 py-2 border border-stone-300 rounded-full text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
       />
-      <span className="text-sm text-gray-500">MAD</span>
+      <span className="text-sm text-stone-500">MAD</span>
       <button
         type="submit"
-        disabled={sendCounter.isLoading}
-        className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+        disabled={sendCounter.isPending}
+        className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-stone-900 rounded-full hover:bg-stone-700 disabled:opacity-50"
       >
         <Send className="w-4 h-4" />
         Counter
@@ -351,14 +404,14 @@ function CounterOfferRow({ request, otherParty, counter, setCounter, onAccept, o
           <button
             type="button"
             onClick={onReject}
-            className="px-3 py-2 text-sm font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+            className="px-4 py-2 text-sm font-bold text-stone-600 hover:bg-stone-100 rounded-full transition-colors"
           >
             Decline
           </button>
           <button
             type="button"
             onClick={onAccept}
-            className="px-3 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700"
+            className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-full hover:bg-emerald-700"
           >
             Accept
           </button>
@@ -366,4 +419,16 @@ function CounterOfferRow({ request, otherParty, counter, setCounter, onAccept, o
       )}
     </form>
   )
+}
+
+/* ───────────────────── helpers ───────────────────── */
+
+function timeAgo(iso) {
+  if (!iso) return 'recently'
+  const then = new Date(iso).getTime()
+  const diff = Date.now() - then
+  if (diff < 60_000) return 'a moment ago'
+  if (diff < 3_600_000) return `${Math.round(diff / 60_000)}m ago`
+  if (diff < 86_400_000) return `${Math.round(diff / 3_600_000)}h ago`
+  return `${Math.round(diff / 86_400_000)}d ago`
 }

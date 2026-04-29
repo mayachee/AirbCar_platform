@@ -3,39 +3,35 @@
 import dynamic from 'next/dynamic'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, AlertCircle, Car, Activity, Plus, MessageSquareText } from 'lucide-react'
+import {
+  Loader2, AlertCircle, Car, Activity, Plus, MessageSquareText, MapPin,
+} from 'lucide-react'
 
 import { partnerService } from '@/features/partner/services/partnerService'
 import { apiClient } from '@/lib/api/client'
 import B2BSubNav from '@/components/b2b/B2BSubNav'
 
-// react-leaflet relies on browser globals — load only on the client.
 const FleetMap = dynamic(() => import('./FleetMap'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full text-gray-500">
+    <div className="flex items-center justify-center h-full text-stone-400">
       <Loader2 className="w-6 h-6 animate-spin mr-2" />
-      Loading map…
+      Drawing the network…
     </div>
   ),
 })
 
 /**
- * V5 · Fleet Map + Live Status.
+ * V5 · Network Fleet Map.
  *
- * Geographic view of every available vehicle on the network. Pins are
- * grouped per (agency, city) — one coloured marker per agency-location
- * pair, popup lists the cars there. The Live Activity rail merges three
- * streams so the page feels alive even when no B2B requests are in flight:
- *   - new car-share requests / status changes (own + counterparties)
- *   - new vehicles added to the network (any agency)
- *   - new agencies onboarding (any partner)
+ * A geographic portrait of the network — every agency, every city, every
+ * car, in motion. The map sits at the centre. The activity rail to its
+ * right reads like a newsroom: who joined, who listed, who's negotiating,
+ * timestamps in plain language.
  */
 export default function B2BFleetMap() {
   const [filter, setFilter] = useState('all') // all | available | b2b
 
-  // Whole network inventory (the V1/V3 endpoint returns every available
-  // car of other partners by default).
   const offers = useQuery({
     queryKey: ['b2b', 'offers'],
     queryFn: () => partnerService.getB2BListings({}),
@@ -46,8 +42,6 @@ export default function B2BFleetMap() {
     queryFn: () => partnerService.getCarShareRequests(),
     staleTime: 60_000,
   })
-  // Pull the most recently created listings + partners for the activity feed.
-  // /listings/ is public — no auth needed and includes every agency.
   const recentListings = useQuery({
     queryKey: ['b2b', 'recent-listings'],
     queryFn: () => apiClient.get('/listings/?page=1&page_size=15'),
@@ -60,7 +54,8 @@ export default function B2BFleetMap() {
   })
 
   const listings = useMemo(() => {
-    const raw = offers.data?.data || offers.data?.results || offers.data || []
+    const raw =
+      offers.data?.data?.data || offers.data?.data || offers.data?.results || []
     return Array.isArray(raw) ? raw : []
   }, [offers.data])
 
@@ -70,88 +65,127 @@ export default function B2BFleetMap() {
     return listings
   }, [listings, filter])
 
-  // Pin clustering by partner: one pin per (partner, city) with a count.
   const groupedPins = useMemo(() => {
     const map = new Map()
     for (const l of visibleListings) {
       const partner = l.partner || {}
-      const partnerId = partner.id ?? 'unknown'
-      const partnerName = partner.business_name || partner.businessName || 'Partner agency'
+      const partnerId = partner.id ?? l.partner_id ?? 'unknown'
+      const partnerName =
+        partner.business_name ||
+        partner.businessName ||
+        l.partner_name ||
+        'Partner agency'
       const city = (l.location || '').split(',')[0].trim() || 'Unknown'
       const key = `${partnerId}|${city}`
       if (!map.has(key)) {
-        map.set(key, {
-          key,
-          partnerId,
-          partnerName,
-          city,
-          listings: [],
-        })
+        map.set(key, { key, partnerId, partnerName, city, listings: [] })
       }
       map.get(key).listings.push(l)
     }
     return Array.from(map.values())
   }, [visibleListings])
 
+  const stats = useMemo(() => {
+    const cities = new Set(
+      listings.map((l) => (l.location || '').split(',')[0].trim()).filter(Boolean),
+    )
+    const agencies = new Set(
+      listings.map((l) => l.partner?.id ?? l.partner_id).filter(Boolean),
+    )
+    return {
+      cars: listings.length,
+      available: listings.filter((l) => l.is_available !== false).length,
+      cities: cities.size,
+      agencies: agencies.size,
+    }
+  }, [listings])
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-stone-50 flex flex-col">
       <B2BSubNav />
 
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4 flex-1 flex flex-col">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Network Fleet Map</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Every agency and every available vehicle in the network — live.
-            </p>
+      {/* Hero */}
+      <section className="border-b border-stone-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-orange-600">
+                Network Fleet Map
+              </p>
+              <h1 className="mt-3 text-4xl lg:text-5xl font-black tracking-tight text-stone-900 leading-[1.05]">
+                Across the Moroccan north.{' '}
+                <span className="italic font-light text-stone-500">Every fleet, mapped.</span>
+              </h1>
+              <p className="mt-4 text-base text-stone-600 leading-relaxed">
+                One pin per agency, one colour per partner. Hover for the lineup. Watch the
+                activity rail to read the network's pulse — new cars, new agencies, deals in
+                motion.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'all', label: 'All Agencies' },
+                { id: 'available', label: 'Available' },
+                { id: 'b2b', label: 'B2B Discount' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilter(f.id)}
+                  className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${
+                    filter === f.id
+                      ? 'bg-stone-900 text-white'
+                      : 'bg-white text-stone-600 border border-stone-300 hover:border-stone-900'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'all', label: 'All Agencies' },
-              { id: 'available', label: 'Available Only' },
-              { id: 'b2b', label: 'B2B Discount Only' },
-            ].map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFilter(f.id)}
-                className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
-                  filter === f.id
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-400'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
+          {/* Stat ribbon */}
+          <dl className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-px bg-stone-200 rounded-2xl overflow-hidden border border-stone-200">
+            <Stat label="Cars on map" value={stats.cars} />
+            <Stat label="Available now" value={stats.available} />
+            <Stat label="Cities" value={stats.cities} icon={MapPin} />
+            <Stat label="Agencies" value={stats.agencies} accent />
+          </dl>
+        </div>
+      </section>
+
+      {/* Map + Activity */}
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col">
         {offers.isError && (
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700">
+          <div className="flex items-start gap-3 p-5 mb-4 rounded-2xl bg-red-50 border border-red-200 text-red-700">
             <AlertCircle className="w-5 h-5 mt-0.5" />
             <p className="text-sm">Could not load fleet data. Try again in a moment.</p>
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-[500px]">
+        <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-[520px]">
           {/* Map */}
-          <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-[420px]">
+          <div className="flex-1 bg-white rounded-3xl border border-stone-200 shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden min-h-[460px]">
             {offers.isLoading ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex items-center justify-center h-full text-stone-400">
                 <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                Loading fleet…
+                Drawing the network…
               </div>
             ) : (
               <FleetMap pins={groupedPins} />
             )}
           </div>
 
-          {/* Activity sidebar */}
-          <aside className="lg:w-80 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
-            <header className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-orange-500" />
-              <h2 className="font-bold text-gray-900">Live Activity</h2>
+          {/* Activity rail */}
+          <aside className="lg:w-80 bg-white rounded-3xl border border-stone-200 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col overflow-hidden">
+            <header className="px-5 py-4 border-b border-stone-100">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-orange-600">
+                The wire
+              </p>
+              <h2 className="mt-1 text-lg font-black text-stone-900 inline-flex items-center gap-2">
+                <Activity className="w-4 h-4 text-orange-500" />
+                Live activity
+              </h2>
             </header>
             <ActivityFeed
               shares={shares.data}
@@ -163,46 +197,26 @@ export default function B2BFleetMap() {
             />
           </aside>
         </div>
-
-        {/* Summary stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Stat label="Vehicles" value={listings.length} />
-          <Stat
-            label="Available"
-            value={listings.filter((l) => l.is_available !== false).length}
-          />
-          <Stat
-            label="Cities"
-            value={
-              new Set(
-                listings.map((l) => (l.location || '').split(',')[0].trim()).filter(Boolean),
-              ).size
-            }
-          />
-          <Stat
-            label="Agencies"
-            value={new Set(listings.map((l) => l.partner?.id).filter(Boolean)).size}
-          />
-        </div>
       </div>
     </div>
   )
 }
 
-function Stat({ label, value }) {
+/* ───────────────────── tiles + feed ───────────────────── */
+
+function Stat({ label, value, suffix, accent, icon: Icon }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
-      <p className="text-2xl font-black text-gray-900 mt-1">{value}</p>
+    <div className={`bg-white px-5 py-5 ${accent ? 'lg:bg-orange-50' : ''}`}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-500 inline-flex items-center gap-1.5">
+        {Icon && <Icon className="w-3 h-3" />}
+        {label}
+      </p>
+      <p className="mt-2 text-3xl lg:text-4xl font-black text-stone-900">{value ?? '—'}</p>
+      {suffix && <p className="text-[11px] text-stone-500 mt-1">{suffix}</p>}
     </div>
   )
 }
 
-/**
- * Merges three streams (car-shares, recent listings, recent partners) into
- * a single time-sorted activity rail. Each item carries a `kind` so we can
- * pick a colour + icon + verb without three separate render branches.
- */
 function ActivityFeed({ shares, listings, partners, isLoading }) {
   const events = useMemo(() => {
     const out = []
@@ -216,12 +230,12 @@ function ActivityFeed({ shares, listings, partners, isLoading }) {
           : s.status === 'cancelled' ? 'Deal cancelled'
           : s.status === 'active' ? 'Share active'
           : s.status === 'completed' ? 'Share completed'
-          : 'Share request'
+          : 'New request'
         const dot =
-          s.status === 'accepted' ? 'bg-green-500'
-          : s.status === 'rejected' || s.status === 'cancelled' ? 'bg-red-500'
+          s.status === 'accepted' ? 'bg-emerald-500'
+          : s.status === 'rejected' || s.status === 'cancelled' ? 'bg-stone-400'
           : s.status === 'active' ? 'bg-blue-500'
-          : 'bg-amber-500'
+          : 'bg-orange-500'
         out.push({
           id: `share-${s.id}`,
           when: s.updated_at || s.created_at,
@@ -248,7 +262,10 @@ function ActivityFeed({ shares, listings, partners, isLoading }) {
           verb: 'New vehicle',
           dot: 'bg-emerald-500',
           line:
-            (l.partner?.business_name || l.partner?.businessName || 'Agency') +
+            (l.partner?.business_name ||
+              l.partner?.businessName ||
+              l.partner_name ||
+              'Agency') +
             ' added ' +
             ((l.make || '') + ' ' + (l.model || '')).trim(),
         })
@@ -272,45 +289,43 @@ function ActivityFeed({ shares, listings, partners, isLoading }) {
     return out
       .filter((e) => e.when)
       .sort((a, b) => new Date(b.when) - new Date(a.when))
-      .slice(0, 25)
+      .slice(0, 30)
   }, [shares, listings, partners])
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500 p-6">
+      <div className="flex items-center justify-center h-full text-stone-400 p-6">
         <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        Loading activity…
+        Reading the wire…
       </div>
     )
   }
 
   if (events.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center text-gray-500 p-6 text-center flex-1">
-        <Car className="w-8 h-8 text-gray-300 mb-2" />
-        <p className="text-sm">Nothing happening on the network yet. Activity will appear here.</p>
+      <div className="flex flex-col items-center justify-center text-stone-400 p-6 text-center flex-1">
+        <Car className="w-8 h-8 text-stone-300 mb-2" />
+        <p className="text-sm">The network is quiet. Activity will appear here.</p>
       </div>
     )
   }
 
   return (
-    <ul className="overflow-y-auto flex-1 divide-y divide-gray-100">
+    <ul className="overflow-y-auto flex-1 divide-y divide-stone-100">
       {events.map((e) => {
         const Icon =
           e.kind === 'listing' ? Plus : e.kind === 'partner' ? Activity : MessageSquareText
         return (
-          <li key={e.id} className="p-4">
-            <div className="flex items-start gap-2">
-              <span className={`w-2 h-2 rounded-full mt-1.5 ${e.dot}`} />
+          <li key={e.id} className="p-4 hover:bg-stone-50 transition-colors">
+            <div className="flex items-start gap-3">
+              <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${e.dot}`} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 inline-flex items-center gap-1.5">
-                  <Icon className="w-3.5 h-3.5 text-gray-400" />
+                <p className="text-sm font-bold text-stone-900 inline-flex items-center gap-1.5">
+                  <Icon className="w-3.5 h-3.5 text-stone-400" />
                   {e.verb}
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5 truncate">{e.line}</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">
-                  {new Date(e.when).toLocaleString()}
-                </p>
+                <p className="text-xs text-stone-500 mt-0.5 truncate">{e.line}</p>
+                <p className="text-[11px] text-stone-400 mt-1">{timeAgo(e.when)}</p>
               </div>
             </div>
           </li>
@@ -318,4 +333,15 @@ function ActivityFeed({ shares, listings, partners, isLoading }) {
       })}
     </ul>
   )
+}
+
+function timeAgo(iso) {
+  if (!iso) return 'recently'
+  const then = new Date(iso).getTime()
+  const diff = Date.now() - then
+  if (diff < 60_000) return 'just now'
+  if (diff < 3_600_000) return `${Math.round(diff / 60_000)}m ago`
+  if (diff < 86_400_000) return `${Math.round(diff / 3_600_000)}h ago`
+  if (diff < 7 * 86_400_000) return `${Math.round(diff / 86_400_000)}d ago`
+  return new Date(iso).toLocaleDateString()
 }

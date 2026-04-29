@@ -35,7 +35,13 @@ export default function B2BBrowsePage() {
   })
 
   const rows = useMemo(() => {
-    const raw = offers.data?.data || offers.data?.results || offers.data || []
+    // /listings/ wraps responses at three levels: apiClient -> backend
+    // envelope -> array of listings. Older endpoints return at two levels.
+    const raw =
+      offers.data?.data?.data ||
+      offers.data?.data ||
+      offers.data?.results ||
+      []
     if (!Array.isArray(raw)) return []
     return pill === 'All Types'
       ? raw
@@ -161,6 +167,13 @@ export default function B2BBrowsePage() {
 
 function BrowseRow({ listing, onRequest }) {
   const partner = listing.partner || {}
+  // /listings/ list endpoint flattens partner; B2B detail endpoint nests it.
+  const partnerName =
+    partner.business_name ||
+    partner.businessName ||
+    listing.partner_name ||
+    'Partner agency'
+  const partnerLogo = partner.logo_url || listing.partner_logo
   const vehicleLabel = `${listing.make || ''} ${listing.model || ''} ${listing.year || ''}`.trim()
   const price = listing.b2b_price_per_day ?? listing.b2b_price ?? listing.price_per_day
   const image =
@@ -183,14 +196,8 @@ function BrowseRow({ listing, onRequest }) {
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <AgencyAvatar
-            name={partner.business_name || partner.businessName}
-            logoUrl={partner.logo_url}
-            size={24}
-          />
-          <p className="text-sm font-semibold text-gray-900 truncate">
-            {partner.business_name || partner.businessName || 'Partner agency'}
-          </p>
+          <AgencyAvatar name={partnerName} logoUrl={partnerLogo} size={24} />
+          <p className="text-sm font-semibold text-gray-900 truncate">{partnerName}</p>
           <span className="text-xs text-gray-400">·</span>
           <p className="text-xs text-gray-500 inline-flex items-center gap-1">
             <MapPin className="w-3 h-3" />
