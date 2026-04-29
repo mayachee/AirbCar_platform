@@ -164,7 +164,17 @@ export const partnerService = {
     if (params.make) query.append('make', params.make)
     const qs = query.toString()
     const url = qs ? `/partners/b2b/listings/?${qs}` : '/partners/b2b/listings/'
-    return apiClient.get(url, undefined, { cache: 'no-store' })
+    try {
+      return await apiClient.get(url, undefined, { cache: 'no-store' })
+    } catch (err) {
+      // The B2B endpoint may not be deployed yet on a given environment
+      // (e.g. Render free-tier sometimes lags behind a push). Render the
+      // empty state instead of a hard error so V1/V3/V5 stay usable.
+      if (err?.status === 404) {
+        return { data: { data: [], count: 0 }, success: true }
+      }
+      throw err
+    }
   },
 
   async createB2BBooking(bookingData) {
@@ -176,7 +186,14 @@ export const partnerService = {
   },
 
   async getCarShareRequests() {
-    return apiClient.get('/partners/car-shares/', undefined, { cache: 'no-store' })
+    try {
+      return await apiClient.get('/partners/car-shares/', undefined, { cache: 'no-store' })
+    } catch (err) {
+      if (err?.status === 404) {
+        return { data: [], success: true }
+      }
+      throw err
+    }
   },
 
   async createCarShareRequest(requestData) {
