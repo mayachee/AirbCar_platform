@@ -1063,6 +1063,60 @@ export default function AddVehicleModal({
             </div>
           </div>
 
+          {/* B2B Sharing opt-in */}
+          <div className="rounded-xl border border-orange-200 bg-orange-50/40 p-4 space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_b2b_enabled"
+                checked={!!formData.is_b2b_enabled}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    is_b2b_enabled: e.target.checked,
+                    b2b_price_per_day: e.target.checked ? prev.b2b_price_per_day : '',
+                  }))
+                }
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+              />
+              <span>
+                <span className="block text-sm font-bold text-gray-900 dark:text-gray-100">
+                  Share with other agencies (B2B)
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Let other Airbcar partner agencies borrow this vehicle from your fleet at a
+                  discounted rate. Shows up on the Inter-Agency Marketplace.
+                </span>
+              </span>
+            </label>
+
+            {formData.is_b2b_enabled && (
+              <div className="pl-7">
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                  B2B daily rate (MAD)
+                </label>
+                <input
+                  type="number"
+                  name="b2b_price_per_day"
+                  value={formData.b2b_price_per_day}
+                  onChange={handleInputChange}
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 250"
+                  className={`w-60 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                    errors.b2b_price_per_day ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  }`}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Borrower pays this rate. Usually below your retail daily rate.
+                </p>
+                {errors.b2b_price_per_day && (
+                  <p className="text-red-500 text-xs mt-1">{errors.b2b_price_per_day}</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
