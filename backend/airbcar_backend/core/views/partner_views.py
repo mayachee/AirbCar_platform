@@ -1270,10 +1270,15 @@ class B2BListingSearchView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        queryset = Listing.objects.filter(
-            is_b2b_enabled=True,
-            is_available=True,
-        ).select_related('partner', 'partner__user')
+        # The Inter-Agency Marketplace shows the entire available fleet by
+        # default — every partner can request any other partner's car. Set
+        # ?b2b_only=true to scope to listings that explicitly opted in to a
+        # B2B discounted rate.
+        queryset = Listing.objects.filter(is_available=True).select_related(
+            'partner', 'partner__user',
+        )
+        if request.query_params.get('b2b_only', '').lower() in ('1', 'true', 'yes'):
+            queryset = queryset.filter(is_b2b_enabled=True)
         if partner:
             queryset = queryset.exclude(partner=partner)
 
