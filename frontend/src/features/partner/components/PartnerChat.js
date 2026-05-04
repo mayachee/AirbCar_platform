@@ -533,13 +533,15 @@ export default function PartnerChat({ partnerData }) {
       <ComposeRequestModal
         isOpen={composeOpen}
         onClose={() => setComposeOpen(false)}
+        excludePartnerId={currentPartnerId}
         onCreated={async (created) => {
           setComposeOpen(false);
-          await fetchRequests();
           if (created?.id) {
+            setRequests((prev) => [created, ...prev.filter((r) => r.id !== created.id)]);
             setSelectedId(created.id);
             setShowMobileChat(true);
           }
+          fetchRequests();
         }}
       />
     </motion.div>

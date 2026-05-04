@@ -36,14 +36,32 @@ function getPartnerName(listing) {
   );
 }
 
-function ListingPicker({ prefillPartnerId, prefillPartnerName, onPick, onClose, t }) {
+function extractApiError(err, fallback) {
+  const data = err?.data;
+  if (data && typeof data === 'object') {
+    if (typeof data.detail === 'string') return data.detail;
+    if (typeof data.error === 'string') return data.error;
+    if (typeof data.message === 'string') return data.message;
+    // DRF field-level errors: { fieldName: "..." } or { fieldName: ["...", ...] }
+    for (const value of Object.values(data)) {
+      if (typeof value === 'string') return value;
+      if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+    }
+  }
+  return err?.message || fallback;
+}
+
+function ListingPicker({ prefillPartnerId, prefillPartnerName, excludePartnerId, onPick, onClose, t }) {
   const [search, setSearch] = useState('');
 
   const offers = useQuery({
-    queryKey: ['compose', 'b2b-listings', prefillPartnerId || 'all'],
+    queryKey: ['compose', 'b2b-listings', prefillPartnerId || 'all', excludePartnerId || 'self'],
     queryFn: () =>
       partnerService.getB2BListings({
         partner_id: prefillPartnerId || undefined,
+        // Only exclude self when no specific partner is targeted; if a
+        // partner is prefilled the API filter pins to that partner anyway.
+        exclude_partner: !prefillPartnerId && excludePartnerId ? excludePartnerId : undefined,
       }),
     staleTime: 30_000,
   });
@@ -182,12 +200,13 @@ function RequestForm({ listing, onBack, onCreated, onClose, t }) {
       onCreated?.(created);
     },
     onError: (err) => {
-      setError(err?.data?.error || err?.data?.detail || err?.message || t('compose_error_generic'));
+      setError(extractApiError(err, t('compose_error_generic')));
     },
   });
 
   const submit = (e) => {
     e.preventDefault();
+    if (create.isPending) return;
     setError('');
     if (!listing?.public_id) {
       setError(t('compose_error_missing_public_id'));
@@ -313,7 +332,7 @@ function RequestForm({ listing, onBack, onCreated, onClose, t }) {
           {t('compose_cancel')}
         </button>
         <button
-          type="submit"
+          type="button"
           onClick={submit}
           disabled={create.isPending}
           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
@@ -337,6 +356,7 @@ export default function ComposeRequestModal({
   prefillPartnerId = null,
   prefillPartnerName = null,
   prefillListing = null,
+  excludePartnerId = null,
 }) {
   const t = useTranslations('partner');
   const [listing, setListing] = useState(prefillListing || null);
@@ -371,6 +391,7 @@ export default function ComposeRequestModal({
             <ListingPicker
               prefillPartnerId={prefillPartnerId}
               prefillPartnerName={prefillPartnerName}
+              excludePartnerId={excludePartnerId}
               onPick={setListing}
               onClose={onClose}
               t={t}
