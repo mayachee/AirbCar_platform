@@ -358,11 +358,11 @@ function RequestModal({ listing, onClose, onSubmitted }) {
             </button>
             <button
               type="submit"
-              disabled={create.isLoading}
+              disabled={create.isPending}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
-              {create.isLoading ? 'Sending…' : 'Send request'}
+              {create.isPending ? 'Sending…' : 'Send request'}
             </button>
           </div>
         </form>

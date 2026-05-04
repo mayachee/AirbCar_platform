@@ -11,7 +11,9 @@ import {
   Settings,
   Bolt,
   Check,
+  Send,
 } from 'lucide-react'
+import ComposeRequestModal from '@/features/partner/components/ComposeRequestModal'
 import { useTranslations } from 'next-intl'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
@@ -54,7 +56,7 @@ export default function PartnerProfileClient({ initialPartner = null, initialLis
   const params = useParams()
   const locale = params?.locale || 'en'
   const { formatPrice } = useCurrency()
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const { showToast } = useToast?.() || { showToast: () => {} }
   const t = useTranslations('partner_public')
 
@@ -66,6 +68,7 @@ export default function PartnerProfileClient({ initialPartner = null, initialLis
   const [isFollowing, setIsFollowing] = useState(initialPartner?.is_following || false)
   const [followerCount, setFollowerCount] = useState(initialPartner?.follower_count || 0)
   const [followBusy, setFollowBusy] = useState(false)
+  const [composeOpen, setComposeOpen] = useState(false)
 
   const [reviews, setReviews] = useState([])
   const [reviewsTotal, setReviewsTotal] = useState(0)
@@ -226,6 +229,9 @@ export default function PartnerProfileClient({ initialPartner = null, initialLis
 
   const companyName = partner.business_name || partner.company_name || [partner.user?.first_name, partner.user?.last_name].filter(Boolean).join(' ') || 'Partner'
   const description = partner.description || partner.bio || ''
+  const viewerIsPartner = (user?.role === 'partner') || user?.is_partner === true
+  const isOwnProfile = !!user?.id && !!partner?.user?.id && String(user.id) === String(partner.user.id)
+  const canMessage = viewerIsPartner && !isOwnProfile
   const totalBookings = partner.total_bookings || 0
   const reviewCount = partner.review_count || reviewsTotal || 0
   const rating = Number(partner.rating || 0)
@@ -293,6 +299,15 @@ export default function PartnerProfileClient({ initialPartner = null, initialLis
                   {isFollowing && <Check className="w-4 h-4" />}
                   {isFollowing ? 'Following' : 'Follow'}
                 </button>
+                {canMessage && (
+                  <button
+                    onClick={() => setComposeOpen(true)}
+                    className="px-6 py-3 rounded-xl font-bold bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Message
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -503,6 +518,17 @@ export default function PartnerProfileClient({ initialPartner = null, initialLis
         </section>
       </main>
       <Footer />
+
+      <ComposeRequestModal
+        isOpen={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        prefillPartnerId={partner?.id}
+        prefillPartnerName={companyName}
+        onCreated={() => {
+          setComposeOpen(false)
+          showToast?.('Request sent. Track it in your messages.', 'success')
+        }}
+      />
     </div>
   )
 }

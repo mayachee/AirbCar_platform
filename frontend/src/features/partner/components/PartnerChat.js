@@ -3,12 +3,12 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { partnerService } from '@/features/partner/services/partnerService';
 import { useTranslations } from 'next-intl';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { format, isToday, isYesterday } from 'date-fns';
 import {
-  Search, Send, MessageSquare, ArrowLeft, Car, Clock,
-  CheckCircle2, AlertCircle, Loader2, ChevronRight
+  Search, Send, MessageSquare, ArrowLeft, Car, Loader2, Plus
 } from 'lucide-react';
+import ComposeRequestModal from './ComposeRequestModal';
 
 // --- Helpers ---
 
@@ -238,6 +238,7 @@ export default function PartnerChat({ partnerData }) {
   const [sending, setSending] = useState(false);
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [lastMessages, setLastMessages] = useState({});
+  const [composeOpen, setComposeOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const pollConversationsRef = useRef(null);
@@ -404,9 +405,19 @@ export default function PartnerChat({ partnerData }) {
         >
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
-              {t('chat_title')}
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                {t('chat_title')}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setComposeOpen(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t('compose_new')}
+              </button>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -426,11 +437,27 @@ export default function PartnerChat({ partnerData }) {
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
               </div>
             ) : filteredRequests.length === 0 ? (
-              <EmptyState
-                icon={MessageSquare}
-                title={searchQuery ? 'No results' : t('chat_no_conversations').split('.')[0]}
-                subtitle={searchQuery ? 'Try a different search' : t('chat_no_conversations')}
-              />
+              <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-3">
+                  <MessageSquare className="h-7 w-7 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                  {searchQuery ? 'No results' : t('chat_no_conversations').split('.')[0]}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  {searchQuery ? 'Try a different search' : t('chat_no_conversations')}
+                </p>
+                {!searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setComposeOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {t('compose_start_first')}
+                  </button>
+                )}
+              </div>
             ) : (
               (Array.isArray(filteredRequests) ? filteredRequests : []).map((request) => (
                 <ConversationItem
@@ -502,6 +529,19 @@ export default function PartnerChat({ partnerData }) {
           )}
         </div>
       </div>
+
+      <ComposeRequestModal
+        isOpen={composeOpen}
+        onClose={() => setComposeOpen(false)}
+        onCreated={async (created) => {
+          setComposeOpen(false);
+          await fetchRequests();
+          if (created?.id) {
+            setSelectedId(created.id);
+            setShowMobileChat(true);
+          }
+        }}
+      />
     </motion.div>
   );
 }

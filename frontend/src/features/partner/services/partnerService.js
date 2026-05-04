@@ -176,6 +176,7 @@ export const partnerService = {
     if (params.location) query.append('location', params.location)
     if (params.make) query.append('brand', params.make)
     if (params.exclude_partner) query.append('exclude_partner', params.exclude_partner)
+    if (params.partner_id) query.append('partner_id', params.partner_id)
     // Ask for a generous page so V1/V3/V5 see most of the network at once.
     query.append('page_size', '100')
     const url = `/listings/?${query.toString()}`
